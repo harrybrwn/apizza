@@ -9,19 +9,29 @@ go install -u github.com/harrybrwn/apizza
 ```
 
 #### Setup
+You can either use the built-in `get` and `set` commands to configure apizza or you can edit the `config.json` file in your home path both methods will have the same results. If you add a key-value pair to the `config.json` file that is not already in the file it will be overwritten the next time the program is run.
+
+The `get` and `set` comands can be used one at a time,
 ```
-apizza config set name="Harry Brown"
-apizza config set email="harrybrown98@gmail.com"
+apizza config set email=bob@example.com
+apizza config set name=Bob
+apizza config set service=Carryout
 ```
 
-#### The Domios API Wrapper for Go (dawg)
+or they can be moved to one line like so. Make sure that there are no spaces between keys and values and that there is a space between key-value pairs.
 ```
-go get github.com/harrybrwn/apizza/dawg
+apizza config set name=Bob email=bob@example.com service=Carryout
 ```
 
-###### Demo
+#### The Domios API Wrapper for Go (DAWG)
+The DAWG library is the api wrapper used by apizza for interfacing with the dominos pizza api.
 ```go
+package main
+
 import (
+	"fmt"
+	"log"
+
 	"github.com/harrybrwn/apizza/dawg"
 )
 
@@ -36,11 +46,23 @@ var addr = &dawg.Address{
 func main() {
 	store, err := dawg.NearestStore(addr, "Delivery")
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
+	order, err := store.NewOrder()
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	pizza, err := store.GetProduct("16SCREEN")
+	if err != nil {
+		log.Fatal(err)
+	}
+	order.AddProduct(pizza)
+
+	if store.IsOpen {
+		fmt.Println(order.Price()
+	} else {
+		fmt.Println("dominos is not open")
+	}
 }
 ```
-
-happy coding :)
-![hahaha](https://external-preview.redd.it/L5a31wsfcT9TcNcvOF3HTOFkXxnKjA7OopCakXxScDg.png?auto=webp&s=bbb10ca8d08363bc2d94996a77619d8bf60c24e8)
