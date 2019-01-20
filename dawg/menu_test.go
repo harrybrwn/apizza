@@ -60,6 +60,6 @@ func TestNewMenu(t *testing.T) {
 		t.Error("newMenu returned a nil menu")
 	}
 	if m.ID != "4336" {
-		t.Error("newMenu returned a menu for the wrong store	")
+		t.Error("newMenu returned a menu for the wrong store")
 	}
 }

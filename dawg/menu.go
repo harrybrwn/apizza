@@ -62,7 +62,7 @@ func makeProduct(data map[string]interface{}) (*Product, error) {
 // parameter is for specifieing which side of the topping should be on for
 // pizza. The 'amount' parameter is 2.0, 1.5, 1.0, or 0.5 and gives the amount
 // of topping should be given.
-func (p *Product) AddTopping(code string, coverage string, amount float64) {
+func (p *Product) AddTopping(code, coverage string, amount float64) {
 	ok := amount == 2.0 || amount == 1.5 || amount == 1.0 || amount == 0.5
 	if !ok {
 		panic("amount must be 2.0, 1.5, 1.0, or 0.5")
@@ -93,7 +93,8 @@ func (p *Product) AddTopping(code string, coverage string, amount float64) {
 	}
 }
 
-// Size gets the size code of the product
+// Size gets the size code of the product. Defaults to -1 if the size
+// cannot be found.
 func (p *Product) Size() int64 {
 	if v, ok := p.other["SizeCode"]; ok {
 		if rt, err := strconv.ParseInt(v.(string), 10, 64); err == nil {
@@ -115,7 +116,7 @@ func (p *Product) Price() float64 {
 }
 
 // Prepared returns a boolean representing whether or not the
-// product is prepared.
+// product is prepared. Default is false.
 func (p *Product) Prepared() bool {
 	v, ok := p.other["pre"].(string)
 	if rt, err := strconv.ParseBool(v); err == nil && ok {
@@ -136,7 +137,7 @@ type Menu struct {
 }
 
 func newMenu(id string) (*Menu, error) {
-	// checks to if the menu has been cached in memory
+	// checks to if the menu has been cached as a global variable
 	if cachedMenu != nil && cachedMenu.ID == id {
 		return cachedMenu, nil
 	}

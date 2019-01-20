@@ -57,6 +57,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	pizza.AddTopping("P", dawg.ToppingLeft, 1.5)
 	order.AddProduct(pizza)
 
 	if store.IsOpen {

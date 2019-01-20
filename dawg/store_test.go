@@ -96,7 +96,6 @@ func TestNearbyStore(t *testing.T) {
 		if s.ID != nearbyStores.Stores[i].ID {
 			t.Error("ids are not the same", stores[i].ID, nearbyStores.Stores[i].ID)
 		}
-		// fmt.Printf("%+v\n", s.IsDeliveryStore)
 	}
 }
 

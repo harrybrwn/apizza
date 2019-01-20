@@ -18,58 +18,20 @@ import (
 	"fmt"
 	"strings"
 	"unicode/utf8"
-	"encoding/json"
 
-	"apizza/dawg"
 	"github.com/spf13/cobra"
-	"github.com/boltdb/bolt"
 )
 
 var menuCmd = &cobra.Command{
 	Use:   "menu",
 	Short: "Get the Dominos menu.",
-	RunE:  func(cmd *cobra.Command, args []string) error {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		var (
-			err error
+			err   error
 			bflag = cmd.Flags().GetBool
-			menuIsCached = true
 		)
 
-		err = db.Update(func(tx *bolt.Tx) error {
-			_, err := tx.CreateBucketIfNotExists([]byte("Menu"))
-			return err
-		})
-		if err != nil {
-			return err
-		}
-
-		err = db.View(func(tx *bolt.Tx) error {
-			var err error
-			b := tx.Bucket([]byte("Menu"))
-			rawmenu := b.Get([]byte("menu"))
-			if rawmenu == nil {
-				menuIsCached = false
-				menu, err = store.Menu()
-				return err
-			}
-			menu = &dawg.Menu{}
-			return json.Unmarshal(rawmenu, menu)
-		})
-		if err != nil {
-			return err
-		}
-
-		err = db.Update(func(tx *bolt.Tx) error {
-			if menuIsCached {
-				return nil
-			}
-			b := tx.Bucket([]byte("Menu"))
-			data, err := json.Marshal(menu)
-			if err != nil {
-				return err
-			}
-			return b.Put([]byte("menu"), data)
-		})
+		err = menuManagment()
 		if err != nil {
 			return err
 		}

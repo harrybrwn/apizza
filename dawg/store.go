@@ -12,6 +12,7 @@ func NearestStore(addr *Address, service string) (*Store, error) {
 		return nil, err
 	}
 	var store *Store
+
 	for i := range allnearby.Stores {
 		if allnearby.Stores[i].IsOnlineNow {
 			store = &allnearby.Stores[i]
@@ -47,11 +48,12 @@ func NewStore(id string, service string, addr *Address) (*Store, error) {
 	return store, err
 }
 
-// InitStore allows for the creation of arbitrary store objects. The main use-case
-// is when data id needed that is not in the default Store object. The obj
-// argument is anything that would be used to decode json data.
+// InitStore allows for the creation of arbitrary store objects. The main
+// use-case is when data id needed that is not in the default Store object.
+// The obj argument is anything that would be used to decode json data.
 //
-// Use type '*map[string]interface{}' in the object argument for all the store data
+// Use type '*map[string]interface{}' in the object argument for all the
+// store data
 func InitStore(id string, obj interface{}) error {
 	path := format("/power/store/%s/profile", id)
 	b, err := get(path, nil)
@@ -134,21 +136,21 @@ func (s *Store) GetProduct(code string) (*Product, error) {
 	return p, nil
 }
 
-// WaitTime returns a pair of integers that are the max and min estimated
-// wait time for that store.
+// WaitTime returns a pair of integers that are the maximum and
+// minimum estimated wait time for that store.
 func (s *Store) WaitTime() (int, int) {
 	m := s.ServiceEstimatedWait
 	return m[s.userService].Min, m[s.userService].Max
 }
 
-type storeLocations struct {
+type storeLocs struct {
 	Status      int     `json:"Status"`
 	Granularity string  `json:"Granularity"`
 	Address     Address `json:"Address"`
 	Stores      []Store `json:"Stores"`
 }
 
-func findNearbyStores(addr *Address, service string) (*storeLocations, error) {
+func findNearbyStores(addr *Address, service string) (*storeLocs, error) {
 	var argCheck = !(service == "Delivery" || service == "Carryout")
 	if argCheck {
 		panic("service must be either 'Delivery' or 'Carryout'")
@@ -161,13 +163,13 @@ func findNearbyStores(addr *Address, service string) (*storeLocations, error) {
 	if err != nil {
 		return nil, err
 	}
-	stores := &storeLocations{}
-	err = json.Unmarshal(b, stores)
-	if err == nil && stores.Status == -1 {
-		return stores, errors.New("Dominos server Failure: -1")
+	locs := &storeLocs{}
+	err = json.Unmarshal(b, locs)
+	if err == nil && locs.Status == -1 {
+		return locs, errors.New("Dominos server Failure: -1")
 	}
-	for i := range stores.Stores {
-		stores.Stores[i].userAddress, stores.Stores[i].userService = addr, service
+	for i := range locs.Stores {
+		locs.Stores[i].userAddress, locs.Stores[i].userService = addr, service
 	}
-	return stores, err
+	return locs, err
 }

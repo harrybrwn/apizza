@@ -17,13 +17,12 @@ package cmd
 import (
 	"fmt"
 	"os"
-	"path/filepath"
 
-	"apizza/pkg/config"
 	"apizza/dawg"
+	"apizza/pkg/config"
 
-	"github.com/spf13/cobra"
 	"github.com/boltdb/bolt"
+	"github.com/spf13/cobra"
 )
 
 var rootCmd = &cobra.Command{
@@ -34,8 +33,6 @@ var rootCmd = &cobra.Command{
 	},
 	Run: func(cmd *cobra.Command, args []string) {
 		if test, err := cmd.Flags().GetBool("test"); test && err == nil {
-			// menu, _ = store.Menu()
-			// printTable()
 			print("nothing is being tested\n")
 		} else {
 			cmd.Usage()
@@ -49,28 +46,23 @@ var rootCmd = &cobra.Command{
 var (
 	cfg = &Config{}
 
-	addr *dawg.Address
-	menu *dawg.Menu
+	addr  *dawg.Address
+	menu  *dawg.Menu
 	store *dawg.Store
-	db *bolt.DB
+	db    *bolt.DB
 )
 
 // Execute runs the root command
 func Execute() {
-	var err error
-	dir := filepath.Join(config.ConfigFolder(), "cache")
-	if _, err := os.Stat(dir); os.IsNotExist(err) {
-		os.Mkdir(dir, os.ModeDir)
-	}
-	path := filepath.Join(dir, "apizza.db")
-	db, err = bolt.Open(path, 0600, nil)
+	err := initDatabase()
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
+
 	defer db.Close()
 
-	if err = rootCmd.Execute(); err != nil {
+	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
@@ -108,27 +100,34 @@ func (c *Config) Set(key string, val interface{}) error {
 
 func init() {
 	var err error
+
 	err = config.SetConfig(".apizza", cfg)
 	if err != nil {
 		panic(err)
 	}
 
-	addr = &dawg.Address{
-		Street: cfg.Address.Street,
-		City: cfg.Address.City,
-		State: cfg.Address.State,
-		Zip: cfg.Address.Zip,
-	}
-	store, err = dawg.NearestStore(addr, cfg.Service)
-	if err != nil {
-		fmt.Println(err.Error())
-		panic(err)
-	}
-
+	// presant throughout program
 	rootCmd.PersistentFlags().String("address", "", "use a specific address")
 	rootCmd.PersistentFlags().String("service", "Delivery", "select a Dominos service, either 'Delivery' or 'Carryout'")
 	rootCmd.PersistentFlags().String("store-id", "", "store id used for all endpoint calls")
 
 	rootCmd.Flags().BoolP("test", "t", false, "testing flag")
 	rootCmd.Flags().MarkHidden("test")
+
+	address, err := rootCmd.PersistentFlags().GetString("address")
+	if address == "" {
+		addr = &dawg.Address{
+			Street: cfg.Address.Street,
+			City:   cfg.Address.City,
+			State:  cfg.Address.State,
+			Zip:    cfg.Address.Zip,
+		}
+	} else if address != "" && err != nil {
+		addr = dawg.ParseAddress(address)
+	}
+	store, err = dawg.NearestStore(addr, cfg.Service)
+	if err != nil {
+		fmt.Println(err.Error())
+		panic(err)
+	}
 }

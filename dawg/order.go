@@ -40,7 +40,8 @@ func (o *Order) Price() (float64, error) {
 		return -1.0, err
 	}
 	data = data["Order"].(map[string]interface{})
-	if price, ok := data["Amounts"].(map[string]interface{})["Customer"]; ok {
+	price, ok := data["Amounts"].(map[string]interface{})["Customer"]
+	if ok {
 		return price.(float64), nil
 	}
 	return -1.0, errors.New("Price not found")

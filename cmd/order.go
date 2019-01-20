@@ -15,6 +15,8 @@
 package cmd
 
 import (
+	"fmt"
+
 	"github.com/spf13/cobra"
 )
 
@@ -22,11 +24,19 @@ var orderCmd = &cobra.Command{
 	Use:   "order",
 	Short: "Order pizza from dominos",
 	RunE: func(cmd *cobra.Command, args []string) error {
+		if cached, err := cmd.Flags().GetBool("cached"); cached && err == nil {
+			fmt.Println("this is where you would see previous orders and saved orders")
+			return nil
+		} else if err != nil {
+			return err
+		}
+
 		print("under constuction!")
 		return nil
 	},
 }
 
 func init() {
+	orderCmd.Flags().BoolP("cached", "c", false, "show the previously cached and saved orders")
 	rootCmd.AddCommand(orderCmd)
 }
