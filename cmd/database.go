@@ -38,7 +38,7 @@ func (db *dataBase) onCheckExists(bucket, key string) error {
 
 func initDatabase() error {
 	var err error
-	dir := filepath.Join(config.ConfigFolder(), "cache")
+	dir := filepath.Join(config.Folder(), "cache")
 	if _, err := os.Stat(dir); os.IsNotExist(err) {
 		os.Mkdir(dir, os.ModeDir)
 	}
@@ -47,6 +47,7 @@ func initDatabase() error {
 	return err
 }
 
+// TODO: this needs to be abstracted
 func menuManagment() error {
 	var (
 		err          error

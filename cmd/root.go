@@ -98,6 +98,17 @@ func (c *Config) Set(key string, val interface{}) error {
 	return config.Set(c, key, val)
 }
 
+func (c *Config) isEmpty() bool {
+	return c.Name == "" &&
+		c.Email == "" &&
+		c.Address.City == "" &&
+		c.Address.State == "" &&
+		c.Address.Street == "" &&
+		c.Address.Streetname == "" &&
+		c.Address.Streetnumber == "" &&
+		c.Address.Zip == ""
+}
+
 func init() {
 	var err error
 
@@ -124,10 +135,5 @@ func init() {
 		}
 	} else if address != "" && err != nil {
 		addr = dawg.ParseAddress(address)
-	}
-	store, err = dawg.NearestStore(addr, cfg.Service)
-	if err != nil {
-		fmt.Println(err.Error())
-		panic(err)
 	}
 }

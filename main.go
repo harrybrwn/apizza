@@ -14,7 +14,9 @@
 
 package main
 
-import "apizza/cmd"
+import (
+	"apizza/cmd"
+)
 
 func main() {
 	cmd.Execute()

@@ -1,24 +1,25 @@
 package config
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"encoding/json"
 	"os"
-	homedir "github.com/mitchellh/go-homedir"
 	"path/filepath"
 	"reflect"
+
+	homedir "github.com/mitchellh/go-homedir"
 )
 
 var (
-	save func() error
-	reset func()
+	save      func() error
+	reset     func()
 	cfgFolder string
-	cfgFile string
+	cfgFile   string
 )
 
-// ConfigFolder returns the path to the folder that was set in SetConfig
-func ConfigFolder() string {
+// Folder returns the path to the folder that was set in SetConfig
+func Folder() string {
 	return cfgFolder
 }
 
@@ -92,7 +93,7 @@ func emptyConfig(t reflect.Type, level int) string {
 
 	for i := 0; i < t.NumField(); i++ {
 		comma := ",\n"
-		if i == t.NumField() - 1 {
+		if i == t.NumField()-1 {
 			comma = "\n"
 		}
 		f := t.Field(i)
@@ -107,7 +108,7 @@ func emptyConfig(t reflect.Type, level int) string {
 		}
 		switch f.Type.Kind() {
 		case reflect.Struct:
-			empty += emptyConfig(f.Type, level + 1)
+			empty += emptyConfig(f.Type, level+1)
 		case reflect.Int:
 			empty += "0" + comma
 		case reflect.String:

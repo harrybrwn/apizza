@@ -15,6 +15,7 @@
 package cmd
 
 import (
+	"apizza/dawg"
 	"fmt"
 	"strings"
 	"unicode/utf8"
@@ -30,6 +31,12 @@ var menuCmd = &cobra.Command{
 			err   error
 			bflag = cmd.Flags().GetBool
 		)
+		if store == nil {
+			store, err = dawg.NearestStore(addr, cfg.Service)
+			if err != nil {
+				return err
+			}
+		}
 
 		err = menuManagment()
 		if err != nil {
@@ -39,13 +46,13 @@ var menuCmd = &cobra.Command{
 		if toppings, err := bflag("toppings"); toppings && err == nil {
 			printToppings()
 		} else if food, err := bflag("food"); food && err == nil {
-			printTable()
+			printMenu()
 		}
 		return nil
 	},
 }
 
-func printTable() {
+func printMenu() {
 	var f func(map[string]interface{}, string)
 
 	f = func(m map[string]interface{}, spacer string) {
@@ -76,6 +83,7 @@ func printTable() {
 			print("\n")
 		}
 	}
+
 	f(menu.Categorization["Food"].(map[string]interface{}), "")
 }
 
@@ -85,7 +93,8 @@ func printToppings() {
 		fmt.Print("  ", key, "\n")
 		for k, v := range val.(map[string]interface{}) {
 			spacer := strings.Repeat(" ", 3-strLen(k))
-			fmt.Print(indent, k, spacer, v.(map[string]interface{})["Name"], "\n")
+			fmt.Print(
+				indent, k, spacer, v.(map[string]interface{})["Name"], "\n")
 		}
 		print("\n")
 	}
@@ -103,7 +112,7 @@ func maxStrLen(list []interface{}) int {
 	return max
 }
 
-var strLen = utf8.RuneCountInString
+var strLen = utf8.RuneCountInString // this is a function
 
 func init() {
 	var bflag = menuCmd.Flags().BoolP
