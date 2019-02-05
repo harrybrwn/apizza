@@ -1,7 +1,9 @@
 package config
 
 import (
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"reflect"
 	"runtime"
@@ -27,28 +29,59 @@ type testCnfg struct {
 		One string `config:"one"`
 		Two string `config:"two"`
 	} `config:"more"`
-	// Thing string
 }
 
 func (c *testCnfg) Get(key string) interface{}            { return nil }
 func (c *testCnfg) Set(key string, val interface{}) error { return nil }
 
-func TestSetConfig(t *testing.T) {
+func TestConfigGetandSet(t *testing.T) {
 	var c = &testCnfg{}
 	if Get(c, "msg") != Get(c, "Msg") {
 		t.Error("the Get function should auto convert 'msg' to 'Msg'.")
 	}
 	if Get(c, "msg").(string) != c.Msg {
-		t.Error("The Get function should be returning the same value as accessing the struct literal.")
+		t.Error("The Get function should be returning the same value as acessing the struct literal.")
 	}
-	c.More.One = "hey is this shit workin"
+	Set(c, "more.one", "hey is this shit workin")
+	if c.More.One != "hey is this shit workin" {
+		t.Error("Setting variables using dot notation in the key didn't work")
+	}
+	Set(c, "Test", "this config is part of a test. it should't be here")
+	test := "this config is part of a test. it should't be here"
+	if c.Test != test {
+		t.Errorf("Error in 'Set':\n\twant: %s\n\tgot: %s", test, c.Test)
+	}
+	if Get(c, "invalidkey") != nil {
+		t.Error("an invalid key should have resulted in a nil value")
+	}
+	if err := Set(c, "invalidkey", ""); err == nil {
+		t.Error("this should have raised an error")
+	}
+}
 
+func TestSetConfig(t *testing.T) {
+	var c = &testCnfg{}
 	err := SetConfig(".testconfig", c)
 	if err != nil {
 		if e, ok := err.(Error); ok {
 			fmt.Println(e.file, e.fun, e.line)
 		}
 		t.Error(err)
+	}
+
+	b, err := ioutil.ReadFile(Folder() + "/config.json")
+	if err != nil {
+		t.Error(err)
+	}
+	err = json.Unmarshal(b, c)
+	if err != nil {
+		t.Error(err)
+	}
+	if c.Test != "this is a test config file" {
+		t.Error("config default value failed")
+	}
+	if c.Msg != "this should have been deleted, please remove it" {
+		t.Error("default config var failed")
 	}
 	if _, err := os.Stat(Folder()); os.IsNotExist(err) {
 		t.Error("The config folder is not where it is supposed to be, you should probably find it")
@@ -57,8 +90,6 @@ func TestSetConfig(t *testing.T) {
 		os.Remove(Folder())
 	}
 }
-
-func TestConfig(t *testing.T) {}
 
 func TestEmptyConfig(t *testing.T) {
 	elem := reflect.ValueOf(&testCnfg{}).Elem()
@@ -70,7 +101,6 @@ func TestEmptyConfig(t *testing.T) {
 		"Two": ""
     }
 }`
-	// expected = strings.Replace(expected, "\r\n", "\n", -1)
 	expected = strings.Replace(expected, "\t", "    ", -1)
 	raw := emptyConfig(elem.Type(), 0)
 

@@ -6,64 +6,85 @@ import (
 	"strings"
 )
 
-type configuration interface {
+// Configuration represents a config object that can act like a series of
+// key-value pairs by using Get and Set methods.
+type Configuration interface {
 	Get(string) interface{}
 	Set(string, interface{}) error
 }
 
 // Get is a helper funtion that finds the field of the config object that
-// matches the key and then returns the value.
-func Get(config configuration, key string) interface{} {
+// matches the key and then returns the value. This function is meant to be
+// wrapped by a config object.
+//
+// Example.
+// type Config struct {
+//     Field string
+// }
+// func (c *Config) Get(key string) interface{} {
+//     return config.Get(c, key)
+// }
+// note: this will only work if the struct impliments the Configuration type.
+func Get(config Configuration, key string) interface{} {
 	value := reflect.ValueOf(config).Elem()
 	v := find(key, value)
-    switch v.Kind() {
-    case reflect.String:
-        return v.String()
-    case reflect.Int:
-        return v.Int()
+	switch v.Kind() {
+	case reflect.String:
+		return v.String()
+	case reflect.Int:
+		return v.Int()
 	case reflect.Struct:
 		return v
-    default:
-        return nil
-    }
+	default:
+		return nil
+	}
 }
 
-// Set is a helper funtion that binds a variable to the fiels that
-// matches the key argument
-func Set(config configuration, key string, val interface{}) error {
+// Set is a helper funtion that binds a variable to the field that
+// matches the key argument. This function is meant to be
+// wrapped by a config object.
+//
+// Example.
+// type Config struct {
+//     Field string
+// }
+// func (c *Config) Get(key string, val interface{}) error {
+//     return config.Set(c, key, val)
+// }
+// note: this will only work if the struct impliments the Configuration type.
+func Set(config Configuration, key string, val interface{}) error {
 	v := reflect.ValueOf(config).Elem()
-    field := find(key, v)
+	field := find(key, v)
 	if !field.IsValid() {
-		return fmt.Errorf("cannot find %s", key)
+		return fmt.Errorf("cannot find '%s'", key)
 	}
-    switch reflect.TypeOf(val).Kind() {
-    case reflect.String:
-        field.SetString(val.(string))
-    case reflect.Int:
-        field.SetInt(val.(int64))
-    case reflect.Struct:
-		// fmt.Println("structs haven't been figured out yet in config.Set")
-        return fmt.Errorf("structs haven't been figured out yet in config.Set")
-    }
+	switch reflect.TypeOf(val).Kind() {
+	case reflect.String:
+		field.SetString(val.(string))
+	case reflect.Int:
+		field.SetInt(val.(int64))
+	case reflect.Struct:
+		return fmt.Errorf("structs haven't been figured out yet for config.Set")
+	}
 	return nil
 }
 
 func find(key string, val reflect.Value) reflect.Value {
-    keys := strings.Split(key, ".")
-    t := val.Type()
-    for i := 0; i < val.NumField(); i++ {
+	keys := strings.Split(key, ".")
+	t := val.Type()
+	for i := 0; i < val.NumField(); i++ {
 		tfield := t.Field(i)
-        if tfield.Name == keys[0] || tfield.Tag.Get("config") == keys[0] {
-            rtVal := val.Field(i)
-            if rtVal.Kind() == reflect.Struct {
+		if tfield.Name == keys[0] || tfield.Tag.Get("config") == keys[0] {
+			rtVal := val.Field(i)
+			if rtVal.Kind() == reflect.Struct {
 				if len(keys) > 1 {
 					return find(keys[1], rtVal)
 				} else if len(keys) == 1 {
 					return rtVal
 				}
-            }
-            return rtVal
-        }
-    }
-    return reflect.ValueOf(nil)
+			}
+			return rtVal
+		}
+	}
+	return reflect.ValueOf(nil)
 }

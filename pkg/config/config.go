@@ -27,7 +27,7 @@ func Folder() string {
 // SetConfig sets the config file and also runs through the configuration
 // setup process.
 func SetConfig(foldername string, cfg interface{}) error {
-	cfgFolder = getfile(foldername)
+	cfgFolder = getdir(foldername)
 	cfgFile = filepath.Join(cfgFolder, "config.json")
 
 	if !exists() {
@@ -134,7 +134,7 @@ func emptyConfig(t reflect.Type, level int) string {
 	return rawcnfg
 }
 
-func getfile(fname string) string {
+func getdir(fname string) string {
 	home, err := homedir.Dir()
 	if err != nil {
 		panic(err)
