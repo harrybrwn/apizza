@@ -23,7 +23,7 @@ type Order struct {
 	StoreID       string                 `json:"StoreID"`
 	OrderID       string                 `json:"OrderID"`
 	Address       Address                `json:"Address"`
-	MetaData      map[string]interface{} `json:"metaData"`
+	MetaData      map[string]interface{} `json:"metaData"` // only for orders sent back
 	FirstName     string                 `json:"FirstName"`
 	LastName      string                 `json:"LastName"`
 	Payments      []Payment              `json:"Payments"`
@@ -89,6 +89,5 @@ func sendOrder(path string, ordr *Order) (map[string]interface{}, error) {
 
 func getOrderPrice(ordr Order) (map[string]interface{}, error) {
 	ordr.Payments = nil
-	resp, err := sendOrder("/power/price-order", &ordr)
-	return resp, err
+	return sendOrder("/power/price-order", &ordr)
 }

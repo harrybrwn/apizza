@@ -27,13 +27,14 @@ import (
 
 var rootCmd = &cobra.Command{
 	Use:   "apizza",
-	Short: "Dominos pizza at the command line.",
-	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-		return config.SetConfig(".apizza", cfg)
-	},
+	Short: "Dominos pizza from the command line.",
 	Run: func(cmd *cobra.Command, args []string) {
 		if test, err := cmd.Flags().GetBool("test"); test && err == nil {
-			print("nothing is being tested\n")
+			// print("nothing is being tested\n")
+			dbTest()
+			fmt.Println(db.Path())
+			// fmt.Printf("%+v\n", db.Info())
+			// fmt.Printf("%+v\n", db.Stats())
 		} else {
 			cmd.Usage()
 		}
@@ -59,7 +60,6 @@ func Execute() {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-
 	defer db.Close()
 
 	if err := rootCmd.Execute(); err != nil {
@@ -111,13 +111,11 @@ func (c *Config) isEmpty() bool {
 
 func init() {
 	var err error
-
 	err = config.SetConfig(".apizza", cfg)
 	if err != nil {
 		panic(err)
 	}
 
-	// presant throughout program
 	rootCmd.PersistentFlags().String("address", "", "use a specific address")
 	rootCmd.PersistentFlags().String("service", "Delivery", "select a Dominos service, either 'Delivery' or 'Carryout'")
 	rootCmd.PersistentFlags().String("store-id", "", "store id used for all endpoint calls")

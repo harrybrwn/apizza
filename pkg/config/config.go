@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"runtime"
 
 	homedir "github.com/mitchellh/go-homedir"
 )
@@ -29,7 +30,7 @@ func SetConfig(foldername string, cfg interface{}) error {
 	cfgFolder = getfile(foldername)
 	cfgFile = filepath.Join(cfgFolder, "config.json")
 
-	if !Exists() {
+	if !exists() {
 		os.Mkdir(cfgFolder, os.ModeDir)
 		fmt.Printf("setting up config file at %s\n", cfgFile)
 		setup(cfgFile, cfg)
@@ -40,7 +41,7 @@ func SetConfig(foldername string, cfg interface{}) error {
 	}
 	err = json.Unmarshal(b, cfg)
 	if err != nil {
-		return err
+		return newError(err)
 	}
 
 	save = func() error {
@@ -70,7 +71,7 @@ func ResetConfig() error {
 	return save()
 }
 
-func Exists() bool {
+func exists() bool {
 	_, err := os.Stat(cfgFolder)
 	return !os.IsNotExist(err)
 }
@@ -89,42 +90,48 @@ func setup(fname string, obj interface{}) error {
 
 func emptyConfig(t reflect.Type, level int) string {
 	spacer := "    "
-	empty := "{\n"
+	// spacer := "\t"
+	rawcnfg := "{\n"
 
-	for i := 0; i < t.NumField(); i++ {
+	nfields := t.NumField()
+	for i := 0; i < nfields; i++ {
 		comma := ",\n"
-		if i == t.NumField()-1 {
+		end := "},\n"
+		if i == nfields-1 {
 			comma = "\n"
+			end = "}\n"
 		}
+
 		f := t.Field(i)
 		for i := 0; i < level; i++ {
-			empty += spacer
+			rawcnfg += spacer
 		}
-		empty += fmt.Sprintf("%s\"%s\": ", spacer, f.Name)
+		rawcnfg += fmt.Sprintf("%s\"%s\": ", spacer, f.Name)
 
 		if deflt := f.Tag.Get("default"); deflt != "" {
-			empty += deflt + comma
+			rawcnfg += deflt + comma
 			continue
 		}
+
 		switch f.Type.Kind() {
 		case reflect.Struct:
-			empty += emptyConfig(f.Type, level+1)
+			rawcnfg += emptyConfig(f.Type, level+1) + end
 		case reflect.Int:
-			empty += "0" + comma
+			rawcnfg += "0" + comma
 		case reflect.String:
-			empty += "\"\"" + comma
+			rawcnfg += "\"\"" + comma
 		default:
-			empty += "null" + comma
+			rawcnfg += "null" + comma
 		}
 	}
+	for k := 0; k < level; k++ {
+		rawcnfg += spacer
+	}
 
-	for i := 0; i < level; i++ {
-		empty += spacer
+	if level == 0 {
+		return rawcnfg + "}"
 	}
-	if level > 0 {
-		return empty + "},\n"
-	}
-	return empty + "}"
+	return rawcnfg
 }
 
 func getfile(fname string) string {
@@ -137,4 +144,26 @@ func getfile(fname string) string {
 
 func write(file string, b []byte) error {
 	return ioutil.WriteFile(file, b, 0644)
+}
+
+// Error is an error object that convays more information about errors
+// raised during configuration.
+type Error struct {
+	inner error
+	fun   string
+	line  int
+	file  string
+}
+
+func newError(inner error) Error {
+	fpcs := make([]uintptr, 2)
+	runtime.Callers(2, fpcs)
+	fun := runtime.FuncForPC(fpcs[0]).Name() + "()"
+	_, file, line, _ := runtime.Caller(2)
+	return Error{inner: inner, fun: fun, file: file, line: line}
+}
+
+func (ce Error) Error() string {
+	return fmt.Sprintf("%s:%d %s\n%s", ce.file, ce.line, ce.fun,
+		ce.inner.Error())
 }

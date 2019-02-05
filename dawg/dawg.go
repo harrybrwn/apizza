@@ -4,7 +4,6 @@ import (
 	"net/http"
 	"net/url"
 
-	// "net"
 	"bytes"
 	"encoding/json"
 	"fmt"
@@ -38,8 +37,8 @@ var (
 	}
 )
 
-// SetLang sets the package language variable which is used by default to send info
-// to dominos
+// SetLang sets the package language variable which is used by default to
+// send info to dominos.
 func SetLang(code string) {
 	Lang = code
 }
@@ -114,7 +113,7 @@ func get(path string, params URLParam) ([]byte, error) {
 		},
 	}
 	t := time.Now()
-	req.Header.Add("User-Agent", "Dominos API Wrapper for GO" + t.String())
+	req.Header.Add("User-Agent", "Dominos API Wrapper for GO"+t.String())
 	resp, err := cli.Do(req)
 
 	if err != nil {

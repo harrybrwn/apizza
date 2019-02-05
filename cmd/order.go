@@ -15,6 +15,9 @@
 package cmd
 
 import (
+	"apizza/dawg"
+	"encoding/json"
+	"errors"
 	"fmt"
 
 	"github.com/spf13/cobra"
@@ -36,7 +39,46 @@ var orderCmd = &cobra.Command{
 	},
 }
 
+var newOrderCmd = &cobra.Command{
+	Use:   "new",
+	Short: "create a new order",
+	RunE: func(cmd *cobra.Command, args []string) error {
+		var err error
+		if store == nil {
+			store, err = dawg.NearestStore(addr, cfg.Service)
+			if err != nil {
+				return err
+			}
+		}
+		order := store.NewOrder()
+
+		name, err := cmd.Flags().GetString("name")
+		if err != nil {
+			return err
+		}
+		if name == "" {
+			return errors.New("Error: No order name... use '--name=<order name>'")
+		} else if name == "new" {
+			return errors.New("Error: cannot give an order that name")
+		}
+
+		raw, err := json.Marshal(&order)
+		if err != nil {
+			return err
+		}
+		fmt.Print(name, ": ")
+		fmt.Println(string(raw))
+
+		return nil
+	},
+	SilenceUsage:  true,
+	SilenceErrors: true,
+}
+
 func init() {
+	newOrderCmd.Flags().StringP("name", "n", "", "set the name of a new order")
+	orderCmd.AddCommand(newOrderCmd)
+
 	orderCmd.Flags().BoolP("cached", "c", false, "show the previously cached and saved orders")
 	rootCmd.AddCommand(orderCmd)
 }

@@ -1,14 +1,22 @@
 # apizza
-A cli for ordering domios pizza.
 
 ![Build Status](https://travis-ci.org/harrybrwn/apizza.svg?branch=master)
+[![GoDoc](https://godoc.org/github.com/github.com/harrybrwn/apizza?status.svg)](https://godoc.org/github.com/harrybrwn/apizza)
+[![Coverage Status](https://coveralls.io/repos/github/harrybrwn/apizza/badge.svg?branch=master)](https://coveralls.io/github/harrybrwn/apizza?branch=master)
 
-#### Installation
+A cli for ordering domios pizza.
+
+### Table of Contents
+- [Installatoin](#installation)
+- [Setup](#setup)
+- [DAWG](#the-dominos-api-wrapper-for-go)
+
+### Installation
 ```
 go install -u github.com/harrybrwn/apizza
 ```
 
-#### Setup
+### Setup
 You can either use the built-in `get` and `set` commands to configure apizza or you can edit the `config.json` file in your home path both methods will have the same results. If you add a key-value pair to the `config.json` file that is not already in the file it will be overwritten the next time the program is run.
 
 The `get` and `set` comands can be used one at a time,
@@ -23,7 +31,7 @@ or they can be moved to one line like so. Make sure that there are no spaces bet
 apizza config set name=Bob email=bob@example.com service=Carryout
 ```
 
-#### The Domios API Wrapper for Go (DAWG)
+### The Domios API Wrapper for Go
 The DAWG library is the api wrapper used by apizza for interfacing with the dominos pizza api.
 ```go
 package main
