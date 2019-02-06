@@ -81,6 +81,7 @@ func init() {
 
 	configGetCmd.Flags().BoolP("test", "t", false, "testing stuff")
 	configGetCmd.Flags().MarkHidden("test")
+
 	configCmd.AddCommand(configGetCmd)
 
 	rootCmd.AddCommand(configCmd)

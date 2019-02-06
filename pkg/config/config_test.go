@@ -23,9 +23,12 @@ func stackTrace() {
 }
 
 type testCnfg struct {
-	Test string `config:"test" default:"\"this is a test config file\""`
-	Msg  string `config:"msg" default:"\"this should have been deleted, please remove it\""`
-	More struct {
+	Test    string      `config:"test" default:"\"this is a test config file\""`
+	Msg     string      `config:"msg" default:"\"this should have been deleted, please remove it\""`
+	Number  int         `config:"number" default:"50"`
+	Number2 int         `config:"number2"`
+	NullVal interface{} `config:"nullval"`
+	More    struct {
 		One string `config:"one"`
 		Two string `config:"two"`
 	} `config:"more"`
@@ -57,18 +60,38 @@ func TestConfigGetandSet(t *testing.T) {
 	if err := Set(c, "invalidkey", ""); err == nil {
 		t.Error("this should have raised an error")
 	}
+	if v := Get(c, "number"); v == nil {
+		t.Errorf("Get(c, `number`) should have returned and integer, got %T", v)
+	}
+	err := Set(c, "number", "what")
+	if err == nil {
+		t.Error("should have returned a bad type error")
+	}
+	err = Set(c, "number", int64(3))
+	if err != nil {
+		t.Error(err)
+	}
 }
 
 func TestSetConfig(t *testing.T) {
 	var c = &testCnfg{}
 	err := SetConfig(".testconfig", c)
 	if err != nil {
-		if e, ok := err.(Error); ok {
-			fmt.Println(e.file, e.fun, e.line)
-		}
 		t.Error(err)
 	}
+	err = Save()
+	if err != nil {
+		t.Error(err)
+	}
+	err = SetConfig(".testconfig", c)
+	if err == nil {
+		t.Error("The second call to SetConfig should have returned an error")
+	}
 
+	err = Reset()
+	if err != nil {
+		t.Error(err)
+	}
 	b, err := ioutil.ReadFile(Folder() + "/config.json")
 	if err != nil {
 		t.Error(err)
@@ -76,6 +99,9 @@ func TestSetConfig(t *testing.T) {
 	err = json.Unmarshal(b, c)
 	if err != nil {
 		t.Error(err)
+	}
+	if c.Number != 50 {
+		t.Error("number should be 50")
 	}
 	if c.Test != "this is a test config file" {
 		t.Error("config default value failed")
@@ -86,7 +112,7 @@ func TestSetConfig(t *testing.T) {
 	if _, err := os.Stat(Folder()); os.IsNotExist(err) {
 		t.Error("The config folder is not where it is supposed to be, you should probably find it")
 	} else {
-		os.Remove(Folder() + "/config.json")
+		os.Remove(File())
 		os.Remove(Folder())
 	}
 }
@@ -95,14 +121,17 @@ func TestEmptyConfig(t *testing.T) {
 	elem := reflect.ValueOf(&testCnfg{}).Elem()
 	expected := `{
     "Test": "this is a test config file",
-    "Msg": "this should have been deleted, please remove it",
+	"Msg": "this should have been deleted, please remove it",
+	"Number": 50,
+	"Number2": 0,
+	"NullVal": null,
     "More": {
 		"One": "",
 		"Two": ""
     }
 }`
 	expected = strings.Replace(expected, "\t", "    ", -1)
-	raw := emptyConfig(elem.Type(), 0)
+	raw := emptyJSONConfig(elem.Type(), 0)
 
 	if raw != expected {
 		t.Errorf("the emptyConfig funtion returned:\n%s\nand should have returned\n%s", raw, expected)

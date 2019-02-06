@@ -40,7 +40,7 @@ var rootCmd = &cobra.Command{
 		}
 	},
 	PersistentPostRunE: func(cmd *cobra.Command, args []string) error {
-		return config.SaveConfig()
+		return config.Save()
 	},
 }
 
@@ -85,7 +85,10 @@ type Config struct {
 		Expiration string `config:"expiration"`
 		CVV        string `config:"cvv"`
 	} `config:"card"`
-	Service string `config:"service" default:"\"Delivery\""`
+	Service  string `config:"service" default:"\"Delivery\""`
+	MyOrders []struct {
+		Name string `config:"name"`
+	} `config:"myorders"`
 }
 
 // Get a config variable
@@ -96,17 +99,6 @@ func (c *Config) Get(key string) interface{} {
 // Set a config variable
 func (c *Config) Set(key string, val interface{}) error {
 	return config.Set(c, key, val)
-}
-
-func (c *Config) isEmpty() bool {
-	return c.Name == "" &&
-		c.Email == "" &&
-		c.Address.City == "" &&
-		c.Address.State == "" &&
-		c.Address.Street == "" &&
-		c.Address.Streetname == "" &&
-		c.Address.Streetnumber == "" &&
-		c.Address.Zip == ""
 }
 
 func init() {

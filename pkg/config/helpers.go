@@ -1,9 +1,14 @@
 package config
 
 import (
+	"errors"
 	"fmt"
 	"reflect"
 	"strings"
+)
+
+var (
+	errWrongType = errors.New("wrong type")
 )
 
 // Configuration represents a config object that can act like a series of
@@ -18,16 +23,14 @@ type Configuration interface {
 // wrapped by a config object.
 //
 // Example.
-// type Config struct {
-//     Field string
-// }
+// type Config struct {}
 // func (c *Config) Get(key string) interface{} {
 //     return config.Get(c, key)
 // }
 // note: this will only work if the struct impliments the Configuration type.
 func Get(config Configuration, key string) interface{} {
 	value := reflect.ValueOf(config).Elem()
-	v := find(key, value)
+	v := find(value, key)
 	switch v.Kind() {
 	case reflect.String:
 		return v.String()
@@ -45,31 +48,39 @@ func Get(config Configuration, key string) interface{} {
 // wrapped by a config object.
 //
 // Example.
-// type Config struct {
-//     Field string
-// }
+// type Config struct {}
 // func (c *Config) Get(key string, val interface{}) error {
 //     return config.Set(c, key, val)
 // }
 // note: this will only work if the struct impliments the Configuration type.
 func Set(config Configuration, key string, val interface{}) error {
 	v := reflect.ValueOf(config).Elem()
-	field := find(key, v)
+	field := find(v, key)
 	if !field.IsValid() {
 		return fmt.Errorf("cannot find '%s'", key)
 	}
+
 	switch reflect.TypeOf(val).Kind() {
 	case reflect.String:
-		field.SetString(val.(string))
+		if field.Kind() == reflect.String {
+			field.SetString(val.(string))
+		} else {
+			return fmt.Errorf("config.Set: wrong type")
+		}
 	case reflect.Int:
-		field.SetInt(val.(int64))
+		fmt.Println("found int")
+		if field.Kind() == reflect.Int {
+			field.SetInt(val.(int64))
+		} else {
+			return fmt.Errorf("config.Set: wrong type")
+		}
 	case reflect.Struct:
 		return fmt.Errorf("structs haven't been figured out yet for config.Set")
 	}
 	return nil
 }
 
-func find(key string, val reflect.Value) reflect.Value {
+func find(val reflect.Value, key string) reflect.Value {
 	keys := strings.Split(key, ".")
 	t := val.Type()
 	for i := 0; i < val.NumField(); i++ {
@@ -78,7 +89,7 @@ func find(key string, val reflect.Value) reflect.Value {
 			rtVal := val.Field(i)
 			if rtVal.Kind() == reflect.Struct {
 				if len(keys) > 1 {
-					return find(keys[1], rtVal)
+					return find(rtVal, keys[1])
 				} else if len(keys) == 1 {
 					return rtVal
 				}

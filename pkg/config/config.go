@@ -2,12 +2,12 @@ package config
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"reflect"
-	"runtime"
 
 	homedir "github.com/mitchellh/go-homedir"
 )
@@ -19,14 +19,12 @@ var (
 	cfgFile   string
 )
 
-// Folder returns the path to the folder that was set in SetConfig
-func Folder() string {
-	return cfgFolder
-}
-
 // SetConfig sets the config file and also runs through the configuration
 // setup process.
 func SetConfig(foldername string, cfg interface{}) error {
+	if cfgFile != "" {
+		return errors.New("cannot set multiple config files")
+	}
 	cfgFolder = getdir(foldername)
 	cfgFile = filepath.Join(cfgFolder, "config.json")
 
@@ -41,7 +39,7 @@ func SetConfig(foldername string, cfg interface{}) error {
 	}
 	err = json.Unmarshal(b, cfg)
 	if err != nil {
-		return newError(err)
+		return err
 	}
 
 	save = func() error {
@@ -49,7 +47,7 @@ func SetConfig(foldername string, cfg interface{}) error {
 		if err != nil {
 			return err
 		}
-		return write(cfgFile, raw)
+		return ioutil.WriteFile(cfgFile, raw, 0644)
 	}
 
 	reset = func() {
@@ -60,13 +58,23 @@ func SetConfig(foldername string, cfg interface{}) error {
 	return nil
 }
 
-// SaveConfig saves the config file
-func SaveConfig() error {
+// Folder returns the path to the folder that was set in SetConfig
+func Folder() string {
+	return cfgFolder
+}
+
+// File returns the config file
+func File() string {
+	return cfgFile
+}
+
+// Save saves the config file
+func Save() error {
 	return save()
 }
 
-// ResetConfig deletes the config file and runs through the setup process
-func ResetConfig() error {
+// Reset deletes the config file and runs through the setup process
+func Reset() error {
 	reset()
 	return save()
 }
@@ -83,14 +91,13 @@ func setup(fname string, obj interface{}) error {
 		return err
 	}
 	t := reflect.ValueOf(obj).Elem()
-	autogen := []byte(emptyConfig(t.Type(), 0))
+	autogen := []byte(emptyJSONConfig(t.Type(), 0))
 	f.Write(autogen)
 	return nil
 }
 
-func emptyConfig(t reflect.Type, level int) string {
+func emptyJSONConfig(t reflect.Type, level int) string {
 	spacer := "    "
-	// spacer := "\t"
 	rawcnfg := "{\n"
 
 	nfields := t.NumField()
@@ -115,7 +122,7 @@ func emptyConfig(t reflect.Type, level int) string {
 
 		switch f.Type.Kind() {
 		case reflect.Struct:
-			rawcnfg += emptyConfig(f.Type, level+1) + end
+			rawcnfg += emptyJSONConfig(f.Type, level+1) + end
 		case reflect.Int:
 			rawcnfg += "0" + comma
 		case reflect.String:
@@ -140,30 +147,4 @@ func getdir(fname string) string {
 		panic(err)
 	}
 	return filepath.Join(home, fname)
-}
-
-func write(file string, b []byte) error {
-	return ioutil.WriteFile(file, b, 0644)
-}
-
-// Error is an error object that convays more information about errors
-// raised during configuration.
-type Error struct {
-	inner error
-	fun   string
-	line  int
-	file  string
-}
-
-func newError(inner error) Error {
-	fpcs := make([]uintptr, 2)
-	runtime.Callers(2, fpcs)
-	fun := runtime.FuncForPC(fpcs[0]).Name() + "()"
-	_, file, line, _ := runtime.Caller(2)
-	return Error{inner: inner, fun: fun, file: file, line: line}
-}
-
-func (ce Error) Error() string {
-	return fmt.Sprintf("%s:%d %s\n%s", ce.file, ce.line, ce.fun,
-		ce.inner.Error())
 }

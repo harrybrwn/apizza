@@ -60,7 +60,7 @@ func bucketHas(b *bolt.Bucket, name string) bool {
 	return true
 }
 
-// TODO: this needs to be abstracted
+// TODO: this is terrible and needs to be split up
 func menuManagment() error {
 	var (
 		err          error
