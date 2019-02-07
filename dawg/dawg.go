@@ -19,11 +19,12 @@ const (
 	// OkStatus  is the status code dominos serves use to signify no problems
 	OkStatus = 0
 	host     = "order.dominos.com"
+
+	// DefaultLang is the package language variable
+	DefaultLang = "en"
 )
 
 var (
-	// Lang is the package language variable
-	Lang = "en"
 	// Warnings is a package switch for turning warings on or off
 	Warnings = false
 
@@ -36,12 +37,6 @@ var (
 		OkStatus:      "Ok 0",
 	}
 )
-
-// SetLang sets the package language variable which is used by default to
-// send info to dominos.
-func SetLang(code string) {
-	Lang = code
-}
 
 // DominosError represents an error sent back by the dominos servers
 type DominosError struct {

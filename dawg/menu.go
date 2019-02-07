@@ -142,7 +142,7 @@ func newMenu(id string) (*Menu, error) {
 		return cachedMenu, nil
 	}
 	path := format("/power/store/%s/menu", id)
-	b, err := get(path, Params{"lang": Lang, "structured": "true"})
+	b, err := get(path, Params{"lang": DefaultLang, "structured": "true"})
 	if err != nil {
 		return nil, err
 	}

@@ -5,8 +5,8 @@ import (
 	"testing"
 )
 
-func TestFindNearbyStores(t *testing.T) {
-	var addr = &Address{
+func testAddress() *Address {
+	return &Address{
 		StreetNum: "1600",
 		Street:    "Pennsylvania Ave NW",
 		City:      "Washington",
@@ -14,12 +14,20 @@ func TestFindNearbyStores(t *testing.T) {
 		Zip:       "20500",
 		AddrType:  "House",
 	}
+}
+
+func TestFindNearbyStores(t *testing.T) {
+	addr := testAddress()
 	for _, service := range []string{"Delivery", "Carryout"} {
 		_, err := findNearbyStores(addr, service)
 		if err != nil {
 			t.Error("\n TestNearbyStore:", err, "\n")
 		}
 	}
+}
+
+func TestFindNearbyStores_Err(t *testing.T) {
+	addr := testAddress()
 	func() {
 		defer func() {
 			if r := recover(); r == nil {
@@ -30,6 +38,12 @@ func TestFindNearbyStores(t *testing.T) {
 		}()
 		_, _ = findNearbyStores(addr, "invalid service")
 	}()
+
+	_, err := findNearbyStores(&Address{}, "Delivery")
+	fmt.Println(err)
+	if err == nil {
+		t.Error("should return error")
+	}
 }
 
 func TestNewStore(t *testing.T) {

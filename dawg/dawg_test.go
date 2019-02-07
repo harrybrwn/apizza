@@ -15,13 +15,13 @@ func TestFormat(t *testing.T) {
 
 func TestAddress(t *testing.T) {
 	var testAddr = Address{
-		StreetNum: "1600",
+		StreetNum:  "1600",
 		StreetName: "Pennsylvania Ave.",
-		Street: "1600 Pennsylvania Ave.",
-		City: "Washington",
-		State: "DC",
-		Zip: "20500",
-		AddrType: "House",
+		Street:     "1600 Pennsylvania Ave.",
+		City:       "Washington",
+		State:      "DC",
+		Zip:        "20500",
+		AddrType:   "House",
 	}
 	rawAddr := `1600 Pennsylvania Ave. Washington, DC 20500`
 
@@ -46,7 +46,7 @@ func TestAddress(t *testing.T) {
 	if string(parsed[1]) != testAddr.StreetNum {
 		t.Error("wrong street num")
 	}
-	if string(parsed[1]) + " " + string(parsed[2]) != testAddr.Street {
+	if string(parsed[1])+" "+string(parsed[2]) != testAddr.Street {
 		t.Error("wrong street")
 	}
 	if string(parsed[3]) != testAddr.City {
@@ -60,13 +60,4 @@ func TestAddress(t *testing.T) {
 	}
 }
 
-func TestApizza(t *testing.T) {
-	if Lang != "en" {
-		t.Errorf("default lang should be 'en' not %s", Lang)
-	}
-	SetLang("es")
-	if Lang != "es" {
-		t.Error("SetLang failed")
-	}
-	Lang = "en"
-}
+func TestApizza(t *testing.T) {}

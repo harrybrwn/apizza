@@ -3,6 +3,7 @@ package dawg
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 )
 
 // NearestStore gets the dominos location closest to the given address
@@ -20,8 +21,7 @@ func NearestStore(addr *Address, service string) (*Store, error) {
 		}
 	}
 	store.userAddress, store.userService = addr, service
-	err = InitStore(store.ID, store)
-	return store, err
+	return store, InitStore(store.ID, store)
 }
 
 // GetAllNearbyStores is a way of getting all the nearby stores
@@ -104,7 +104,7 @@ func (s *Store) Menu() (*Menu, error) {
 // NewOrder is a convenience function for creating an order from some of the store variables.
 func (s *Store) NewOrder() *Order {
 	return &Order{
-		LanguageCode:  Lang,
+		LanguageCode:  DefaultLang,
 		ServiceMethod: s.userService,
 		StoreID:       s.ID,
 		Products:      []*Product{},
@@ -151,8 +151,8 @@ type storeLocs struct {
 }
 
 func findNearbyStores(addr *Address, service string) (*storeLocs, error) {
-	var argCheck = !(service == "Delivery" || service == "Carryout")
-	if argCheck {
+	// var argCheck = !(service == "Delivery" || service == "Carryout")
+	if !(service == "Delivery" || service == "Carryout") {
 		panic("service must be either 'Delivery' or 'Carryout'")
 	}
 	b, err := get("/power/store-locator", &Params{
@@ -166,7 +166,8 @@ func findNearbyStores(addr *Address, service string) (*storeLocs, error) {
 	locs := &storeLocs{}
 	err = json.Unmarshal(b, locs)
 	if err == nil && locs.Status == -1 {
-		return locs, errors.New("Dominos server Failure: -1")
+		// return locs, errors.New("Dominos server Failure: -1", "error")
+		return locs, fmt.Errorf("Dominos server Failure -1:\n%+v", locs)
 	}
 	for i := range locs.Stores {
 		locs.Stores[i].userAddress, locs.Stores[i].userService = addr, service

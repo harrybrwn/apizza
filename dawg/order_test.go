@@ -12,7 +12,7 @@ func TestGetOrderPrice(t *testing.T) {
 		t.Error("Should have returned an error")
 	}
 	order := Order{
-		LanguageCode:  Lang,
+		LanguageCode:  DefaultLang,
 		ServiceMethod: "Delivery",
 		StoreID:       "4336",
 		Products: []*Product{
