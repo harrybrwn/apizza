@@ -91,9 +91,9 @@ func setup(fname string, obj interface{}) error {
 		return err
 	}
 	t := reflect.ValueOf(obj).Elem()
-	autogen := []byte(emptyJSONConfig(t.Type(), 0))
-	f.Write(autogen)
-	return nil
+	autogen := emptyJSONConfig(t.Type(), 0)
+	_, err = f.Write([]byte(autogen))
+	return err
 }
 
 func emptyJSONConfig(t reflect.Type, level int) string {

@@ -5,3 +5,7 @@ TODO
 *.json
 *.txt
 test
+*.out
+*.exe
+*.test
+test-coverage
