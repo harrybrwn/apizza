@@ -50,11 +50,7 @@ func makeProduct(data map[string]interface{}) (*Product, error) {
 		other[key] = data[key]
 	}
 	p.other = other
-
-	if err != nil {
-		return p, err
-	}
-	return p, nil
+	return p, err
 }
 
 // AddTopping adds a topping to the product. The 'code' parameter is a
@@ -70,12 +66,6 @@ func (p *Product) AddTopping(code, coverage string, amount float64) {
 	var key string
 	// come on now, this is shity, but i don't know how to fix it
 	switch coverage {
-	case "full":
-		key = ToppingFull
-	case "left":
-		key = ToppingLeft
-	case "right":
-		key = ToppingRight
 	case ToppingFull:
 		key = coverage
 	case ToppingLeft:
@@ -83,7 +73,7 @@ func (p *Product) AddTopping(code, coverage string, amount float64) {
 	case ToppingRight:
 		key = coverage
 	default:
-		panic(`topping coverage must be "full", "left", or "right".`)
+		panic("topping coverage must be dawg.ToppingFull, dawg.ToppingRight, or dawg.ToppingLeft.")
 	}
 	if p.Options == nil {
 		p.Options = map[string]interface{}{}
@@ -118,9 +108,9 @@ func (p *Product) Price() float64 {
 // Prepared returns a boolean representing whether or not the
 // product is prepared. Default is false.
 func (p *Product) Prepared() bool {
-	v, ok := p.other["pre"].(string)
-	if rt, err := strconv.ParseBool(v); err == nil && ok {
-		return rt
+	v, ok := p.other["Prepared"]
+	if ok {
+		return v.(bool)
 	}
 	return false
 }
