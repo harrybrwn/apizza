@@ -1,6 +1,7 @@
 package dawg
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -28,7 +29,7 @@ func NearestStore(addr *Address, service string) (*Store, error) {
 // except they will by full initialized.
 func GetAllNearbyStores(addr *Address, service string) ([]Store, error) {
 	all, err := findNearbyStores(addr, service)
-	if all.Status == -1 {
+	if err != nil {
 		return nil, err
 	}
 	for i := range all.Stores {
@@ -60,13 +61,8 @@ func InitStore(id string, obj interface{}) error {
 	if err != nil {
 		return err
 	}
-	dominoserr := &DominosError{}
-	err = dominoserr.Init(b)
-	if err != nil {
-		return err
-	}
-	if dominoserr.IsFailure() {
-		return dominoserr
+	if bytes.HasPrefix(b, []byte("<!DOCTYPE html>")) {
+		return errors.New("invalid 'id' argument")
 	}
 	return json.Unmarshal(b, obj)
 }
@@ -113,9 +109,8 @@ func (s *Store) NewOrder() *Order {
 	}
 }
 
-// GetProduct finds the procuct from the menu give a product code.
+// GetProduct finds the menu item that matchs the given product code.
 func (s *Store) GetProduct(code string) (*Product, error) {
-	// use MakeProduct to return a product
 	// get a menu and find the map that matches the Code
 	menu, err := s.Menu()
 	if err != nil {
@@ -151,7 +146,6 @@ type storeLocs struct {
 }
 
 func findNearbyStores(addr *Address, service string) (*storeLocs, error) {
-	// var argCheck = !(service == "Delivery" || service == "Carryout")
 	if !(service == "Delivery" || service == "Carryout") {
 		panic("service must be either 'Delivery' or 'Carryout'")
 	}
