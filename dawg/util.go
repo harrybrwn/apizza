@@ -37,7 +37,7 @@ func (p Params) Encode() string {
 		case bool:
 			val = strconv.FormatBool(v.(bool))
 		default:
-			val = ""
+			panic(fmt.Sprintf("can't encode type %T", v))
 		}
 
 		if buffer.Len() > 0 {
