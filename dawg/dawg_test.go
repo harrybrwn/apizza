@@ -13,50 +13,109 @@ func TestFormat(t *testing.T) {
 	}
 }
 
-func TestAddress(t *testing.T) {
-	var testAddr = Address{
-		StreetNum:  "1600",
-		StreetName: "Pennsylvania Ave.",
-		Street:     "1600 Pennsylvania Ave.",
-		City:       "Washington",
-		State:      "DC",
-		Zip:        "20500",
-		AddrType:   "House",
+func TestURLParams(t *testing.T) {
+	expected := []string{
+		"a=what&b=7&c=false",
+		"b=7&c=false&a=what",
+		"c=false&a=what&b=7",
 	}
-	rawAddr := `1600 Pennsylvania Ave. Washington, DC 20500`
+	p := Params{"a": "what", "b": 7, "c": false}
+	enc := p.Encode()
 
-	addr := ParseAddress(rawAddr)
-	if addr.StreetNum != testAddr.StreetNum {
-		t.Error("wrong street num")
-	}
-	if addr.Street != testAddr.Street {
-		t.Error("wrong street")
-	}
-	if addr.City != testAddr.City {
-		t.Error("wrong city")
-	}
-	if addr.State != testAddr.State {
-		t.Error("wrong state")
-	}
-	if addr.Zip != testAddr.Zip {
-		t.Error("wrong zip")
+	func() {
+		for _, expec := range expected {
+			// exit the closure if one of the possible encodings is found
+			if enc == expec {
+				return
+			}
+		}
+		t.Error("bad url encoding")
+	}()
+
+	p = Params{"byteobj": []byte("data")}
+	if p.Encode() != "byteobj=data" {
+		t.Error("bad encoding for bytes")
 	}
 
-	parsed := parse([]byte(rawAddr))
-	if string(parsed[1]) != testAddr.StreetNum {
-		t.Error("wrong street num")
+	t.Run("bad Param type", func(t *testing.T) {
+		defer func() {
+			if r := recover(); r == nil {
+				t.Error("should panic")
+			}
+		}()
+		type test struct{ a string }
+		p = Params{"struct": test{"no"}}
+		p.Encode()
+	})
+
+	p = nil
+	enc = p.Encode()
+	if enc != "" {
+		t.Error("should be empty string")
 	}
-	if string(parsed[1])+" "+string(parsed[2]) != testAddr.Street {
-		t.Error("wrong street")
+}
+
+func TestAddressTable(t *testing.T) {
+	var cases = []struct {
+		raw      string
+		expected Address
+	}{
+		{
+			`1600 Pennsylvania Ave. Washington, DC 20500`,
+			Address{StreetNum: "1600", StreetName: "Pennsylvania Ave.",
+				Street: "1600 Pennsylvania Ave.", City: "Washington",
+				State: "DC", Zip: "20500", AddrType: "House"},
+		},
+		{
+			`378 James St. Chicago, IL 60621`,
+			Address{StreetNum: "378", StreetName: "James St.",
+				Street: "378 James St.", City: "Chicago", State: "IL",
+				Zip: "60621"},
+		},
 	}
-	if string(parsed[3]) != testAddr.City {
-		t.Error("wrong city")
+
+	for _, tc := range cases {
+		addr := ParseAddress(tc.raw)
+		if addr.StreetNum != tc.expected.StreetNum {
+			t.Error("wrong street num")
+		}
+		if addr.Street != tc.expected.Street {
+			t.Error("wrong street")
+		}
+		if addr.City != tc.expected.City {
+			t.Error("wrong city")
+		}
+		if addr.State != tc.expected.State {
+			t.Error("wrong state")
+		}
+		if addr.Zip != tc.expected.Zip {
+			t.Error("wrong zip")
+		}
 	}
-	if string(parsed[4]) != testAddr.State {
-		t.Error("wrong state")
+}
+
+func TestNetworking_Err(t *testing.T) {
+	_, err := get("/", nil)
+	if err == nil {
+		t.Error("expected error")
 	}
-	if string(parsed[5]) != testAddr.Zip {
-		t.Error("wrong zip")
+
+	_, err = get("/invalid path", nil)
+	if err == nil {
+		t.Error("expected error")
+	}
+
+	b, err := post("/invalid path", make([]byte, 1))
+	if len(b) != 0 {
+		t.Error("exepcted zero length responce")
+	}
+	if err == nil {
+		t.Error("expected error")
+	}
+
+	b, err = post("invalid path", nil)
+	if err == nil {
+		t.Error("expected error")
 	}
 }
 

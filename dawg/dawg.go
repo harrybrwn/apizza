@@ -30,6 +30,9 @@ var (
 
 	cli = &http.Client{
 		Timeout: time.Duration(5 * time.Second),
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			return http.ErrUseLastResponse
+		},
 	}
 	errCodes = map[int]string{
 		FailureStatus: "Failure -1",
@@ -91,10 +94,6 @@ func get(path string, params URLParam) ([]byte, error) {
 	if params == nil {
 		params = &Params{}
 	}
-	// to prevent future suffering
-	if path[0] != '/' {
-		path = "/" + path
-	}
 	req := &http.Request{
 		Method: "GET",
 		Host:   host,
@@ -108,7 +107,7 @@ func get(path string, params URLParam) ([]byte, error) {
 		},
 	}
 	t := time.Now()
-	req.Header.Add("User-Agent", "Dominos API Wrapper for GO"+t.String())
+	req.Header.Add("User-Agent", "Dominos API Wrapper for GO-"+t.String())
 	resp, err := cli.Do(req)
 
 	if err != nil {
@@ -126,9 +125,6 @@ func get(path string, params URLParam) ([]byte, error) {
 }
 
 func post(path string, data []byte) ([]byte, error) {
-	if path[0] != '/' {
-		path = "/" + path
-	}
 	req := &http.Request{
 		Method: "POST",
 		Host:   host,
@@ -141,10 +137,16 @@ func post(path string, data []byte) ([]byte, error) {
 		},
 	}
 	var buf bytes.Buffer
-	if resp, err := cli.Do(req); err == nil {
-		_, err = buf.ReadFrom(resp.Body)
-	} else {
+	resp, err := cli.Do(req)
+	if err != nil {
 		return nil, err
+	}
+	_, err = buf.ReadFrom(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+	if resp.StatusCode != http.StatusOK {
+		return buf.Bytes(), fmt.Errorf("bad responce code: %d", resp.StatusCode)
 	}
 	return buf.Bytes(), nil
 }
