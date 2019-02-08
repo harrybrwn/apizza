@@ -54,7 +54,6 @@ func SetConfig(foldername string, cfg interface{}) error {
 		os.Remove(cfgFile)
 		setup(cfgFile, cfg)
 	}
-
 	return nil
 }
 

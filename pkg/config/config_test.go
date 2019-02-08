@@ -63,14 +63,33 @@ func TestConfigGetandSet(t *testing.T) {
 	if v := Get(c, "number"); v == nil {
 		t.Errorf("Get(c, `number`) should have returned and integer, got %T", v)
 	}
+	if Get(c, "More") == nil {
+		t.Error("didn't get struct value")
+	}
 	err := Set(c, "number", "what")
 	if err == nil {
 		t.Error("should have returned a bad type error")
 	}
-	err = Set(c, "number", int64(3))
+	err = Set(c, "number2", int64(3))
 	if err != nil {
 		t.Error(err)
 	}
+	err = Set(c, "number", int64(6))
+	if err != nil {
+		t.Error(err)
+	}
+	if Get(c, "number").(int64) != int64(6) {
+		t.Error("wrong number")
+	}
+	err = Set(c, "msg", 5)
+	if err == nil {
+		t.Error("expected error")
+	}
+	err = Set(c, "more", struct{ a string }{"what"})
+	if err == nil {
+		t.Error("expected error")
+	}
+	// t.Errorf("%+v", c.More)
 }
 
 func TestSetConfig(t *testing.T) {

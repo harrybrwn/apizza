@@ -60,21 +60,20 @@ func Set(config Configuration, key string, val interface{}) error {
 		return fmt.Errorf("cannot find '%s'", key)
 	}
 
-	switch reflect.TypeOf(val).Kind() {
-	case reflect.String:
+	switch val.(type) {
+	case string:
 		if field.Kind() == reflect.String {
 			field.SetString(val.(string))
 		} else {
 			return fmt.Errorf("config.Set: wrong type")
 		}
-	case reflect.Int:
-		fmt.Println("found int")
+	case int, int64, int32:
 		if field.Kind() == reflect.Int {
 			field.SetInt(val.(int64))
 		} else {
 			return fmt.Errorf("config.Set: wrong type")
 		}
-	case reflect.Struct:
+	default:
 		return fmt.Errorf("structs haven't been figured out yet for config.Set")
 	}
 	return nil
