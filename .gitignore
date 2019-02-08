@@ -1,11 +1,17 @@
+# Notes
 demo
-data
-.vscode
 TODO
-*.json
 *.txt
+
+# Test Data
+data
+*.json
 test
+test-coverage
+coverage.html
+
+# Other
+.vscode
 *.out
 *.exe
 *.test
-test-coverage
