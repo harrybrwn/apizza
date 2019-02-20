@@ -13,7 +13,7 @@ A cli for ordering domios pizza.
 
 ### Installation
 ```
-go install -u github.com/harrybrwn/apizza
+go install github.com/harrybrwn/apizza
 ```
 
 ### Setup

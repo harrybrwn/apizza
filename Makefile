@@ -1,3 +1,4 @@
+PKGS=./cmd ./dawg ./pkg/cache ./pkg/config
 COVER_FILE=test-coverage
 COVER=go tool cover
 
