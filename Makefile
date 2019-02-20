@@ -1,7 +1,14 @@
-COVER=test-coverage
+COVER_FILE=test-coverage
+COVER=go tool cover
+
+
+build: test
+	go install yt
 
 test:
-	go test ./... -coverprofile=$(COVER)
-	go tool cover -func=$(COVER)
-	go tool cover -html=$(COVER) -o coverage.html
+	go test -v ./... -coverprofile=$(COVER_FILE)
+	$(COVER) -func=$(COVER_FILE)
+	$(COVER) -html=$(COVER_FILE) -o coverage.html
 
+clean: build
+	rm $(COVER_FILE)
