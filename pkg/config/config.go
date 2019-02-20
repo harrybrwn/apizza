@@ -29,7 +29,7 @@ func SetConfig(foldername string, cfg interface{}) error {
 	cfgFile = filepath.Join(cfgFolder, "config.json")
 
 	if !exists() {
-		os.Mkdir(cfgFolder, os.ModeDir)
+		os.Mkdir(cfgFolder, 0700)
 		fmt.Printf("setting up config file at %s\n", cfgFile)
 		setup(cfgFile, cfg)
 	}

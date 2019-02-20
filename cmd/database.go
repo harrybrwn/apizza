@@ -37,10 +37,10 @@ func initDatabase() error {
 	var err error
 	dir := filepath.Join(config.Folder(), "cache")
 	if _, err := os.Stat(dir); os.IsNotExist(err) {
-		os.Mkdir(dir, os.ModeDir)
+		os.Mkdir(dir, 0700)
 	}
 	path := filepath.Join(dir, "apizza.db")
-	db, err = bolt.Open(path, 0600, nil)
+	db, err = bolt.Open(path, 0700, nil)
 	return err
 }
 
