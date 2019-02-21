@@ -14,10 +14,6 @@ func TestUtils(t *testing.T) {
 	if filename(p) != "path" {
 		t.Errorf("filename did not get the right name given: '%s'", p)
 	}
-	p = `C:\Testing\a\windows\path.wintest`
-	if filename(p) != "path" {
-		t.Errorf("filename did not get the right name given: '%s'", p)
-	}
 	if filename("notapath.test") != "notapath" {
 		t.Error("filename didn't work for just the name of a file")
 	}
