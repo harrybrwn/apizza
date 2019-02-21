@@ -102,8 +102,7 @@ func (c *Config) Set(key string, val interface{}) error {
 }
 
 func init() {
-	var err error
-	err = config.SetConfig(".apizza", cfg)
+	err := config.SetConfig(".apizza", cfg)
 	if err != nil {
 		panic(err)
 	}
@@ -115,15 +114,20 @@ func init() {
 	rootCmd.Flags().BoolP("test", "t", false, "testing flag")
 	rootCmd.Flags().MarkHidden("test")
 
-	address, err := rootCmd.PersistentFlags().GetString("address")
-	if address == "" {
+	addressFlg, err := rootCmd.PersistentFlags().GetString("address")
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
+	if addressFlg == "" {
 		addr = &dawg.Address{
 			Street: cfg.Address.Street,
 			City:   cfg.Address.City,
 			State:  cfg.Address.State,
 			Zip:    cfg.Address.Zip,
 		}
-	} else if address != "" && err != nil {
-		addr = dawg.ParseAddress(address)
+	} else if addressFlg != "" {
+		addr = dawg.ParseAddress(addressFlg)
 	}
 }
