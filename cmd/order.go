@@ -27,21 +27,30 @@ var orderCmd = &cobra.Command{
 	Use:   "order",
 	Short: "Order pizza from dominos",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		if cached, err := cmd.Flags().GetBool("cached"); cached && err == nil {
-			fmt.Println("this is where you would see previous orders and saved orders")
-			return nil
-		} else if err != nil {
+		var order *dawg.Order
+
+		cached, err := cmd.Flags().GetBool("cached")
+		if err != nil {
 			return err
 		}
 
-		print("under constuction!")
+		if cached {
+			fmt.Println("this is where you would see previous orders and saved orders")
+			return nil
+		}
+
+		if order == nil {
+			return errors.New("Error: no orders were given")
+		}
 		return nil
 	},
+	SilenceUsage:  true,
+	SilenceErrors: true,
 }
 
 var newOrderCmd = &cobra.Command{
 	Use:   "new",
-	Short: "create a new order",
+	Short: "Create a new order that will be stored in the cache.",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		var err error
 		if store == nil {
@@ -58,8 +67,20 @@ var newOrderCmd = &cobra.Command{
 		}
 		if name == "" {
 			return errors.New("Error: No order name... use '--name=<order name>'")
-		} else if name == "new" {
+		} else if name == "new" { // I completely forgot why I did this
 			return errors.New("Error: cannot give an order that name")
+		}
+
+		product, err := cmd.Flags().GetString("product")
+		if err != nil {
+			return err
+		}
+		if product != "" {
+			p, err := store.GetProduct(product)
+			if err != nil {
+				return err
+			}
+			order.AddProduct(p)
 		}
 
 		raw, err := json.Marshal(&order)
@@ -68,6 +89,13 @@ var newOrderCmd = &cobra.Command{
 		}
 		fmt.Print(name, ": ")
 		fmt.Println(string(raw))
+		print("\n\n")
+		fmt.Printf("%+v\n", store)
+		price, err := order.Price()
+		if err != nil {
+			return err
+		}
+		fmt.Println("Price:", price)
 
 		return nil
 	},
@@ -77,6 +105,8 @@ var newOrderCmd = &cobra.Command{
 
 func init() {
 	newOrderCmd.Flags().StringP("name", "n", "", "set the name of a new order")
+	newOrderCmd.Flags().StringP("product", "p", "", "the product code for the new order")
+
 	orderCmd.AddCommand(newOrderCmd)
 
 	orderCmd.Flags().BoolP("cached", "c", false, "show the previously cached and saved orders")

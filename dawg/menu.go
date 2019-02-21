@@ -33,7 +33,7 @@ type Product struct {
 }
 
 func makeProduct(data map[string]interface{}) (*Product, error) {
-	p := &Product{}
+	p := &Product{Qty: 1}
 	var md mapstructure.Metadata
 	config := &mapstructure.DecoderConfig{
 		Metadata: &md,
