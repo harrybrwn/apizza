@@ -4,7 +4,7 @@ COVER=go tool cover
 
 
 build: test
-	go install yt
+	go install apizza
 
 test:
 	go test -v ./... -coverprofile=$(COVER_FILE)
