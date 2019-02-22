@@ -10,17 +10,16 @@ import (
 
 // DataBase is a wrapper struct for boltdb key-value pair database.
 type DataBase struct {
-	Path         string
-	Bucketname   string
-	bucketExists bool
-	db           *bolt.DB
+	Path          string
+	DefaultBucket string
+	db            *bolt.DB
 }
 
-// GetDB returns an initialized DataBase with either a brand new boltdb or and
-// existing one.
-func GetDB(dbdir, dbname string) (*DataBase, error) {
-	name := filename(dbname)
-	boltdb, err := bolt.Open(filepath.Join(dbdir, dbname), 0600, nil)
+// GetDB returns an initialized DataBase. Will either create a brand new boltdb
+// or open existing one.
+func GetDB(dbfile string) (*DataBase, error) {
+	name := filename(dbfile)
+	boltdb, err := bolt.Open(dbfile, 0600, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -30,9 +29,9 @@ func GetDB(dbdir, dbname string) (*DataBase, error) {
 		return err
 	})
 	db := &DataBase{
-		Path:       filepath.Join(dbdir, dbname),
-		Bucketname: name,
-		db:         boltdb,
+		Path:          dbfile,
+		DefaultBucket: name,
+		db:            boltdb,
 	}
 	return db, err
 }
@@ -72,7 +71,7 @@ func (db *DataBase) Exists(key string) bool {
 	return exists
 }
 
-// Close will close the DataBases inner bolt.DB
+// Close will close the DataBase's inner bolt.DB
 func (db *DataBase) Close() error {
 	return db.db.Close()
 }
@@ -88,14 +87,14 @@ func (db *DataBase) Destroy() error {
 
 func (db *DataBase) view(fn func(*bolt.Bucket) error) error {
 	return db.db.View(func(tx *bolt.Tx) error {
-		bucket := tx.Bucket([]byte(db.Bucketname))
+		bucket := tx.Bucket([]byte(db.DefaultBucket))
 		return fn(bucket)
 	})
 }
 
 func (db *DataBase) update(fn func(*bolt.Bucket) error) error {
 	return db.db.Update(func(tx *bolt.Tx) error {
-		bucket := tx.Bucket([]byte(db.Bucketname))
+		bucket := tx.Bucket([]byte(db.DefaultBucket))
 		return fn(bucket)
 	})
 }

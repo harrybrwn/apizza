@@ -3,7 +3,6 @@ package cache
 import (
 	"io/ioutil"
 	"os"
-	"path/filepath"
 	"testing"
 
 	"github.com/boltdb/bolt"
@@ -41,15 +40,16 @@ func TestGetDB(t *testing.T) {
 }
 
 func TestGetDB_ExpectedErr(t *testing.T) {
-	_, err := GetDB("", "")
+	_, err := GetDB("")
 	if err == nil {
 		t.Error("expected error")
 	}
 }
 
 func TestDB_Put(t *testing.T) {
-	dir, fname := temp()
-	db, err := GetDB(dir, fname)
+	dbfname := temp()
+	fname := filename(dbfname)
+	db, err := GetDB(dbfname)
 	if err != nil || db == nil {
 		t.Fatal("bad db creation:", err)
 	}
@@ -91,8 +91,9 @@ func TestDB_Put(t *testing.T) {
 }
 
 func TestDB_Get(t *testing.T) {
-	dir, fname := temp()
-	db, err := GetDB(dir, fname)
+	dbfname := temp()
+	fname := filename(dbfname)
+	db, err := GetDB(dbfname)
 	if err != nil || db == nil {
 		t.Fatal("bad db creation")
 	}
@@ -118,7 +119,7 @@ func TestDB_Get(t *testing.T) {
 	}
 }
 
-func temp() (string, string) {
+func temp() string {
 	// f, err := ioutil.TempFile("", "apizza-")
 	f, err := ioutil.TempFile("", "")
 	if err != nil {
@@ -130,6 +131,5 @@ func temp() (string, string) {
 	if err := os.Remove(f.Name()); err != nil {
 		panic(err)
 	}
-	name := f.Name()
-	return filepath.Dir(name), filepath.Base(name)
+	return f.Name()
 }
