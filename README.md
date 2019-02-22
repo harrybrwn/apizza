@@ -13,11 +13,17 @@ A cli for ordering domios pizza.
 
 ### Installation
 ```
+go get -u github.com/harrybrwn/apizza
 go install github.com/harrybrwn/apizza
 ```
 
 ### Setup
-You can either use the built-in `get` and `set` commands to configure apizza or you can edit the `config.json` file in your home path both methods will have the same results. If you add a key-value pair to the `config.json` file that is not already in the file it will be overwritten the next time the program is run.
+You can either use the built-in `get` and `set` commands to configure apizza or
+you can edit the `config.json` file in your home path. Both of these setup methods
+will have the same results, however, the config folder will not be created if
+the program is not run at least once. If you add a key-value pair to the
+`config.json` file that is not already in the file it will be overwritten the
+next time the program is run.
 
 The `get` and `set` comands can be used one at a time,
 ```
