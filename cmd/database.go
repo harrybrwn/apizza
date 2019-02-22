@@ -33,8 +33,7 @@ import (
 // 	return exists
 // }
 
-func initDatabase() error {
-	var err error
+func initDatabase() (err error) {
 	dir := filepath.Join(config.Folder(), "cache")
 	if _, err := os.Stat(dir); os.IsNotExist(err) {
 		os.Mkdir(dir, 0700)
@@ -61,11 +60,8 @@ func bucketHas(b *bolt.Bucket, name string) bool {
 }
 
 // TODO: this is terrible and needs to be split up
-func menuManagment() error {
-	var (
-		err          error
-		menuIsCached = true
-	)
+func menuManagment() (err error) {
+	var menuIsCached = true
 	err = db.Update(func(tx *bolt.Tx) error {
 		_, err := tx.CreateBucketIfNotExists([]byte("Menu"))
 		return err

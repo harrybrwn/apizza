@@ -44,10 +44,7 @@ func (db *DataBase) Put(key string, val []byte) error {
 }
 
 // Get will retrieve the value given a key
-func (db *DataBase) Get(key string) ([]byte, error) {
-	var err error
-	var raw []byte
-
+func (db *DataBase) Get(key string) (raw []byte, err error) {
 	err = db.view(func(b *bolt.Bucket) error {
 		raw = b.Get([]byte(key))
 		return nil
@@ -56,9 +53,8 @@ func (db *DataBase) Get(key string) ([]byte, error) {
 }
 
 // Exists will return true if the key supplied has data associated with it.
-func (db *DataBase) Exists(key string) bool {
-	var exists bool
-	db.view(func(b *bolt.Bucket) error {
+func (db *DataBase) Exists(key string) (exists bool) {
+	if err := db.view(func(b *bolt.Bucket) error {
 		data := b.Get([]byte(key))
 
 		if data == nil {
@@ -67,7 +63,9 @@ func (db *DataBase) Exists(key string) bool {
 			exists = true
 		}
 		return nil
-	})
+	}); err != nil {
+		return false
+	}
 	return exists
 }
 
