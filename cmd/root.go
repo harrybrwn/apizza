@@ -22,27 +22,28 @@ import (
 	"apizza/pkg/config"
 
 	"github.com/boltdb/bolt"
-	"github.com/spf13/cobra"
 )
 
-var rootCmd = &cobra.Command{
-	Use:   "apizza",
-	Short: "Dominos pizza from the command line.",
-	Run: func(cmd *cobra.Command, args []string) {
-		if test, err := cmd.Flags().GetBool("test"); test && err == nil {
-			// print("nothing is being tested\n")
-			dbTest()
-			fmt.Println(db.Path())
-			// fmt.Printf("%+v\n", db.Info())
-			// fmt.Printf("%+v\n", db.Stats())
-		} else {
-			cmd.Usage()
-		}
-	},
-	PersistentPostRunE: func(cmd *cobra.Command, args []string) error {
-		return config.Save()
-	},
-}
+// var rootCmd = &cobra.Command{
+// 	Use:   "apizza",
+// 	Short: "Dominos pizza from the command line.",
+// 	Run: func(cmd *cobra.Command, args []string) {
+// 		if test, err := cmd.Flags().GetBool("test"); test && err == nil {
+// 			// print("nothing is being tested\n")
+// 			dbTest()
+// 			fmt.Println(db.Path())
+// 			// fmt.Printf("%+v\n", db.Info())
+// 			// fmt.Printf("%+v\n", db.Stats())
+// 		} else {
+// 			cmd.Usage()
+// 		}
+// 	},
+// 	PersistentPostRunE: func(cmd *cobra.Command, args []string) error {
+// 		return config.Save()
+// 	},
+// }
+
+var rootCmd = newApizzaCmd().cmd
 
 var (
 	cfg = &Config{}
@@ -106,13 +107,6 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
-
-	rootCmd.PersistentFlags().String("address", "", "use a specific address")
-	rootCmd.PersistentFlags().String("service", "Delivery", "select a Dominos service, either 'Delivery' or 'Carryout'")
-	rootCmd.PersistentFlags().String("store-id", "", "store id used for all endpoint calls")
-
-	rootCmd.Flags().BoolP("test", "t", false, "testing flag")
-	rootCmd.Flags().MarkHidden("test")
 
 	addressFlg, err := rootCmd.PersistentFlags().GetString("address")
 	if err != nil {
