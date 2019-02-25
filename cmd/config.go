@@ -20,69 +20,85 @@ import (
 	"strings"
 
 	// "apizza/pkg/config"
+
 	"github.com/spf13/cobra"
 )
 
-var configCmd = &cobra.Command{
-	Use:   "config",
-	Short: "Configure apizza",
-	Long: `The 'config' command is used for accessing the .apizza config file
-in your home directory. Feel free to edit the .apizza json file
-by hand or use the 'config' command.
-
-ex. 'apizza config get <variable>' or 'apizza config set name=<your name>'`,
+type configCmd struct {
+	*basecmd
 }
 
-var configSetCmd = &cobra.Command{
-	Use:   "set <config var>",
-	Short: "change variables in the config file",
-	RunE: func(cmd *cobra.Command, args []string) error {
-		if len(args) < 1 {
-			return errors.New("Error: no variable given")
-		}
+func newConfigCmd() cliCommand {
+	c := &configCmd{}
+	c.basecmd = &basecmd{cmd: &cobra.Command{
+		Use:   "config",
+		Short: "Configure apizza",
+		Long: `The 'config' command is used for accessing the .apizza config file
+	in your home directory. Feel free to edit the .apizza json file
+	by hand or use the 'config' command.
+	
+	ex. 'apizza config get <variable>' or 'apizza config set name=<your name>'`,
+		RunE: c.run,
+	}}
 
-		for _, a := range args {
-			keys := strings.Split(a, "=")
-			err := cfg.Set(keys[0], keys[1])
-			if err != nil {
-				return err
-			}
-		}
-		return nil
-	},
-	SilenceUsage:  true,
-	SilenceErrors: true,
+	c.AddCmd(
+		newConfigSet(),
+		newConfigGet(),
+	)
+	return c
 }
 
-var configGetCmd = &cobra.Command{
-	Use:   "get <config var>",
-	Short: "print the specified config variable to screen",
-	RunE: func(cmd *cobra.Command, args []string) error {
-		if len(args) < 1 {
-			return errors.New("Error: no variable given")
-		}
-
-		// add a flag '--all' that prints the contents of the config file
-		for _, arg := range args {
-			v := cfg.Get(arg)
-			if v == nil {
-				return fmt.Errorf("Error: cannot find %s", arg)
-			}
-			fmt.Println(v)
-		}
-		return nil
-	},
-	SilenceUsage:  true,
-	SilenceErrors: true,
+type configSetCmd struct {
+	*basecmd
 }
 
-func init() {
-	configCmd.AddCommand(configSetCmd)
+func (c *configSetCmd) run(cmd *cobra.Command, args []string) error {
+	if len(args) < 1 {
+		return errors.New("Error: no variable given")
+	}
 
-	configGetCmd.Flags().BoolP("test", "t", false, "testing stuff")
-	configGetCmd.Flags().MarkHidden("test")
+	for _, arg := range args {
+		keys := strings.Split(arg, "=")
+		err := cfg.Set(keys[0], keys[1])
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
 
-	configCmd.AddCommand(configGetCmd)
+func newConfigSet() cliCommand {
+	c := &configCmd{}
+	c.basecmd = newSilentBaseCommand("", "", c.run)
+	return c
+}
 
-	rootCmd.AddCommand(configCmd)
+type configGetCmd struct {
+	*basecmd
+}
+
+func (c *configGetCmd) run(cmd *cobra.Command, args []string) error {
+	if len(args) < 1 {
+		return errors.New("Error: no variable given")
+	}
+
+	// add a flag '--all' that prints the contents of the config file
+	for _, arg := range args {
+		v := cfg.Get(arg)
+		if v == nil {
+			return fmt.Errorf("Error: cannot find %s", arg)
+		}
+		fmt.Println(v)
+	}
+	return nil
+}
+
+func newConfigGet() cliCommand {
+	c := &configGetCmd{}
+	c.basecmd = newSilentBaseCommand(
+		"set <config var>",
+		"change variables in the config file",
+		c.run,
+	)
+	return c
 }

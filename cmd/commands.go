@@ -1,18 +1,90 @@
 package cmd
 
 import (
+	"apizza/pkg/config"
+	"fmt"
+	"os"
+
 	"github.com/spf13/cobra"
 )
 
-// TODO: re-write Execute func with the new cli builder system... ex.
-// func Execute() {
-// 	builder := cliBuilder{}
-// }
+// Execute runs the root command
+func Execute() {
+	builder := cliBuilder{root: newApizzaCmd()}
+
+	err := initDatabase()
+	if err != nil {
+		handle(err)
+	}
+
+	err = config.SetConfig(".apizza", cfg)
+	if err != nil {
+		handle(err)
+	}
+
+	defer func() {
+		err = db.Close()
+		if err != nil {
+			handle(err)
+		}
+		err = config.Save()
+		if err != nil {
+			handle(err)
+		}
+	}()
+
+	_, err = builder.exec()
+	if err != nil {
+		handle(err)
+	}
+}
+
+func handle(e error) { fmt.Println(e); os.Exit(1) }
 
 type cliCommand interface {
 	command() *cobra.Command
-	addCommands(...cliCommand)
+	AddCmd(...cliCommand)
 	run(*cobra.Command, []string) error
+}
+
+type basecmd struct {
+	cmd *cobra.Command
+}
+
+func (bc *basecmd) command() *cobra.Command {
+	return bc.cmd
+}
+
+func (bc *basecmd) AddCmd(cmds ...cliCommand) {
+	for _, cmd := range cmds {
+		bc.cmd.AddCommand(cmd.command())
+	}
+}
+
+func (bc *basecmd) run(cmd *cobra.Command, args []string) error {
+	return bc.cmd.Usage()
+}
+
+type runFunc func(*cobra.Command, []string) error
+
+func newBaseCommand(use, short string, f runFunc) *basecmd {
+	return &basecmd{cmd: &cobra.Command{
+		Use:   use,
+		Short: short,
+		RunE:  f,
+	}}
+}
+
+func newSilentBaseCommand(use, short string, f runFunc) *basecmd {
+	base := &basecmd{cmd: &cobra.Command{
+		Use:           use,
+		Short:         short,
+		RunE:          f,
+		SilenceErrors: true,
+		SilenceUsage:  true,
+	}}
+
+	return base
 }
 
 type cliBuilder struct {
@@ -20,31 +92,20 @@ type cliBuilder struct {
 	commands []cliCommand
 }
 
-type builder interface {
-	build()
+type commandBuilder interface {
+	exec()
 	add(cliCommand)
 }
 
-func (b *cliBuilder) build() {
-	b.addAll()
-	b.root.addCommands(b.commands...)
+func (b *cliBuilder) exec() (*cobra.Command, error) {
+	b.root.AddCmd(
+		newOrderCommand(),
+		newMenuCmd(),
+		newConfigCmd(),
+	)
+	return b.root.command().ExecuteC()
 }
 
 func (b *cliBuilder) add(cmd cliCommand) {
 	b.commands = append(b.commands, cmd)
 }
-
-func (b *cliBuilder) addAll() {
-	// menually add all commands here with new<cmd name> functions
-	b.commands = []cliCommand{}
-}
-
-// func (b *cliBuilder) newApizzaCmd() cliCommand {
-// 	return newApizzaCmd(cobra.Command{
-// 		Use:   "apizza",
-// 		Short: "Dominos pizza from the command line.",
-// 		PersistentPostRunE: func(cmd *cobra.Command, args []string) error {
-// 			return config.Save()
-// 		},
-// 	})
-// }

@@ -23,32 +23,99 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var orderCmd = &cobra.Command{
-	Use:   "order",
-	Short: "Order pizza from dominos",
-	RunE: func(cmd *cobra.Command, args []string) error {
-		var order *dawg.Order
+type orderCommand struct {
+	*basecmd
+	cached bool
+}
 
-		cached, err := cmd.Flags().GetBool("cached")
+func (c *orderCommand) run(cmd *cobra.Command, args []string) (err error) {
+	var order *dawg.Order
+
+	if c.cached {
+		fmt.Println("this is where you would see previous orders and saved orders")
+		return nil
+	}
+
+	if order == nil {
+		return errors.New("Error: no orders were given")
+	}
+	return nil
+}
+
+func newOrderCommand() cliCommand {
+	c := &orderCommand{
+		cached: false,
+	}
+	c.basecmd = newSilentBaseCommand("order", "Order pizza from dominos", c.run)
+
+	c.cmd.Flags().BoolVarP(&c.cached, "cached", "c", c.cached, "show the previously cached and saved orders")
+
+	// newOrderCmd.Flags().StringP("name", "n", "", "set the name of a new order")
+	// newOrderCmd.Flags().StringP("product", "p", "", "the product code for the new order")
+	c.AddCmd(newNewOrderCmd())
+	// c.cmd.AddCommand(NewOrderCmd)
+	return c
+}
+
+type newOrderCmd struct {
+	*basecmd
+	name, product string
+}
+
+func (c *newOrderCmd) run(cmd *cobra.Command, args []string) error {
+	var err error
+	if store == nil {
+		store, err = dawg.NearestStore(addr, cfg.Service)
 		if err != nil {
 			return err
 		}
+	}
+	order := store.NewOrder()
 
-		if cached {
-			fmt.Println("this is where you would see previous orders and saved orders")
-			return nil
-		}
+	if c.name == "" {
+		return errors.New("Error: No order name... use '--name=<order name>'")
+	} else if c.name == "new" { // I completely forgot why I did this
+		return errors.New("Error: cannot give an order that name")
+	}
 
-		if order == nil {
-			return errors.New("Error: no orders were given")
+	if c.product != "" {
+		p, err := store.GetProduct(c.product)
+		if err != nil {
+			return err
 		}
-		return nil
-	},
-	SilenceUsage:  true,
-	SilenceErrors: true,
+		order.AddProduct(p)
+	}
+
+	raw, err := json.Marshal(&order)
+	if err != nil {
+		return err
+	}
+	fmt.Print(c.name, ": ")
+	fmt.Println(string(raw))
+	print("\n\n")
+	fmt.Printf("%+v\n", store)
+	price, err := order.Price()
+	if err != nil {
+		return err
+	}
+	fmt.Println("Price:", price)
+
+	return nil
 }
 
-var newOrderCmd = &cobra.Command{
+func newNewOrderCmd() cliCommand {
+	c := &newOrderCmd{name: "", product: ""}
+	c.basecmd = newSilentBaseCommand(
+		"new", "Create a new order that will be stored in the cache.",
+		c.run,
+	)
+
+	c.cmd.Flags().StringP("name", "n", "", "set the name of a new order")
+	c.cmd.Flags().StringP("product", "p", "", "the product code for the new order")
+	return c
+}
+
+var NewOrderCmd = &cobra.Command{
 	Use:   "new",
 	Short: "Create a new order that will be stored in the cache.",
 	RunE: func(cmd *cobra.Command, args []string) error {
@@ -101,14 +168,4 @@ var newOrderCmd = &cobra.Command{
 	},
 	SilenceUsage:  true,
 	SilenceErrors: true,
-}
-
-func init() {
-	newOrderCmd.Flags().StringP("name", "n", "", "set the name of a new order")
-	newOrderCmd.Flags().StringP("product", "p", "", "the product code for the new order")
-
-	orderCmd.AddCommand(newOrderCmd)
-
-	orderCmd.Flags().BoolP("cached", "c", false, "show the previously cached and saved orders")
-	rootCmd.AddCommand(orderCmd)
 }

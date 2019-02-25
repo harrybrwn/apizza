@@ -8,21 +8,11 @@ import (
 )
 
 type apizzaCmd struct {
-	cmd     *cobra.Command
+	basecmd
 	address string
 	service string
 	storeID string
 	test    bool
-}
-
-func (c *apizzaCmd) command() *cobra.Command {
-	return c.cmd
-}
-
-func (c *apizzaCmd) addCommands(cmds ...cliCommand) {
-	for _, cmd := range cmds {
-		c.cmd.AddCommand(cmd.command())
-	}
 }
 
 func (c *apizzaCmd) run(cmd *cobra.Command, args []string) (err error) {
@@ -34,20 +24,20 @@ func (c *apizzaCmd) run(cmd *cobra.Command, args []string) (err error) {
 	return err
 }
 
-func newApizzaCmd() *apizzaCmd {
-	c := &apizzaCmd{cmd: &cobra.Command{
+func newApizzaCmd() cliCommand {
+	c := &apizzaCmd{address: "", service: cfg.Service}
+
+	c.basecmd.cmd = &cobra.Command{
 		Use:   "apizza",
 		Short: "Dominos pizza from the command line.",
 		PersistentPostRunE: func(cmd *cobra.Command, args []string) error {
 			return config.Save()
 		},
-	},
-		address: "",
 	}
 	c.cmd.RunE = c.run
 
 	c.cmd.PersistentFlags().StringVar(&c.address, "address", c.address, "use a specific address")
-	c.cmd.PersistentFlags().StringVar(&c.service, "service", cfg.Service, "select a Dominos service, either 'Delivery' or 'Carryout'")
+	c.cmd.PersistentFlags().StringVar(&c.service, "service", c.service, "select a Dominos service, either 'Delivery' or 'Carryout'")
 
 	c.cmd.Flags().BoolVarP(&c.test, "test", "t", false, "testing flag")
 	c.cmd.Flags().MarkHidden("test")

@@ -15,35 +15,11 @@
 package cmd
 
 import (
-	"fmt"
-	"os"
-
 	"apizza/dawg"
 	"apizza/pkg/config"
 
 	"github.com/boltdb/bolt"
 )
-
-// var rootCmd = &cobra.Command{
-// 	Use:   "apizza",
-// 	Short: "Dominos pizza from the command line.",
-// 	Run: func(cmd *cobra.Command, args []string) {
-// 		if test, err := cmd.Flags().GetBool("test"); test && err == nil {
-// 			// print("nothing is being tested\n")
-// 			dbTest()
-// 			fmt.Println(db.Path())
-// 			// fmt.Printf("%+v\n", db.Info())
-// 			// fmt.Printf("%+v\n", db.Stats())
-// 		} else {
-// 			cmd.Usage()
-// 		}
-// 	},
-// 	PersistentPostRunE: func(cmd *cobra.Command, args []string) error {
-// 		return config.Save()
-// 	},
-// }
-
-var rootCmd = newApizzaCmd().cmd
 
 var (
 	cfg = &Config{}
@@ -53,21 +29,6 @@ var (
 	store *dawg.Store
 	db    *bolt.DB
 )
-
-// Execute runs the root command
-func Execute() {
-	err := initDatabase()
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
-	defer db.Close()
-
-	if err := rootCmd.Execute(); err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
-}
 
 // Config is the configuration struct
 type Config struct {
@@ -100,28 +61,4 @@ func (c *Config) Get(key string) interface{} {
 // Set a config variable
 func (c *Config) Set(key string, val interface{}) error {
 	return config.Set(c, key, val)
-}
-
-func init() {
-	err := config.SetConfig(".apizza", cfg)
-	if err != nil {
-		panic(err)
-	}
-
-	addressFlg, err := rootCmd.PersistentFlags().GetString("address")
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
-
-	if addressFlg == "" {
-		addr = &dawg.Address{
-			Street: cfg.Address.Street,
-			City:   cfg.Address.City,
-			State:  cfg.Address.State,
-			Zip:    cfg.Address.Zip,
-		}
-	} else if addressFlg != "" {
-		addr = dawg.ParseAddress(addressFlg)
-	}
 }

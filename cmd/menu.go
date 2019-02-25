@@ -23,33 +23,40 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var menuCmd = &cobra.Command{
-	Use:   "menu",
-	Short: "Get the Dominos menu.",
-	RunE: func(cmd *cobra.Command, args []string) error {
-		var (
-			err   error
-			bflag = cmd.Flags().GetBool
-		)
-		if store == nil {
-			store, err = dawg.NearestStore(addr, cfg.Service)
-			if err != nil {
-				return err
-			}
-		}
+type menuCmd struct {
+	*basecmd
+	all, food, toppings bool
+}
 
-		err = menuManagment()
+func (c *menuCmd) run(cmd *cobra.Command, args []string) (err error) {
+	if store == nil {
+		store, err = dawg.NearestStore(addr, cfg.Service)
 		if err != nil {
 			return err
 		}
+	}
 
-		if toppings, err := bflag("toppings"); toppings && err == nil {
-			printToppings()
-		} else if food, err := bflag("food"); food && err == nil {
-			printMenu()
-		}
-		return nil
-	},
+	err = menuManagment()
+	if err != nil {
+		return err
+	}
+
+	if c.toppings {
+		printToppings()
+	} else if c.food {
+		printMenu()
+	}
+	return nil
+}
+
+func newMenuCmd() cliCommand {
+	c := &menuCmd{all: false, food: true, toppings: false}
+	c.basecmd = newBaseCommand("menu", "Get the Dominos menu.", c.run)
+
+	c.cmd.Flags().BoolVarP(&c.all, "all", "a", c.all, "show the entire menu")
+	c.cmd.Flags().BoolVarP(&c.food, "food", "f", c.food, "print out the food items on the menu")
+	c.cmd.Flags().BoolVarP(&c.toppings, "toppings", "t", c.toppings, "print out the toppings on the menu")
+	return c
 }
 
 func printMenu() {
@@ -113,13 +120,3 @@ func maxStrLen(list []interface{}) int {
 }
 
 var strLen = utf8.RuneCountInString // this is a function
-
-func init() {
-	var bflag = menuCmd.Flags().BoolP
-
-	bflag("all", "a", false, "show the entire menu")
-	bflag("food", "f", true, "print out the food items on the menu")
-	bflag("toppings", "t", false, "print out the toppings on the menu")
-
-	rootCmd.AddCommand(menuCmd)
-}
