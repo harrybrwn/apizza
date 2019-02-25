@@ -15,6 +15,7 @@
 package cmd
 
 import (
+	"apizza/pkg/config"
 	"errors"
 	"fmt"
 	"strings"
@@ -23,6 +24,43 @@ import (
 
 	"github.com/spf13/cobra"
 )
+
+var (
+	cfg = &Config{}
+)
+
+// Config is the configuration struct
+type Config struct {
+	Name    string `config:"name"`
+	Email   string `config:"email"`
+	Address struct {
+		Street       string `config:"street"`
+		Streetname   string `config:"streetname"`
+		Streetnumber string `config:"streetnumber"`
+		City         string `config:"city"`
+		State        string `config:"state"`
+		Zip          string `config:"zip"`
+	} `config:"address"`
+	Card struct {
+		Number     string `config:"number"`
+		Expiration string `config:"expiration"`
+		CVV        string `config:"cvv"`
+	} `config:"card"`
+	Service  string `config:"service" default:"\"Delivery\""`
+	MyOrders []struct {
+		Name string `config:"name"`
+	} `config:"myorders"`
+}
+
+// Get a config variable
+func (c *Config) Get(key string) interface{} {
+	return config.Get(c, key)
+}
+
+// Set a config variable
+func (c *Config) Set(key string, val interface{}) error {
+	return config.Set(c, key, val)
+}
 
 type configCmd struct {
 	*basecmd
