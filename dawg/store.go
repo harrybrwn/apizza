@@ -9,6 +9,9 @@ import (
 
 // NearestStore gets the dominos location closest to the given address
 func NearestStore(addr *Address, service string) (*Store, error) {
+	if addr == nil {
+		return nil, errors.New("empty address")
+	}
 	allnearby, err := findNearbyStores(addr, service)
 	if err != nil {
 		return nil, err
