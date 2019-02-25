@@ -15,19 +15,16 @@
 package cmd
 
 import (
-	"apizza/pkg/config"
 	"errors"
 	"fmt"
 	"strings"
 
-	// "apizza/pkg/config"
+	"apizza/pkg/config"
 
 	"github.com/spf13/cobra"
 )
 
-var (
-	cfg = &Config{}
-)
+var cfg = &Config{}
 
 // Config is the configuration struct
 type Config struct {
@@ -68,16 +65,12 @@ type configCmd struct {
 
 func newConfigCmd() cliCommand {
 	c := &configCmd{}
-	c.basecmd = &basecmd{cmd: &cobra.Command{
-		Use:   "config",
-		Short: "Configure apizza",
-		Long: `The 'config' command is used for accessing the .apizza config file
-	in your home directory. Feel free to edit the .apizza json file
-	by hand or use the 'config' command.
-	
-	ex. 'apizza config get <variable>' or 'apizza config set name=<your name>'`,
-		RunE: c.run,
-	}}
+	c.basecmd = newBaseCommand("config", "Configure apizza", c.run)
+	c.cmd.Long = `The 'config' command is used for accessing the .apizza config file
+in your home directory. Feel free to edit the .apizza json file
+by hand or use the 'config' command.
+
+ex. 'apizza config get name' or 'apizza config set name=<your name>'`
 
 	c.AddCmd(
 		newConfigSet(),
