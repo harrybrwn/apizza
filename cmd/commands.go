@@ -13,12 +13,12 @@ import (
 func Execute() {
 	builder := cliBuilder{root: newApizzaCmd()}
 
-	err := initDatabase()
+	err := config.SetConfig(".apizza", cfg)
 	if err != nil {
 		handle(err)
 	}
 
-	err = config.SetConfig(".apizza", cfg)
+	err = initDatabase()
 	if err != nil {
 		handle(err)
 	}
