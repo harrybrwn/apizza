@@ -49,11 +49,7 @@ func newOrderCommand() cliCommand {
 	c.basecmd = newSilentBaseCommand("order", "Order pizza from dominos", c.run)
 
 	c.cmd.Flags().BoolVarP(&c.cached, "cached", "c", c.cached, "show the previously cached and saved orders")
-
-	// newOrderCmd.Flags().StringP("name", "n", "", "set the name of a new order")
-	// newOrderCmd.Flags().StringP("product", "p", "", "the product code for the new order")
 	c.AddCmd(newNewOrderCmd())
-	// c.cmd.AddCommand(NewOrderCmd)
 	return c
 }
 
@@ -110,62 +106,7 @@ func newNewOrderCmd() cliCommand {
 		c.run,
 	)
 
-	c.cmd.Flags().StringP("name", "n", "", "set the name of a new order")
-	c.cmd.Flags().StringP("product", "p", "", "the product code for the new order")
+	c.cmd.Flags().StringVarP(&c.name, "name", "n", c.name, "set the name of a new order")
+	c.cmd.Flags().StringVarP(&c.product, "product", "p", c.product, "the product code for the new order")
 	return c
-}
-
-var NewOrderCmd = &cobra.Command{
-	Use:   "new",
-	Short: "Create a new order that will be stored in the cache.",
-	RunE: func(cmd *cobra.Command, args []string) error {
-		var err error
-		if store == nil {
-			store, err = dawg.NearestStore(addr, cfg.Service)
-			if err != nil {
-				return err
-			}
-		}
-		order := store.NewOrder()
-
-		name, err := cmd.Flags().GetString("name")
-		if err != nil {
-			return err
-		}
-		if name == "" {
-			return errors.New("Error: No order name... use '--name=<order name>'")
-		} else if name == "new" { // I completely forgot why I did this
-			return errors.New("Error: cannot give an order that name")
-		}
-
-		product, err := cmd.Flags().GetString("product")
-		if err != nil {
-			return err
-		}
-		if product != "" {
-			p, err := store.GetProduct(product)
-			if err != nil {
-				return err
-			}
-			order.AddProduct(p)
-		}
-
-		raw, err := json.Marshal(&order)
-		if err != nil {
-			return err
-		}
-		fmt.Print(name, ": ")
-		fmt.Println(string(raw))
-		print("\n\n")
-		fmt.Printf("%+v\n", store)
-		price, err := order.Price()
-		if err != nil {
-			return err
-		}
-		fmt.Println("Price:", price)
-
-		return nil
-	},
-	SilenceUsage:  true,
-	SilenceErrors: true,
 }

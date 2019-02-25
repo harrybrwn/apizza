@@ -69,7 +69,11 @@ func (c *configSetCmd) run(cmd *cobra.Command, args []string) error {
 
 func newConfigSet() cliCommand {
 	c := &configCmd{}
-	c.basecmd = newSilentBaseCommand("", "", c.run)
+	c.basecmd = newSilentBaseCommand(
+		"set",
+		"change variables in the config file",
+		c.run,
+	)
 	return c
 }
 
@@ -96,8 +100,8 @@ func (c *configGetCmd) run(cmd *cobra.Command, args []string) error {
 func newConfigGet() cliCommand {
 	c := &configGetCmd{}
 	c.basecmd = newSilentBaseCommand(
-		"set <config var>",
-		"change variables in the config file",
+		"get",
+		"print the specified config variable to screen",
 		c.run,
 	)
 	return c

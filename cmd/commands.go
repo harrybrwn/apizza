@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"apizza/dawg"
 	"apizza/pkg/config"
 	"fmt"
 	"os"
@@ -20,6 +21,17 @@ func Execute() {
 	err = config.SetConfig(".apizza", cfg)
 	if err != nil {
 		handle(err)
+	}
+
+	if builder.root.(*apizzaCmd).address == "" {
+		addr = &dawg.Address{
+			Street: cfg.Address.Street,
+			City:   cfg.Address.City,
+			State:  cfg.Address.State,
+			Zip:    cfg.Address.Zip,
+		}
+	} else {
+		addr = dawg.ParseAddress(builder.root.(*apizzaCmd).address)
 	}
 
 	defer func() {
@@ -62,7 +74,8 @@ func (bc *basecmd) AddCmd(cmds ...cliCommand) {
 }
 
 func (bc *basecmd) run(cmd *cobra.Command, args []string) error {
-	return bc.cmd.Usage()
+	// return bc.cmd.Usage()
+	return nil
 }
 
 type runFunc func(*cobra.Command, []string) error
