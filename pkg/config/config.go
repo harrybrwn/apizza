@@ -21,7 +21,7 @@ var (
 
 // SetConfig sets the config file and also runs through the configuration
 // setup process.
-func SetConfig(foldername string, cfg interface{}) error {
+func SetConfig(foldername string, cfg Config) error {
 	if cfgFile != "" {
 		return errors.New("cannot set multiple config files")
 	}

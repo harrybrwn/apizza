@@ -11,9 +11,9 @@ var (
 	errWrongType = errors.New("wrong type")
 )
 
-// Configuration represents a config object that can act like a series of
+// Config represents a config object that can act like a series of
 // key-value pairs by using Get and Set methods.
-type Configuration interface {
+type Config interface {
 	Get(string) interface{}
 	Set(string, interface{}) error
 }
@@ -27,8 +27,8 @@ type Configuration interface {
 // func (c *Config) Get(key string) interface{} {
 //     return config.Get(c, key)
 // }
-// note: this will only work if the struct impliments the Configuration type.
-func Get(config Configuration, key string) interface{} {
+// note: this will only work if the struct impliments the Config type.
+func Get(config Config, key string) interface{} {
 	value := reflect.ValueOf(config).Elem()
 	v := find(value, key)
 	switch v.Kind() {
@@ -52,8 +52,8 @@ func Get(config Configuration, key string) interface{} {
 // func (c *Config) Get(key string, val interface{}) error {
 //     return config.Set(c, key, val)
 // }
-// note: this will only work if the struct impliments the Configuration type.
-func Set(config Configuration, key string, val interface{}) error {
+// note: this will only work if the struct impliments the Config type.
+func Set(config Config, key string, val interface{}) error {
 	v := reflect.ValueOf(config).Elem()
 	field := find(v, key)
 	if !field.IsValid() {
