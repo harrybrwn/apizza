@@ -30,7 +30,7 @@ type menuCmd struct {
 
 func (c *menuCmd) run(cmd *cobra.Command, args []string) (err error) {
 	if store == nil {
-		store, err = dawg.NearestStore(addr, cfg.Service)
+		store, err = dawg.NearestStore(c.addr, cfg.Service)
 		if err != nil {
 			return err
 		}
@@ -49,9 +49,9 @@ func (c *menuCmd) run(cmd *cobra.Command, args []string) (err error) {
 	return nil
 }
 
-func newMenuCmd() cliCommand {
+func (b *cliBuilder) newMenuCmd() cliCommand {
 	c := &menuCmd{all: false, food: true, toppings: false}
-	c.basecmd = newBaseCommand("menu", "Get the Dominos menu.", c.run)
+	c.basecmd = b.newBaseCommand("menu", "Get the Dominos menu.", c.run)
 
 	c.cmd.Flags().BoolVarP(&c.all, "all", "a", c.all, "show the entire menu")
 	c.cmd.Flags().BoolVarP(&c.food, "food", "f", c.food, "print out the food items on the menu")

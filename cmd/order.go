@@ -56,7 +56,7 @@ type newOrderCmd struct {
 
 func (c *newOrderCmd) run(cmd *cobra.Command, args []string) (err error) {
 	if store == nil {
-		store, err = dawg.NearestStore(addr, cfg.Service)
+		store, err = dawg.NearestStore(c.addr, cfg.Service)
 		if err != nil {
 			return err
 		}
@@ -94,9 +94,9 @@ func (c *newOrderCmd) run(cmd *cobra.Command, args []string) (err error) {
 	return nil
 }
 
-func newNewOrderCmd() cliCommand {
+func (b *cliBuilder) newNewOrderCmd() cliCommand {
 	c := &newOrderCmd{name: "", product: ""}
-	c.basecmd = newBaseCommand(
+	c.basecmd = b.newBaseCommand(
 		"new",
 		"Create a new order that will be stored in the cache.",
 		c.run,

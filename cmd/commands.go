@@ -36,7 +36,7 @@ func Execute() {
 	}
 
 	builder := cliBuilder{root: newApizzaCmd()}
-	addr = builder.getAddress()
+	builder.addr = builder.getAddress()
 
 	defer func() {
 		err = db.Close()
@@ -64,7 +64,8 @@ type cliCommand interface {
 }
 
 type basecmd struct {
-	cmd *cobra.Command
+	cmd  *cobra.Command
+	addr *dawg.Address
 }
 
 func (bc *basecmd) command() *cobra.Command {
@@ -113,32 +114,27 @@ func newBaseCommand(use, short string, f runFunc) *basecmd {
 	return base
 }
 
-type cliBuilder struct {
-	root     cliCommand
-	commands []cliCommand
-}
-
 type commandBuilder interface {
 	exec()
-	add(cliCommand)
+}
+
+type cliBuilder struct {
+	*basecmd
+	root cliCommand
 }
 
 func (b *cliBuilder) exec() (*cobra.Command, error) {
 	b.root.AddCmd(
 		newOrderCommand().AddCmd(
-			newNewOrderCmd(),
+			b.newNewOrderCmd(),
 		),
 		newConfigCmd().AddCmd(
 			newConfigSet(),
 			newConfigGet(),
 		),
-		newMenuCmd(),
+		b.newMenuCmd(),
 	)
 	return b.root.command().ExecuteC()
-}
-
-func (b *cliBuilder) add(cmd cliCommand) {
-	b.commands = append(b.commands, cmd)
 }
 
 func (b *cliBuilder) getAddress() *dawg.Address {
@@ -152,4 +148,10 @@ func (b *cliBuilder) getAddress() *dawg.Address {
 		}
 	}
 	return dawg.ParseAddress(addrStr)
+}
+
+func (b *cliBuilder) newBaseCommand(use, short string, f runFunc) *basecmd {
+	base := newBaseCommand(use, short, f)
+	base.addr = b.addr
+	return base
 }

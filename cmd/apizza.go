@@ -24,7 +24,7 @@ import (
 )
 
 var (
-	addr  *dawg.Address
+	// addr  *dawg.Address
 	menu  *dawg.Menu
 	store *dawg.Store
 	db    *bolt.DB
