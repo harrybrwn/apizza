@@ -24,7 +24,7 @@ import (
 )
 
 // Execute runs the root command
-func Execute() {
+func Execute(args []string) {
 	err := config.SetConfig(".apizza", cfg)
 	if err != nil {
 		handle(err)
@@ -36,7 +36,7 @@ func Execute() {
 	}
 
 	builder := cliBuilder{root: newApizzaCmd()}
-	builder.addr = builder.getAddress()
+	addr = builder.getAddress()
 
 	defer func() {
 		err = db.Close()
@@ -64,8 +64,7 @@ type cliCommand interface {
 }
 
 type basecmd struct {
-	cmd  *cobra.Command
-	addr *dawg.Address
+	cmd *cobra.Command
 }
 
 func (bc *basecmd) command() *cobra.Command {
@@ -92,7 +91,6 @@ func newVerboseBaseCommand(use, short string, f runFunc) *basecmd {
 		RunE:  f,
 	}}
 	if f == nil {
-		// f = base.run // i guess this works too, cool
 		base.cmd.RunE = base.run
 	}
 	return base
@@ -107,7 +105,6 @@ func newBaseCommand(use, short string, f runFunc) *basecmd {
 		SilenceUsage:  true,
 	}}
 	if f == nil {
-		// f = base.run // i guess this works too, cool
 		base.cmd.RunE = base.run
 	}
 
@@ -150,8 +147,8 @@ func (b *cliBuilder) getAddress() *dawg.Address {
 	return dawg.ParseAddress(addrStr)
 }
 
+// this is here for future plans
 func (b *cliBuilder) newBaseCommand(use, short string, f runFunc) *basecmd {
 	base := newBaseCommand(use, short, f)
-	base.addr = b.addr
 	return base
 }

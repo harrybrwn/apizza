@@ -16,8 +16,9 @@ package main
 
 import (
 	"apizza/cmd"
+	"os"
 )
 
 func main() {
-	cmd.Execute()
+	cmd.Execute(os.Args[1:])
 }

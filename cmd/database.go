@@ -11,28 +11,6 @@ import (
 	"github.com/boltdb/bolt"
 )
 
-// type dataBase struct {
-// 	DB *bolt.DB
-// }
-
-// func (db *dataBase) checkexists(bucket, key string) bool {
-// 	var exists bool
-// 	err := db.DB.View(func(tx *bolt.Tx) error {
-// 		// b := tx.Bucket([]byte(bucket))
-// 		// rawval := b.Get(key)
-// 		if rawval == nil {
-// 			exists = false
-// 			return nil
-// 		}
-// 		return nil
-// 	})
-// 	if err != nil {
-// 		fmt.Println("Yes... you need to handle thins error in checkexists", err)
-// 		return false
-// 	}
-// 	return exists
-// }
-
 func initDatabase() (err error) {
 	dir := filepath.Join(config.Folder(), "cache")
 	if _, err := os.Stat(dir); os.IsNotExist(err) {
