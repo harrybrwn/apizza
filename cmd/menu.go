@@ -30,7 +30,7 @@ type menuCmd struct {
 
 func (c *menuCmd) run(cmd *cobra.Command, args []string) (err error) {
 	if store == nil {
-		store, err = dawg.NearestStore(addr, cfg.Service)
+		store, err = dawg.NearestStore(c.addr, cfg.Service)
 		if err != nil {
 			return err
 		}

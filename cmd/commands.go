@@ -35,8 +35,7 @@ func Execute(args []string) {
 		handle(err)
 	}
 
-	builder := cliBuilder{root: newApizzaCmd()}
-	addr = builder.getAddress()
+	builder := newBuilder()
 
 	defer func() {
 		err = db.Close()
@@ -64,7 +63,8 @@ type cliCommand interface {
 }
 
 type basecmd struct {
-	cmd *cobra.Command
+	cmd  *cobra.Command
+	addr *dawg.Address
 }
 
 func (bc *basecmd) command() *cobra.Command {
@@ -116,8 +116,14 @@ type commandBuilder interface {
 }
 
 type cliBuilder struct {
-	*basecmd
 	root cliCommand
+	addr *dawg.Address
+}
+
+func newBuilder() *cliBuilder {
+	b := &cliBuilder{root: newApizzaCmd()}
+	b.addr = b.getAddress()
+	return b
 }
 
 func (b *cliBuilder) exec() (*cobra.Command, error) {
@@ -150,5 +156,6 @@ func (b *cliBuilder) getAddress() *dawg.Address {
 // this is here for future plans
 func (b *cliBuilder) newBaseCommand(use, short string, f runFunc) *basecmd {
 	base := newBaseCommand(use, short, f)
+	base.addr = b.addr
 	return base
 }
