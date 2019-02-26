@@ -25,8 +25,6 @@ import (
 
 // Execute runs the root command
 func Execute() {
-	builder := cliBuilder{root: newApizzaCmd()}
-
 	err := config.SetConfig(".apizza", cfg)
 	if err != nil {
 		handle(err)
@@ -37,6 +35,7 @@ func Execute() {
 		handle(err)
 	}
 
+	builder := cliBuilder{root: newApizzaCmd()}
 	addr = builder.getAddress()
 
 	defer func() {
@@ -60,7 +59,7 @@ func handle(e error) { fmt.Println(e); os.Exit(1) }
 
 type cliCommand interface {
 	command() *cobra.Command
-	AddCmd(...cliCommand)
+	AddCmd(...cliCommand) cliCommand
 	run(*cobra.Command, []string) error
 }
 
@@ -72,10 +71,11 @@ func (bc *basecmd) command() *cobra.Command {
 	return bc.cmd
 }
 
-func (bc *basecmd) AddCmd(cmds ...cliCommand) {
+func (bc *basecmd) AddCmd(cmds ...cliCommand) cliCommand {
 	for _, cmd := range cmds {
 		bc.cmd.AddCommand(cmd.command())
 	}
+	return bc
 }
 
 func (bc *basecmd) run(cmd *cobra.Command, args []string) error {
@@ -125,9 +125,14 @@ type commandBuilder interface {
 
 func (b *cliBuilder) exec() (*cobra.Command, error) {
 	b.root.AddCmd(
-		newOrderCommand(),
+		newOrderCommand().AddCmd(
+			newNewOrderCmd(),
+		),
+		newConfigCmd().AddCmd(
+			newConfigSet(),
+			newConfigGet(),
+		),
 		newMenuCmd(),
-		newConfigCmd(),
 	)
 	return b.root.command().ExecuteC()
 }

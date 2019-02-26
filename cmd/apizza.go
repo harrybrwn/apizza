@@ -31,7 +31,7 @@ var (
 )
 
 type apizzaCmd struct {
-	basecmd
+	*basecmd
 	address string
 	service string
 	storeID string
@@ -49,15 +49,7 @@ func (c *apizzaCmd) run(cmd *cobra.Command, args []string) (err error) {
 
 func newApizzaCmd() cliCommand {
 	c := &apizzaCmd{address: "", service: cfg.Service}
-
-	c.basecmd.cmd = &cobra.Command{
-		Use:   "apizza",
-		Short: "Dominos pizza from the command line.",
-		PersistentPostRunE: func(cmd *cobra.Command, args []string) error {
-			return config.Save()
-		},
-	}
-	c.cmd.RunE = c.run
+	c.basecmd = newBaseCommand("apizza", "Dominos pizza from the command line.", c.run)
 
 	c.cmd.PersistentFlags().StringVar(&c.address, "address", c.address, "use a specific address")
 	c.cmd.PersistentFlags().StringVar(&c.service, "service", c.service, "select a Dominos service, either 'Delivery' or 'Carryout'")

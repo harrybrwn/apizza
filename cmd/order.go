@@ -43,13 +43,9 @@ func (c *orderCommand) run(cmd *cobra.Command, args []string) (err error) {
 }
 
 func newOrderCommand() cliCommand {
-	c := &orderCommand{
-		cached: false,
-	}
+	c := &orderCommand{cached: false}
 	c.basecmd = newBaseCommand("order", "Order pizza from dominos", c.run)
-
 	c.cmd.Flags().BoolVarP(&c.cached, "cached", "c", c.cached, "show the previously cached and saved orders")
-	c.AddCmd(newNewOrderCmd())
 	return c
 }
 
@@ -58,8 +54,7 @@ type newOrderCmd struct {
 	name, product string
 }
 
-func (c *newOrderCmd) run(cmd *cobra.Command, args []string) error {
-	var err error
+func (c *newOrderCmd) run(cmd *cobra.Command, args []string) (err error) {
 	if store == nil {
 		store, err = dawg.NearestStore(addr, cfg.Service)
 		if err != nil {

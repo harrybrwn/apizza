@@ -71,10 +71,6 @@ in your home directory. Feel free to edit the .apizza json file
 by hand or use the 'config' command.
 
 ex. 'apizza config get name' or 'apizza config set name=<your name>'`
-	c.AddCmd(
-		newConfigSet(),
-		newConfigGet(),
-	)
 	return c
 }
 
