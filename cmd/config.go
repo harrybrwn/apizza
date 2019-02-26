@@ -63,14 +63,9 @@ type configCmd struct {
 	*basecmd
 }
 
-// func (c *configCmd) run(cmd *cobra.Command, args []string) error {
-// 	return c.cmd.Usage()
-// }
-
 func newConfigCmd() cliCommand {
 	c := &configCmd{}
-	// fmt.Println("config.run:", c.basecmd.run, c.run == nil, c.basecmd.run == nil)
-	c.basecmd = newBaseCommand("config", "Configure apizza", nil)
+	c.basecmd = newVerboseBaseCommand("config", "Configure apizza", nil)
 	c.cmd.Long = `The 'config' command is used for accessing the .apizza config file
 in your home directory. Feel free to edit the .apizza json file
 by hand or use the 'config' command.
@@ -104,7 +99,7 @@ func (c *configSetCmd) run(cmd *cobra.Command, args []string) error {
 
 func newConfigSet() cliCommand {
 	c := &configSetCmd{}
-	c.basecmd = newSilentBaseCommand(
+	c.basecmd = newBaseCommand(
 		"set",
 		"change variables in the config file",
 		c.run,
@@ -134,7 +129,7 @@ func (c *configGetCmd) run(cmd *cobra.Command, args []string) error {
 
 func newConfigGet() cliCommand {
 	c := &configGetCmd{}
-	c.basecmd = newSilentBaseCommand(
+	c.basecmd = newBaseCommand(
 		"get",
 		"print the specified config variable to screen",
 		c.run,

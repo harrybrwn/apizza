@@ -46,7 +46,7 @@ func newOrderCommand() cliCommand {
 	c := &orderCommand{
 		cached: false,
 	}
-	c.basecmd = newSilentBaseCommand("order", "Order pizza from dominos", c.run)
+	c.basecmd = newBaseCommand("order", "Order pizza from dominos", c.run)
 
 	c.cmd.Flags().BoolVarP(&c.cached, "cached", "c", c.cached, "show the previously cached and saved orders")
 	c.AddCmd(newNewOrderCmd())
@@ -101,8 +101,9 @@ func (c *newOrderCmd) run(cmd *cobra.Command, args []string) error {
 
 func newNewOrderCmd() cliCommand {
 	c := &newOrderCmd{name: "", product: ""}
-	c.basecmd = newSilentBaseCommand(
-		"new", "Create a new order that will be stored in the cache.",
+	c.basecmd = newBaseCommand(
+		"new",
+		"Create a new order that will be stored in the cache.",
 		c.run,
 	)
 

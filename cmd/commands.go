@@ -70,19 +70,20 @@ func (bc *basecmd) run(cmd *cobra.Command, args []string) error {
 
 type runFunc func(*cobra.Command, []string) error
 
-func newBaseCommand(use, short string, f runFunc) *basecmd {
+func newVerboseBaseCommand(use, short string, f runFunc) *basecmd {
 	base := &basecmd{cmd: &cobra.Command{
 		Use:   use,
 		Short: short,
 		RunE:  f,
 	}}
 	if f == nil {
-		f = base.run
+		// f = base.run // i guess this works too, cool
+		base.cmd.RunE = base.run
 	}
 	return base
 }
 
-func newSilentBaseCommand(use, short string, f runFunc) *basecmd {
+func newBaseCommand(use, short string, f runFunc) *basecmd {
 	base := &basecmd{cmd: &cobra.Command{
 		Use:           use,
 		Short:         short,
@@ -90,6 +91,10 @@ func newSilentBaseCommand(use, short string, f runFunc) *basecmd {
 		SilenceErrors: true,
 		SilenceUsage:  true,
 	}}
+	if f == nil {
+		// f = base.run // i guess this works too, cool
+		base.cmd.RunE = base.run
+	}
 
 	return base
 }
