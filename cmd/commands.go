@@ -23,16 +23,7 @@ func Execute() {
 		handle(err)
 	}
 
-	if builder.root.(*apizzaCmd).address == "" {
-		addr = &dawg.Address{
-			Street: cfg.Address.Street,
-			City:   cfg.Address.City,
-			State:  cfg.Address.State,
-			Zip:    cfg.Address.Zip,
-		}
-	} else {
-		addr = dawg.ParseAddress(builder.root.(*apizzaCmd).address)
-	}
+	addr = builder.getAddress()
 
 	defer func() {
 		err = db.Close()
@@ -74,18 +65,21 @@ func (bc *basecmd) AddCmd(cmds ...cliCommand) {
 }
 
 func (bc *basecmd) run(cmd *cobra.Command, args []string) error {
-	// return bc.cmd.Usage()
-	return nil
+	return bc.cmd.Usage()
 }
 
 type runFunc func(*cobra.Command, []string) error
 
 func newBaseCommand(use, short string, f runFunc) *basecmd {
-	return &basecmd{cmd: &cobra.Command{
+	base := &basecmd{cmd: &cobra.Command{
 		Use:   use,
 		Short: short,
 		RunE:  f,
 	}}
+	if f == nil {
+		f = base.run
+	}
+	return base
 }
 
 func newSilentBaseCommand(use, short string, f runFunc) *basecmd {
@@ -121,4 +115,17 @@ func (b *cliBuilder) exec() (*cobra.Command, error) {
 
 func (b *cliBuilder) add(cmd cliCommand) {
 	b.commands = append(b.commands, cmd)
+}
+
+func (b *cliBuilder) getAddress() *dawg.Address {
+	addrStr := b.root.(*apizzaCmd).address
+	if addrStr == "" {
+		return &dawg.Address{
+			Street: cfg.Address.Street,
+			City:   cfg.Address.City,
+			State:  cfg.Address.State,
+			Zip:    cfg.Address.Zip,
+		}
+	}
+	return dawg.ParseAddress(addrStr)
 }
