@@ -50,29 +50,27 @@ func (c *menuCmd) run(cmd *cobra.Command, args []string) (err error) {
 		newtime := strconv.Itoa(time.Now().Second())
 		err = db.Put("menu_t", []byte(newtime))
 	}
-	tstamp, err := db.Get("menu_t")
-	if err != nil {
-		return err
-	}
-	menutimeStamp, err := strconv.ParseInt(string(tstamp), 10, 64)
-	if err != nil {
-		return err
-	}
-	t := time.Unix(menutimeStamp, 0)
 
-	if cachedMenu != nil && time.Since(t) < (time.Minute*30) {
+	menuCache, err := db.TimeStamp("menu")
+	if err != nil {
+		return err
+	}
+
+	if cachedMenu != nil && time.Since(menuCache) < 30*time.Minute {
 		c.menu = &dawg.Menu{}
 		err = json.Unmarshal(cachedMenu, c.menu)
 		if err != nil {
 			return err
 		}
 	} else {
-		newtime := strconv.Itoa(time.Now().Second())
-		err = db.Put("menu_t", []byte(newtime))
+		err = db.ResetTimeStamp("menu")
 		if err != nil {
 			return err
 		}
-		c.storeNewMenu()
+		err = c.cacheNewMenu()
+		if err != nil {
+			return err
+		}
 	}
 
 	if c.toppings {
@@ -141,7 +139,7 @@ func (c *menuCmd) printToppings() {
 	}
 }
 
-func (c *menuCmd) storeNewMenu() (err error) {
+func (c *menuCmd) cacheNewMenu() (err error) {
 	if store == nil {
 		store, err = dawg.NearestStore(c.addr, cfg.Service)
 		if err != nil {
