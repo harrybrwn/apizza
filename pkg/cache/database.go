@@ -1,9 +1,12 @@
 package cache
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
+	"time"
 
 	"github.com/boltdb/bolt"
 )
@@ -17,18 +20,22 @@ type DataBase struct {
 
 // GetDB returns an initialized DataBase. Will either create a brand new boltdb
 // or open existing one.
-func GetDB(dbfile string) (*DataBase, error) {
-	name := filename(dbfile)
-	boltdb, err := bolt.Open(dbfile, 0600, nil)
+func GetDB(dbfile string) (db *DataBase, err error) {
+	err = ensureDBPath(dbfile)
+	if err != nil {
+		return nil, err
+	}
+	boltdb, err := bolt.Open(dbfile, 0700, nil)
 	if err != nil {
 		return nil, err
 	}
 
+	name := filename(dbfile)
 	err = boltdb.Update(func(tx *bolt.Tx) error {
 		_, err := tx.CreateBucketIfNotExists([]byte(name))
 		return err
 	})
-	db := &DataBase{
+	db = &DataBase{
 		Path:          dbfile,
 		DefaultBucket: name,
 		db:            boltdb,
@@ -69,6 +76,28 @@ func (db *DataBase) Exists(key string) (exists bool) {
 	return exists
 }
 
+// TimeStamp gets the timestamp for a given key and will also create one if it does
+// not already exist.
+func (db *DataBase) TimeStamp(key string) (time.Time, error) {
+	key += "_timestamp"
+	if !db.Exists(key) {
+		return time.Now(), db.Put(key, timeStampNow())
+	}
+
+	rawstamp, err := db.Get(key)
+	if err != nil {
+		return time.Time{}, err
+	}
+	tStamp, err := strconv.ParseInt(string(rawstamp), 10, 64)
+	fmt.Printf("timestamp is... '%s': %s -> %v\n", key, rawstamp, time.Unix(tStamp, 0))
+	return time.Unix(tStamp, 0), err
+}
+
+// ResetTimeStamp stores a new timestamp for the given key.
+func (db *DataBase) ResetTimeStamp(key string) error {
+	return db.Put(key+"_timestamp", timeStampNow())
+}
+
 // Close will close the DataBase's inner bolt.DB
 func (db *DataBase) Close() error {
 	return db.db.Close()
@@ -100,4 +129,17 @@ func (db *DataBase) update(fn func(*bolt.Bucket) error) error {
 func filename(file string) string {
 	fname := filepath.Base(file)
 	return strings.TrimSuffix(fname, filepath.Ext(fname))
+}
+
+func timeStampNow() []byte {
+	newtime := strconv.FormatInt(time.Now().Unix(), 10)
+	return []byte(newtime)
+}
+
+func ensureDBPath(path string) error {
+	p := filepath.Dir(path)
+	if _, err := os.Stat(p); os.IsNotExist(err) {
+		return os.Mkdir(p, 0700)
+	}
+	return nil
 }
