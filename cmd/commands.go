@@ -16,12 +16,16 @@ package cmd
 
 import (
 	"apizza/dawg"
+	"apizza/pkg/cache"
 	"apizza/pkg/config"
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"github.com/spf13/cobra"
 )
+
+var db *cache.DataBase
 
 // Execute runs the root command
 func Execute(args []string) {
@@ -30,7 +34,8 @@ func Execute(args []string) {
 		handle(err)
 	}
 
-	err = initDatabase()
+	dbpath := filepath.Join(config.Folder(), "cache", "apizza.db")
+	db, err = cache.GetDB(dbpath)
 	if err != nil {
 		handle(err)
 	}

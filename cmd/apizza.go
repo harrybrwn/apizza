@@ -19,7 +19,6 @@ import (
 	"apizza/pkg/config"
 	"fmt"
 
-	"github.com/boltdb/bolt"
 	"github.com/spf13/cobra"
 )
 
@@ -27,7 +26,6 @@ var (
 	addr  *dawg.Address
 	menu  *dawg.Menu
 	store *dawg.Store
-	db    *bolt.DB
 )
 
 type apizzaCmd struct {

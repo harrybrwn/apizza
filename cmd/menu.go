@@ -16,8 +16,11 @@ package cmd
 
 import (
 	"apizza/dawg"
+	"encoding/json"
 	"fmt"
+	"strconv"
 	"strings"
+	"time"
 	"unicode/utf8"
 
 	"github.com/spf13/cobra"
@@ -25,7 +28,10 @@ import (
 
 type menuCmd struct {
 	*basecmd
-	all, food, toppings bool
+	menu     *dawg.Menu
+	all      bool
+	food     bool
+	toppings bool
 }
 
 func (c *menuCmd) run(cmd *cobra.Command, args []string) (err error) {
@@ -36,15 +42,43 @@ func (c *menuCmd) run(cmd *cobra.Command, args []string) (err error) {
 		}
 	}
 
-	err = menuManagment()
+	cachedMenu, err := db.Get("menu")
 	if err != nil {
 		return err
 	}
+	if !db.Exists("menu_t") {
+		newtime := strconv.Itoa(time.Now().Second())
+		err = db.Put("menu_t", []byte(newtime))
+	}
+	tstamp, err := db.Get("menu_t")
+	if err != nil {
+		return err
+	}
+	menutimeStamp, err := strconv.ParseInt(string(tstamp), 10, 64)
+	if err != nil {
+		return err
+	}
+	t := time.Unix(menutimeStamp, 0)
+
+	if cachedMenu != nil && time.Since(t) < (time.Minute*30) {
+		c.menu = &dawg.Menu{}
+		err = json.Unmarshal(cachedMenu, c.menu)
+		if err != nil {
+			return err
+		}
+	} else {
+		newtime := strconv.Itoa(time.Now().Second())
+		err = db.Put("menu_t", []byte(newtime))
+		if err != nil {
+			return err
+		}
+		c.storeNewMenu()
+	}
 
 	if c.toppings {
-		printToppings()
+		c.printToppings()
 	} else if c.food {
-		printMenu()
+		c.printMenu()
 	}
 	return nil
 }
@@ -59,7 +93,7 @@ func (b *cliBuilder) newMenuCmd() cliCommand {
 	return c
 }
 
-func printMenu() {
+func (c *menuCmd) printMenu() {
 	var f func(map[string]interface{}, string)
 
 	f = func(m map[string]interface{}, spacer string) {
@@ -78,9 +112,9 @@ func printMenu() {
 			var prod map[string]interface{}
 			max := maxStrLen(prods) + 2
 			for _, p := range prods {
-				_, ok := menu.Products[p.(string)]
+				_, ok := c.menu.Products[p.(string)]
 				if ok {
-					prod = menu.Products[p.(string)].(map[string]interface{})
+					prod = c.menu.Products[p.(string)].(map[string]interface{})
 				} else {
 					continue
 				}
@@ -91,12 +125,12 @@ func printMenu() {
 		}
 	}
 
-	f(menu.Categorization["Food"].(map[string]interface{}), "")
+	f(c.menu.Categorization["Food"].(map[string]interface{}), "")
 }
 
-func printToppings() {
+func (c *menuCmd) printToppings() {
 	indent := strings.Repeat(" ", 4)
-	for key, val := range menu.Toppings {
+	for key, val := range c.menu.Toppings {
 		fmt.Print("  ", key, "\n")
 		for k, v := range val.(map[string]interface{}) {
 			spacer := strings.Repeat(" ", 3-strLen(k))
@@ -105,6 +139,25 @@ func printToppings() {
 		}
 		print("\n")
 	}
+}
+
+func (c *menuCmd) storeNewMenu() (err error) {
+	if store == nil {
+		store, err = dawg.NearestStore(c.addr, cfg.Service)
+		if err != nil {
+			return err
+		}
+	}
+
+	c.menu, err = store.Menu()
+	if err != nil {
+		return err
+	}
+	rawMenu, err := json.Marshal(c.menu)
+	if err != nil {
+		return err
+	}
+	return db.Put("menu", rawMenu)
 }
 
 func maxStrLen(list []interface{}) int {
