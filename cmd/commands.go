@@ -41,8 +41,6 @@ func Execute() {
 		handle(err)
 	}
 
-	builder := newBuilder()
-
 	defer func() {
 		err = db.Close()
 		if err != nil {
@@ -53,6 +51,8 @@ func Execute() {
 			handle(err)
 		}
 	}()
+
+	builder := newBuilder()
 
 	_, err = builder.exec()
 	if err != nil {

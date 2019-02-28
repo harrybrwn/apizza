@@ -18,6 +18,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/spf13/cobra"
 
@@ -26,15 +27,42 @@ import (
 
 type orderCommand struct {
 	*basecmd
-	cached bool
+	showCached bool
+	showPrice  bool
 }
 
 func (c *orderCommand) run(cmd *cobra.Command, args []string) (err error) {
-	var order *dawg.Order
+	order := &dawg.Order{}
 
-	if c.cached {
-		fmt.Println("this is where you would see previous orders and saved orders")
+	if c.showCached {
+		all, err := db.GetAll()
+		if err != nil {
+			return err
+		}
+		for k := range all {
+			if strings.Contains(k, "user_order_") {
+				fmt.Println(getOrderName(k))
+			}
+		}
 		return nil
+	}
+
+	if len(args) > 0 {
+		raw, err := db.Get(toOrderName(args[0]))
+		if err != nil {
+			return err
+		}
+		err = json.Unmarshal(raw, order)
+		if err != nil {
+			return err
+		}
+	}
+	if c.showPrice {
+		price, err := order.Price()
+		if err != nil {
+			return err
+		}
+		fmt.Printf("Price: %f\n", price)
 	}
 
 	if order == nil {
@@ -44,9 +72,11 @@ func (c *orderCommand) run(cmd *cobra.Command, args []string) (err error) {
 }
 
 func newOrderCommand() cliCommand {
-	c := &orderCommand{cached: false}
+	c := &orderCommand{showCached: false, showPrice: false}
 	c.basecmd = newBaseCommand("order", "Order pizza from dominos", c.run)
-	c.cmd.Flags().BoolVarP(&c.cached, "cached", "c", c.cached, "show the previously cached and saved orders")
+
+	c.cmd.Flags().BoolVarP(&c.showCached, "show-cached", "c", c.showCached, "show the previously cached and saved orders")
+	c.cmd.Flags().BoolVarP(&c.showPrice, "show-price", "p", c.showPrice, "show to price of an order")
 	return c
 }
 
@@ -82,12 +112,13 @@ func (c *newOrderCmd) run(cmd *cobra.Command, args []string) (err error) {
 	}
 	fmt.Print(c.name, ": ")
 	fmt.Println(string(raw))
+
 	price, err := order.Price()
 	if err != nil {
 		return err
 	}
 	fmt.Println("Price:", price)
-
+	err = db.Put(toOrderName(c.name), raw)
 	return nil
 }
 
@@ -102,4 +133,12 @@ func (b *cliBuilder) newNewOrderCmd() cliCommand {
 	c.cmd.Flags().StringVarP(&c.name, "name", "n", c.name, "set the name of a new order")
 	c.cmd.Flags().StringVarP(&c.product, "product", "p", c.product, "the product code for the new order")
 	return c
+}
+
+func toOrderName(name string) string {
+	return "user_order_" + name
+}
+
+func getOrderName(name string) string {
+	return strings.Replace(name, "user_order_", "", -1)
 }
