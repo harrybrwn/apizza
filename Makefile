@@ -1,15 +1,18 @@
-PKGS=./cmd ./dawg ./pkg/cache ./pkg/config
 COVER_FILE=test-coverage
 COVER=go tool cover
 
+all: test build clean
 
-build: test
+build:
 	go install apizza
 
-test:
-	go test -v ./... -coverprofile=$(COVER_FILE)
+test: setup
+	go test -cover ./... -coverprofile=$(COVER_FILE)
 	$(COVER) -func=$(COVER_FILE)
 	$(COVER) -html=$(COVER_FILE) -o coverage.html
 
-clean: build
+setup:
+	touch $(COVER_FILE)
+
+clean:
 	rm $(COVER_FILE)

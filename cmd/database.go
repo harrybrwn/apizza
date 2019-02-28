@@ -1,14 +1,15 @@
 package cmd
 
 import (
-	"apizza/dawg"
-	"apizza/pkg/config"
 	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
 
 	"github.com/boltdb/bolt"
+
+	"apizza/dawg"
+	"apizza/pkg/config"
 )
 
 func initDatabase() (err error) {

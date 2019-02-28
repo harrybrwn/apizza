@@ -19,9 +19,9 @@ import (
 	"fmt"
 	"strings"
 
-	"apizza/pkg/config"
-
 	"github.com/spf13/cobra"
+
+	"apizza/pkg/config"
 )
 
 var cfg = &Config{}

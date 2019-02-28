@@ -15,16 +15,17 @@
 package cmd
 
 import (
-	"apizza/dawg"
-	"apizza/pkg/config"
 	"fmt"
 	"os"
 
 	"github.com/spf13/cobra"
+
+	"apizza/dawg"
+	"apizza/pkg/config"
 )
 
 // Execute runs the root command
-func Execute(args []string) {
+func Execute() {
 	err := config.SetConfig(".apizza", cfg)
 	if err != nil {
 		handle(err)

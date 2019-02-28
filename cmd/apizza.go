@@ -15,12 +15,13 @@
 package cmd
 
 import (
-	"apizza/dawg"
-	"apizza/pkg/config"
 	"fmt"
 
 	"github.com/boltdb/bolt"
 	"github.com/spf13/cobra"
+
+	"apizza/dawg"
+	"apizza/pkg/config"
 )
 
 var (

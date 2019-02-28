@@ -15,12 +15,13 @@
 package cmd
 
 import (
-	"apizza/dawg"
 	"encoding/json"
 	"errors"
 	"fmt"
 
 	"github.com/spf13/cobra"
+
+	"apizza/dawg"
 )
 
 type orderCommand struct {
@@ -65,8 +66,6 @@ func (c *newOrderCmd) run(cmd *cobra.Command, args []string) (err error) {
 
 	if c.name == "" {
 		return errors.New("Error: No order name... use '--name=<order name>'")
-	} else if c.name == "new" { // I completely forgot why I did this
-		return errors.New("Error: cannot give an order that name")
 	}
 
 	if c.product != "" {
@@ -83,8 +82,6 @@ func (c *newOrderCmd) run(cmd *cobra.Command, args []string) (err error) {
 	}
 	fmt.Print(c.name, ": ")
 	fmt.Println(string(raw))
-	print("\n\n")
-	fmt.Printf("%+v\n", store)
 	price, err := order.Price()
 	if err != nil {
 		return err

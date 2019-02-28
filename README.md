@@ -1,10 +1,11 @@
 # apizza
 
 [![Build Status](https://travis-ci.com/harrybrwn/apizza.svg?branch=master)](https://travis-ci.com/harrybrwn/apizza)
-[![GoDoc](https://godoc.org/github.com/github.com/harrybrwn/apizza?status.svg)](https://godoc.org/github.com/harrybrwn/apizza)
 [![Coverage Status](https://coveralls.io/repos/github/harrybrwn/apizza/badge.svg?branch=master)](https://coveralls.io/github/harrybrwn/apizza?branch=master)
+[![GoDoc](https://godoc.org/github.com/github.com/harrybrwn/apizza/dawg?status.svg)](https://godoc.org/github.com/harrybrwn/apizza/dawg)
+[![Go Report Card](https://goreportcard.com/badge/github.com/harrybrwn/apizza)](https://goreportcard.com/report/github.com/harrybrwn/apizza)
 
-A cli for ordering domios pizza.
+Dominos pizza from the command line.
 
 ### Table of Contents
 - [Installatoin](#installation)
@@ -18,12 +19,18 @@ go install github.com/harrybrwn/apizza
 ```
 
 ### Setup
-You can either use the built-in `get` and `set` commands to configure apizza or
-you can edit the `config.json` file in your home path. Both of these setup methods
-will have the same results, however, the config folder will not be created if
-the program is not run at least once. If you add a key-value pair to the
-`config.json` file that is not already in the file it will be overwritten the
-next time the program is run.
+The most you have to do as a user in terms of setting up apizza is fill in the
+config variables. The only config variables that are manditory are "Address"
+and "Service" but the other config variables contain information that the Dominos
+website uses.
+
+> **Note**: The config file won't exist if apizza is not run at least once.
+
+To edit the config file, you can either use the built-in `config get` and
+`config set` commands to configure apizza or you can edit the `config.json` file
+in your home path. Both of these setup methods will have the same results If you
+add a key-value pair to the `config.json` file that is not already in the file
+it will be overwritten the next time the program is run.
 
 The `get` and `set` comands can be used one at a time,
 ```
@@ -36,6 +43,7 @@ or they can be moved to one line like so. Make sure that there are no spaces bet
 ```
 apizza config set name=Bob email=bob@example.com service=Carryout
 ```
+
 
 ### The Domios API Wrapper for Go
 The DAWG library is the api wrapper used by apizza for interfacing with the dominos pizza api.
