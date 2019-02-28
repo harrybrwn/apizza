@@ -15,7 +15,6 @@
 package cmd
 
 import (
-	"apizza/dawg"
 	"encoding/json"
 	"fmt"
 	"strconv"
@@ -24,6 +23,8 @@ import (
 	"unicode/utf8"
 
 	"github.com/spf13/cobra"
+
+	"apizza/dawg"
 )
 
 type menuCmd struct {

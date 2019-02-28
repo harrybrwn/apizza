@@ -15,20 +15,21 @@
 package cmd
 
 import (
-	"apizza/dawg"
-	"apizza/pkg/cache"
-	"apizza/pkg/config"
 	"fmt"
 	"os"
 	"path/filepath"
 
 	"github.com/spf13/cobra"
+
+	"apizza/dawg"
+	"apizza/pkg/cache"
+	"apizza/pkg/config"
 )
 
 var db *cache.DataBase
 
 // Execute runs the root command
-func Execute(args []string) {
+func Execute() {
 	err := config.SetConfig(".apizza", cfg)
 	if err != nil {
 		handle(err)
