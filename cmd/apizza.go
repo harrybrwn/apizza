@@ -16,6 +16,7 @@ package cmd
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/spf13/cobra"
 
@@ -31,23 +32,29 @@ var (
 
 type apizzaCmd struct {
 	*basecmd
-	address string
-	service string
-	storeID string
-	test    bool
+	address    string
+	service    string
+	storeID    string
+	test       bool
+	clearCache bool
 }
 
 func (c *apizzaCmd) run(cmd *cobra.Command, args []string) (err error) {
 	if c.test {
 		fmt.Println("config file:", config.File())
-	} else {
-		err = cmd.Usage()
 	}
-	return err
+	if c.clearCache {
+		if err := db.Close(); err != nil {
+			return err
+		}
+		fmt.Println("removing", db.Path)
+		return os.Remove(db.Path)
+	}
+	return cmd.Usage()
 }
 
 func newApizzaCmd() cliCommand {
-	c := &apizzaCmd{address: "", service: cfg.Service}
+	c := &apizzaCmd{address: "", service: cfg.Service, clearCache: false}
 	c.basecmd = newBaseCommand("apizza", "Dominos pizza from the command line.", c.run)
 
 	c.cmd.PersistentFlags().StringVar(&c.address, "address", c.address, "use a specific address")
@@ -55,5 +62,6 @@ func newApizzaCmd() cliCommand {
 
 	c.cmd.Flags().BoolVarP(&c.test, "test", "t", false, "testing flag")
 	c.cmd.Flags().MarkHidden("test")
+	c.cmd.Flags().BoolVar(&c.clearCache, "clear-cache", c.clearCache, "delete the database used for caching")
 	return c
 }
