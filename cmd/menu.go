@@ -17,7 +17,6 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
-	"strconv"
 	"strings"
 	"time"
 	"unicode/utf8"
@@ -47,17 +46,12 @@ func (c *menuCmd) run(cmd *cobra.Command, args []string) (err error) {
 	if err != nil {
 		return err
 	}
-	if !db.Exists("menu_t") {
-		newtime := strconv.Itoa(time.Now().Second())
-		err = db.Put("menu_t", []byte(newtime))
-	}
-
-	menuCache, err := db.TimeStamp("menu")
+	cacheTime, err := db.TimeStamp("menu")
 	if err != nil {
 		return err
 	}
 
-	if cachedMenu != nil && time.Since(menuCache) < 30*time.Minute {
+	if cachedMenu != nil && time.Since(cacheTime) < 30*time.Minute {
 		c.menu = &dawg.Menu{}
 		err = json.Unmarshal(cachedMenu, c.menu)
 		if err != nil {

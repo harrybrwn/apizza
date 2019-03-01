@@ -9,6 +9,7 @@ data
 test
 test-coverage
 coverage.html
+setup
 
 # Other
 .vscode

@@ -85,6 +85,17 @@ func TestDB_Put(t *testing.T) {
 		t.Error("the 'test_val' key should exist")
 	}
 
+	err = db.Put("yes", []byte("'yes' is a key that should exist."))
+	if err != nil {
+		t.Error(err)
+	}
+	if db.Exists("yes") == false {
+		t.Error("should exist")
+	}
+	if db.Exists("no") == true {
+		t.Error("shouldn't exist")
+	}
+
 	if err := db.Close(); err != nil {
 		t.Error("didn't close db:", err)
 	}

@@ -16,3 +16,6 @@ setup:
 
 clean:
 	rm $(COVER_FILE)
+
+reset:
+	rm ~/.apizza/cache/apizza.db

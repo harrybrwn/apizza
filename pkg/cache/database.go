@@ -1,7 +1,6 @@
 package cache
 
 import (
-	"fmt"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -25,7 +24,7 @@ func GetDB(dbfile string) (db *DataBase, err error) {
 	if err != nil {
 		return nil, err
 	}
-	boltdb, err := bolt.Open(dbfile, 0700, nil)
+	boltdb, err := bolt.Open(dbfile, 0777, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -89,7 +88,6 @@ func (db *DataBase) TimeStamp(key string) (time.Time, error) {
 		return time.Time{}, err
 	}
 	tStamp, err := strconv.ParseInt(string(rawstamp), 10, 64)
-	fmt.Printf("timestamp is... '%s': %s -> %v\n", key, rawstamp, time.Unix(tStamp, 0))
 	return time.Unix(tStamp, 0), err
 }
 
