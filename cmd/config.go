@@ -61,16 +61,27 @@ func (c *Config) Set(key string, val interface{}) error {
 
 type configCmd struct {
 	*basecmd
+	file bool
+}
+
+func (c *configCmd) run(cmd *cobra.Command, args []string) error {
+	if c.file {
+		fmt.Print(config.File())
+		return nil
+	}
+	return c.cmd.Usage()
 }
 
 func newConfigCmd() cliCommand {
-	c := &configCmd{}
-	c.basecmd = newVerboseBaseCommand("config", "Configure apizza", nil)
+	c := &configCmd{file: false}
+	c.basecmd = newVerboseBaseCommand("config", "Configure apizza", c.run)
 	c.cmd.Long = `The 'config' command is used for accessing the .apizza config file
 in your home directory. Feel free to edit the .apizza json file
 by hand or use the 'config' command.
 
 ex. 'apizza config get name' or 'apizza config set name=<your name>'`
+
+	c.cmd.Flags().BoolVarP(&c.file, "file", "f", c.file, "show the path to the config.json file")
 	return c
 }
 
