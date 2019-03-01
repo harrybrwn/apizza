@@ -4,6 +4,7 @@ import (
 	"io/ioutil"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/boltdb/bolt"
 )
@@ -95,6 +96,13 @@ func TestDB_Put(t *testing.T) {
 	if db.Exists("no") == true {
 		t.Error("shouldn't exist")
 	}
+	all, err := db.GetAll()
+	if err != nil {
+		t.Error(err)
+	}
+	if all == nil {
+		t.Error("got empty map")
+	}
 
 	if err := db.Close(); err != nil {
 		t.Error("didn't close db:", err)
@@ -127,6 +135,47 @@ func TestDB_Get(t *testing.T) {
 	}
 	if err := db.Close(); err != nil {
 		t.Error("didn't close db:", err)
+	}
+}
+
+func TestTimeStamp(t *testing.T) {
+	db, err := GetDB(temp())
+	if err != nil || db == nil {
+		t.Fatal("bad db creation")
+	}
+
+	stamp, err := db.TimeStamp("test")
+	if err != nil {
+		t.Error(err)
+	}
+	time.Sleep(time.Second / 4)
+	tdiff := time.Since(stamp)
+	if time.Millisecond*240 > tdiff || tdiff > time.Millisecond*260 {
+		t.Error("time stamp is not in the right range")
+	}
+
+	time.Sleep(time.Second / 4)
+	stamp2, err := db.TimeStamp("test")
+	if err != nil {
+		t.Error(err)
+	}
+	time.Sleep(time.Second * 2)
+	t1, t2 := time.Since(stamp), time.Since(stamp2)
+	if t1 > t2 {
+		t.Error("time one shouldn't be bigger than t1")
+	}
+	if t2-t1 > time.Second {
+		t.Error("time difference is way too big")
+	}
+	if err := db.ResetTimeStamp("test"); err != nil {
+		t.Error(err)
+	}
+	stampRe, err := db.TimeStamp("test")
+	if err != nil {
+		t.Error(err)
+	}
+	if time.Since(stampRe) > t2 {
+		t.Error("timestamp didn't reset")
 	}
 }
 

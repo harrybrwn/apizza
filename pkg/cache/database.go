@@ -112,6 +112,7 @@ func (db *DataBase) Destroy() error {
 
 // GetAll returns a map of all the key-value pairs in the database.
 func (db *DataBase) GetAll() (all map[string][]byte, err error) {
+	all = map[string][]byte{}
 	err = db.view(func(b *bolt.Bucket) error {
 		return b.ForEach(func(k, v []byte) error {
 			all[string(k)] = v
