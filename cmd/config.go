@@ -31,12 +31,12 @@ type Config struct {
 	Name    string `config:"name"`
 	Email   string `config:"email"`
 	Address struct {
-		Street       string `config:"street"`
-		Streetname   string `config:"streetname"`
-		Streetnumber string `config:"streetnumber"`
-		City         string `config:"city"`
-		State        string `config:"state"`
-		Zip          string `config:"zip"`
+		Street string `config:"street"`
+		// Streetname   string `config:"streetname"`
+		// Streetnumber string `config:"streetnumber"`
+		City  string `config:"city"`
+		State string `config:"state"`
+		Zip   string `config:"zip"`
 	} `config:"address"`
 	Card struct {
 		Number     string `config:"number"`
@@ -59,14 +59,25 @@ func (c *Config) Set(key string, val interface{}) error {
 	return config.Set(c, key, val)
 }
 
+func (c *Config) validateAddress() error {
+	splitStreet := strings.Split(c.Address.Street, " ")
+	fmt.Println(splitStreet)
+	return nil
+}
+
 type configCmd struct {
 	*basecmd
 	file bool
+	dir  bool
 }
 
 func (c *configCmd) run(cmd *cobra.Command, args []string) error {
 	if c.file {
-		fmt.Print(config.File())
+		fmt.Println(config.File())
+		return nil
+	}
+	if c.dir {
+		fmt.Println(config.Folder())
 		return nil
 	}
 	return c.cmd.Usage()
@@ -82,6 +93,10 @@ by hand or use the 'config' command.
 ex. 'apizza config get name' or 'apizza config set name=<your name>'`
 
 	c.cmd.Flags().BoolVarP(&c.file, "file", "f", c.file, "show the path to the config.json file")
+	c.cmd.Flags().BoolVarP(&c.dir, "dir", "d", c.dir, "show the apizza config directory path")
+	c.cmd.PersistentFlags().MarkHidden("address")
+	c.cmd.PersistentFlags().MarkHidden("service")
+	c.cmd.InheritedFlags().MarkHidden("address")
 	return c
 }
 

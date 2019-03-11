@@ -35,8 +35,9 @@ func Execute() {
 		handle(err)
 	}
 
-	dbpath := filepath.Join(config.Folder(), "cache", "apizza.db")
-	db, err = cache.GetDB(dbpath)
+	builder := newBuilder()
+
+	db, err = cache.GetDB(builder.dbPath())
 	if err != nil {
 		handle(err)
 	}
@@ -51,8 +52,6 @@ func Execute() {
 			handle(err)
 		}
 	}()
-
-	builder := newBuilder()
 
 	_, err = builder.exec()
 	if err != nil {
@@ -164,4 +163,8 @@ func (b *cliBuilder) newBaseCommand(use, short string, f runFunc) *basecmd {
 	base := newBaseCommand(use, short, f)
 	base.addr = b.addr
 	return base
+}
+
+func (b *cliBuilder) dbPath() string {
+	return filepath.Join(config.Folder(), "cache", "apizza.db")
 }

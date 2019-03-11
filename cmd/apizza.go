@@ -21,7 +21,6 @@ import (
 	"github.com/spf13/cobra"
 
 	"apizza/dawg"
-	"apizza/pkg/config"
 )
 
 var (
@@ -41,7 +40,14 @@ type apizzaCmd struct {
 
 func (c *apizzaCmd) run(cmd *cobra.Command, args []string) (err error) {
 	if c.test {
-		fmt.Println("config file:", config.File())
+		all, err := db.GetAll()
+		if err != nil {
+			return err
+		}
+		for k := range all {
+			fmt.Printf("%v\n", k)
+		}
+		return nil
 	}
 	if c.clearCache {
 		if err := db.Close(); err != nil {

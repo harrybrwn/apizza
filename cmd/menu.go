@@ -30,14 +30,12 @@ type menuCmd struct {
 	*basecmd
 	menu     *dawg.Menu
 	all      bool
-	food     bool
 	toppings bool
 }
 
 func (c *menuCmd) run(cmd *cobra.Command, args []string) (err error) {
 	if store == nil {
-		store, err = dawg.NearestStore(c.addr, cfg.Service)
-		if err != nil {
+		if store, err = dawg.NearestStore(c.addr, cfg.Service); err != nil {
 			return err
 		}
 	}
@@ -51,37 +49,33 @@ func (c *menuCmd) run(cmd *cobra.Command, args []string) (err error) {
 		return err
 	}
 
-	if cachedMenu != nil && time.Since(cacheTime) < 30*time.Minute {
+	if cachedMenu != nil && time.Since(cacheTime) < 12*time.Hour {
 		c.menu = &dawg.Menu{}
-		err = json.Unmarshal(cachedMenu, c.menu)
-		if err != nil {
+		if err = json.Unmarshal(cachedMenu, c.menu); err != nil {
 			return err
 		}
 	} else {
-		err = db.ResetTimeStamp("menu")
-		if err != nil {
+		if err = db.ResetTimeStamp("menu"); err != nil {
 			return err
 		}
-		err = c.cacheNewMenu()
-		if err != nil {
+		if err = c.cacheNewMenu(); err != nil {
 			return err
 		}
 	}
 
 	if c.toppings {
 		c.printToppings()
-	} else if c.food {
-		c.printMenu()
+		return nil
 	}
+	c.printMenu()
 	return nil
 }
 
 func (b *cliBuilder) newMenuCmd() cliCommand {
-	c := &menuCmd{all: false, food: true, toppings: false}
+	c := &menuCmd{all: false, toppings: false}
 	c.basecmd = b.newBaseCommand("menu", "Get the Dominos menu.", c.run)
 
 	c.cmd.Flags().BoolVarP(&c.all, "all", "a", c.all, "show the entire menu")
-	c.cmd.Flags().BoolVarP(&c.food, "food", "f", c.food, "print out the food items on the menu")
 	c.cmd.Flags().BoolVarP(&c.toppings, "toppings", "t", c.toppings, "print out the toppings on the menu")
 	return c
 }
