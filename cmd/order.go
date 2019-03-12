@@ -27,14 +27,13 @@ import (
 
 type orderCommand struct {
 	*basecmd
-	showCached bool
-	showPrice  bool
+	showAll   bool
+	showPrice bool
+	delete    bool
 }
 
 func (c *orderCommand) run(cmd *cobra.Command, args []string) (err error) {
-	order := &dawg.Order{}
-
-	if c.showCached {
+	if c.showAll {
 		all, err := db.GetAll()
 		if err != nil {
 			return err
@@ -47,36 +46,42 @@ func (c *orderCommand) run(cmd *cobra.Command, args []string) (err error) {
 		return nil
 	}
 
-	if len(args) > 0 {
-		raw, err := db.Get(toOrderName(args[0]))
-		if err != nil {
-			return err
-		}
-		err = json.Unmarshal(raw, order)
-		if err != nil {
-			return err
-		}
+	if len(args) < 1 {
+		return errors.New("Error: no orders were given")
 	}
+
+	if c.delete {
+		if err = db.Delete("user_order_" + args[0]); err != nil {
+			return err
+		}
+		fmt.Println(args[0], "successfully deleted.")
+		return nil
+	}
+
+	order, err := getOrder(args[0])
+	if err != nil {
+		return err
+	}
+
 	if c.showPrice {
 		price, err := order.Price()
 		if err != nil {
 			return err
 		}
-		fmt.Printf("Price: %f\n", price)
+		fmt.Printf("%s\n", args[0])
+		fmt.Printf("  Price: %f\n", price)
 	}
 
-	if order == nil {
-		return errors.New("Error: no orders were given")
-	}
 	return nil
 }
 
 func newOrderCommand() cliCommand {
-	c := &orderCommand{showCached: false, showPrice: false}
-	c.basecmd = newBaseCommand("order", "Order pizza from dominos", c.run)
+	c := &orderCommand{showAll: false, showPrice: false, delete: false}
+	c.basecmd = newBaseCommand("order [order name]", "Order pizza from dominos", c.run)
 
-	c.cmd.Flags().BoolVarP(&c.showCached, "show-cached", "c", c.showCached, "show the previously cached and saved orders")
+	c.cmd.Flags().BoolVarP(&c.showAll, "show-all", "a", c.showAll, "show the previously cached and saved orders")
 	c.cmd.Flags().BoolVarP(&c.showPrice, "show-price", "p", c.showPrice, "show to price of an order")
+	c.cmd.Flags().BoolVarP(&c.delete, "delete", "d", c.delete, "delete the order from the database")
 	return c
 }
 
@@ -118,7 +123,7 @@ func (c *newOrderCmd) run(cmd *cobra.Command, args []string) (err error) {
 		return err
 	}
 	fmt.Println("Price:", price)
-	err = db.Put(toOrderName(c.name), raw)
+	err = db.Put("user_order_"+c.name, raw)
 	return nil
 }
 
@@ -135,10 +140,18 @@ func (b *cliBuilder) newNewOrderCmd() cliCommand {
 	return c
 }
 
-func toOrderName(name string) string {
-	return "user_order_" + name
-}
-
 func getOrderName(name string) string {
 	return strings.Replace(name, "user_order_", "", -1)
+}
+
+func getOrder(name string) (*dawg.Order, error) {
+	raw, err := db.Get("user_order_" + name)
+	if err != nil {
+		return nil, err
+	}
+	order := &dawg.Order{}
+	if err = json.Unmarshal(raw, order); err != nil {
+		return nil, err
+	}
+	return order, nil
 }

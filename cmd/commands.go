@@ -55,7 +55,8 @@ func Execute() {
 
 	_, err = builder.exec()
 	if err != nil {
-		handle(err)
+		fmt.Println(err)
+		os.Exit(0)
 	}
 }
 

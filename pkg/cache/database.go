@@ -60,7 +60,7 @@ func (db *DataBase) Get(key string) (raw []byte, err error) {
 
 // Delete removes the data for a specific key.
 func (db *DataBase) Delete(key string) error {
-	return db.view(func(b *bolt.Bucket) error {
+	return db.update(func(b *bolt.Bucket) error {
 		return b.Delete([]byte(key))
 	})
 }
