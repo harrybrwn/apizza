@@ -38,9 +38,9 @@ func (c *orderCommand) run(cmd *cobra.Command, args []string) (err error) {
 		if err != nil {
 			return err
 		}
-		for k := range all {
+		for k, v := range all {
 			if strings.Contains(k, "user_order_") {
-				fmt.Println(getOrderName(k))
+				fmt.Println(getOrderName(k), string(v))
 			}
 		}
 		return nil

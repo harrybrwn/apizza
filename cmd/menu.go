@@ -28,9 +28,10 @@ import (
 
 type menuCmd struct {
 	*basecmd
-	menu     *dawg.Menu
-	all      bool
-	toppings bool
+	menu          *dawg.Menu
+	all           bool
+	toppings      bool
+	preconfigured bool
 }
 
 func (c *menuCmd) run(cmd *cobra.Command, args []string) (err error) {
@@ -111,8 +112,23 @@ func (c *menuCmd) printMenu() {
 			print("\n")
 		}
 	}
+	if test {
+		fmt.Println(c.menu.Categorization)
+		for k := range c.menu.Categorization {
+			fmt.Print(k, ", ")
+		}
+		fmt.Print("\n")
+		return
+	}
 
-	f(c.menu.Categorization["Food"].(map[string]interface{}), "")
+	var key string
+	if c.preconfigured {
+		key = "PreconfiguredProducts"
+	} else {
+		key = "Food"
+	}
+
+	f(c.menu.Categorization[key].(map[string]interface{}), "")
 }
 
 func (c *menuCmd) printToppings() {

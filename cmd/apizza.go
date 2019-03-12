@@ -59,14 +59,16 @@ func (c *apizzaCmd) run(cmd *cobra.Command, args []string) (err error) {
 	return cmd.Usage()
 }
 
+var test bool
+
 func newApizzaCmd() cliCommand {
 	c := &apizzaCmd{address: "", service: cfg.Service, clearCache: false}
 	c.basecmd = newBaseCommand("apizza", "Dominos pizza from the command line.", c.run)
 
 	c.cmd.PersistentFlags().StringVar(&c.address, "address", c.address, "use a specific address")
 	c.cmd.PersistentFlags().StringVar(&c.service, "service", c.service, "select a Dominos service, either 'Delivery' or 'Carryout'")
+	c.cmd.PersistentFlags().BoolVar(&test, "test", false, "testing flag")
 
-	c.cmd.Flags().BoolVarP(&c.test, "test", "t", false, "testing flag")
 	c.cmd.Flags().MarkHidden("test")
 	c.cmd.Flags().BoolVar(&c.clearCache, "clear-cache", c.clearCache, "delete the database used for caching")
 	return c
