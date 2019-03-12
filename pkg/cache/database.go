@@ -58,6 +58,13 @@ func (db *DataBase) Get(key string) (raw []byte, err error) {
 	return raw, err
 }
 
+// Delete removes the data for a specific key.
+func (db *DataBase) Delete(key string) error {
+	return db.view(func(b *bolt.Bucket) error {
+		return b.Delete([]byte(key))
+	})
+}
+
 // Exists will return true if the key supplied has data associated with it.
 func (db *DataBase) Exists(key string) (exists bool) {
 	if err := db.view(func(b *bolt.Bucket) error {
