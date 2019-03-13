@@ -39,7 +39,7 @@ func (c *orderCommand) printall() error {
 	}
 	for k := range all {
 		if strings.Contains(k, "user_order_") {
-			fmt.Println(" ", getOrderName(k)) //, string(v))
+			fmt.Println(" ", strings.Replace(k, "user_order_", "", -1)) //, string(v))
 		}
 	}
 	return nil
@@ -153,10 +153,6 @@ func (b *cliBuilder) newNewOrderCmd() cliCommand {
 	return c
 }
 
-func getOrderName(name string) string {
-	return strings.Replace(name, "user_order_", "", -1)
-}
-
 func getOrder(name string) (*dawg.Order, error) {
 	raw, err := db.Get("user_order_" + name)
 	if err != nil {
@@ -173,12 +169,9 @@ func printOrder(name string, o *dawg.Order) {
 	fmt.Println(name)
 	print("  Products:\n")
 	for _, p := range o.Products {
-		// fmt.Printf("      %#v\n", p)
 		fmt.Printf("      %s - quantity: %d, options: %v\n", p.Code, p.Qty, p.Options)
 	}
-	// fmt.Printf("  Products: %+v\n", o.Products)
 	fmt.Printf("  StoreID: %s\n", o.StoreID)
 	fmt.Printf("  Method:  %s\n", o.ServiceMethod)
 	fmt.Printf("  Address: %+v\n", o.Address)
-	// fmt.Printf("%+v\n", o)
 }
