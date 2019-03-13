@@ -97,38 +97,39 @@ func (c *menuCmd) printMenu() {
 				f(c.(map[string]interface{}), spacer+"  ")
 			}
 		} else if len(prods) > 0 { // the printing part
-			var prod map[string]interface{}
-			max := maxStrLen(prods) + 2
+			var product map[string]interface{}
 			for _, p := range prods {
-				_, ok := c.menu.Products[p.(string)]
-				if ok {
-					prod = c.menu.Products[p.(string)].(map[string]interface{})
+				key := p.(string)
+
+				if prod, ok := c.menu.Products[key]; ok {
+					product = prod.(map[string]interface{})
+				} else if prod, ok := c.menu.Variants[key]; ok {
+					product = prod.(map[string]interface{})
+				} else if prod, ok := c.menu.Preconfigured[key]; ok {
+					product = prod.(map[string]interface{})
 				} else {
 					continue
 				}
-				space := strings.Repeat(" ", max-strLen(p.(string)))
-				fmt.Print(spacer+"  ", p, space, prod["Name"], "\n")
+				c.printMenuVarient(product, spacer)
 			}
 			print("\n")
 		}
 	}
-	if test {
-		fmt.Println(c.menu.Categorization)
-		for k := range c.menu.Categorization {
-			fmt.Print(k, ", ")
+	f(c.menu.Categorization["Food"].(map[string]interface{}), "")
+	f(c.menu.Categorization["PreconfiguredProducts"].(map[string]interface{}), "")
+}
+
+func (c *menuCmd) printMenuVarient(product map[string]interface{}, spacer string) {
+	if varients, ok := product["Variants"].([]interface{}); ok {
+		fmt.Printf("%s  \"%s\" (%s)\n", spacer, product["Name"], product["Code"])
+		// max := maxStrLen(varients)
+		for _, v := range varients {
+			fmt.Println(spaces(8), "-", v, spaces(10-strLen(v.(string))), c.menu.Variants[v.(string)].(map[string]interface{})["Name"])
 		}
-		fmt.Print("\n")
-		return
-	}
-
-	var key string
-	if c.preconfigured {
-		key = "PreconfiguredProducts"
 	} else {
-		key = "Food"
+		// fmt.Println("no varients")
+		fmt.Printf("%s  \"%s\"\n%s - %s", spacer, product["Name"], spacer+"    ", product["Code"])
 	}
-
-	f(c.menu.Categorization[key].(map[string]interface{}), "")
 }
 
 func (c *menuCmd) printToppings() {
@@ -176,3 +177,7 @@ func maxStrLen(list []interface{}) int {
 }
 
 var strLen = utf8.RuneCountInString // this is a function
+
+func spaces(i int) string {
+	return strings.Repeat(" ", i)
+}

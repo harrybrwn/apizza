@@ -115,8 +115,11 @@ func (c *newOrderCmd) run(cmd *cobra.Command, args []string) (err error) {
 	if err != nil {
 		return err
 	}
-	fmt.Print(c.name, ": ")
-	fmt.Println(string(raw))
+
+	if test {
+		fmt.Println(c.name, ": ")
+		fmt.Println(string(raw))
+	}
 
 	price, err := order.Price()
 	if err != nil {
