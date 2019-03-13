@@ -73,11 +73,12 @@ func (c *menuCmd) run(cmd *cobra.Command, args []string) (err error) {
 }
 
 func (b *cliBuilder) newMenuCmd() cliCommand {
-	c := &menuCmd{all: false, toppings: false}
+	c := &menuCmd{all: false, toppings: false, preconfigured: false}
 	c.basecmd = b.newBaseCommand("menu", "Get the Dominos menu.", c.run)
 
 	c.cmd.Flags().BoolVarP(&c.all, "all", "a", c.all, "show the entire menu")
 	c.cmd.Flags().BoolVarP(&c.toppings, "toppings", "t", c.toppings, "print out the toppings on the menu")
+	c.cmd.Flags().BoolVarP(&c.preconfigured, "preconfigured", "p", c.preconfigured, "show the pre-configured products on the dominos menu")
 	return c
 }
 
@@ -115,19 +116,30 @@ func (c *menuCmd) printMenu() {
 			print("\n")
 		}
 	}
-	f(c.menu.Categorization["Food"].(map[string]interface{}), "")
-	f(c.menu.Categorization["PreconfiguredProducts"].(map[string]interface{}), "")
+	keys := []string{"Food"}
+	if c.preconfigured {
+		keys = []string{"PreconfiguredProducts"}
+	}
+	if c.all {
+		keys = []string{"PreconfiguredProducts", "Food"}
+	}
+
+	for _, key := range keys {
+		f(c.menu.Categorization[key].(map[string]interface{}), "")
+	}
 }
 
 func (c *menuCmd) printMenuVarient(product map[string]interface{}, spacer string) {
+	// if product has varients, print them
 	if varients, ok := product["Variants"].([]interface{}); ok {
-		fmt.Printf("%s  \"%s\" (%s)\n", spacer, product["Name"], product["Code"])
-		// max := maxStrLen(varients)
+		fmt.Printf("%s  \"%s\" [%s]\n", spacer, product["Name"], product["Code"])
+		max := maxStrLen(varients)
+
 		for _, v := range varients {
-			fmt.Println(spaces(8), "-", v, spaces(10-strLen(v.(string))), c.menu.Variants[v.(string)].(map[string]interface{})["Name"])
+			fmt.Println(spaces(8), "-", v, spaces(max-strLen(v.(string))), c.menu.Variants[v.(string)].(map[string]interface{})["Name"])
 		}
 	} else {
-		// fmt.Println("no varients")
+		// if product has no varients, it is a preconfigured product
 		fmt.Printf("%s  \"%s\"\n%s - %s", spacer, product["Name"], spacer+"    ", product["Code"])
 	}
 }
@@ -138,8 +150,8 @@ func (c *menuCmd) printToppings() {
 		fmt.Print("  ", key, "\n")
 		for k, v := range val.(map[string]interface{}) {
 			spacer := strings.Repeat(" ", 3-strLen(k))
-			fmt.Print(
-				indent, k, spacer, v.(map[string]interface{})["Name"], "\n")
+			fmt.Println(
+				indent, k, spacer, v.(map[string]interface{})["Name"])
 		}
 		print("\n")
 	}
