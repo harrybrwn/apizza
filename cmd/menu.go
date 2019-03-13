@@ -32,6 +32,7 @@ type menuCmd struct {
 	all           bool
 	toppings      bool
 	preconfigured bool
+	item          string
 }
 
 func (c *menuCmd) run(cmd *cobra.Command, args []string) (err error) {
@@ -41,6 +42,39 @@ func (c *menuCmd) run(cmd *cobra.Command, args []string) (err error) {
 		}
 	}
 
+	if err := c.findMenu(); err != nil {
+		return err
+	}
+
+	if len(c.item) > 0 {
+		prod, err := c.findProduct(c.item)
+		if err != nil {
+			return err
+		}
+		iteminfo(prod)
+		return nil
+	}
+
+	if c.toppings {
+		c.printToppings()
+		return nil
+	}
+	c.printMenu()
+	return nil
+}
+
+func (b *cliBuilder) newMenuCmd() cliCommand {
+	c := &menuCmd{all: false, toppings: false, preconfigured: false}
+	c.basecmd = b.newBaseCommand("menu", "Get the Dominos menu.", c.run)
+
+	c.cmd.Flags().BoolVarP(&c.all, "all", "a", c.all, "show the entire menu")
+	c.cmd.Flags().BoolVarP(&c.toppings, "toppings", "t", c.toppings, "print out the toppings on the menu")
+	c.cmd.Flags().BoolVarP(&c.preconfigured, "preconfigured", "p", c.preconfigured, "show the pre-configured products on the dominos menu")
+	c.cmd.Flags().StringVarP(&c.item, "item", "i", "", "show info on the menu item given")
+	return c
+}
+
+func (c *menuCmd) findMenu() error {
 	cachedMenu, err := db.Get("menu")
 	if err != nil {
 		return err
@@ -63,23 +97,7 @@ func (c *menuCmd) run(cmd *cobra.Command, args []string) (err error) {
 			return err
 		}
 	}
-
-	if c.toppings {
-		c.printToppings()
-		return nil
-	}
-	c.printMenu()
 	return nil
-}
-
-func (b *cliBuilder) newMenuCmd() cliCommand {
-	c := &menuCmd{all: false, toppings: false, preconfigured: false}
-	c.basecmd = b.newBaseCommand("menu", "Get the Dominos menu.", c.run)
-
-	c.cmd.Flags().BoolVarP(&c.all, "all", "a", c.all, "show the entire menu")
-	c.cmd.Flags().BoolVarP(&c.toppings, "toppings", "t", c.toppings, "print out the toppings on the menu")
-	c.cmd.Flags().BoolVarP(&c.preconfigured, "preconfigured", "p", c.preconfigured, "show the pre-configured products on the dominos menu")
-	return c
 }
 
 func (c *menuCmd) printMenu() {
@@ -98,20 +116,12 @@ func (c *menuCmd) printMenu() {
 				f(c.(map[string]interface{}), spacer+"  ")
 			}
 		} else if len(prods) > 0 { // the printing part
-			var product map[string]interface{}
 			for _, p := range prods {
-				key := p.(string)
-
-				if prod, ok := c.menu.Products[key]; ok {
-					product = prod.(map[string]interface{})
-				} else if prod, ok := c.menu.Variants[key]; ok {
-					product = prod.(map[string]interface{})
-				} else if prod, ok := c.menu.Preconfigured[key]; ok {
-					product = prod.(map[string]interface{})
-				} else {
+				product, err := c.findProduct(p.(string))
+				if err != nil {
 					continue
 				}
-				c.printMenuVarient(product, spacer)
+				c.printMenuItem(product, spacer)
 			}
 			print("\n")
 		}
@@ -129,18 +139,29 @@ func (c *menuCmd) printMenu() {
 	}
 }
 
-func (c *menuCmd) printMenuVarient(product map[string]interface{}, spacer string) {
+func (c *menuCmd) printMenuItem(product map[string]interface{}, spacer string) {
 	// if product has varients, print them
 	if varients, ok := product["Variants"].([]interface{}); ok {
 		fmt.Printf("%s  \"%s\" [%s]\n", spacer, product["Name"], product["Code"])
 		max := maxStrLen(varients)
 
 		for _, v := range varients {
-			fmt.Println(spaces(8), "-", v, spaces(max-strLen(v.(string))), c.menu.Variants[v.(string)].(map[string]interface{})["Name"])
+			fmt.Println(
+				spacer, "-", v, spaces(max-strLen(v.(string))), c.menu.Variants[v.(string)].(map[string]interface{})["Name"])
 		}
 	} else {
 		// if product has no varients, it is a preconfigured product
 		fmt.Printf("%s  \"%s\"\n%s - %s", spacer, product["Name"], spacer+"    ", product["Code"])
+	}
+}
+
+func iteminfo(prod map[string]interface{}) {
+	fmt.Printf("%s [%s]\n", prod["Name"], prod["Code"])
+
+	for k, v := range prod {
+		if k != "Name" && k != "Tags" {
+			fmt.Printf("    %s: %v\n", k, v)
+		}
 	}
 }
 
@@ -155,6 +176,20 @@ func (c *menuCmd) printToppings() {
 		}
 		print("\n")
 	}
+}
+
+func (c *menuCmd) findProduct(key string) (map[string]interface{}, error) {
+	var product map[string]interface{}
+	if prod, ok := c.menu.Products[key]; ok {
+		product = prod.(map[string]interface{})
+	} else if prod, ok := c.menu.Variants[key]; ok {
+		product = prod.(map[string]interface{})
+	} else if prod, ok := c.menu.Preconfigured[key]; ok {
+		product = prod.(map[string]interface{})
+	} else {
+		return nil, fmt.Errorf("could not find %s", key)
+	}
+	return product, nil
 }
 
 func (c *menuCmd) cacheNewMenu() (err error) {

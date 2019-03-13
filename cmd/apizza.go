@@ -67,9 +67,10 @@ func newApizzaCmd() cliCommand {
 
 	c.cmd.PersistentFlags().StringVar(&c.address, "address", c.address, "use a specific address")
 	c.cmd.PersistentFlags().StringVar(&c.service, "service", c.service, "select a Dominos service, either 'Delivery' or 'Carryout'")
-	c.cmd.PersistentFlags().BoolVar(&test, "test", false, "testing flag")
 
+	c.cmd.PersistentFlags().BoolVar(&test, "test", false, "testing flag")
 	c.cmd.Flags().MarkHidden("test")
+
 	c.cmd.Flags().BoolVar(&c.clearCache, "clear-cache", c.clearCache, "delete the database used for caching")
 	return c
 }
