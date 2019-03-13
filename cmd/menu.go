@@ -147,7 +147,7 @@ func (c *menuCmd) printMenuItem(product map[string]interface{}, spacer string) {
 
 		for _, v := range varients {
 			fmt.Println(
-				spacer, "-", v, spaces(max-strLen(v.(string))), c.menu.Variants[v.(string)].(map[string]interface{})["Name"])
+				spaces(strLen(spacer)+3), "-", v, spaces(max-strLen(v.(string))), c.menu.Variants[v.(string)].(map[string]interface{})["Name"])
 		}
 	} else {
 		// if product has no varients, it is a preconfigured product

@@ -32,22 +32,28 @@ type orderCommand struct {
 	delete    bool
 }
 
+func (c *orderCommand) printall() error {
+	all, err := db.GetAll()
+	if err != nil {
+		return err
+	}
+	for k := range all {
+		if strings.Contains(k, "user_order_") {
+			fmt.Println(" ", getOrderName(k)) //, string(v))
+		}
+	}
+	return nil
+}
+
 func (c *orderCommand) run(cmd *cobra.Command, args []string) (err error) {
-	if c.showAll {
-		all, err := db.GetAll()
-		if err != nil {
-			return err
-		}
-		for k, v := range all {
-			if strings.Contains(k, "user_order_") {
-				fmt.Println(getOrderName(k), string(v))
-			}
-		}
-		return nil
+	if len(args) < 1 {
+		c.showAll = true
 	}
 
-	if len(args) < 1 {
-		return errors.New("Error: no orders were given")
+	if c.showAll {
+		return c.printall()
+	} else if len(args) < 1 {
+		return errors.New("Error: no orders given")
 	}
 
 	if c.delete {
@@ -68,10 +74,11 @@ func (c *orderCommand) run(cmd *cobra.Command, args []string) (err error) {
 		if err != nil {
 			return err
 		}
-		fmt.Printf("%s\n", args[0])
 		fmt.Printf("  Price: %f\n", price)
+		return nil
 	}
 
+	printOrder(args[0], order)
 	return nil
 }
 
@@ -87,7 +94,8 @@ func newOrderCommand() cliCommand {
 
 type newOrderCmd struct {
 	*basecmd
-	name, product string
+	name     string
+	products []string
 }
 
 func (c *newOrderCmd) run(cmd *cobra.Command, args []string) (err error) {
@@ -103,12 +111,14 @@ func (c *newOrderCmd) run(cmd *cobra.Command, args []string) (err error) {
 		return errors.New("Error: No order name... use '--name=<order name>'")
 	}
 
-	if c.product != "" {
-		p, err := store.GetProduct(c.product)
-		if err != nil {
-			return err
+	if len(c.products) > 0 {
+		for _, p := range c.products {
+			prod, err := store.GetProduct(p)
+			if err != nil {
+				return err
+			}
+			order.AddProduct(prod)
 		}
-		order.AddProduct(p)
 	}
 
 	raw, err := json.Marshal(&order)
@@ -131,7 +141,7 @@ func (c *newOrderCmd) run(cmd *cobra.Command, args []string) (err error) {
 }
 
 func (b *cliBuilder) newNewOrderCmd() cliCommand {
-	c := &newOrderCmd{name: "", product: ""}
+	c := &newOrderCmd{name: "", products: []string{}}
 	c.basecmd = b.newBaseCommand(
 		"new",
 		"Create a new order that will be stored in the cache.",
@@ -139,7 +149,7 @@ func (b *cliBuilder) newNewOrderCmd() cliCommand {
 	)
 
 	c.cmd.Flags().StringVarP(&c.name, "name", "n", c.name, "set the name of a new order")
-	c.cmd.Flags().StringVarP(&c.product, "product", "p", c.product, "the product code for the new order")
+	c.cmd.Flags().StringSliceVarP(&c.products, "products", "p", c.products, "product codes for the new order")
 	return c
 }
 
@@ -157,4 +167,18 @@ func getOrder(name string) (*dawg.Order, error) {
 		return nil, err
 	}
 	return order, nil
+}
+
+func printOrder(name string, o *dawg.Order) {
+	fmt.Println(name)
+	print("  Products:\n")
+	for _, p := range o.Products {
+		// fmt.Printf("      %#v\n", p)
+		fmt.Printf("      %s - quantity: %d, options: %v\n", p.Code, p.Qty, p.Options)
+	}
+	// fmt.Printf("  Products: %+v\n", o.Products)
+	fmt.Printf("  StoreID: %s\n", o.StoreID)
+	fmt.Printf("  Method:  %s\n", o.ServiceMethod)
+	fmt.Printf("  Address: %+v\n", o.Address)
+	// fmt.Printf("%+v\n", o)
 }
