@@ -17,6 +17,8 @@ package cmd
 import (
 	"errors"
 	"fmt"
+	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -67,8 +69,9 @@ func (c *Config) validateAddress() error {
 
 type configCmd struct {
 	*basecmd
-	file bool
-	dir  bool
+	file       bool
+	dir        bool
+	resetCache bool
 }
 
 func (c *configCmd) run(cmd *cobra.Command, args []string) error {
@@ -80,11 +83,18 @@ func (c *configCmd) run(cmd *cobra.Command, args []string) error {
 		fmt.Println(config.Folder())
 		return nil
 	}
+	if c.resetCache {
+		err := os.Remove(filepath.Join(config.Folder(), "cache", "apizza.db"))
+		if err != nil {
+			return err
+		}
+		return nil
+	}
 	return c.cmd.Usage()
 }
 
 func newConfigCmd() cliCommand {
-	c := &configCmd{file: false}
+	c := &configCmd{file: false, dir: false, resetCache: false}
 	c.basecmd = newVerboseBaseCommand("config", "Configure apizza", c.run)
 	c.cmd.Long = `The 'config' command is used for accessing the .apizza config file
 in your home directory. Feel free to edit the .apizza json file
@@ -94,9 +104,7 @@ ex. 'apizza config get name' or 'apizza config set name=<your name>'`
 
 	c.cmd.Flags().BoolVarP(&c.file, "file", "f", c.file, "show the path to the config.json file")
 	c.cmd.Flags().BoolVarP(&c.dir, "dir", "d", c.dir, "show the apizza config directory path")
-	c.cmd.PersistentFlags().MarkHidden("address")
-	c.cmd.PersistentFlags().MarkHidden("service")
-	c.cmd.InheritedFlags().MarkHidden("address")
+	c.cmd.Flags().BoolVarP(&c.resetCache, "reset-cache", "r", c.resetCache, "reset the database cache")
 	return c
 }
 
