@@ -42,7 +42,7 @@ func (c *menuCmd) run(cmd *cobra.Command, args []string) (err error) {
 		}
 	}
 
-	if err := c.findMenu(); err != nil {
+	if err := c.initMenu(); err != nil {
 		return err
 	}
 
@@ -74,7 +74,7 @@ func (b *cliBuilder) newMenuCmd() cliCommand {
 	return c
 }
 
-func (c *menuCmd) findMenu() error {
+func (c *menuCmd) initMenu() error {
 	cachedMenu, err := db.Get("menu")
 	if err != nil {
 		return err
@@ -157,9 +157,10 @@ func (c *menuCmd) printMenuItem(product map[string]interface{}, spacer string) {
 
 func iteminfo(prod map[string]interface{}) {
 	fmt.Printf("%s [%s]\n", prod["Name"], prod["Code"])
+	fmt.Printf("    %s: %v\n", "DefaultToppings", prod["Tags"].(map[string]interface{})["DefaultToppings"])
 
 	for k, v := range prod {
-		if k != "Name" && k != "Tags" {
+		if k != "Name" && k != "Tags" && k != "ImageCode" {
 			fmt.Printf("    %s: %v\n", k, v)
 		}
 	}

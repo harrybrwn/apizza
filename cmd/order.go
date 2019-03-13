@@ -27,33 +27,13 @@ import (
 
 type orderCommand struct {
 	*basecmd
-	showAll   bool
 	showPrice bool
 	delete    bool
 }
 
-func (c *orderCommand) printall() error {
-	all, err := db.GetAll()
-	if err != nil {
-		return err
-	}
-	for k := range all {
-		if strings.Contains(k, "user_order_") {
-			fmt.Println(" ", strings.Replace(k, "user_order_", "", -1)) //, string(v))
-		}
-	}
-	return nil
-}
-
 func (c *orderCommand) run(cmd *cobra.Command, args []string) (err error) {
 	if len(args) < 1 {
-		c.showAll = true
-	}
-
-	if c.showAll {
 		return c.printall()
-	} else if len(args) < 1 {
-		return errors.New("Error: no orders given")
 	}
 
 	if c.delete {
@@ -71,22 +51,35 @@ func (c *orderCommand) run(cmd *cobra.Command, args []string) (err error) {
 
 	if c.showPrice {
 		price, err := order.Price()
-		if err != nil {
-			return err
+		if err == nil {
+			fmt.Printf("  Price: %f\n", price)
 		}
-		fmt.Printf("  Price: %f\n", price)
-		return nil
+		return err
 	}
 
 	printOrder(args[0], order)
 	return nil
 }
 
-func newOrderCommand() cliCommand {
-	c := &orderCommand{showAll: false, showPrice: false, delete: false}
-	c.basecmd = newBaseCommand("order [order name]", "Order pizza from dominos", c.run)
+func (c *orderCommand) printall() error {
+	all, err := db.GetAll()
+	if err != nil {
+		return err
+	}
+	for k := range all {
+		if strings.Contains(k, "user_order_") {
+			fmt.Println(" ", strings.Replace(k, "user_order_", "", -1)) //, string(v))
+		}
+	}
+	return nil
+}
 
-	c.cmd.Flags().BoolVarP(&c.showAll, "show-all", "a", c.showAll, "show the previously cached and saved orders")
+func newOrderCommand() cliCommand {
+	c := &orderCommand{showPrice: false, delete: false}
+	c.basecmd = newBaseCommand("order <name>", "Manage user created orders", c.run)
+	c.basecmd.cmd.Long = `The order command gets information on all of the user
+created orders. Use 'apizza order <order name>' for info on a specific order`
+
 	c.cmd.Flags().BoolVarP(&c.showPrice, "show-price", "p", c.showPrice, "show to price of an order")
 	c.cmd.Flags().BoolVarP(&c.delete, "delete", "d", c.delete, "delete the order from the database")
 	return c
