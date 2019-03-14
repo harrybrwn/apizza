@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"apizza/pkg/cache"
 	"bytes"
 	"encoding/json"
 	"fmt"
@@ -10,6 +9,8 @@ import (
 	"reflect"
 	"runtime"
 	"testing"
+
+	"github.com/harrybrwn/apizza/pkg/cache"
 )
 
 func TestRunner(t *testing.T) {

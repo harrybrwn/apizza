@@ -23,7 +23,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"apizza/pkg/config"
+	"github.com/harrybrwn/apizza/pkg/config"
 )
 
 var cfg = &Config{}

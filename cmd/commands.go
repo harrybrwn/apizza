@@ -21,9 +21,9 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"apizza/dawg"
-	"apizza/pkg/cache"
-	"apizza/pkg/config"
+	"github.com/harrybrwn/apizza/dawg"
+	"github.com/harrybrwn/apizza/pkg/cache"
+	"github.com/harrybrwn/apizza/pkg/config"
 )
 
 var db *cache.DataBase

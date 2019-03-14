@@ -24,7 +24,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"apizza/dawg"
+	"github.com/harrybrwn/apizza/dawg"
 )
 
 type orderCommand struct {
