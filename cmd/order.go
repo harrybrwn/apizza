@@ -19,7 +19,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"os"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -31,7 +30,6 @@ type orderCommand struct {
 	*basecmd
 	showPrice bool
 	delete    bool
-	output    io.Writer
 }
 
 func (c *orderCommand) run(cmd *cobra.Command, args []string) (err error) {
@@ -55,7 +53,7 @@ func (c *orderCommand) run(cmd *cobra.Command, args []string) (err error) {
 	if c.showPrice {
 		price, err := order.Price()
 		if err == nil {
-			fmt.Printf("  Price: %f\n", price)
+			fmt.Fprintf(c.output, "  Price: %f\n", price)
 		}
 		return err
 	}
@@ -78,7 +76,7 @@ func (c *orderCommand) printall() error {
 }
 
 func newOrderCommand() cliCommand {
-	c := &orderCommand{showPrice: false, delete: false, output: os.Stdout}
+	c := &orderCommand{showPrice: false, delete: false}
 	c.basecmd = newBaseCommand("order <name>", "Manage user created orders", c.run)
 	c.basecmd.cmd.Long = `The order command gets information on all of the user
 created orders. Use 'apizza order <order name>' for info on a specific order`

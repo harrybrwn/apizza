@@ -16,6 +16,7 @@ package cmd
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 
@@ -69,8 +70,9 @@ type cliCommand interface {
 }
 
 type basecmd struct {
-	cmd  *cobra.Command
-	addr *dawg.Address
+	cmd    *cobra.Command
+	addr   *dawg.Address
+	output io.Writer
 }
 
 func (bc *basecmd) command() *cobra.Command {
@@ -103,13 +105,16 @@ func newVerboseBaseCommand(use, short string, f runFunc) *basecmd {
 }
 
 func newBaseCommand(use, short string, f runFunc) *basecmd {
-	base := &basecmd{cmd: &cobra.Command{
-		Use:           use,
-		Short:         short,
-		RunE:          f,
-		SilenceErrors: true,
-		SilenceUsage:  true,
-	}}
+	base := &basecmd{
+		cmd: &cobra.Command{
+			Use:           use,
+			Short:         short,
+			RunE:          f,
+			SilenceErrors: true,
+			SilenceUsage:  true,
+		},
+		output: os.Stdout,
+	}
 	if f == nil {
 		base.cmd.RunE = base.run
 	}

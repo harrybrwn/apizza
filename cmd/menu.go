@@ -18,7 +18,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"os"
 	"strings"
 	"time"
 	"unicode/utf8"
@@ -35,7 +34,6 @@ type menuCmd struct {
 	toppings      bool
 	preconfigured bool
 	item          string
-	output        io.Writer
 }
 
 func (c *menuCmd) run(cmd *cobra.Command, args []string) (err error) {
@@ -67,7 +65,7 @@ func (c *menuCmd) run(cmd *cobra.Command, args []string) (err error) {
 }
 
 func (b *cliBuilder) newMenuCmd() cliCommand {
-	c := &menuCmd{output: os.Stdout, all: false, toppings: false, preconfigured: false}
+	c := &menuCmd{all: false, toppings: false, preconfigured: false}
 	c.basecmd = b.newBaseCommand("menu", "Get the Dominos menu.", c.run)
 
 	c.cmd.Flags().BoolVarP(&c.all, "all", "a", c.all, "show the entire menu")
