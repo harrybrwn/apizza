@@ -1,7 +1,6 @@
 # apizza
 
 [![Build Status](https://travis-ci.com/harrybrwn/apizza.svg?branch=master)](https://travis-ci.com/harrybrwn/apizza)
-[![Coverage Status](https://coveralls.io/repos/github/harrybrwn/apizza/badge.svg?branch=master)](https://coveralls.io/github/harrybrwn/apizza?branch=master)
 [![GoDoc](https://godoc.org/github.com/github.com/harrybrwn/apizza/dawg?status.svg)](https://godoc.org/github.com/harrybrwn/apizza/dawg)
 [![Go Report Card](https://goreportcard.com/badge/github.com/harrybrwn/apizza)](https://goreportcard.com/report/github.com/harrybrwn/apizza)
 
