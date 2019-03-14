@@ -47,8 +47,10 @@ apizza config set name=Bob email=bob@example.com service=Carryout
 
 ### Orders
 To save a new order, use `apizza order new` along with at least the `--name` and
-`--products` flags. The products flag takes at least one string but accepts a list of
-comma separated product codes that can be found in the menu command. Viewing all of the saved orders is as simple as `apizza order`.
+`--products` flags. The name flag is the name that the app will use when refering to
+that order. The products flag takes at least one string but accepts a list of
+comma separated product codes that can be found in the menu command. Viewing all of
+the saved orders is as simple as `apizza order`.
 
 
 ### The Domios API Wrapper for Go
