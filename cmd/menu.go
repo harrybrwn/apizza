@@ -17,6 +17,8 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
+	"io"
+	"os"
 	"strings"
 	"time"
 	"unicode/utf8"
@@ -33,6 +35,7 @@ type menuCmd struct {
 	toppings      bool
 	preconfigured bool
 	item          string
+	output        io.Writer
 }
 
 func (c *menuCmd) run(cmd *cobra.Command, args []string) (err error) {
@@ -51,7 +54,7 @@ func (c *menuCmd) run(cmd *cobra.Command, args []string) (err error) {
 		if err != nil {
 			return err
 		}
-		iteminfo(prod)
+		iteminfo(prod, c.output)
 		return nil
 	}
 
@@ -64,12 +67,13 @@ func (c *menuCmd) run(cmd *cobra.Command, args []string) (err error) {
 }
 
 func (b *cliBuilder) newMenuCmd() cliCommand {
-	c := &menuCmd{all: false, toppings: false, preconfigured: false}
+	c := &menuCmd{output: os.Stdout, all: false, toppings: false, preconfigured: false}
 	c.basecmd = b.newBaseCommand("menu", "Get the Dominos menu.", c.run)
 
 	c.cmd.Flags().BoolVarP(&c.all, "all", "a", c.all, "show the entire menu")
 	c.cmd.Flags().BoolVarP(&c.toppings, "toppings", "t", c.toppings, "print out the toppings on the menu")
-	c.cmd.Flags().BoolVarP(&c.preconfigured, "preconfigured", "p", c.preconfigured, "show the pre-configured products on the dominos menu")
+	c.cmd.Flags().BoolVarP(&c.preconfigured, "preconfigured",
+		"p", c.preconfigured, "show the pre-configured products on the dominos menu")
 	c.cmd.Flags().StringVarP(&c.item, "item", "i", "", "show info on the menu item given")
 	return c
 }
@@ -109,7 +113,7 @@ func (c *menuCmd) printMenu() {
 
 		// if there is nothing in that category, dont print the code name
 		if len(cats) != 0 || len(prods) != 0 {
-			fmt.Print(spacer, m["Code"], "\n")
+			fmt.Fprint(c.output, spacer, m["Code"], "\n")
 		}
 		if len(cats) > 0 { // the recursive part
 			for _, c := range cats {
@@ -123,7 +127,7 @@ func (c *menuCmd) printMenu() {
 				}
 				c.printMenuItem(product, spacer)
 			}
-			print("\n")
+			fmt.Fprint(c.output, "\n")
 		}
 	}
 	keys := []string{"Food"}
@@ -142,26 +146,26 @@ func (c *menuCmd) printMenu() {
 func (c *menuCmd) printMenuItem(product map[string]interface{}, spacer string) {
 	// if product has varients, print them
 	if varients, ok := product["Variants"].([]interface{}); ok {
-		fmt.Printf("%s  \"%s\" [%s]\n", spacer, product["Name"], product["Code"])
+		fmt.Fprintf(c.output, "%s  \"%s\" [%s]\n", spacer, product["Name"], product["Code"])
 		max := maxStrLen(varients)
 
 		for _, v := range varients {
-			fmt.Println(
-				spaces(strLen(spacer)+3), "-", v, spaces(max-strLen(v.(string))), c.menu.Variants[v.(string)].(map[string]interface{})["Name"])
+			fmt.Fprintln(
+				c.output, spaces(strLen(spacer)+3), "-", v, spaces(max-strLen(v.(string))), c.menu.Variants[v.(string)].(map[string]interface{})["Name"])
 		}
 	} else {
 		// if product has no varients, it is a preconfigured product
-		fmt.Printf("%s  \"%s\"\n%s - %s", spacer, product["Name"], spacer+"    ", product["Code"])
+		fmt.Fprintf(c.output, "%s  \"%s\"\n%s - %s", spacer, product["Name"], spacer+"    ", product["Code"])
 	}
 }
 
-func iteminfo(prod map[string]interface{}) {
-	fmt.Printf("%s [%s]\n", prod["Name"], prod["Code"])
-	fmt.Printf("    %s: %v\n", "DefaultToppings", prod["Tags"].(map[string]interface{})["DefaultToppings"])
+func iteminfo(prod map[string]interface{}, output io.Writer) {
+	fmt.Fprintf(output, "%s [%s]\n", prod["Name"], prod["Code"])
+	fmt.Fprintf(output, "    %s: %v\n", "DefaultToppings", prod["Tags"].(map[string]interface{})["DefaultToppings"])
 
 	for k, v := range prod {
 		if k != "Name" && k != "Tags" && k != "ImageCode" {
-			fmt.Printf("    %s: %v\n", k, v)
+			fmt.Fprintf(output, "    %s: %v\n", k, v)
 		}
 	}
 }
@@ -169,13 +173,13 @@ func iteminfo(prod map[string]interface{}) {
 func (c *menuCmd) printToppings() {
 	indent := strings.Repeat(" ", 4)
 	for key, val := range c.menu.Toppings {
-		fmt.Print("  ", key, "\n")
+		fmt.Fprint(c.output, "  ", key, "\n")
 		for k, v := range val.(map[string]interface{}) {
 			spacer := strings.Repeat(" ", 3-strLen(k))
-			fmt.Println(
-				indent, k, spacer, v.(map[string]interface{})["Name"])
+			fmt.Fprintln(
+				c.output, indent, k, spacer, v.(map[string]interface{})["Name"])
 		}
-		print("\n")
+		fmt.Fprint(c.output, "\n")
 	}
 }
 
