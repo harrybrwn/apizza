@@ -18,6 +18,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
+	"os"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -29,6 +31,7 @@ type orderCommand struct {
 	*basecmd
 	showPrice bool
 	delete    bool
+	output    io.Writer
 }
 
 func (c *orderCommand) run(cmd *cobra.Command, args []string) (err error) {
@@ -57,8 +60,7 @@ func (c *orderCommand) run(cmd *cobra.Command, args []string) (err error) {
 		return err
 	}
 
-	printOrder(args[0], order)
-	return nil
+	return printOrder(args[0], order)
 }
 
 func (c *orderCommand) printall() error {
@@ -66,16 +68,17 @@ func (c *orderCommand) printall() error {
 	if err != nil {
 		return err
 	}
+	fmt.Fprintln(c.output, "Your Orders:")
 	for k := range all {
 		if strings.Contains(k, "user_order_") {
-			fmt.Println(" ", strings.Replace(k, "user_order_", "", -1)) //, string(v))
+			fmt.Fprintln(c.output, " ", strings.Replace(k, "user_order_", "", -1)) //, string(v))
 		}
 	}
 	return nil
 }
 
 func newOrderCommand() cliCommand {
-	c := &orderCommand{showPrice: false, delete: false}
+	c := &orderCommand{showPrice: false, delete: false, output: os.Stdout}
 	c.basecmd = newBaseCommand("order <name>", "Manage user created orders", c.run)
 	c.basecmd.cmd.Long = `The order command gets information on all of the user
 created orders. Use 'apizza order <order name>' for info on a specific order`
@@ -118,17 +121,6 @@ func (c *newOrderCmd) run(cmd *cobra.Command, args []string) (err error) {
 	if err != nil {
 		return err
 	}
-
-	if test {
-		fmt.Println(c.name, ": ")
-		fmt.Println(string(raw))
-	}
-
-	price, err := order.Price()
-	if err != nil {
-		return err
-	}
-	fmt.Println("Price:", price)
 	err = db.Put("user_order_"+c.name, raw)
 	return nil
 }
@@ -158,13 +150,18 @@ func getOrder(name string) (*dawg.Order, error) {
 	return order, nil
 }
 
-func printOrder(name string, o *dawg.Order) {
+func printOrder(name string, o *dawg.Order) error {
 	fmt.Println(name)
 	print("  Products:\n")
 	for _, p := range o.Products {
 		fmt.Printf("      %s - quantity: %d, options: %v\n", p.Code, p.Qty, p.Options)
 	}
+	price, err := o.Price()
+	if err == nil {
+		fmt.Printf("  Price:   %f\n", price)
+	}
 	fmt.Printf("  StoreID: %s\n", o.StoreID)
 	fmt.Printf("  Method:  %s\n", o.ServiceMethod)
 	fmt.Printf("  Address: %+v\n", o.Address)
+	return nil
 }

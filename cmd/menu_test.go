@@ -19,6 +19,7 @@ func TestRunner(t *testing.T) {
 
 	var tests = []func(*testing.T){
 		initDummyCheck,
+		testOrderNew,
 		testFindProduct,
 	}
 
@@ -35,16 +36,17 @@ func testFindProduct(t *testing.T) {
 	}
 	buf := &bytes.Buffer{}
 	c.output = buf
+	c.all = true
 
 	c.printMenu()
-
-	// dummy check
 	if len(buf.Bytes()) < 10000 {
 		t.Error("the menu seems to be a bit short in length")
 	}
 	buf.Reset()
-
 	c.printToppings()
+	if len(buf.Bytes()) < 1000 {
+		t.Error("toppings menu seems too short")
+	}
 }
 
 func TestStringStuff(t *testing.T) {
