@@ -1,6 +1,6 @@
 COVER_FILE=test-coverage
 COVER=go tool cover
-OUTPUT=$(GOPATH)/bin/apizza$(GOEXE)
+OUTPUT=$(GOPATH)/bin/apizza
 
 all: test build clean
 
