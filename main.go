@@ -15,7 +15,7 @@
 package main
 
 import (
-	"apizza/cmd"
+	"github.com/harrybrwn/apizza/cmd"
 )
 
 func main() {
