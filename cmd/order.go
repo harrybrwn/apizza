@@ -60,7 +60,7 @@ func (c *orderCommand) run(cmd *cobra.Command, args []string) (err error) {
 		return err
 	}
 
-	return printOrder(args[0], order)
+	return printOrder(args[0], order, c.output)
 }
 
 func (c *orderCommand) printall() error {
@@ -150,18 +150,18 @@ func getOrder(name string) (*dawg.Order, error) {
 	return order, nil
 }
 
-func printOrder(name string, o *dawg.Order) error {
-	fmt.Println(name)
-	print("  Products:\n")
+func printOrder(name string, o *dawg.Order, output io.Writer) error {
+	fmt.Fprintln(output, name)
+	fmt.Fprintln(output, "  Products:")
 	for _, p := range o.Products {
-		fmt.Printf("      %s - quantity: %d, options: %v\n", p.Code, p.Qty, p.Options)
+		fmt.Fprintf(output, "    %s - quantity: %d, options: %v\n", p.Code, p.Qty, p.Options)
 	}
 	price, err := o.Price()
 	if err == nil {
-		fmt.Printf("  Price:   %f\n", price)
+		fmt.Fprintf(output, "  Price:   %f\n", price)
 	}
-	fmt.Printf("  StoreID: %s\n", o.StoreID)
-	fmt.Printf("  Method:  %s\n", o.ServiceMethod)
-	fmt.Printf("  Address: %+v\n", o.Address)
+	fmt.Fprintf(output, "  StoreID: %s\n", o.StoreID)
+	fmt.Fprintf(output, "  Method:  %s\n", o.ServiceMethod)
+	fmt.Fprintf(output, "  Address: %+v\n", o.Address)
 	return nil
 }
