@@ -90,6 +90,15 @@ func (bc *basecmd) run(cmd *cobra.Command, args []string) error {
 	return bc.cmd.Usage()
 }
 
+func (bc *basecmd) getstore() (err error) {
+	if store == nil {
+		if store, err = dawg.NearestStore(bc.addr, cfg.Service); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 type runFunc func(*cobra.Command, []string) error
 
 func newVerboseBaseCommand(use, short string, f runFunc) *basecmd {

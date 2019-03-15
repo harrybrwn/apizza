@@ -36,11 +36,9 @@ type menuCmd struct {
 	item          string
 }
 
-func (c *menuCmd) run(cmd *cobra.Command, args []string) (err error) {
-	if store == nil {
-		if store, err = dawg.NearestStore(c.addr, cfg.Service); err != nil {
-			return err
-		}
+func (c *menuCmd) run(cmd *cobra.Command, args []string) error {
+	if err := c.getstore(); err != nil {
+		return err
 	}
 
 	if err := c.initMenu(); err != nil {

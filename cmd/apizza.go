@@ -25,7 +25,6 @@ import (
 
 var (
 	addr  *dawg.Address
-	menu  *dawg.Menu
 	store *dawg.Store
 )
 

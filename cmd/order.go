@@ -84,11 +84,8 @@ type newOrderCmd struct {
 }
 
 func (c *newOrderCmd) run(cmd *cobra.Command, args []string) (err error) {
-	if store == nil {
-		store, err = dawg.NearestStore(c.addr, cfg.Service)
-		if err != nil {
-			return err
-		}
+	if err := c.getstore(); err != nil {
+		return err
 	}
 	order := store.NewOrder()
 
