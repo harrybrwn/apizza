@@ -7,8 +7,9 @@ import (
 )
 
 func testOrderNew(t *testing.T) {
-	order := newOrderCommand().(*orderCommand)
-	new := newBuilder().newNewOrderCmd()
+	b := newBuilder()
+	order := b.newOrderCommand().(*orderCommand)
+	new := b.newNewOrderCmd()
 
 	new.command().Flags().Parse([]string{"--name=testorder", "--products=12SCMEATZA"})
 	err := new.run(new.command(), []string{})

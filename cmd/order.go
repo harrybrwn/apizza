@@ -52,7 +52,6 @@ func (c *orderCommand) run(cmd *cobra.Command, args []string) (err error) {
 
 	if c.addProduct != "" {
 		if err := c.getstore(); err != nil {
-			fmt.Println("err after getstore")
 			return err
 		}
 		p, err := store.GetProduct(c.addProduct)
@@ -60,7 +59,11 @@ func (c *orderCommand) run(cmd *cobra.Command, args []string) (err error) {
 			return err
 		}
 		order.AddProduct(p)
+		if err := saveOrder(args[0], order); err != nil {
+			return err
+		}
 		fmt.Fprintf(c.output, "%s added successfully.", c.addProduct)
+		return nil
 	}
 
 	return c.printOrder(args[0], order)
@@ -80,9 +83,9 @@ func (c *orderCommand) printall() error {
 	return nil
 }
 
-func newOrderCommand() cliCommand {
+func (b *cliBuilder) newOrderCommand() cliCommand {
 	c := &orderCommand{price: false, delete: false}
-	c.basecmd = newBaseCommand("order <name>", "Manage user created orders", c.run)
+	c.basecmd = b.newBaseCommand("order <name>", "Manage user created orders", c.run)
 	c.basecmd.cmd.Long = `The order command gets information on all of the user
 created orders. Use 'apizza order <order name>' for info on a specific order`
 
@@ -117,13 +120,7 @@ func (c *newOrderCmd) run(cmd *cobra.Command, args []string) (err error) {
 			order.AddProduct(prod)
 		}
 	}
-
-	raw, err := json.Marshal(&order)
-	if err != nil {
-		return err
-	}
-	err = db.Put("user_order_"+c.name, raw)
-	return nil
+	return saveOrder(c.name, order)
 }
 
 func (b *cliBuilder) newNewOrderCmd() cliCommand {
@@ -145,13 +142,21 @@ func getOrder(name string) (*dawg.Order, error) {
 		return nil, err
 	}
 	if raw == nil {
-		return nil, fmt.Errorf("cannot find %s", name)
+		return nil, fmt.Errorf("cannot find order %s", name)
 	}
 	order := &dawg.Order{}
 	if err = json.Unmarshal(raw, order); err != nil {
 		return nil, err
 	}
 	return order, nil
+}
+
+func saveOrder(name string, o *dawg.Order) error {
+	raw, err := json.Marshal(o)
+	if err != nil {
+		return err
+	}
+	return db.Put("user_order_"+name, raw)
 }
 
 func (c *orderCommand) printOrder(name string, o *dawg.Order) (err error) {
