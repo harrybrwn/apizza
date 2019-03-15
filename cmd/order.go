@@ -27,8 +27,9 @@ import (
 
 type orderCommand struct {
 	*basecmd
-	price  bool
-	delete bool
+	price      bool
+	delete     bool
+	addProduct string
 }
 
 func (c *orderCommand) run(cmd *cobra.Command, args []string) (err error) {
@@ -40,13 +41,26 @@ func (c *orderCommand) run(cmd *cobra.Command, args []string) (err error) {
 		if err = db.Delete("user_order_" + args[0]); err != nil {
 			return err
 		}
-		fmt.Println(args[0], "successfully deleted.")
+		fmt.Fprintln(c.output, args[0], "successfully deleted.")
 		return nil
 	}
 
 	order, err := getOrder(args[0])
 	if err != nil {
 		return err
+	}
+
+	if c.addProduct != "" {
+		if err := c.getstore(); err != nil {
+			fmt.Println("err after getstore")
+			return err
+		}
+		p, err := store.GetProduct(c.addProduct)
+		if err != nil {
+			return err
+		}
+		order.AddProduct(p)
+		fmt.Fprintf(c.output, "%s added successfully.", c.addProduct)
 	}
 
 	return c.printOrder(args[0], order)
@@ -73,6 +87,7 @@ func newOrderCommand() cliCommand {
 created orders. Use 'apizza order <order name>' for info on a specific order`
 
 	c.cmd.Flags().BoolVarP(&c.price, "price", "p", c.price, "show to price of an order")
+	c.cmd.Flags().StringVarP(&c.addProduct, "add-product", "a", c.addProduct, "add a product to the order")
 	c.cmd.Flags().BoolVarP(&c.delete, "delete", "d", c.delete, "delete the order from the database")
 	return c
 }
@@ -90,7 +105,7 @@ func (c *newOrderCmd) run(cmd *cobra.Command, args []string) (err error) {
 	order := store.NewOrder()
 
 	if c.name == "" {
-		return errors.New("Error: No order name... use '--name=<order name>'")
+		return errors.New("No order name... use '--name=<order name>'")
 	}
 
 	if len(c.products) > 0 {
@@ -128,6 +143,9 @@ func getOrder(name string) (*dawg.Order, error) {
 	raw, err := db.Get("user_order_" + name)
 	if err != nil {
 		return nil, err
+	}
+	if raw == nil {
+		return nil, fmt.Errorf("cannot find %s", name)
 	}
 	order := &dawg.Order{}
 	if err = json.Unmarshal(raw, order); err != nil {

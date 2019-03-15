@@ -56,7 +56,7 @@ func Execute() {
 
 	_, err = builder.exec()
 	if err != nil {
-		fmt.Println(err)
+		fmt.Printf("Error: %s\n", err)
 		os.Exit(0)
 	}
 }
