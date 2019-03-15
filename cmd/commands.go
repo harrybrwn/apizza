@@ -93,11 +93,14 @@ func (bc *basecmd) run(cmd *cobra.Command, args []string) error {
 type runFunc func(*cobra.Command, []string) error
 
 func newVerboseBaseCommand(use, short string, f runFunc) *basecmd {
-	base := &basecmd{cmd: &cobra.Command{
-		Use:   use,
-		Short: short,
-		RunE:  f,
-	}}
+	base := &basecmd{
+		cmd: &cobra.Command{
+			Use:   use,
+			Short: short,
+			RunE:  f,
+		},
+		output: os.Stdout,
+	}
 	if f == nil {
 		base.cmd.RunE = base.run
 	}

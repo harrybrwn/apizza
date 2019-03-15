@@ -18,7 +18,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -28,8 +27,8 @@ import (
 
 type orderCommand struct {
 	*basecmd
-	showPrice bool
-	delete    bool
+	price  bool
+	delete bool
 }
 
 func (c *orderCommand) run(cmd *cobra.Command, args []string) (err error) {
@@ -50,15 +49,7 @@ func (c *orderCommand) run(cmd *cobra.Command, args []string) (err error) {
 		return err
 	}
 
-	if c.showPrice {
-		price, err := order.Price()
-		if err == nil {
-			fmt.Fprintf(c.output, "  Price: %f\n", price)
-		}
-		return err
-	}
-
-	return printOrder(args[0], order, c.output)
+	return c.printOrder(args[0], order)
 }
 
 func (c *orderCommand) printall() error {
@@ -76,12 +67,12 @@ func (c *orderCommand) printall() error {
 }
 
 func newOrderCommand() cliCommand {
-	c := &orderCommand{showPrice: false, delete: false}
+	c := &orderCommand{price: false, delete: false}
 	c.basecmd = newBaseCommand("order <name>", "Manage user created orders", c.run)
 	c.basecmd.cmd.Long = `The order command gets information on all of the user
 created orders. Use 'apizza order <order name>' for info on a specific order`
 
-	c.cmd.Flags().BoolVarP(&c.showPrice, "show-price", "p", c.showPrice, "show to price of an order")
+	c.cmd.Flags().BoolVarP(&c.price, "price", "p", c.price, "show to price of an order")
 	c.cmd.Flags().BoolVarP(&c.delete, "delete", "d", c.delete, "delete the order from the database")
 	return c
 }
@@ -148,18 +139,26 @@ func getOrder(name string) (*dawg.Order, error) {
 	return order, nil
 }
 
-func printOrder(name string, o *dawg.Order, output io.Writer) error {
-	fmt.Fprintln(output, name)
-	fmt.Fprintln(output, "  Products:")
+func (c *orderCommand) printOrder(name string, o *dawg.Order) (err error) {
+	var p float64
+	if c.price {
+		p, err = o.Price()
+		if err != nil {
+			return err
+		}
+	}
+
+	fmt.Fprintln(c.output, name)
+	if c.price {
+		fmt.Fprintf(c.output, "  Price: %f\n", p)
+	}
+
+	fmt.Fprintln(c.output, "  Products:")
 	for _, p := range o.Products {
-		fmt.Fprintf(output, "    %s - quantity: %d, options: %v\n", p.Code, p.Qty, p.Options)
+		fmt.Fprintf(c.output, "    %s - quantity: %d, options: %v\n", p.Code, p.Qty, p.Options)
 	}
-	price, err := o.Price()
-	if err == nil {
-		fmt.Fprintf(output, "  Price:   %f\n", price)
-	}
-	fmt.Fprintf(output, "  StoreID: %s\n", o.StoreID)
-	fmt.Fprintf(output, "  Method:  %s\n", o.ServiceMethod)
-	fmt.Fprintf(output, "  Address: %+v\n", o.Address)
+	fmt.Fprintf(c.output, "  StoreID: %s\n", o.StoreID)
+	fmt.Fprintf(c.output, "  Method:  %s\n", o.ServiceMethod)
+	fmt.Fprintf(c.output, "  Address: %+v\n", o.Address)
 	return nil
 }
