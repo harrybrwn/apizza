@@ -20,7 +20,7 @@ func TestUtils(t *testing.T) {
 }
 
 func TestGetDB(t *testing.T) {
-	db, err := GetDB(temp())
+	db, err := GetDB(tempfile())
 	if err != nil {
 		t.Error(err)
 	}
@@ -48,7 +48,7 @@ func TestGetDB_ExpectedErr(t *testing.T) {
 }
 
 func TestDB_Put(t *testing.T) {
-	dbfname := temp()
+	dbfname := tempfile()
 	fname := filename(dbfname)
 	db, err := GetDB(dbfname)
 	if err != nil || db == nil {
@@ -110,7 +110,7 @@ func TestDB_Put(t *testing.T) {
 }
 
 func TestDB_Get(t *testing.T) {
-	dbfname := temp()
+	dbfname := tempfile()
 	fname := filename(dbfname)
 	db, err := GetDB(dbfname)
 	if err != nil || db == nil {
@@ -139,7 +139,7 @@ func TestDB_Get(t *testing.T) {
 }
 
 func TestTimeStamp(t *testing.T) {
-	db, err := GetDB(temp())
+	db, err := GetDB(tempfile())
 	if err != nil || db == nil {
 		t.Fatal("bad db creation")
 	}
@@ -179,8 +179,7 @@ func TestTimeStamp(t *testing.T) {
 	}
 }
 
-func temp() string {
-	// f, err := ioutil.TempFile("", "apizza-")
+func tempfile() string {
 	f, err := ioutil.TempFile("", "")
 	if err != nil {
 		panic(err)
