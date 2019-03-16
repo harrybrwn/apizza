@@ -11,7 +11,7 @@ func testOrderNew(t *testing.T) {
 	order := b.newOrderCommand().(*orderCommand)
 	new := b.newNewOrderCmd()
 
-	new.command().Flags().Parse([]string{"--name=testorder", "--products=12SCMEATZA"})
+	new.command().ParseFlags([]string{"--name=testorder", "--products=12SCMEATZA"})
 	err := new.run(new.command(), []string{})
 	if err != nil {
 		t.Error(err)

@@ -19,10 +19,11 @@ func TestRunner(t *testing.T) {
 	}
 
 	var tests = []func(*testing.T){
-		dummyCheck_forinit,
+		dummyCheckForinit,
 		testOrderNew,
 		testFindProduct,
 		testApizzaCmdRun,
+		withDummyDB(testApizzaResetflag),
 	}
 
 	for _, f := range tests {
@@ -37,6 +38,23 @@ func testApizzaCmdRun(t *testing.T) {
 	c.output = buf
 	c.command().SetOutput(buf)
 
+	c.command().ParseFlags([]string{})
+	if err := c.run(c.command(), []string{}); err != nil {
+		t.Error(err)
+	}
+
+	c.command().ParseFlags([]string{"--test"})
+	if err := c.run(c.command(), []string{}); err != nil {
+		t.Error(err)
+	}
+}
+
+func testApizzaResetflag(t *testing.T) {
+	c := newApizzaCmd().(*apizzaCmd)
+	buf := &bytes.Buffer{}
+	c.output = buf
+	c.command().SetOutput(buf)
+	c.command().ParseFlags([]string{"--clear-cache"})
 	if err := c.run(c.command(), []string{}); err != nil {
 		t.Error(err)
 	}
@@ -44,18 +62,11 @@ func testApizzaCmdRun(t *testing.T) {
 
 // omg, i can't beleve i haven't been putting this in my other tests, this is great
 func init() {
-	var check = func(e error, msg string) {
-		if e != nil {
-			fmt.Printf("test setup failed: %s - %s\n", e, msg)
-			os.Exit(1)
-		}
-	}
-
 	wd, err := os.Getwd()
 	check(err, "working dir")
-	dir := filepath.Join(wd, "testdata")
+	// dir := filepath.Join(wd, "testdata")
 
-	db, err = cache.GetDB(filepath.Join(dir, "test.db"))
+	db, err = cache.GetDB(filepath.Join(wd, "testdata", "test.db"))
 	check(err, "database")
 	err = db.Put("test", []byte("this is some test data"))
 	check(err, "database put")
@@ -65,7 +76,7 @@ func init() {
 	check(err, "json")
 }
 
-func dummyCheck_forinit(t *testing.T) {
+func dummyCheckForinit(t *testing.T) {
 	data, err := db.Get("test")
 	if err != nil {
 		t.Error(err)
@@ -75,6 +86,28 @@ func dummyCheck_forinit(t *testing.T) {
 	}
 	if cfg.Name != "joe" || cfg.Email != "nojoe@mail.com" {
 		t.Error("test data is not correct")
+	}
+}
+
+func withDummyDB(fn func(*testing.T)) func(*testing.T) {
+	wd, err := os.Getwd()
+	check(err, "working dir")
+
+	dbPath := filepath.Join(wd, "testdata", "testing_dummyDB.db")
+	newDatabase, err := cache.GetDB(dbPath)
+	check(err, "dummy database")
+	err = newDatabase.Put("test", []byte("this is a testvalue"))
+
+	oldDatabase := db
+	return func(t *testing.T) {
+		db = newDatabase
+		defer func() {
+			db = oldDatabase
+			check(newDatabase.Close(), "deleting dummy database")
+			os.Remove(dbPath)
+		}()
+		fn(t)
+		fmt.Println("dummy test completed")
 	}
 }
 
@@ -92,5 +125,12 @@ func teardownTests() {
 	}
 	if err = os.Remove(filepath.Join(wd, "testdata")); err != nil {
 		panic(err)
+	}
+}
+
+func check(e error, msg string) {
+	if e != nil {
+		fmt.Printf("test setup failed: %s - %s\n", e, msg)
+		os.Exit(1)
 	}
 }

@@ -38,13 +38,13 @@ type apizzaCmd struct {
 }
 
 func (c *apizzaCmd) run(cmd *cobra.Command, args []string) (err error) {
-	if c.test {
+	if test {
 		all, err := db.GetAll()
 		if err != nil {
 			return err
 		}
 		for k := range all {
-			fmt.Printf("%v\n", k)
+			fmt.Fprintf(c.output, "%v\n", k)
 		}
 		return nil
 	}
@@ -52,7 +52,7 @@ func (c *apizzaCmd) run(cmd *cobra.Command, args []string) (err error) {
 		if err := db.Close(); err != nil {
 			return err
 		}
-		fmt.Println("removing", db.Path)
+		fmt.Fprintln(c.output, "removing", db.Path)
 		return os.Remove(db.Path)
 	}
 	return cmd.Usage()
