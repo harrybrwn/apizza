@@ -6,7 +6,7 @@ all: test build clean
 .PHONY: build test setup clean reset
 
 build:
-	go install apizza
+	go install github.com/harrybrwn/apizza
 
 test: setup
 	go test -cover ./... -coverprofile=$(COVER_FILE)
