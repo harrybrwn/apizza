@@ -29,7 +29,8 @@ func testOrderNew(t *testing.T) {
 `
 	if string(buf.Bytes()) != expected {
 		t.Error("wrong output from apizza order")
-		fmt.Println(string(buf.Bytes()))
+		fmt.Println("got this:", string(buf.Bytes()))
+		fmt.Println("expected this:", expected)
 	}
 	buf.Reset()
 	if err := order.run(order.command(), []string{"testorder"}); err != nil {
@@ -39,14 +40,13 @@ func testOrderNew(t *testing.T) {
 	expected = `testorder
   Products:
     12SCMEATZA - quantity: 1, options: map[]
-  Price:   16.490000
   StoreID: 4336
   Method:  Carryout
   Address: {Street:1600 Pennsylvania Ave NW StreetNum: City:Washington DC State: Zip:20500 AddrType: StreetName:}
 `
 	if string(buf.Bytes()) != expected {
 		t.Error("wrong output from apizza order")
-		fmt.Println(string(buf.Bytes()))
-		fmt.Println(expected)
+		fmt.Println("got this:", string(buf.Bytes()))
+		fmt.Println("expected this:", expected)
 	}
 }
