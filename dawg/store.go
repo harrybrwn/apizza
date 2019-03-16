@@ -7,7 +7,11 @@ import (
 	"fmt"
 )
 
-// NearestStore gets the dominos location closest to the given address
+// NearestStore gets the dominos location closest to the given address.
+//
+// The addr argument should be the address to deliver to not the address of the
+// store itself. The service should be either "Carryout" or "Delivery", this will
+// deturmine wether the final order will be for pickup or delivery.
 func NearestStore(addr *Address, service string) (*Store, error) {
 	if addr == nil {
 		return nil, errors.New("empty address")
@@ -46,6 +50,9 @@ func GetAllNearbyStores(addr *Address, service string) ([]Store, error) {
 // The service and address arguments are for store functions that require those
 // variables. If the store does not need to use those functions, service can be
 // an empty string, and add can be 'nil'.
+//
+// The addr argument should be the address to deliver to not the address of the
+// store itself.
 func NewStore(id string, service string, addr *Address) (*Store, error) {
 	store := &Store{userService: service, userAddress: addr}
 	err := InitStore(id, store)
