@@ -18,6 +18,9 @@ func TestRunner(t *testing.T) {
 		return runtime.FuncForPC(reflect.ValueOf(a).Pointer()).Name()
 	}
 
+	setupTests()
+	defer teardownTests()
+
 	var tests = []func(*testing.T){
 		dummyCheckForinit,
 		testOrderNew,
@@ -30,7 +33,6 @@ func TestRunner(t *testing.T) {
 	for _, f := range tests {
 		t.Run(funcname(f), f)
 	}
-	teardownTests()
 }
 
 func testApizzaCmdRun(t *testing.T) {
@@ -59,22 +61,6 @@ func testApizzaResetflag(t *testing.T) {
 	if err := c.run(c.command(), []string{}); err != nil {
 		t.Error(err)
 	}
-}
-
-// omg, i can't beleve i haven't been putting this in my other tests, this is great
-func init() {
-	wd, err := os.Getwd()
-	check(err, "working dir")
-	// dir := filepath.Join(wd, "testdata")
-
-	db, err = cache.GetDB(filepath.Join(wd, "testdata", "test.db"))
-	check(err, "database")
-	err = db.Put("test", []byte("this is some test data"))
-	check(err, "database put")
-
-	raw := `{"Name":"joe","Email":"nojoe@mail.com","Address":{"Street":"1600 Pennsylvania Ave NW","City":"Washington DC","State":"","Zip":"20500"},"Card":{"Number":"","Expiration":"","CVV":""},"Service":"Carryout","MyOrders":null}`
-	err = json.Unmarshal([]byte(raw), cfg)
-	check(err, "json")
 }
 
 func dummyCheckForinit(t *testing.T) {
@@ -108,8 +94,37 @@ func withDummyDB(fn func(*testing.T)) func(*testing.T) {
 			os.Remove(dbPath)
 		}()
 		fn(t)
-		fmt.Println("dummy test completed")
 	}
+}
+
+func setupTests() {
+	wd, err := os.Getwd()
+	check(err, "working dir")
+
+	db, err = cache.GetDB(filepath.Join(wd, "testdata", "test.db"))
+	check(err, "database")
+	err = db.Put("test", []byte("this is some test data"))
+	check(err, "database put")
+
+	raw := []byte(`
+{
+	"Name":"joe",
+	"Email":"nojoe@mail.com",
+	"Address":{
+		"Street":"1600 Pennsylvania Ave NW",
+		"City":"Washington DC",
+		"State":"",
+		"Zip":"20500"
+	},
+	"Card":{
+		"Number":"",
+		"Expiration":"",
+		"CVV":""
+	},
+	"Service":"Carryout",
+	"MyOrders":null
+}`)
+	check(json.Unmarshal(raw, cfg), "json")
 }
 
 func teardownTests() {
