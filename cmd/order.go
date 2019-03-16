@@ -29,13 +29,14 @@ type orderCommand struct {
 	*basecmd
 	price  bool
 	delete bool
-	// addProduct string
-	add []string
+	add    []string
 }
 
 func (c *orderCommand) run(cmd *cobra.Command, args []string) (err error) {
 	if len(args) < 1 {
 		return c.printall()
+	} else if len(args) > 1 {
+		return errors.New("cannot handle multiple orders")
 	}
 
 	if c.delete {
@@ -50,22 +51,6 @@ func (c *orderCommand) run(cmd *cobra.Command, args []string) (err error) {
 	if err != nil {
 		return err
 	}
-
-	// if c.addProduct != "" {
-	// 	if err := c.getstore(); err != nil {
-	// 		return err
-	// 	}
-	// 	p, err := store.GetProduct(c.addProduct)
-	// 	if err != nil {
-	// 		return err
-	// 	}
-	// 	order.AddProduct(p)
-	// 	if err := saveOrder(args[0], order); err != nil {
-	// 		return err
-	// 	}
-	// 	fmt.Fprintf(c.output, "%s added successfully.", c.addProduct)
-	// 	return nil
-	// }
 
 	if len(c.add) > 0 {
 		if err := c.getstore(); err != nil {
@@ -96,7 +81,7 @@ func (c *orderCommand) printall() error {
 	fmt.Fprintln(c.output, "Your Orders:")
 	for k := range all {
 		if strings.Contains(k, "user_order_") {
-			fmt.Fprintln(c.output, " ", strings.Replace(k, "user_order_", "", -1)) //, string(v))
+			fmt.Fprintln(c.output, " ", strings.Replace(k, "user_order_", "", -1))
 		}
 	}
 	return nil
@@ -109,7 +94,6 @@ func (b *cliBuilder) newOrderCommand() cliCommand {
 created orders. Use 'apizza order <order name>' for info on a specific order`
 
 	c.cmd.Flags().BoolVarP(&c.price, "price", "p", c.price, "show to price of an order")
-	// c.cmd.Flags().StringVarP(&c.addProduct, "add-products", "x", c.addProduct, "add any number of products to the specific order")
 	c.cmd.Flags().StringSliceVarP(&c.add, "add", "a", c.add, "add any number of products to a specific order")
 	c.cmd.Flags().BoolVarP(&c.delete, "delete", "d", c.delete, "delete the order from the database")
 	return c
