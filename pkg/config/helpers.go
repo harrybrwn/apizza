@@ -20,14 +20,14 @@ type Config interface {
 
 // Get is a helper funtion that finds the field of the config object that
 // matches the key and then returns the value. This function is meant to be
-// wrapped by a config object.
+// wrapped by a config object. Get will return nil if it does not find the key.
 //
-// Example.
-// type Config struct {}
-// func (c *Config) Get(key string) interface{} {
-//     return config.Get(c, key)
-// }
-// note: this will only work if the struct impliments the Config type.
+// Example:
+// 	type MyConfig struct {}
+//
+// 	func (c *MyConfig) Get(key string) interface{} { return config.Get(c, key) }
+//
+// note: this will only work if the struct impliments the Config interface.
 func Get(config Config, key string) interface{} {
 	value := reflect.ValueOf(config).Elem()
 	v := find(value, key)
@@ -47,12 +47,12 @@ func Get(config Config, key string) interface{} {
 // matches the key argument. This function is meant to be
 // wrapped by a config object.
 //
-// Example.
-// type Config struct {}
-// func (c *Config) Get(key string, val interface{}) error {
-//     return config.Set(c, key, val)
-// }
-// note: this will only work if the struct impliments the Config type.
+// Example:
+// 	type MyConfig struct {}
+//
+// 	func (c *MyConfig) Get(key string, val interface{}) error { return config.Set(c, key, val) }
+//
+// note: this will only work if the struct impliments the Config interface.
 func Set(config Config, key string, val interface{}) error {
 	v := reflect.ValueOf(config).Elem()
 	field := find(v, key)
