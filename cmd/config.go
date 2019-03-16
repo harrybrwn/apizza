@@ -21,6 +21,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/mitchellh/mapstructure"
 	"github.com/spf13/cobra"
 
 	"github.com/harrybrwn/apizza/pkg/config"
@@ -61,6 +62,19 @@ func (c *Config) Set(key string, val interface{}) error {
 	return config.Set(c, key, val)
 }
 
+func (c *Config) printAll() error {
+	m := map[string]interface{}{}
+	err := mapstructure.Decode(c, &m)
+	if err != nil {
+		return err
+	}
+
+	for k, v := range m {
+		fmt.Println(k, v)
+	}
+	return nil
+}
+
 func (c *Config) validateAddress() error {
 	splitStreet := strings.Split(c.Address.Street, " ")
 	fmt.Println(splitStreet)
@@ -72,6 +86,7 @@ type configCmd struct {
 	file       bool
 	dir        bool
 	resetCache bool
+	getall     bool
 }
 
 func (c *configCmd) run(cmd *cobra.Command, args []string) error {
@@ -90,6 +105,9 @@ func (c *configCmd) run(cmd *cobra.Command, args []string) error {
 		}
 		return nil
 	}
+	if c.getall {
+		return cfg.printAll()
+	}
 	return c.cmd.Usage()
 }
 
@@ -105,6 +123,7 @@ ex. 'apizza config get name' or 'apizza config set name=<your name>'`
 	c.cmd.Flags().BoolVarP(&c.file, "file", "f", c.file, "show the path to the config.json file")
 	c.cmd.Flags().BoolVarP(&c.dir, "dir", "d", c.dir, "show the apizza config directory path")
 	c.cmd.Flags().BoolVarP(&c.resetCache, "reset-cache", "r", c.resetCache, "reset the database cache")
+	c.cmd.Flags().BoolVar(&c.getall, "get-all", c.getall, "show all the contents of the config file")
 	return c
 }
 
