@@ -24,6 +24,7 @@ func TestRunner(t *testing.T) {
 		testFindProduct,
 		testApizzaCmdRun,
 		withDummyDB(testApizzaResetflag),
+		testMenuRun,
 	}
 
 	for _, f := range tests {

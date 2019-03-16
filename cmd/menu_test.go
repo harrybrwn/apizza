@@ -5,6 +5,32 @@ import (
 	"testing"
 )
 
+func testMenuRun(t *testing.T) {
+	c := newBuilder().newMenuCmd().(*menuCmd)
+	buf := &bytes.Buffer{}
+	c.output = buf
+	if err := c.run(c.command(), []string{}); err != nil {
+		t.Error(err)
+	}
+
+	c.item = "not a thing"
+	if err := c.run(c.command(), []string{}); err == nil {
+		t.Error("should raise error")
+	}
+
+	c.item = "10SCREEN"
+	if err := c.run(c.command(), []string{}); err != nil {
+		t.Error(err)
+	}
+
+	c.item = ""
+	// c.command().ParseFlags([]string{"--toppings"})
+	c.toppings = true
+	if err := c.run(c.command(), []string{}); err != nil {
+		t.Error(err)
+	}
+}
+
 func testFindProduct(t *testing.T) {
 	c := newBuilder().newMenuCmd().(*menuCmd)
 	if err := c.initMenu(); err != nil {
