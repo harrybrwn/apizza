@@ -77,10 +77,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	order, err := store.NewOrder()
-	if err != nil {
-		log.Fatal(err)
-	}
+	order := store.NewOrder()
 
 	pizza, err := store.GetProduct("16SCREEN")
 	if err != nil {
@@ -90,7 +87,7 @@ func main() {
 	order.AddProduct(pizza)
 
 	if store.IsOpen {
-		fmt.Println(order.Price()
+		fmt.Println(order.Price())
 	} else {
 		fmt.Println("dominos is not open")
 	}

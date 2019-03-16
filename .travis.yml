@@ -1,7 +1,4 @@
 language: go
 
 before_install:
-  - go get -u github.com/spf13/cobra
-  - go get -u github.com/mitchellh/go-homedir
-  - go get -u github.com/mitchellh/mapstructure
-  - go get -u github.com/boltdb/bolt
+  - go get -u $(go list -f '{{ join .Imports "\n" }}' apizza/... | grep '^github.com/.*' | grep 'apizza' -v)
