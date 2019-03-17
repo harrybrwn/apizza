@@ -24,6 +24,10 @@ func TestRunner(t *testing.T) {
 	var tests = []func(*testing.T){
 		dummyCheckForinit,
 		testOrderNew,
+		testOrderNewErr,
+		testOrderRunAdd,
+		testOrderPriceOutput,
+		testOrderRunDelete,
 		testFindProduct,
 		testApizzaCmdRun,
 		withDummyDB(testApizzaResetflag),
@@ -73,6 +77,9 @@ func dummyCheckForinit(t *testing.T) {
 	}
 	if cfg.Name != "joe" || cfg.Email != "nojoe@mail.com" {
 		t.Error("test data is not correct")
+	}
+	if err = db.Delete("test"); err != nil {
+		t.Error("couldn't delete test", err)
 	}
 }
 

@@ -66,7 +66,7 @@ func (c *orderCommand) run(cmd *cobra.Command, args []string) (err error) {
 		if err := saveOrder(args[0], order); err != nil {
 			return err
 		}
-		fmt.Fprintln(c.output, "updated order saved successfully.")
+		fmt.Fprintln(c.output, "updated order successfully saved.")
 		return nil
 	}
 
@@ -78,6 +78,11 @@ func (c *orderCommand) printall() error {
 	if err != nil {
 		return err
 	}
+	if len(all) < 1 {
+		fmt.Fprintln(c.output, "No orders saved.")
+		return nil
+	}
+
 	fmt.Fprintln(c.output, "Your Orders:")
 	for k := range all {
 		if strings.Contains(k, "user_order_") {

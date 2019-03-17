@@ -18,13 +18,13 @@ func testMenuRun(t *testing.T) {
 		t.Error("should raise error")
 	}
 
+	store = nil
 	c.item = "10SCREEN"
 	if err := c.run(c.command(), []string{}); err != nil {
 		t.Error(err)
 	}
 
 	c.item = ""
-	// c.command().ParseFlags([]string{"--toppings"})
 	c.toppings = true
 	if err := c.run(c.command(), []string{}); err != nil {
 		t.Error(err)

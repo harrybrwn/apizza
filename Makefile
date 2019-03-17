@@ -3,7 +3,7 @@ COVER=go tool cover
 
 all: test build clean
 
-.PHONY: build test setup clean reset
+.PHONY: build test setup clean
 
 build:
 	go install github.com/harrybrwn/apizza
@@ -18,6 +18,3 @@ setup:
 
 clean:
 	rm $(COVER_FILE)
-
-reset:
-	rm $(HOME).apizza/cache/apizza.db
