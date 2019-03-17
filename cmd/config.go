@@ -17,6 +17,7 @@ package cmd
 import (
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -62,7 +63,7 @@ func (c *Config) Set(key string, val interface{}) error {
 	return config.Set(c, key, val)
 }
 
-func (c *Config) printAll() error {
+func (c *Config) printAll(output io.Writer) error {
 	m := map[string]interface{}{}
 	err := mapstructure.Decode(c, &m)
 	if err != nil {
@@ -70,7 +71,7 @@ func (c *Config) printAll() error {
 	}
 
 	for k, v := range m {
-		fmt.Println(k, v)
+		fmt.Fprintln(output, k, v)
 	}
 	return nil
 }
@@ -106,7 +107,7 @@ func (c *configCmd) run(cmd *cobra.Command, args []string) error {
 		return nil
 	}
 	if c.getall {
-		return cfg.printAll()
+		return cfg.printAll(os.Stdout)
 	}
 	return c.cmd.Usage()
 }

@@ -32,6 +32,10 @@ func TestRunner(t *testing.T) {
 		testApizzaCmdRun,
 		withDummyDB(testApizzaResetflag),
 		testMenuRun,
+		testExec,
+		testConfig,
+		// testConfigGet,
+		// testConfigSet,
 	}
 
 	for _, f := range tests {
@@ -63,6 +67,16 @@ func testApizzaResetflag(t *testing.T) {
 	c.command().SetOutput(buf)
 	c.command().ParseFlags([]string{"--clear-cache"})
 	if err := c.run(c.command(), []string{}); err != nil {
+		t.Error(err)
+	}
+}
+
+func testExec(t *testing.T) {
+	b := newBuilder()
+	b.root.command().SetOutput(&bytes.Buffer{})
+
+	_, err := b.exec()
+	if err != nil {
 		t.Error(err)
 	}
 }
