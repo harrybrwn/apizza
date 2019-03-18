@@ -133,9 +133,9 @@ func setupTests() {
 	"Email":"nojoe@mail.com",
 	"Address":{
 		"Street":"1600 Pennsylvania Ave NW",
-		"City":"Washington DC",
+		"CityName":"Washington DC",
 		"State":"",
-		"Zip":"20500"
+		"Zipcode":"20500"
 	},
 	"Card":{
 		"Number":"",

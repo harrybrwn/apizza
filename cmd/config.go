@@ -25,6 +25,7 @@ import (
 	"github.com/mitchellh/mapstructure"
 	"github.com/spf13/cobra"
 
+	"github.com/harrybrwn/apizza/dawg"
 	"github.com/harrybrwn/apizza/pkg/config"
 )
 
@@ -32,15 +33,16 @@ var cfg = &Config{}
 
 // Config is the configuration struct
 type Config struct {
-	Name    string `config:"name"`
-	Email   string `config:"email"`
-	Address struct {
-		Street string `config:"street"`
-		City   string `config:"city"`
-		State  string `config:"state"`
-		Zip    string `config:"zip"`
-	} `config:"address"`
-	Card struct {
+	Name  string `config:"name"`
+	Email string `config:"email"`
+	// Address struct {
+	// 	Street   string `config:"street"`
+	// 	CityName string `config:"city_name"`
+	// 	State    string `config:"state"`
+	// 	Zipcode  string `config:"zipcode"`
+	// } `config:"address"`
+	Address *address `config:"address"`
+	Card    struct {
 		Number     string `config:"number"`
 		Expiration string `config:"expiration"`
 		CVV        string `config:"cvv"`
@@ -74,8 +76,39 @@ func (c *Config) printAll(output io.Writer) error {
 	return nil
 }
 
+var _ dawg.Address = (*address)(nil)
+
+type address struct {
+	Street   string `config:"street"`
+	CityName string `config:"city_name"`
+	State    string `config:"state"`
+	Zipcode  string `config:"zipcode"`
+}
+
+func (a *address) LineOne() string {
+	return a.Street
+}
+
+func (a *address) StateCode() string {
+	if strLen(a.State) == 2 {
+		return strings.ToUpper(a.State)
+	}
+	return ""
+}
+
+func (a *address) City() string {
+	return a.CityName
+}
+
+func (a *address) Zip() string {
+	if strLen(a.Zipcode) == 5 {
+		return a.Zipcode
+	}
+	return ""
+}
+
 func (c *Config) validateAddress() error {
-	splitStreet := strings.Split(c.Address.Street, " ")
+	splitStreet := strings.Split(c.Address.LineOne(), " ")
 	fmt.Println(splitStreet)
 	return nil
 }
