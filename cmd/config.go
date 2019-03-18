@@ -41,7 +41,7 @@ type Config struct {
 	// 	State    string `config:"state"`
 	// 	Zipcode  string `config:"zipcode"`
 	// } `config:"address"`
-	Address *address `config:"address"`
+	Address address `config:"address"`
 	Card    struct {
 		Number     string `config:"number"`
 		Expiration string `config:"expiration"`

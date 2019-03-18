@@ -167,7 +167,7 @@ func (b *cliBuilder) exec() (*cobra.Command, error) {
 func (b *cliBuilder) getAddress() *address {
 	addrStr := b.root.(*apizzaCmd).address
 	if addrStr == "" {
-		return cfg.Address
+		return &cfg.Address
 	}
 	// return dawg.ParseAddress(addrStr)
 	return nil
