@@ -5,14 +5,14 @@ import (
 	"testing"
 )
 
-func testAddress() *Address {
-	return &Address{
-		StreetNum: "1600",
-		Street:    "Pennsylvania Ave NW",
-		City:      "Washington",
-		State:     "DC",
-		Zip:       "20500",
-		AddrType:  "House",
+func testAddress() *StreetAddr {
+	return &StreetAddr{
+		StreetNum:     "1600",
+		StreetLineOne: "Pennsylvania Ave NW",
+		CityName:      "Washington",
+		State:         "DC",
+		Zipcode:       "20500",
+		AddrType:      "House",
 	}
 }
 
@@ -39,7 +39,7 @@ func TestFindNearbyStores_Err(t *testing.T) {
 		_, _ = findNearbyStores(addr, "invalid service")
 	}()
 
-	_, err := findNearbyStores(&Address{}, "Delivery")
+	_, err := findNearbyStores(&StreetAddr{}, "Delivery")
 	if err == nil {
 		t.Error("should return error")
 	}
@@ -97,7 +97,7 @@ func TestNearestStore(t *testing.T) {
 }
 
 func TestNearestStore_Err(t *testing.T) {
-	_, err := NearestStore(&Address{}, "Delivery")
+	_, err := NearestStore(&StreetAddr{}, "Delivery")
 	if err == nil {
 		t.Error("expected error")
 	}
@@ -123,7 +123,7 @@ func TestGetAllNearbyStores(t *testing.T) {
 }
 
 func TestGetAllNearbyStores_Err(t *testing.T) {
-	_, err := GetAllNearbyStores(&Address{}, "Delivery")
+	_, err := GetAllNearbyStores(&StreetAddr{}, "Delivery")
 	if err == nil {
 		t.Error("expected error")
 	}

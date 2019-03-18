@@ -89,6 +89,9 @@ func StreetAddrFromAddress(addr Address) *StreetAddr {
 // <number> <name> <type>
 // 123 Example St.
 func (s *StreetAddr) Street() string {
+	if s.StreetNum != "" && s.StreetName != "" {
+		return fmt.Sprintf("%s %s", s.StreetNum, s.StreetName)
+	}
 	return s.StreetLineOne
 }
 
