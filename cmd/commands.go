@@ -31,37 +31,32 @@ var db *cache.DataBase
 
 // Execute runs the root command
 func Execute() {
-	err := config.SetConfig(".apizza", cfg)
-	if err != nil {
-		handle(err)
+	var err error
+	if err = config.SetConfig(".apizza", cfg); err != nil {
+		handle(err, "", 1)
 	}
 
 	builder := newBuilder()
 
-	db, err = cache.GetDB(builder.dbPath())
-	if err != nil {
-		handle(err)
+	if db, err = cache.GetDB(builder.dbPath()); err != nil {
+		handle(err, "", 1)
 	}
 
 	defer func() {
-		err = db.Close()
-		if err != nil {
-			handle(err)
+		if err = db.Close(); err != nil {
+			handle(err, "", 1)
 		}
-		err = config.Save()
-		if err != nil {
-			handle(err)
+		if err = config.Save(); err != nil {
+			handle(err, "", 1)
 		}
 	}()
 
-	_, err = builder.exec()
-	if err != nil {
-		fmt.Printf("Error: %s\n", err)
-		os.Exit(0)
+	if _, err = builder.exec(); err != nil {
+		handle(err, "Error", 0)
 	}
 }
 
-func handle(e error) { fmt.Println(e); os.Exit(1) }
+func handle(e error, msg string, code int) { fmt.Printf("%s: %s\n", msg, e); os.Exit(code) }
 
 type cliCommand interface {
 	command() *cobra.Command

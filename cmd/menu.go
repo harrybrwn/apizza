@@ -194,11 +194,8 @@ func (c *menuCmd) findProduct(key string) (map[string]interface{}, error) {
 }
 
 func (c *menuCmd) cacheNewMenu() (err error) {
-	if store == nil {
-		store, err = dawg.NearestStore(c.addr, cfg.Service)
-		if err != nil {
-			return err
-		}
+	if err = c.getstore(); err != nil {
+		return err
 	}
 
 	c.menu, err = store.Menu()
