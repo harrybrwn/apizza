@@ -38,6 +38,9 @@ func (c *cartCmd) run(cmd *cobra.Command, args []string) (err error) {
 	} else if len(args) > 1 {
 		return errors.New("cannot handle multiple orders")
 	}
+	if args[0] == "add" {
+		return errors.New("cannot use 'add' as an order name")
+	}
 
 	if c.delete {
 		if err = db.Delete("user_order_" + args[0]); err != nil {
@@ -111,14 +114,20 @@ type addOrderCmd struct {
 }
 
 func (c *addOrderCmd) run(cmd *cobra.Command, args []string) (err error) {
+	if c.name == "" && len(args) < 1 {
+		return errors.New("No order name... use '--name=<order name>' or give name as an argument")
+	}
+	var orderName string
+	if c.name == "" {
+		orderName = args[0]
+	} else {
+		orderName = c.name
+	}
+
 	if err := c.getstore(); err != nil {
 		return err
 	}
 	order := store.NewOrder()
-
-	if c.name == "" {
-		return errors.New("No order name... use '--name=<order name>'")
-	}
 
 	if len(c.products) > 0 {
 		for _, p := range c.products {
@@ -129,13 +138,13 @@ func (c *addOrderCmd) run(cmd *cobra.Command, args []string) (err error) {
 			order.AddProduct(prod)
 		}
 	}
-	return saveOrder(c.name, order)
+	return saveOrder(orderName, order)
 }
 
 func (b *cliBuilder) newAddOrderCmd() cliCommand {
 	c := &addOrderCmd{name: "", products: []string{}}
 	c.basecmd = b.newBaseCommand(
-		"add",
+		"add <new order name>",
 		"Create a new order that will be stored in the cart.",
 		c.run,
 	)
