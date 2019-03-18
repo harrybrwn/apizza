@@ -36,11 +36,9 @@ type Config struct {
 	Email   string `config:"email"`
 	Address struct {
 		Street string `config:"street"`
-		// Streetname   string `config:"streetname"`
-		// Streetnumber string `config:"streetnumber"`
-		City  string `config:"city"`
-		State string `config:"state"`
-		Zip   string `config:"zip"`
+		City   string `config:"city"`
+		State  string `config:"state"`
+		Zip    string `config:"zip"`
 	} `config:"address"`
 	Card struct {
 		Number     string `config:"number"`
@@ -172,7 +170,7 @@ func (c *configGetCmd) run(cmd *cobra.Command, args []string) error {
 		if v == nil {
 			return fmt.Errorf("Error: cannot find %s", arg)
 		}
-		fmt.Println(v)
+		fmt.Fprintln(c.output, v)
 	}
 	return nil
 }

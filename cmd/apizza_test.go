@@ -34,8 +34,8 @@ func TestRunner(t *testing.T) {
 		testMenuRun,
 		testExec,
 		testConfig,
-		// testConfigGet,
-		// testConfigSet,
+		testConfigGet,
+		testConfigSet,
 	}
 
 	for _, f := range tests {
@@ -46,8 +46,7 @@ func TestRunner(t *testing.T) {
 func testApizzaCmdRun(t *testing.T) {
 	c := newApizzaCmd().(*apizzaCmd)
 	buf := &bytes.Buffer{}
-	c.output = buf
-	c.command().SetOutput(buf)
+	c.setOutput(buf)
 
 	c.command().ParseFlags([]string{})
 	if err := c.run(c.command(), []string{}); err != nil {
@@ -63,8 +62,8 @@ func testApizzaCmdRun(t *testing.T) {
 func testApizzaResetflag(t *testing.T) {
 	c := newApizzaCmd().(*apizzaCmd)
 	buf := &bytes.Buffer{}
-	c.output = buf
-	c.command().SetOutput(buf)
+	c.setOutput(buf)
+
 	c.command().ParseFlags([]string{"--clear-cache"})
 	if err := c.run(c.command(), []string{}); err != nil {
 		t.Error(err)

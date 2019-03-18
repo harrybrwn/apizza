@@ -12,17 +12,15 @@ func testOrderNew(t *testing.T) {
 	new := b.newNewOrderCmd().(*newOrderCmd)
 
 	buf := &bytes.Buffer{}
-	new.output = buf
-	new.command().SetOutput(buf)
+	new.setOutput(buf)
+	order.setOutput(buf)
 
 	new.command().ParseFlags([]string{"--name=testorder", "--products=12SCMEATZA"})
 	err := new.run(new.command(), []string{})
 	if err != nil {
 		t.Error(err)
 	}
-
 	buf.Reset()
-	order.output = buf
 
 	if err := order.run(order.command(), []string{"testorder"}); err != nil {
 		t.Error(err)
@@ -53,8 +51,7 @@ func testOrderRunAdd(t *testing.T) {
 	order := newBuilder().newOrderCommand().(*orderCommand)
 
 	buf := &bytes.Buffer{}
-	order.output = buf
-	order.command().SetOutput(buf)
+	order.setOutput(buf)
 
 	if err := order.run(order.command(), []string{}); err != nil {
 		t.Error(err)
@@ -68,8 +65,8 @@ func testOrderRunAdd(t *testing.T) {
 		fmt.Println("got this:", string(buf.Bytes()))
 		fmt.Println("expected this:", expected)
 	}
-
 	buf.Reset()
+
 	order.command().ParseFlags([]string{"--add", "W08PBNLW,W08PPLNW"})
 	if err := order.run(order.command(), []string{"testorder"}); err != nil {
 		t.Error(err)
@@ -85,8 +82,7 @@ func testOrderPriceOutput(t *testing.T) {
 	order := newBuilder().newOrderCommand().(*orderCommand)
 
 	buf := &bytes.Buffer{}
-	order.output = buf
-	order.command().SetOutput(buf)
+	order.setOutput(buf)
 
 	order.price = true
 	if err := order.run(order.command(), []string{"testorder"}); err != nil {
@@ -116,8 +112,7 @@ func testOrderRunDelete(t *testing.T) {
 	order := newBuilder().newOrderCommand().(*orderCommand)
 
 	buf := &bytes.Buffer{}
-	order.output = buf
-	order.command().SetOutput(buf)
+	order.setOutput(buf)
 
 	order.delete = true
 	if err := order.run(order.command(), []string{"testorder"}); err != nil {

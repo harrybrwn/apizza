@@ -67,6 +67,7 @@ type cliCommand interface {
 	command() *cobra.Command
 	AddCmd(...cliCommand) cliCommand
 	run(*cobra.Command, []string) error
+	setOutput(io.Writer)
 }
 
 type basecmd struct {
@@ -88,6 +89,11 @@ func (bc *basecmd) AddCmd(cmds ...cliCommand) cliCommand {
 
 func (bc *basecmd) run(cmd *cobra.Command, args []string) error {
 	return bc.cmd.Usage()
+}
+
+func (bc *basecmd) setOutput(output io.Writer) {
+	bc.output = output
+	bc.cmd.SetOutput(output)
 }
 
 func (bc *basecmd) getstore() (err error) {

@@ -8,7 +8,8 @@ import (
 func testMenuRun(t *testing.T) {
 	c := newBuilder().newMenuCmd().(*menuCmd)
 	buf := &bytes.Buffer{}
-	c.output = buf
+	c.setOutput(buf)
+
 	if err := c.run(c.command(), []string{}); err != nil {
 		t.Error(err)
 	}
@@ -37,7 +38,8 @@ func testFindProduct(t *testing.T) {
 		t.Error(err)
 	}
 	buf := &bytes.Buffer{}
-	c.output = buf
+	c.setOutput(buf)
+
 	c.all = true
 
 	c.printMenu()
