@@ -33,7 +33,8 @@ func TestRunner(t *testing.T) {
 		withDummyDB(testApizzaResetflag),
 		testMenuRun,
 		testExec,
-		testConfig,
+		testConfigStruct,
+		testConfigCmd,
 		testConfigGet,
 		testConfigSet,
 	}

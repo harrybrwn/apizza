@@ -105,7 +105,7 @@ func (c *configCmd) run(cmd *cobra.Command, args []string) error {
 		return nil
 	}
 	if c.getall {
-		return cfg.printAll(os.Stdout)
+		return cfg.printAll(c.output)
 	}
 	return c.cmd.Usage()
 }
@@ -132,11 +132,14 @@ type configSetCmd struct {
 
 func (c *configSetCmd) run(cmd *cobra.Command, args []string) error {
 	if len(args) < 1 {
-		return errors.New("Error: no variable given")
+		return errors.New("no variable given")
 	}
 
 	for _, arg := range args {
 		keys := strings.Split(arg, "=")
+		if len(keys) < 2 {
+			return errors.New("use '<key>=<value>' format")
+		}
 		err := cfg.Set(keys[0], keys[1])
 		if err != nil {
 			return err
@@ -161,14 +164,14 @@ type configGetCmd struct {
 
 func (c *configGetCmd) run(cmd *cobra.Command, args []string) error {
 	if len(args) < 1 {
-		return errors.New("Error: no variable given")
+		return errors.New("no variable given")
 	}
 
 	// add a flag '--all' that prints the contents of the config file
 	for _, arg := range args {
 		v := cfg.Get(arg)
 		if v == nil {
-			return fmt.Errorf("Error: cannot find %s", arg)
+			return fmt.Errorf("cannot find %s", arg)
 		}
 		fmt.Fprintln(c.output, v)
 	}
