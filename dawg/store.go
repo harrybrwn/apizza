@@ -12,7 +12,7 @@ import (
 // The addr argument should be the address to deliver to not the address of the
 // store itself. The service should be either "Carryout" or "Delivery", this will
 // deturmine wether the final order will be for pickup or delivery.
-func NearestStore(addr *Address, service string) (*Store, error) {
+func NearestStore(addr Address, service string) (*Store, error) {
 	if addr == nil {
 		return nil, errors.New("empty address")
 	}
@@ -34,7 +34,7 @@ func NearestStore(addr *Address, service string) (*Store, error) {
 
 // GetAllNearbyStores is a way of getting all the nearby stores
 // except they will by full initialized.
-func GetAllNearbyStores(addr *Address, service string) ([]Store, error) {
+func GetAllNearbyStores(addr Address, service string) ([]Store, error) {
 	all, err := findNearbyStores(addr, service)
 	if err != nil {
 		return nil, err
@@ -53,7 +53,7 @@ func GetAllNearbyStores(addr *Address, service string) ([]Store, error) {
 //
 // The addr argument should be the address to deliver to not the address of the
 // store itself.
-func NewStore(id string, service string, addr *Address) (*Store, error) {
+func NewStore(id string, service string, addr Address) (*Store, error) {
 	store := &Store{userService: service, userAddress: addr}
 	err := InitStore(id, store)
 	return store, err
@@ -98,7 +98,7 @@ type Store struct {
 	} `json:"ServiceMethodEstimatedWaitMinutes"`
 	Hours                map[string][]map[string]string `json:"Hours"`
 	MinDeliveryOrderAmnt float64                        `json:"MinimumDeliveryOrderAmount"`
-	userAddress          *Address
+	userAddress          Address
 	userService          string
 }
 
@@ -114,7 +114,7 @@ func (s *Store) NewOrder() *Order {
 		ServiceMethod: s.userService,
 		StoreID:       s.ID,
 		Products:      []*Product{},
-		Address:       *s.userAddress,
+		Address:       StreetAddrFromAddress(s.userAddress),
 		Payments:      []Payment{},
 	}
 }
@@ -149,19 +149,20 @@ func (s *Store) WaitTime() (int, int) {
 }
 
 type storeLocs struct {
-	Status      int     `json:"Status"`
-	Granularity string  `json:"Granularity"`
-	Address     Address `json:"Address"`
-	Stores      []Store `json:"Stores"`
+	Status      int         `json:"Status"`
+	Granularity string      `json:"Granularity"`
+	Address     *StreetAddr `json:"Address"`
+	Stores      []Store     `json:"Stores"`
 }
 
-func findNearbyStores(addr *Address, service string) (*storeLocs, error) {
+func findNearbyStores(addr Address, service string) (*storeLocs, error) {
 	if !(service == "Delivery" || service == "Carryout") {
 		panic("service must be either 'Delivery' or 'Carryout'")
 	}
 	b, err := get("/power/store-locator", &Params{
-		"s":    format("%s %s", addr.StreetNum, addr.Street),
-		"c":    format("%s, %s %s", addr.City, addr.State, addr.Zip),
+		// "s":    format("%s %s", addr.StreetNum, addr.Street),
+		"s":    addr.Street(),
+		"c":    format("%s, %s %s", addr.City(), addr.StateCode(), addr.Zip()),
 		"type": service,
 	})
 	if err != nil {

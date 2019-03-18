@@ -22,7 +22,7 @@ type Order struct {
 	Products      []*Product             `json:"Products"`
 	StoreID       string                 `json:"StoreID"`
 	OrderID       string                 `json:"OrderID"`
-	Address       Address                `json:"Address"`
+	Address       *StreetAddr            `json:"Address"`
 	MetaData      map[string]interface{} `json:"metaData"` // only for orders sent back
 	FirstName     string                 `json:"FirstName"`
 	LastName      string                 `json:"LastName"`
