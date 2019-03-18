@@ -46,7 +46,7 @@ func parse(raw []byte) [][]byte {
 
 // Address is a guid for how addresses should be used as input
 type Address interface {
-	Street() string
+	LineOne() string
 	StateCode() string
 	City() string
 	Zip() string
@@ -67,7 +67,7 @@ type StreetAddr struct {
 
 // StreetAddrFromAddress returns a StreetAddr pointer from an Address interface.
 func StreetAddrFromAddress(addr Address) *StreetAddr {
-	parts := strings.Split(addr.Street(), " ")
+	parts := strings.Split(addr.LineOne(), " ")
 	var streetNum, streetName string
 	if _, err := strconv.Atoi(parts[0]); err == nil {
 		streetNum = parts[0]
@@ -75,7 +75,7 @@ func StreetAddrFromAddress(addr Address) *StreetAddr {
 	}
 
 	return &StreetAddr{
-		StreetLineOne: addr.Street(),
+		StreetLineOne: addr.LineOne(),
 		StreetNum:     streetNum,
 		CityName:      addr.City(),
 		State:         addr.StateCode(),
@@ -84,11 +84,11 @@ func StreetAddrFromAddress(addr Address) *StreetAddr {
 	}
 }
 
-// Street gives the street in the format of
+// LineOne gives the street in the following format
 //
 // <number> <name> <type>
 // 123 Example St.
-func (s *StreetAddr) Street() string {
+func (s *StreetAddr) LineOne() string {
 	if s.StreetNum != "" && s.StreetName != "" {
 		return fmt.Sprintf("%s %s", s.StreetNum, s.StreetName)
 	}

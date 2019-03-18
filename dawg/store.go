@@ -160,8 +160,7 @@ func findNearbyStores(addr Address, service string) (*storeLocs, error) {
 		panic("service must be either 'Delivery' or 'Carryout'")
 	}
 	b, err := get("/power/store-locator", &Params{
-		// "s":    format("%s %s", addr.StreetNum, addr.Street),
-		"s":    addr.Street(),
+		"s":    addr.LineOne(),
 		"c":    format("%s, %s %s", addr.City(), addr.StateCode(), addr.Zip()),
 		"type": service,
 	})
