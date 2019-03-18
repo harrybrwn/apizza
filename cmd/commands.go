@@ -146,7 +146,13 @@ type cliBuilder struct {
 
 func newBuilder() *cliBuilder {
 	b := &cliBuilder{root: newApizzaCmd()}
-	b.addr = b.getAddress()
+
+	addrStr := b.root.(*apizzaCmd).address
+	if addrStr == "" {
+		b.addr = &cfg.Address
+	} else {
+		b.addr = nil
+	}
 	return b
 }
 
@@ -162,15 +168,6 @@ func (b *cliBuilder) exec() (*cobra.Command, error) {
 		b.newMenuCmd(),
 	)
 	return b.root.command().ExecuteC()
-}
-
-func (b *cliBuilder) getAddress() *address {
-	addrStr := b.root.(*apizzaCmd).address
-	if addrStr == "" {
-		return &cfg.Address
-	}
-	// return dawg.ParseAddress(addrStr)
-	return nil
 }
 
 // this is here for future plans
