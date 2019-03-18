@@ -33,14 +33,8 @@ var cfg = &Config{}
 
 // Config is the configuration struct
 type Config struct {
-	Name  string `config:"name"`
-	Email string `config:"email"`
-	// Address struct {
-	// 	Street   string `config:"street"`
-	// 	CityName string `config:"city_name"`
-	// 	State    string `config:"state"`
-	// 	Zipcode  string `config:"zipcode"`
-	// } `config:"address"`
+	Name    string  `config:"name"`
+	Email   string  `config:"email"`
 	Address address `config:"address"`
 	Card    struct {
 		Number     string `config:"number"`
@@ -105,12 +99,6 @@ func (a *address) Zip() string {
 		return a.Zipcode
 	}
 	return ""
-}
-
-func (c *Config) validateAddress() error {
-	splitStreet := strings.Split(c.Address.LineOne(), " ")
-	fmt.Println(splitStreet)
-	return nil
 }
 
 type configCmd struct {

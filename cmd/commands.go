@@ -111,9 +111,7 @@ func newVerboseBaseCommand(use, short string, f runFunc) *basecmd {
 		},
 		output: os.Stdout,
 	}
-	if f == nil {
-		base.cmd.RunE = base.run
-	}
+
 	return base
 }
 
@@ -127,9 +125,6 @@ func newBaseCommand(use, short string, f runFunc) *basecmd {
 			SilenceUsage:  true,
 		},
 		output: os.Stdout,
-	}
-	if f == nil {
-		base.cmd.RunE = base.run
 	}
 
 	return base
