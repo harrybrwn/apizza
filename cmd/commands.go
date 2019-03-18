@@ -67,7 +67,7 @@ type cliCommand interface {
 
 type basecmd struct {
 	cmd    *cobra.Command
-	addr   *dawg.Address
+	addr   *address
 	output io.Writer
 }
 
@@ -111,9 +111,7 @@ func newVerboseBaseCommand(use, short string, f runFunc) *basecmd {
 		},
 		output: os.Stdout,
 	}
-	if f == nil {
-		base.cmd.RunE = base.run
-	}
+
 	return base
 }
 
@@ -128,9 +126,6 @@ func newBaseCommand(use, short string, f runFunc) *basecmd {
 		},
 		output: os.Stdout,
 	}
-	if f == nil {
-		base.cmd.RunE = base.run
-	}
 
 	return base
 }
@@ -141,12 +136,18 @@ type commandBuilder interface {
 
 type cliBuilder struct {
 	root cliCommand
-	addr *dawg.Address
+	addr *address
 }
 
 func newBuilder() *cliBuilder {
 	b := &cliBuilder{root: newApizzaCmd()}
-	b.addr = b.getAddress()
+
+	addrStr := b.root.(*apizzaCmd).address
+	if addrStr == "" {
+		b.addr = &cfg.Address
+	} else {
+		b.addr = nil
+	}
 	return b
 }
 
@@ -162,19 +163,6 @@ func (b *cliBuilder) exec() (*cobra.Command, error) {
 		b.newMenuCmd(),
 	)
 	return b.root.command().ExecuteC()
-}
-
-func (b *cliBuilder) getAddress() *dawg.Address {
-	addrStr := b.root.(*apizzaCmd).address
-	if addrStr == "" {
-		return &dawg.Address{
-			Street: cfg.Address.Street,
-			City:   cfg.Address.City,
-			State:  cfg.Address.State,
-			Zip:    cfg.Address.Zip,
-		}
-	}
-	return dawg.ParseAddress(addrStr)
 }
 
 // this is here for future plans

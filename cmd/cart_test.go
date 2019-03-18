@@ -31,7 +31,7 @@ func testOrderNew(t *testing.T) {
     12SCMEATZA - quantity: 1, options: map[]
   StoreID: 4336
   Method:  Carryout
-  Address: {Street:1600 Pennsylvania Ave NW StreetNum: City:Washington DC State: Zip:20500 AddrType: StreetName:}
+  Address: &{StreetLineOne:1600 Pennsylvania Ave NW StreetNum:1600 CityName:Washington DC State: Zipcode:20500 AddrType: StreetName:Pennsylvania Ave NW}
 `
 	if string(buf.Bytes()) != expected {
 		t.Error("wrong output from apizza order")
@@ -97,7 +97,7 @@ func testOrderPriceOutput(t *testing.T) {
     W08PPLNW - quantity: 1, options: map[]
   StoreID: 4336
   Method:  Carryout
-  Address: {Street:1600 Pennsylvania Ave NW StreetNum: City:Washington DC State: Zip:20500 AddrType: StreetName:}
+  Address: &{StreetLineOne:1600 Pennsylvania Ave NW StreetNum:1600 CityName:Washington DC State: Zipcode:20500 AddrType: StreetName:Pennsylvania Ave NW}
 `
 	if string(buf.Bytes()) != expected {
 		t.Error("unexpected price output")

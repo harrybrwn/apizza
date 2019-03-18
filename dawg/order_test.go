@@ -27,14 +27,14 @@ func TestGetOrderPrice(t *testing.T) {
 		},
 		Payments: []Payment{Payment{}},
 		OrderID:  "",
-		Address: Address{
-			StreetNum:  "1600",
-			Street:     "1600 Pennsylvania Ave.",
-			StreetName: "Pennsylvania Ave.",
-			City:       "Washington",
-			State:      "DC",
-			Zip:        "20500",
-			AddrType:   "House",
+		Address: &StreetAddr{
+			StreetNum:     "1600",
+			StreetLineOne: "1600 Pennsylvania Ave.",
+			StreetName:    "Pennsylvania Ave.",
+			CityName:      "Washington",
+			State:         "DC",
+			Zipcode:       "20500",
+			AddrType:      "House",
 		},
 	}
 	resp, err := getOrderPrice(order)
@@ -57,13 +57,13 @@ func TestGetOrderPrice(t *testing.T) {
 }
 
 func TestNewOrder(t *testing.T) {
-	var addr = &Address{
+	var addr = &StreetAddr{
 		StreetNum:  "1600",
 		StreetName: "Pennsylvania Ave NW",
 		// Street: "1600 Pennsylvania Ave NW",
-		City:     "Washington",
+		CityName: "Washington",
 		State:    "DC",
-		Zip:      "20500",
+		Zipcode:  "20500",
 		AddrType: "House",
 	}
 	s, err := NearestStore(addr, "Delivery")

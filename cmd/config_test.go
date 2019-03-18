@@ -15,9 +15,9 @@ func testConfigStruct(t *testing.T) {
 		"Service Carryout",
 		"Name joe",
 		"Email nojoe@mail.com",
-		"City:Washington DC",
-		"Street:1600 Pennsylvania Ave NW",
-		"Zip:20500",
+		"Washington DC",
+		"1600 Pennsylvania Ave NW",
+		"20500",
 	}
 
 	for _, phrase := range phrases {
@@ -81,9 +81,9 @@ func testConfigCmd(t *testing.T) {
 		"Service Carryout",
 		"Name joe",
 		"Email nojoe@mail.com",
-		"City:Washington DC",
-		"Street:1600 Pennsylvania Ave NW",
-		"Zip:20500",
+		"Washington DC",
+		"1600 Pennsylvania Ave NW",
+		"20500",
 	}
 	c.getall = true
 	if err := c.run(c.command(), []string{}); err != nil {

@@ -16,19 +16,19 @@ func TestFormat(t *testing.T) {
 func TestAddressTable(t *testing.T) {
 	var cases = []struct {
 		raw      string
-		expected Address
+		expected StreetAddr
 	}{
 		{
 			`1600 Pennsylvania Ave. Washington, DC 20500`,
-			Address{StreetNum: "1600", StreetName: "Pennsylvania Ave.",
-				Street: "1600 Pennsylvania Ave.", City: "Washington",
-				State: "DC", Zip: "20500", AddrType: "House"},
+			StreetAddr{StreetNum: "1600", StreetName: "Pennsylvania Ave.",
+				StreetLineOne: "1600 Pennsylvania Ave.", CityName: "Washington",
+				State: "DC", Zipcode: "20500", AddrType: "House"},
 		},
 		{
 			`378 James St. Chicago, IL 60621`,
-			Address{StreetNum: "378", StreetName: "James St.",
-				Street: "378 James St.", City: "Chicago", State: "IL",
-				Zip: "60621"},
+			StreetAddr{StreetNum: "378", StreetName: "James St.",
+				StreetLineOne: "378 James St.", CityName: "Chicago", State: "IL",
+				Zipcode: "60621"},
 		},
 	}
 
@@ -37,16 +37,16 @@ func TestAddressTable(t *testing.T) {
 		if addr.StreetNum != tc.expected.StreetNum {
 			t.Error("wrong street num")
 		}
-		if addr.Street != tc.expected.Street {
+		if addr.StreetLineOne != tc.expected.StreetLineOne {
 			t.Error("wrong street")
 		}
-		if addr.City != tc.expected.City {
+		if addr.CityName != tc.expected.CityName {
 			t.Error("wrong city")
 		}
 		if addr.State != tc.expected.State {
 			t.Error("wrong state")
 		}
-		if addr.Zip != tc.expected.Zip {
+		if addr.Zipcode != tc.expected.Zipcode {
 			t.Error("wrong zip")
 		}
 	}
