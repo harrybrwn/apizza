@@ -152,8 +152,8 @@ func newBuilder() *cliBuilder {
 
 func (b *cliBuilder) exec() (*cobra.Command, error) {
 	b.root.AddCmd(
-		b.newOrderCommand().AddCmd(
-			b.newNewOrderCmd(),
+		b.newCartCmd().AddCmd(
+			b.newAddOrderCmd(),
 		),
 		newConfigCmd().AddCmd(
 			newConfigSet(),

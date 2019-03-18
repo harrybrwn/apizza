@@ -8,21 +8,21 @@ import (
 
 func testOrderNew(t *testing.T) {
 	b := newBuilder()
-	order := b.newOrderCommand().(*orderCommand)
-	new := b.newNewOrderCmd().(*newOrderCmd)
+	cart := b.newCartCmd().(*cartCmd)
+	add := b.newAddOrderCmd().(*addOrderCmd)
 
 	buf := &bytes.Buffer{}
-	new.setOutput(buf)
-	order.setOutput(buf)
+	add.setOutput(buf)
+	cart.setOutput(buf)
 
-	new.command().ParseFlags([]string{"--name=testorder", "--products=12SCMEATZA"})
-	err := new.run(new.command(), []string{})
+	add.command().ParseFlags([]string{"--name=testorder", "--products=12SCMEATZA"})
+	err := add.run(add.command(), []string{})
 	if err != nil {
 		t.Error(err)
 	}
 	buf.Reset()
 
-	if err := order.run(order.command(), []string{"testorder"}); err != nil {
+	if err := cart.run(cart.command(), []string{"testorder"}); err != nil {
 		t.Error(err)
 	}
 
@@ -41,19 +41,19 @@ func testOrderNew(t *testing.T) {
 }
 
 func testOrderNewErr(t *testing.T) {
-	new := newBuilder().newNewOrderCmd().(*newOrderCmd)
+	new := newBuilder().newAddOrderCmd().(*addOrderCmd)
 	if err := new.run(new.command(), []string{}); err == nil {
 		t.Error("expected error")
 	}
 }
 
 func testOrderRunAdd(t *testing.T) {
-	order := newBuilder().newOrderCommand().(*orderCommand)
+	cart := newBuilder().newCartCmd().(*cartCmd)
 
 	buf := &bytes.Buffer{}
-	order.setOutput(buf)
+	cart.setOutput(buf)
 
-	if err := order.run(order.command(), []string{}); err != nil {
+	if err := cart.run(cart.command(), []string{}); err != nil {
 		t.Error(err)
 	}
 
@@ -67,8 +67,8 @@ func testOrderRunAdd(t *testing.T) {
 	}
 	buf.Reset()
 
-	order.command().ParseFlags([]string{"--add", "W08PBNLW,W08PPLNW"})
-	if err := order.run(order.command(), []string{"testorder"}); err != nil {
+	cart.command().ParseFlags([]string{"--add", "W08PBNLW,W08PPLNW"})
+	if err := cart.run(cart.command(), []string{"testorder"}); err != nil {
 		t.Error(err)
 	}
 	if string(buf.Bytes()) != "updated order successfully saved.\n" {
@@ -79,13 +79,13 @@ func testOrderRunAdd(t *testing.T) {
 }
 
 func testOrderPriceOutput(t *testing.T) {
-	order := newBuilder().newOrderCommand().(*orderCommand)
+	cart := newBuilder().newCartCmd().(*cartCmd)
 
 	buf := &bytes.Buffer{}
-	order.setOutput(buf)
+	cart.setOutput(buf)
 
-	order.price = true
-	if err := order.run(order.command(), []string{"testorder"}); err != nil {
+	cart.price = true
+	if err := cart.run(cart.command(), []string{"testorder"}); err != nil {
 		t.Error(err)
 	}
 
@@ -103,30 +103,30 @@ func testOrderPriceOutput(t *testing.T) {
 		t.Error("unexpected price output")
 	}
 
-	if err := order.run(order.command(), []string{"to-many", "args"}); err == nil {
+	if err := cart.run(cart.command(), []string{"to-many", "args"}); err == nil {
 		t.Error("expected error")
 	}
 }
 
 func testOrderRunDelete(t *testing.T) {
-	order := newBuilder().newOrderCommand().(*orderCommand)
+	cart := newBuilder().newCartCmd().(*cartCmd)
 
 	buf := &bytes.Buffer{}
-	order.setOutput(buf)
+	cart.setOutput(buf)
 
-	order.delete = true
-	if err := order.run(order.command(), []string{"testorder"}); err != nil {
+	cart.delete = true
+	if err := cart.run(cart.command(), []string{"testorder"}); err != nil {
 		t.Error(err)
 	}
 	if string(buf.Bytes()) != "testorder successfully deleted.\n" {
 		t.Error("wrong output message")
 		fmt.Println("got:", string(buf.Bytes()))
 	}
-	order.delete = false
+	cart.delete = false
 	buf.Reset()
 
-	order.command().ParseFlags([]string{})
-	if err := order.run(order.command(), []string{}); err != nil {
+	cart.command().ParseFlags([]string{})
+	if err := cart.run(cart.command(), []string{}); err != nil {
 		t.Error(err)
 	}
 	expected := `No orders saved.
@@ -138,7 +138,7 @@ func testOrderRunDelete(t *testing.T) {
 	}
 	buf.Reset()
 
-	if err := order.run(order.command(), []string{"not_a_real_order"}); err == nil {
+	if err := cart.run(cart.command(), []string{"not_a_real_order"}); err == nil {
 		t.Error("expected error")
 	}
 }

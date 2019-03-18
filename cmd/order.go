@@ -25,14 +25,14 @@ import (
 	"github.com/harrybrwn/apizza/dawg"
 )
 
-type orderCommand struct {
+type cartCmd struct {
 	*basecmd
 	price  bool
 	delete bool
 	add    []string
 }
 
-func (c *orderCommand) run(cmd *cobra.Command, args []string) (err error) {
+func (c *cartCmd) run(cmd *cobra.Command, args []string) (err error) {
 	if len(args) < 1 {
 		return c.printall()
 	} else if len(args) > 1 {
@@ -73,7 +73,7 @@ func (c *orderCommand) run(cmd *cobra.Command, args []string) (err error) {
 	return c.printOrder(args[0], order)
 }
 
-func (c *orderCommand) printall() error {
+func (c *cartCmd) printall() error {
 	all, err := db.GetAll()
 	if err != nil {
 		return err
@@ -92,11 +92,11 @@ func (c *orderCommand) printall() error {
 	return nil
 }
 
-func (b *cliBuilder) newOrderCommand() cliCommand {
-	c := &orderCommand{price: false, delete: false}
-	c.basecmd = b.newBaseCommand("order <name>", "Manage user created orders", c.run)
-	c.basecmd.cmd.Long = `The order command gets information on all of the user
-created orders. Use 'apizza order <order name>' for info on a specific order`
+func (b *cliBuilder) newCartCmd() cliCommand {
+	c := &cartCmd{price: false, delete: false}
+	c.basecmd = b.newBaseCommand("cart <order name>", "Manage user created orders", c.run)
+	c.basecmd.cmd.Long = `The cart command gets information on all of the user
+created orders. Use 'apizza cart <order name>' for info on a specific order`
 
 	c.cmd.Flags().BoolVarP(&c.price, "price", "p", c.price, "show to price of an order")
 	c.cmd.Flags().StringSliceVarP(&c.add, "add", "a", c.add, "add any number of products to a specific order")
@@ -104,13 +104,13 @@ created orders. Use 'apizza order <order name>' for info on a specific order`
 	return c
 }
 
-type newOrderCmd struct {
+type addOrderCmd struct {
 	*basecmd
 	name     string
 	products []string
 }
 
-func (c *newOrderCmd) run(cmd *cobra.Command, args []string) (err error) {
+func (c *addOrderCmd) run(cmd *cobra.Command, args []string) (err error) {
 	if err := c.getstore(); err != nil {
 		return err
 	}
@@ -132,11 +132,11 @@ func (c *newOrderCmd) run(cmd *cobra.Command, args []string) (err error) {
 	return saveOrder(c.name, order)
 }
 
-func (b *cliBuilder) newNewOrderCmd() cliCommand {
-	c := &newOrderCmd{name: "", products: []string{}}
+func (b *cliBuilder) newAddOrderCmd() cliCommand {
+	c := &addOrderCmd{name: "", products: []string{}}
 	c.basecmd = b.newBaseCommand(
-		"new",
-		"Create a new order that will be stored in the cache.",
+		"add",
+		"Create a new order that will be stored in the cart.",
 		c.run,
 	)
 
@@ -168,7 +168,7 @@ func saveOrder(name string, o *dawg.Order) error {
 	return db.Put("user_order_"+name, raw)
 }
 
-func (c *orderCommand) printOrder(name string, o *dawg.Order) (err error) {
+func (c *cartCmd) printOrder(name string, o *dawg.Order) (err error) {
 	var p float64
 	if c.price {
 		p, err = o.Price()
