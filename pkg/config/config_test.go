@@ -153,6 +153,6 @@ func TestEmptyConfig(t *testing.T) {
 	raw := emptyJSONConfig(elem.Type(), 0)
 
 	if raw != expected {
-		t.Errorf("the emptyConfig funtion returned:\n%s\nand should have returned\n%s", raw, expected)
+		t.Errorf("the emptyConfig function returned:\n%s\nand should have returned\n%s", raw, expected)
 	}
 }

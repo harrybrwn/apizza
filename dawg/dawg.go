@@ -146,7 +146,7 @@ func post(path string, data []byte) ([]byte, error) {
 		return nil, err
 	}
 	if resp.StatusCode != http.StatusOK {
-		return buf.Bytes(), fmt.Errorf("bad responce code: %d", resp.StatusCode)
+		return buf.Bytes(), fmt.Errorf("bad response code: %d", resp.StatusCode)
 	}
 	return buf.Bytes(), nil
 }

@@ -71,7 +71,7 @@ func TestNetworking_Err(t *testing.T) {
 		t.Error("expected error")
 	}
 
-	b, err = post("invalid path", nil)
+	_, err = post("invalid path", nil)
 	if err == nil {
 		t.Error("expected error")
 	}
