@@ -1,11 +1,11 @@
 COVER_FILE=test-coverage
 COVER=go tool cover
 
-all: test build clean
+all: test install clean
 
-.PHONY: build test setup clean
+.PHONY: install test setup clean
 
-build:
+install:
 	go install github.com/harrybrwn/apizza
 
 test: setup

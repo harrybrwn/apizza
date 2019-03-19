@@ -25,6 +25,8 @@ import (
 	"github.com/harrybrwn/apizza/dawg"
 )
 
+var orderPrefix = "user_order_"
+
 type cartCmd struct {
 	*basecmd
 	price  bool
@@ -43,7 +45,7 @@ func (c *cartCmd) run(cmd *cobra.Command, args []string) (err error) {
 	}
 
 	if c.delete {
-		if err = db.Delete("user_order_" + args[0]); err != nil {
+		if err = db.Delete(orderPrefix + args[0]); err != nil {
 			return err
 		}
 		fmt.Fprintln(c.output, args[0], "successfully deleted.")
@@ -88,8 +90,8 @@ func (c *cartCmd) printall() error {
 
 	fmt.Fprintln(c.output, "Your Orders:")
 	for k := range all {
-		if strings.Contains(k, "user_order_") {
-			fmt.Fprintln(c.output, " ", strings.Replace(k, "user_order_", "", -1))
+		if strings.Contains(k, orderPrefix) {
+			fmt.Fprintln(c.output, " ", strings.Replace(k, orderPrefix, "", -1))
 		}
 	}
 	return nil
@@ -155,7 +157,7 @@ func (b *cliBuilder) newAddOrderCmd() cliCommand {
 }
 
 func getOrder(name string) (*dawg.Order, error) {
-	raw, err := db.Get("user_order_" + name)
+	raw, err := db.Get(orderPrefix + name)
 	if err != nil {
 		return nil, err
 	}
@@ -174,7 +176,7 @@ func saveOrder(name string, o *dawg.Order) error {
 	if err != nil {
 		return err
 	}
-	return db.Put("user_order_"+name, raw)
+	return db.Put(orderPrefix+name, raw)
 }
 
 func (c *cartCmd) printOrder(name string, o *dawg.Order) (err error) {
@@ -198,5 +200,11 @@ func (c *cartCmd) printOrder(name string, o *dawg.Order) (err error) {
 	fmt.Fprintf(c.output, "  StoreID: %s\n", o.StoreID)
 	fmt.Fprintf(c.output, "  Method:  %s\n", o.ServiceMethod)
 	fmt.Fprintf(c.output, "  Address: %+v\n", o.Address)
+	if test {
+		fmt.Printf("%+v\n", o)
+		for _, prod := range o.Products {
+			fmt.Printf("%+v\n", prod)
+		}
+	}
 	return nil
 }
