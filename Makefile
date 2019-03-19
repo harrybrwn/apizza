@@ -11,7 +11,6 @@ build:
 test: setup
 	go test -cover ./... -coverprofile=$(COVER_FILE)
 	$(COVER) -func=$(COVER_FILE)
-	$(COVER) -html=$(COVER_FILE) -o coverage.html
 
 setup:
 	touch $(COVER_FILE)
