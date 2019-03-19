@@ -15,21 +15,17 @@
 package cmd
 
 import (
-	"encoding/json"
 	"fmt"
 	"io"
 	"strings"
-	"time"
 	"unicode/utf8"
 
 	"github.com/spf13/cobra"
-
-	"github.com/harrybrwn/apizza/dawg"
 )
 
 type menuCmd struct {
 	*basecmd
-	menu          *dawg.Menu
+	// menu          *dawg.Menu
 	all           bool
 	toppings      bool
 	preconfigured bool
@@ -74,31 +70,31 @@ func (b *cliBuilder) newMenuCmd() cliCommand {
 	return c
 }
 
-func (c *menuCmd) initMenu() error {
-	cachedMenu, err := db.Get("menu")
-	if err != nil {
-		return err
-	}
-	cacheTime, err := db.TimeStamp("menu")
-	if err != nil {
-		return err
-	}
+// func (c *menuCmd) initMenu() error {
+// 	cachedMenu, err := db.Get("menu")
+// 	if err != nil {
+// 		return err
+// 	}
+// 	cacheTime, err := db.TimeStamp("menu")
+// 	if err != nil {
+// 		return err
+// 	}
 
-	if cachedMenu != nil && time.Since(cacheTime) < 12*time.Hour {
-		c.menu = &dawg.Menu{}
-		if err = json.Unmarshal(cachedMenu, c.menu); err != nil {
-			return err
-		}
-	} else {
-		if err = db.ResetTimeStamp("menu"); err != nil {
-			return err
-		}
-		if err = c.cacheNewMenu(); err != nil {
-			return err
-		}
-	}
-	return nil
-}
+// 	if cachedMenu != nil && time.Since(cacheTime) < 12*time.Hour {
+// 		c.menu = &dawg.Menu{}
+// 		if err = json.Unmarshal(cachedMenu, c.menu); err != nil {
+// 			return err
+// 		}
+// 	} else {
+// 		if err = db.ResetTimeStamp("menu"); err != nil {
+// 			return err
+// 		}
+// 		if err = c.cacheNewMenu(); err != nil {
+// 			return err
+// 		}
+// 	}
+// 	return nil
+// }
 
 func (c *menuCmd) printMenu() {
 	var f func(map[string]interface{}, string)
@@ -193,21 +189,21 @@ func (c *menuCmd) findProduct(key string) (map[string]interface{}, error) {
 	return product, nil
 }
 
-func (c *menuCmd) cacheNewMenu() (err error) {
-	if err = c.getstore(); err != nil {
-		return err
-	}
+// func (c *menuCmd) cacheNewMenu() (err error) {
+// 	if err = c.getstore(); err != nil {
+// 		return err
+// 	}
 
-	c.menu, err = store.Menu()
-	if err != nil {
-		return err
-	}
-	rawMenu, err := json.Marshal(c.menu)
-	if err != nil {
-		return err
-	}
-	return db.Put("menu", rawMenu)
-}
+// 	c.menu, err = store.Menu()
+// 	if err != nil {
+// 		return err
+// 	}
+// 	rawMenu, err := json.Marshal(c.menu)
+// 	if err != nil {
+// 		return err
+// 	}
+// 	return db.Put("menu", rawMenu)
+// }
 
 func maxStrLen(list []interface{}) int {
 	max := 0

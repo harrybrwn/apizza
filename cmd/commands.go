@@ -15,10 +15,12 @@
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/spf13/cobra"
 
@@ -68,6 +70,7 @@ type cliCommand interface {
 type basecmd struct {
 	cmd    *cobra.Command
 	addr   *address
+	menu   *dawg.Menu
 	output io.Writer
 }
 
@@ -98,6 +101,48 @@ func (bc *basecmd) getstore() (err error) {
 		}
 	}
 	return nil
+}
+
+func (bc *basecmd) initMenu() error {
+	cachedMenu, err := db.Get("menu")
+	if err != nil {
+		return err
+	}
+	cacheTime, err := db.TimeStamp("menu")
+	if err != nil {
+		return err
+	}
+
+	if cachedMenu != nil && time.Since(cacheTime) < 12*time.Hour {
+		bc.menu = &dawg.Menu{}
+		if err = json.Unmarshal(cachedMenu, bc.menu); err != nil {
+			return err
+		}
+	} else {
+		if err = db.ResetTimeStamp("menu"); err != nil {
+			return err
+		}
+		if err = bc.cacheNewMenu(); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (bc *basecmd) cacheNewMenu() (err error) {
+	if err = bc.getstore(); err != nil {
+		return err
+	}
+
+	bc.menu, err = store.Menu()
+	if err != nil {
+		return err
+	}
+	rawMenu, err := json.Marshal(bc.menu)
+	if err != nil {
+		return err
+	}
+	return db.Put("menu", rawMenu)
 }
 
 type runFunc func(*cobra.Command, []string) error
