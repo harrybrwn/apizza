@@ -7,7 +7,7 @@
 Dominos pizza from the command line.
 
 ### Table of Contents
-- [Installatoin](#installation)
+- [Installation](#installation)
 - [Setup](#setup)
 - [Orders](#orders)
 - [DAWG](#the-dominos-api-wrapper-for-go)

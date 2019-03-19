@@ -65,7 +65,7 @@ func TestNetworking_Err(t *testing.T) {
 
 	b, err := post("/invalid path", make([]byte, 1))
 	if len(b) != 0 {
-		t.Error("exepcted zero length responce")
+		t.Error("exepcted zero length response")
 	}
 	if err == nil {
 		t.Error("expected error")

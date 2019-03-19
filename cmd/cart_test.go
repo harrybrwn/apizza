@@ -72,7 +72,7 @@ func testOrderRunAdd(t *testing.T) {
 		t.Error(err)
 	}
 	if string(buf.Bytes()) != "updated order successfully saved.\n" {
-		t.Error("wrong ouput message")
+		t.Error("wrong output message")
 		fmt.Println("expected:", "updated order successfully saved.")
 		fmt.Println("got:", string(buf.Bytes()))
 	}

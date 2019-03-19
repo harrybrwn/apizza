@@ -103,7 +103,7 @@ func testConfigCmd(t *testing.T) {
 		t.Error(err)
 	}
 	if string(buf.Bytes()) != cmdUseage {
-		t.Error("useage does not match")
+		t.Error("usage does not match")
 	}
 	buf.Reset()
 
@@ -111,7 +111,7 @@ func testConfigCmd(t *testing.T) {
 		t.Error(err)
 	}
 	if string(buf.Bytes()) != c.command().UsageString() {
-		t.Error("useage does not match")
+		t.Error("usage does not match")
 	}
 }
 

@@ -105,6 +105,7 @@ func withDummyDB(fn func(*testing.T)) func(*testing.T) {
 	newDatabase, err := cache.GetDB(dbPath)
 	check(err, "dummy database")
 	err = newDatabase.Put("test", []byte("this is a testvalue"))
+	check(err, "db.Put")
 
 	oldDatabase := db
 	return func(t *testing.T) {

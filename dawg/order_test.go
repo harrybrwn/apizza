@@ -60,11 +60,10 @@ func TestNewOrder(t *testing.T) {
 	var addr = &StreetAddr{
 		StreetNum:  "1600",
 		StreetName: "Pennsylvania Ave NW",
-		// Street: "1600 Pennsylvania Ave NW",
-		CityName: "Washington",
-		State:    "DC",
-		Zipcode:  "20500",
-		AddrType: "House",
+		CityName:   "Washington",
+		State:      "DC",
+		Zipcode:    "20500",
+		AddrType:   "House",
 	}
 	s, err := NearestStore(addr, "Delivery")
 	if err != nil {
