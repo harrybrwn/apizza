@@ -40,9 +40,6 @@ func (c *cartCmd) run(cmd *cobra.Command, args []string) (err error) {
 	} else if len(args) > 1 {
 		return errors.New("cannot handle multiple orders")
 	}
-	if args[0] == "add" {
-		return errors.New("cannot use 'add' as an order name")
-	}
 
 	if c.delete {
 		if err = db.Delete(orderPrefix + args[0]); err != nil {
