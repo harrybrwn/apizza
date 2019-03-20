@@ -214,27 +214,27 @@ func TestAutoTimeStamp(t *testing.T) {
 	time.Sleep(time.Second / 2)
 
 	if err = db.AutoTimeStamp("test", time.Second/10,
-		func() error { return errors.New("test") },
+		func() error { return errors.New("this error should be raised") },
 		func() error { return nil },
 	); err == nil {
-		t.Error("expected error")
+		t.Error("expected error from update func")
 	}
 
-	if err = db.AutoTimeStamp("test", time.Second,
+	if err = db.AutoTimeStamp("test", time.Second*2,
 		func() error { return nil },
-		func() error { return errors.New("test") },
+		func() error { return errors.New("this error should be raised") },
 	); err == nil {
-		t.Error("expected error")
+		t.Error("expected error from notUpdate func")
 	}
 
 	if err = db.AutoTimeStamp("test", time.Second*2,
 		func() error { return nil }, nil,
 	); err != nil {
-		t.Error(err)
+		t.Error("notUpdate passed as nil:", err)
 	}
 
-	if err = db.AutoTimeStamp("test", time.Second,
-		func() error { return errors.New("shouldn't be raised") },
+	if err = db.AutoTimeStamp("test", time.Second*2,
+		func() error { return errors.New("update func shouldn't be run but was") },
 		func() error { return nil },
 	); err != nil {
 		t.Error(err)
