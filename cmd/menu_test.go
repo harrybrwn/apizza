@@ -3,6 +3,7 @@ package cmd
 import (
 	"bytes"
 	"testing"
+	"time"
 )
 
 func testMenuRun(t *testing.T) {
@@ -34,7 +35,7 @@ func testMenuRun(t *testing.T) {
 
 func testFindProduct(t *testing.T) {
 	c := newBuilder().newMenuCmd().(*menuCmd)
-	if err := c.initMenu(); err != nil {
+	if err := db.AutoTimeStamp("menu", 12*time.Hour, c.cacheNewMenu, c.getCachedMenu); err != nil {
 		t.Error(err)
 	}
 	buf := &bytes.Buffer{}

@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"io"
 	"strings"
+	"time"
 	"unicode/utf8"
 
 	"github.com/spf13/cobra"
@@ -37,7 +38,7 @@ func (c *menuCmd) run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	if err := c.initMenu(); err != nil {
+	if err := db.AutoTimeStamp("menu", 12*time.Hour, c.cacheNewMenu, c.getCachedMenu); err != nil {
 		return err
 	}
 

@@ -20,7 +20,6 @@ import (
 	"io"
 	"os"
 	"path/filepath"
-	"time"
 
 	"github.com/spf13/cobra"
 
@@ -103,32 +102,6 @@ func (bc *basecmd) getstore() (err error) {
 	return nil
 }
 
-func (bc *basecmd) initMenu() error {
-	cachedMenu, err := db.Get("menu")
-	if err != nil {
-		return err
-	}
-	cacheTime, err := db.TimeStamp("menu")
-	if err != nil {
-		return err
-	}
-
-	if cachedMenu != nil && time.Since(cacheTime) < 12*time.Hour {
-		bc.menu = &dawg.Menu{}
-		if err = json.Unmarshal(cachedMenu, bc.menu); err != nil {
-			return err
-		}
-	} else {
-		if err = db.ResetTimeStamp("menu"); err != nil {
-			return err
-		}
-		if err = bc.cacheNewMenu(); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
 func (bc *basecmd) cacheNewMenu() (err error) {
 	if err = bc.getstore(); err != nil {
 		return err
@@ -138,11 +111,20 @@ func (bc *basecmd) cacheNewMenu() (err error) {
 	if err != nil {
 		return err
 	}
-	rawMenu, err := json.Marshal(bc.menu)
+	raw, err := json.Marshal(bc.menu)
 	if err != nil {
 		return err
 	}
-	return db.Put("menu", rawMenu)
+	return db.Put("menu", raw)
+}
+
+func (bc *basecmd) getCachedMenu() error {
+	raw, err := db.Get("menu")
+	if err != nil {
+		return err
+	}
+	bc.menu = &dawg.Menu{}
+	return json.Unmarshal(raw, bc.menu)
 }
 
 type runFunc func(*cobra.Command, []string) error
