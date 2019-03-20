@@ -98,6 +98,28 @@ func (db *DataBase) TimeStamp(key string) (time.Time, error) {
 	return time.Unix(tStamp, 0), err
 }
 
+// AutoTimeStamp will check the timestamp at a given key everytime AutoTimeStamp
+// is run. The function given as the 'update' argument will be run if the stored
+// timestamp is past the decay argument.
+func (db *DataBase) AutoTimeStamp(
+	key string,
+	decay time.Duration,
+	update func() error,
+) error {
+	tstamp, err := db.TimeStamp(key)
+	if err != nil {
+		return err
+	}
+
+	if time.Since(tstamp) > decay {
+		if err = update(); err != nil {
+			return err
+		}
+		return db.ResetTimeStamp(key)
+	}
+	return nil
+}
+
 // ResetTimeStamp stores a new timestamp for the given key.
 func (db *DataBase) ResetTimeStamp(key string) error {
 	return db.Put(key+"_timestamp", timeStampNow())
