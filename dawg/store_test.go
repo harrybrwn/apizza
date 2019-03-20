@@ -43,6 +43,9 @@ func TestFindNearbyStores_Err(t *testing.T) {
 	if err == nil {
 		t.Error("should return error")
 	}
+	if _, err := NearestStore(nil, "Delivery"); err == nil {
+		t.Error("expected error")
+	}
 }
 
 func TestNewStore(t *testing.T) {
@@ -160,6 +163,10 @@ func TestInitStore_Err(t *testing.T) {
 	sMap := map[string]interface{}{}
 	err := InitStore("", &sMap)
 	if err == nil {
+		t.Error("expected error")
+	}
+
+	if err = InitStore("1234", &sMap); err == nil {
 		t.Error("expected error")
 	}
 }

@@ -1,6 +1,7 @@
 package cache
 
 import (
+	"errors"
 	"io/ioutil"
 	"os"
 	"testing"
@@ -46,7 +47,6 @@ func TestGetDB_ExpectedErr(t *testing.T) {
 		t.Error("expected error")
 	}
 }
-
 func TestDB_Put(t *testing.T) {
 	dbfname := tempfile()
 	fname := filename(dbfname)
@@ -96,6 +96,13 @@ func TestDB_Put(t *testing.T) {
 	if db.Exists("no") == true {
 		t.Error("shouldn't exist")
 	}
+	if err := db.Delete("yes"); err != nil {
+		t.Error(err)
+	}
+	if db.Exists("yes") == true {
+		t.Error("shouldn't exist")
+	}
+
 	all, err := db.GetAll()
 	if err != nil {
 		t.Error(err)
@@ -124,6 +131,10 @@ func TestDB_Get(t *testing.T) {
 	})
 	if err != nil {
 		t.Error("error on boltDB's end")
+	}
+
+	if db.Exists("") {
+		t.Error("should be false")
 	}
 
 	val, err := db.Get("test")
@@ -176,6 +187,57 @@ func TestTimeStamp(t *testing.T) {
 	}
 	if time.Since(stampRe) > t2 {
 		t.Error("timestamp didn't reset")
+	}
+}
+
+func TestAutoTimeStamp(t *testing.T) {
+	db, err := GetDB(tempfile())
+	if err != nil || db == nil {
+		t.Fatal("bad db creation")
+	}
+	if err = db.AutoTimeStamp("test", time.Second/10,
+		func() error { return nil },
+		func() error { return nil },
+	); err != nil {
+		t.Error(err)
+	}
+
+	time.Sleep(time.Second / 2)
+
+	if err = db.AutoTimeStamp("test", time.Second/10,
+		func() error { return nil },
+		func() error { return nil },
+	); err != nil {
+		t.Error(err)
+	}
+
+	time.Sleep(time.Second / 2)
+
+	if err = db.AutoTimeStamp("test", time.Second/10,
+		func() error { return errors.New("test") },
+		func() error { return nil },
+	); err == nil {
+		t.Error("expected error")
+	}
+
+	if err = db.AutoTimeStamp("test", time.Second,
+		func() error { return nil },
+		func() error { return errors.New("test") },
+	); err == nil {
+		t.Error("expected error")
+	}
+
+	if err = db.AutoTimeStamp("test", time.Second*2,
+		func() error { return nil }, nil,
+	); err != nil {
+		t.Error(err)
+	}
+
+	if err = db.AutoTimeStamp("test", time.Second,
+		func() error { return errors.New("shouldn't be raised") },
+		func() error { return nil },
+	); err != nil {
+		t.Error(err)
 	}
 }
 

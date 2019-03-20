@@ -24,6 +24,7 @@ func TestRunner(t *testing.T) {
 	var tests = []func(*testing.T){
 		dummyCheckForinit,
 		testOrderNew,
+		testAddOrder,
 		testOrderNewErr,
 		testOrderRunAdd,
 		testOrderPriceOutput,

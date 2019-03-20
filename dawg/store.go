@@ -134,10 +134,7 @@ func (s *Store) GetProduct(code string) (*Product, error) {
 	} else {
 		return nil, errors.New("cannot find product")
 	}
-	if err != nil {
-		return nil, err
-	}
-	return p, nil
+	return p, err
 }
 
 // WaitTime returns a pair of integers that are the maximum and

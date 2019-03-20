@@ -112,3 +112,28 @@ func TestNewOrder(t *testing.T) {
 		t.Error("Order.Price() failed")
 	}
 }
+
+func TestBadOrder(t *testing.T) {
+	// store, err := NearestStore(testAddress(), "Delivery")
+	addr := testAddress()
+	addr.StreetLineOne = ""
+	store, err := NearestStore(addr, "Delivery")
+	if err != nil {
+		t.Error(err)
+	}
+	o := store.NewOrder()
+
+	p, err := store.GetProduct("2LDCOKE")
+	if err != nil {
+		t.Error(err)
+	}
+	o.AddProduct(p)
+
+	price, err := o.Price()
+	if err == nil {
+		t.Error(err)
+	}
+	if price != -1.0 {
+		t.Error("expected bad price")
+	}
+}

@@ -40,6 +40,29 @@ func testOrderNew(t *testing.T) {
 	}
 }
 
+func testAddOrder(t *testing.T) {
+	add := newBuilder().newAddOrderCmd().(*addOrderCmd)
+	buf := &bytes.Buffer{}
+	add.setOutput(buf)
+
+	if err := add.run(add.command(), []string{"testing"}); err != nil {
+		t.Error(err)
+	}
+	if string(buf.Bytes()) != "" {
+		t.Error("wrong output: should have no output")
+	}
+	buf.Reset()
+
+	cart := newBuilder().newCartCmd().(*cartCmd)
+	cart.setOutput(buf)
+
+	cart.command().ParseFlags([]string{"-d"})
+	if err := cart.run(cart.command(), []string{"testing"}); err != nil {
+		t.Error(err)
+	}
+	buf.Reset()
+}
+
 func testOrderNewErr(t *testing.T) {
 	new := newBuilder().newAddOrderCmd().(*addOrderCmd)
 	if err := new.run(new.command(), []string{}); err == nil {
