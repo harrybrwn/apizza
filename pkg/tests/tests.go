@@ -1,3 +1,4 @@
+// Package tests is a package for internal testing in the apizza program.
 package tests
 
 import (

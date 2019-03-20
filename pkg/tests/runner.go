@@ -47,6 +47,7 @@ func testName(f interface{}) string {
 	return runtime.FuncForPC(reflect.ValueOf(f).Pointer()).Name()
 }
 
+// matchString and its methods are from the Go standard library.
 type matchString func(pat, str string) (bool, error)
 
 func (f matchString) MatchString(pat, str string) (bool, error) { return f(pat, str) }

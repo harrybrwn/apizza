@@ -73,3 +73,31 @@ closing tests.
 		t.Error("output should be as expected")
 	}
 }
+
+func TestMatchString(t *testing.T) {
+	m := matchString(matchStr)
+	if ok, err := m.MatchString("", ""); err != nil {
+		t.Error(err)
+	} else if !ok {
+		t.Error("should be true")
+	}
+
+	if err := m.StartCPUProfile(&bytes.Buffer{}); err != nil {
+		t.Error(err)
+	}
+
+	if err := m.WriteProfileTo("", &bytes.Buffer{}, 0); err != nil {
+		t.Error(err)
+	}
+
+	if m.ImportPath() != "" {
+		t.Error("wrong path")
+	}
+
+	if err := m.StopTestLog(); err != nil {
+		t.Error(err)
+	}
+
+	m.StartTestLog(&bytes.Buffer{})
+	m.StopCPUProfile()
+}
