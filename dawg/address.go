@@ -33,17 +33,6 @@ func parse(raw []byte) [][]byte {
 	return addressRegex.FindAllSubmatch(raw, -1)[0]
 }
 
-// Address represents a street address.
-// type Address struct {
-// 	Street     string `json:"Street"`
-// 	StreetNum  string `json:"StreetNumber"`
-// 	City       string `json:"City"`
-// 	State      string `json:"Region"`
-// 	Zip        string `json:"PostalCode"`
-// 	AddrType   string `json:"Type"`
-// 	StreetName string `json:"StreetName"`
-// }
-
 // Address is a guid for how addresses should be used as input
 type Address interface {
 	LineOne() string

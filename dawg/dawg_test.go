@@ -76,5 +76,3 @@ func TestNetworking_Err(t *testing.T) {
 		t.Error("expected error")
 	}
 }
-
-func TestApizza(t *testing.T) {}

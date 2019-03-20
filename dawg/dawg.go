@@ -59,8 +59,6 @@ func (err *DominosError) Init(jsonData []byte) error {
 
 func (err *DominosError) Error() string {
 	var errmsg string
-	// errmsg += "Tip: use err.IsWarning() or err.IsFailure() for handling type DominosError.\n"
-	// errmsg += "\tex. if e, ok := err.(*DominosError); ok && e.IsFailure() { panic(e) }\n\n"
 	for i := range err.StatusItems {
 		if v, ok := err.StatusItems[i]["Code"]; ok {
 			errmsg += fmt.Sprintf("Dominos %s:\n", v)

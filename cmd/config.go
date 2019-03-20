@@ -188,7 +188,6 @@ func (c *configGetCmd) run(cmd *cobra.Command, args []string) error {
 		return errors.New("no variable given")
 	}
 
-	// add a flag '--all' that prints the contents of the config file
 	for _, arg := range args {
 		v := cfg.Get(arg)
 		if v == nil {

@@ -89,7 +89,6 @@ func TestConfigGetandSet(t *testing.T) {
 	if err == nil {
 		t.Error("expected error")
 	}
-	// t.Errorf("%+v", c.More)
 }
 
 func TestSetConfig(t *testing.T) {

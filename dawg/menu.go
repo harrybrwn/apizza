@@ -64,7 +64,6 @@ func (p *Product) AddTopping(code, coverage string, amount float64) {
 		panic("amount must be 2.0, 1.5, 1.0, or 0.5")
 	}
 	var key string
-	// come on now, this is shity, but i don't know how to fix it
 	switch coverage {
 	case ToppingFull:
 		key = coverage
