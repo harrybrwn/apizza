@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
-	"fmt"
 )
 
 // NearestStore gets the dominos location closest to the given address.
@@ -170,8 +169,7 @@ func findNearbyStores(addr Address, service string) (*storeLocs, error) {
 	locs := &storeLocs{}
 	err = json.Unmarshal(b, locs)
 	if err == nil && locs.Status == -1 {
-		// return locs, errors.New("Dominos server Failure: -1", "error")
-		return locs, fmt.Errorf("Dominos server Failure -1:\n%+v", locs)
+		return locs, errors.New("Dominos server Failure: -1")
 	}
 	for i := range locs.Stores {
 		locs.Stores[i].userAddress, locs.Stores[i].userService = addr, service
