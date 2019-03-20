@@ -34,21 +34,21 @@ var db *cache.DataBase
 func Execute() {
 	var err error
 	if err = config.SetConfig(".apizza", cfg); err != nil {
-		handle(err, "", 1)
+		handle(err, "Internal Error", 1)
 	}
 
 	builder := newBuilder()
 
 	if db, err = cache.GetDB(builder.dbPath()); err != nil {
-		handle(err, "", 1)
+		handle(err, "Internal Error", 1)
 	}
 
 	defer func() {
 		if err = db.Close(); err != nil {
-			handle(err, "", 1)
+			handle(err, "Internal Error", 1)
 		}
 		if err = config.Save(); err != nil {
-			handle(err, "", 1)
+			handle(err, "Internal Error", 1)
 		}
 	}()
 

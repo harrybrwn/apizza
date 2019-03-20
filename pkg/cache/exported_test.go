@@ -36,7 +36,6 @@ func ExampleDataBase() {
 }
 
 func tempfile() string {
-	// f, err := ioutil.TempFile("", "apizza-")
 	f, err := ioutil.TempFile("", "")
 	if err != nil {
 		panic(err)
