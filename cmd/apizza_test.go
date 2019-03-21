@@ -24,8 +24,8 @@ func TestRunner(t *testing.T) {
 		withCartCmd(b, testOrderPriceOutput),
 		withCartCmd(b, testOrderRunDelete),
 		testFindProduct,
-		withApizzaCmd(newApizzaCmd(), testApizzaCmdRun),
-		withDummyDB(withApizzaCmd(newApizzaCmd(), testApizzaResetflag)),
+		withApizzaCmd(testApizzaCmdRun, newApizzaCmd()),
+		withDummyDB(withApizzaCmd(testApizzaResetflag, newApizzaCmd())),
 		testMenuRun,
 		testExec,
 		testConfigStruct,
@@ -51,7 +51,7 @@ func runtests(t *testing.T, pTests []func(*testing.T)) {
 	}
 }
 
-func testApizzaCmdRun(c cliCommand, t *testing.T) {
+func testApizzaCmdRun(t *testing.T, buf *bytes.Buffer, c *apizzaCmd) {
 	c.command().ParseFlags([]string{})
 	if err := c.run(c.command(), []string{}); err != nil {
 		t.Error(err)
@@ -61,12 +61,26 @@ func testApizzaCmdRun(c cliCommand, t *testing.T) {
 	if err := c.run(c.command(), []string{}); err != nil {
 		t.Error(err)
 	}
+	test = false
+	buf.Reset()
 }
 
-func testApizzaResetflag(c cliCommand, t *testing.T) {
+func testApizzaResetflag(t *testing.T, buf *bytes.Buffer, c *apizzaCmd) {
 	c.command().ParseFlags([]string{"--clear-cache"})
+	c.clearCache = true
+	test = false
 	if err := c.run(c.command(), []string{}); err != nil {
 		t.Error(err)
+	}
+
+	if _, err := os.Stat(db.Path); os.IsExist(err) {
+		t.Error("database should not exitst")
+	} else if !os.IsNotExist(err) {
+		t.Error("database should not exitst")
+	}
+
+	if string(buf.Bytes()) != fmt.Sprintf("removing %s\n", db.Path) {
+		t.Error("wrong output")
 	}
 }
 
@@ -161,10 +175,16 @@ func withCmds(test func(*testing.T, *bytes.Buffer, ...cliCommand), cmds ...cliCo
 	}
 }
 
-func withApizzaCmd(c cliCommand, f func(cliCommand, *testing.T)) func(*testing.T) {
+func withApizzaCmd(f func(*testing.T, *bytes.Buffer, *apizzaCmd), c cliCommand) func(*testing.T) {
 	return func(t *testing.T) {
-		c.setOutput(&bytes.Buffer{})
-		f(c, t)
+		cmd, ok := c.(*apizzaCmd)
+		if !ok {
+			t.Error("not an *apizzaCmd")
+			return
+		}
+		buf := &bytes.Buffer{}
+		cmd.setOutput(buf)
+		f(t, buf, cmd)
 	}
 }
 

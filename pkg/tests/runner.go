@@ -54,6 +54,11 @@ func (r *Runner) AddTest(funcs ...TestingFunc) {
 	}
 }
 
+// Reset will remove all of the tests stored in the Runner.
+func (r *Runner) Reset() {
+	r.tests = []testing.InternalTest{}
+}
+
 // Wrap will wrap a test in a start function and an end function. start and end
 // will be run as part of the test
 func (r *Runner) Wrap(test func(*testing.T), start, end func() error) func(*testing.T) {

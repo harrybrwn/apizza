@@ -28,7 +28,7 @@ func NamedTempFile(prefix, suffix string) string {
 
 // WithTempFile is a test wrapper that accepts a function with the file
 // and testing.T as arguments.
-func WithTempFile(test func(file string, t *testing.T)) func(*testing.T) {
+func WithTempFile(test func(string, *testing.T)) func(*testing.T) {
 	return func(t *testing.T) {
 		test(TempFile(), t)
 	}

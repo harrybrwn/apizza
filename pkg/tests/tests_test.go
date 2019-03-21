@@ -2,6 +2,7 @@ package tests
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -103,4 +104,51 @@ func TestMatchString(t *testing.T) {
 
 	m.StartTestLog(&bytes.Buffer{})
 	m.StopCPUProfile()
+}
+
+func TestTempDir(t *testing.T) {
+	dir := TempDir()
+	if dir == "" {
+		t.Error("bad temp dir")
+	}
+	if _, err := os.Stat(dir); os.IsNotExist(err) {
+		t.Error(dir, "should exist")
+	}
+}
+func TestWithTempFile(t *testing.T) {
+	f := func(file string, innerT *testing.T) {
+		if _, err := os.Stat(file); os.IsExist(err) {
+			t.Error(file, "should not exist")
+		}
+	}
+
+	t.Run("inner_test_WithTempFile", WithTempFile(f))
+}
+
+func TestWrap(t *testing.T) {
+	r := &Runner{
+		T:        t,
+		Setup:    func() {},
+		Teardown: func() {},
+	}
+
+	nilErrF := func() error { return nil }
+	errF := func() error { return errors.New("test err") }
+
+	r.AddTest(
+		func(*testing.T) {},
+		r.Wrap(func(*testing.T) {}, nilErrF, nilErrF),
+	)
+	r.Run()
+
+	r.Reset()
+	if len(r.tests) > 0 {
+		t.Error("tests were not reset")
+	}
+
+	r.AddTest(
+		func(*testing.T) {},
+		r.Wrap(func(t *testing.T) { t.Skip("should be skipped") }, nilErrF, errF),
+	)
+	r.Run()
 }

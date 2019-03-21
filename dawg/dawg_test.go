@@ -13,7 +13,7 @@ func TestFormat(t *testing.T) {
 	url := format("https://order.dominos.com/power/%s", "store-locator")
 	expected := "https://order.dominos.com/power/store-locator"
 	if url != expected {
-		t.Error(fmt.Sprintf("Expected: %s, Got: %s", expected, url))
+		t.Errorf("Expected: %s, Got: %s", expected, url)
 	}
 }
 
