@@ -28,13 +28,12 @@ func TestGetOrderPrice(t *testing.T) {
 		Payments: []Payment{Payment{}},
 		OrderID:  "",
 		Address: &StreetAddr{
-			StreetNum:     "1600",
-			StreetLineOne: "1600 Pennsylvania Ave.",
-			StreetName:    "Pennsylvania Ave.",
-			CityName:      "Washington",
-			State:         "DC",
-			Zipcode:       "20500",
-			AddrType:      "House",
+			StreetNum:  "1600",
+			StreetName: "Pennsylvania Ave.",
+			CityName:   "Washington",
+			State:      "DC",
+			Zipcode:    "20500",
+			AddrType:   "House",
 		},
 	}
 	resp, err := getOrderPrice(order)
@@ -54,7 +53,14 @@ func TestGetOrderPrice(t *testing.T) {
 }
 
 func TestNewOrder(t *testing.T) {
-	addr := testAddress()
+	addr := &StreetAddr{
+		StreetNum:  "1600",
+		StreetName: "Pennsylvania Ave.",
+		CityName:   "Washington",
+		State:      "DC",
+		Zipcode:    "20500",
+		AddrType:   "House",
+	}
 	s, err := NearestStore(addr, "Carryout")
 	if err != nil {
 		t.Error(err)
@@ -106,7 +112,7 @@ func TestNewOrder(t *testing.T) {
 	}
 }
 
-func TestBadOrder(t *testing.T) {
+func TestOrder_Err(t *testing.T) {
 	// store, err := NearestStore(testAddress(), "Delivery")
 	addr := testAddress()
 	addr.StreetLineOne = ""

@@ -46,7 +46,7 @@ var (
 func dominosErr(resp []byte) error {
 	e := &DominosError{}
 	if err := e.init(resp); err != nil {
-		panic(err)
+		return err
 	}
 
 	if e.IsOk() {
@@ -78,8 +78,8 @@ type statusItem struct {
 func (err *DominosError) init(jsonData []byte) error {
 	err.fullErr = map[string]interface{}{}
 
-	if err := json.Unmarshal(jsonData, &err.fullErr); err != nil {
-		return err
+	if e := json.Unmarshal(jsonData, &err.fullErr); e != nil {
+		return e
 	}
 	return mapstructure.Decode(err.fullErr, err)
 }
@@ -90,11 +90,13 @@ func (err *DominosError) Error() string {
 		errmsg += fmt.Sprintf("Dominos %s:\n", item.Code)
 	}
 	for _, item := range err.Order.StatusItems {
-		errmsg += fmt.Sprintf("    Code: '%s'", item.Code)
+		if item.Code != "" {
+			errmsg += fmt.Sprintf("    Code: '%s'", item.Code)
+		}
 		if item.Message != "" {
-			errmsg += ":\n        " + item.Message
+			errmsg += fmt.Sprintf(":\n        %s\n", item.Message)
 		} else if item.PulseText != "" {
-			errmsg += fmt.Sprintf("PulseCode: '%d'", item.PulseCode) + ":\n        " + item.PulseText
+			errmsg += fmt.Sprintf("    PulseCode %d:\n        %s", item.PulseCode, item.PulseText)
 		} else {
 			errmsg += "\n"
 		}
