@@ -19,7 +19,7 @@ const (
 	ToppingRight = "2/2"
 )
 
-var cachedMenu *Menu
+// var cachedMenu *Menu
 
 // Product represents a product on the dominos menu.
 type Product struct {
@@ -126,17 +126,14 @@ type Menu struct {
 }
 
 func newMenu(id string) (*Menu, error) {
-	// checks to if the menu has been cached as a global variable
-	if cachedMenu != nil && cachedMenu.ID == id {
-		return cachedMenu, nil
-	}
 	path := format("/power/store/%s/menu", id)
 	b, err := get(path, Params{"lang": DefaultLang, "structured": "true"})
 	if err != nil {
 		return nil, err
 	}
 	menu := &Menu{ID: id}
-	err = json.Unmarshal(b, menu)
-	cachedMenu = menu
-	return menu, err
+	if err = json.Unmarshal(b, menu); err != nil {
+		return nil, err
+	}
+	return menu, dominosErr(b)
 }

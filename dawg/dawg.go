@@ -43,6 +43,18 @@ var (
 	}
 )
 
+func dominosErr(resp []byte) *DominosError {
+	e := &DominosError{}
+	if err := e.init(resp); err != nil {
+		panic(err)
+	}
+
+	if e.IsOk() {
+		return nil
+	}
+	return e
+}
+
 // DominosError represents an error sent back by the dominos servers
 type DominosError struct {
 	Status      int          `json:"Status"`
@@ -63,7 +75,7 @@ type statusItem struct {
 }
 
 // Init initializes the error from json data.
-func (err *DominosError) Init(jsonData []byte) error {
+func (err *DominosError) init(jsonData []byte) error {
 	err.fullErr = map[string]interface{}{}
 
 	if err := json.Unmarshal(jsonData, &err.fullErr); err != nil {
@@ -99,6 +111,10 @@ func (err *DominosError) IsWarning() bool {
 // system from working
 func (err *DominosError) IsFailure() bool {
 	return err.Status == FailureStatus
+}
+
+func (err *DominosError) IsOk() bool {
+	return err.Status != FailureStatus
 }
 
 func get(path string, params URLParam) ([]byte, error) {

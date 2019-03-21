@@ -76,7 +76,7 @@ func sendOrder(path string, ordr *Order) (map[string]interface{}, error) {
 	}
 
 	dominoserr := &DominosError{}
-	if err := dominoserr.Init(b); err != nil {
+	if err := dominoserr.init(b); err != nil {
 		return respData, err
 	}
 	if dominoserr.IsFailure() {
