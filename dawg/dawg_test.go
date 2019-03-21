@@ -95,15 +95,7 @@ func _TestDominosErrors(t *testing.T) {
 		},
 		StoreID: "4336",
 		OrderID: "",
-		Address: &StreetAddr{
-			// StreetNum: "1600",
-			StreetLineOne: "1600 Pennsylvania Ave.",
-			// StreetName: "Pennsylvania Ave.",
-			CityName: "Washington",
-			State:    "DC",
-			Zipcode:  "20500",
-			AddrType: "House",
-		},
+		Address: testAddress(),
 	}
 	resp, err := post("/power/price-order", order.rawData())
 	if err != nil {
@@ -111,6 +103,7 @@ func _TestDominosErrors(t *testing.T) {
 	}
 	if err := dominosErr(resp); err != nil {
 		t.Error(err)
+		err, _ := err.(*DominosError)
 		for k, v := range err.fullErr {
 			if k != "Order" {
 				fmt.Println(k, v)
@@ -123,12 +116,4 @@ func _TestDominosErrors(t *testing.T) {
 	} else {
 		fmt.Printf("we chillin\n%+v\n", order)
 	}
-	// fmt.Println(err)
-	// e := &DominosError{}
-	// if err := e.init(resp); err != nil {
-	// 	panic(err)
-	// }
-	// if e.IsFailure() {
-	// 	fmt.Println(e)
-	// }
 }

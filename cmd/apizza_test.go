@@ -14,26 +14,18 @@ import (
 )
 
 func TestRunner(t *testing.T) {
-	var funcname = func(a interface{}) string {
-		return runtime.FuncForPC(reflect.ValueOf(a).Pointer()).Name()
-	}
-
-	setupTests()
-	defer teardownTests()
-
 	b := newBuilder()
 
-	var testsfunctions = []func(*testing.T){
-		dummyCheckForinit,
-		withTwoCmd(b.newCartCmd(), b.newAddOrderCmd(), testOrderNew),
-		withTwoCmd(b.newCartCmd(), b.newAddOrderCmd(), testAddOrder),
-		withCmd(b.newAddOrderCmd(), testOrderNewErr),
-		withCmd(b.newCartCmd(), testOrderRunAdd),
+	var apizzaTests = []func(*testing.T){
+		withCmds(testOrderNew, b.newCartCmd(), b.newAddOrderCmd()),
+		withCmds(testAddOrder, b.newCartCmd(), b.newAddOrderCmd()),
+		withCmds(testOrderNewErr, b.newAddOrderCmd()),
+		withCmds(testOrderRunAdd, b.newCartCmd()),
 		withCartCmd(b, testOrderPriceOutput),
 		withCartCmd(b, testOrderRunDelete),
 		testFindProduct,
-		withApizza(newApizzaCmd(), testApizzaCmdRun),
-		withDummyDB(withApizza(newApizzaCmd(), testApizzaResetflag)),
+		withApizzaCmd(newApizzaCmd(), testApizzaCmdRun),
+		withDummyDB(withApizzaCmd(newApizzaCmd(), testApizzaResetflag)),
 		testMenuRun,
 		testExec,
 		testConfigStruct,
@@ -41,13 +33,10 @@ func TestRunner(t *testing.T) {
 		testConfigGet,
 		testConfigSet,
 	}
-
-	for _, f := range testsfunctions {
-		t.Run(funcname(f), f)
-	}
+	runtests(t, apizzaTests)
 }
 
-func testAll(t *testing.T, pTests []func(*testing.T)) {
+func runtests(t *testing.T, pTests []func(*testing.T)) {
 	var funcName = func(a interface{}) string {
 		return runtime.FuncForPC(reflect.ValueOf(a).Pointer()).Name()
 	}
@@ -108,13 +97,13 @@ func dummyCheckForinit(t *testing.T) {
 }
 
 func withDummyDB(fn func(*testing.T)) func(*testing.T) {
-	newDatabase, err := cache.GetDB(tests.NamedTempFile("testdata", "testing_dummyDB.db"))
-	check(err, "dummy database")
-	err = newDatabase.Put("test", []byte("this is a testvalue"))
-	check(err, "db.Put")
-
-	oldDatabase := db
 	return func(t *testing.T) {
+		newDatabase, err := cache.GetDB(tests.NamedTempFile("testdata", "testing_dummyDB.db"))
+		check(err, "dummy database")
+		err = newDatabase.Put("test", []byte("this is a testvalue"))
+		check(err, "db.Put")
+
+		oldDatabase := db
 		db = newDatabase
 		defer func() {
 			db = oldDatabase
@@ -162,28 +151,17 @@ func teardownTests() {
 	}
 }
 
-func withCmd(
-	c cliCommand,
-	f func(cliCommand, *bytes.Buffer, *testing.T),
-) func(*testing.T) {
+func withCmds(test func(*testing.T, *bytes.Buffer, ...cliCommand), cmds ...cliCommand) func(*testing.T) {
 	return func(t *testing.T) {
 		buf := &bytes.Buffer{}
-		c.setOutput(buf)
-		f(c, buf, t)
+		for i := range cmds {
+			cmds[i].setOutput(buf)
+		}
+		test(t, buf, cmds...)
 	}
 }
 
-func withTwoCmd(
-	c1, c2 cliCommand,
-	f func(cliCommand, cliCommand, *bytes.Buffer, *testing.T),
-) func(*testing.T) {
-	buf := &bytes.Buffer{}
-	c1.setOutput(buf)
-	c2.setOutput(buf)
-	return func(t *testing.T) { f(c1, c2, buf, t) }
-}
-
-func withApizza(c cliCommand, f func(cliCommand, *testing.T)) func(*testing.T) {
+func withApizzaCmd(c cliCommand, f func(cliCommand, *testing.T)) func(*testing.T) {
 	return func(t *testing.T) {
 		c.setOutput(&bytes.Buffer{})
 		f(c, t)

@@ -6,7 +6,8 @@ import (
 	"testing"
 )
 
-func testOrderNew(cart, add cliCommand, buf *bytes.Buffer, t *testing.T) {
+func testOrderNew(t *testing.T, buf *bytes.Buffer, cmds ...cliCommand) {
+	cart, add := cmds[0], cmds[1]
 	add.command().ParseFlags([]string{"--name=testorder", "--products=12SCMEATZA"})
 	err := add.run(add.command(), []string{})
 	if err != nil {
@@ -32,7 +33,8 @@ func testOrderNew(cart, add cliCommand, buf *bytes.Buffer, t *testing.T) {
 	}
 }
 
-func testAddOrder(cart, add cliCommand, buf *bytes.Buffer, t *testing.T) {
+func testAddOrder(t *testing.T, buf *bytes.Buffer, cmds ...cliCommand) {
+	cart, add := cmds[0], cmds[1]
 	if err := add.run(add.command(), []string{"testing"}); err != nil {
 		t.Error(err)
 	}
@@ -48,13 +50,14 @@ func testAddOrder(cart, add cliCommand, buf *bytes.Buffer, t *testing.T) {
 	buf.Reset()
 }
 
-func testOrderNewErr(new cliCommand, buf *bytes.Buffer, t *testing.T) {
-	if err := new.run(new.command(), []string{}); err == nil {
+func testOrderNewErr(t *testing.T, buf *bytes.Buffer, cmds ...cliCommand) {
+	if err := cmds[0].run(cmds[0].command(), []string{}); err == nil {
 		t.Error("expected error")
 	}
 }
 
-func testOrderRunAdd(cart cliCommand, buf *bytes.Buffer, t *testing.T) {
+func testOrderRunAdd(t *testing.T, buf *bytes.Buffer, cmds ...cliCommand) {
+	cart := cmds[0]
 	if err := cart.run(cart.command(), []string{}); err != nil {
 		t.Error(err)
 	}
