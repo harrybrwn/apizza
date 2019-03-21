@@ -90,11 +90,11 @@ func (err *DominosError) Error() string {
 		errmsg += fmt.Sprintf("Dominos %s:\n", item.Code)
 	}
 	for _, item := range err.Order.StatusItems {
-		errmsg += "    " + item.Code
+		errmsg += fmt.Sprintf("    Code: '%s'", item.Code)
 		if item.Message != "" {
 			errmsg += ":\n        " + item.Message
 		} else if item.PulseText != "" {
-			errmsg += fmt.Sprint(item.PulseCode) + ":\n        " + item.PulseText
+			errmsg += fmt.Sprintf("PulseCode: '%d'", item.PulseCode) + ":\n        " + item.PulseText
 		} else {
 			errmsg += "\n"
 		}
