@@ -30,32 +30,12 @@ func TestTempFile(t *testing.T) {
 
 func TestRunner(t *testing.T) {
 	output := &bytes.Buffer{}
-
-	r := &Runner{
-		Setup: func() {
-			fmt.Fprintln(output, "setting up tests...")
-		},
-		Teardown: func() {
-			fmt.Fprintln(output, "closing tests.")
-		},
-	}
-	r.AddTest(
-		func(t *testing.T) { fmt.Fprintln(output, "t1") },
-		func(t *testing.T) { fmt.Fprintln(output, "t2") },
-	)
-
-	r.Run()
 	expected := `setting up tests...
 t1
 t2
 closing tests.
 `
-	if string(output.Bytes()) != expected {
-		t.Error("output should be as expected")
-	}
-	output.Reset()
-
-	r = &Runner{
+	r := &Runner{
 		T: t,
 		Setup: func() {
 			fmt.Fprintln(output, "setting up tests...")
@@ -71,6 +51,31 @@ closing tests.
 	r.Run()
 	if string(output.Bytes()) != expected {
 		t.Error("output should be as expected")
+	}
+}
+
+func TestNewRunner(t *testing.T) {
+	var (
+		setupRan    = false
+		middleRan   = false
+		teardownRan = false
+	)
+
+	r := NewRunner(t, func() { setupRan = true }, func() { teardownRan = true })
+	if r.T == nil {
+		t.Error("bad vars")
+	}
+	r.AddTest(func(*testing.T) { middleRan = true })
+	r.Run()
+
+	if !setupRan {
+		t.Error("setup did not run")
+	}
+	if !middleRan {
+		t.Error("test did not run")
+	}
+	if !teardownRan {
+		t.Error("teardown did not run")
 	}
 }
 

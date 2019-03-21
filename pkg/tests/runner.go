@@ -31,6 +31,11 @@ func (r *Runner) Run() int {
 	return testing.MainStart(matchString(matchStr), r.tests, nil, nil).Run()
 }
 
+// NewRunner returns a new runner
+func NewRunner(t *testing.T, setup, teardown func()) *Runner {
+	return &Runner{T: t, Setup: setup, Teardown: teardown}
+}
+
 // AddTest adds any number of test functions as arguments.
 func (r *Runner) AddTest(funcs ...func(*testing.T)) {
 	for _, f := range funcs {
