@@ -1,11 +1,15 @@
 package tests
 
 import (
+	"errors"
 	"io"
 	"reflect"
 	"runtime"
 	"testing"
 )
+
+// TestingFunc represents a test function.
+type TestingFunc func(*testing.T)
 
 // Runner is a structure that runs a list of tests with a setup functon
 // and a teardown function
@@ -18,8 +22,12 @@ type Runner struct {
 
 // Run runs all of the Runner's tests
 func (r *Runner) Run() int {
-	r.Setup()
-	defer r.Teardown()
+	if r.Setup != nil {
+		r.Setup()
+	}
+	if r.Teardown != nil {
+		defer r.Teardown()
+	}
 
 	if r.T != nil {
 		for _, test := range r.tests {
@@ -37,12 +45,28 @@ func NewRunner(t *testing.T, setup, teardown func()) *Runner {
 }
 
 // AddTest adds any number of test functions as arguments.
-func (r *Runner) AddTest(funcs ...func(*testing.T)) {
+func (r *Runner) AddTest(funcs ...TestingFunc) {
 	for _, f := range funcs {
 		r.tests = append(r.tests, testing.InternalTest{
 			Name: testName(f),
 			F:    f,
 		})
+	}
+}
+
+// Wrap will wrap a test in a start function and an end function. start and end
+// will be run as part of the test
+func (r *Runner) Wrap(test func(*testing.T), start, end func() error) func(*testing.T) {
+	return func(t *testing.T) {
+		if err := start(); err != nil {
+			t.Errorf("Wrapped function %s (start): %s", testName(test), err)
+		}
+
+		test(t)
+
+		if err := end(); err != nil {
+			t.Errorf("Wrapped function %s (end): %s", testName(test), err)
+		}
 	}
 }
 
@@ -52,19 +76,15 @@ func testName(f interface{}) string {
 	return runtime.FuncForPC(reflect.ValueOf(f).Pointer()).Name()
 }
 
+var errMatchStr = errors.New("tests: unexpected use of tests.Runner")
+
 // matchString and its methods are from the Go standard library.
 type matchString func(pat, str string) (bool, error)
 
-func (f matchString) MatchString(pat, str string) (bool, error) { return f(pat, str) }
-
-// func (f matchString) StartCPUProfile(w io.Writer) error {return errors.New("testing: unexpected use of func Main")}
-func (f matchString) StartCPUProfile(w io.Writer) error { return nil }
-func (f matchString) StopCPUProfile()                   {}
-
-// func (f matchString) WriteProfileTo(string, io.Writer, int) error {return errors.New("testing: unexpected use of func Main")}
-func (f matchString) WriteProfileTo(string, io.Writer, int) error { return nil }
+func (f matchString) MatchString(pat, str string) (bool, error)   { return f(pat, str) }
+func (f matchString) StartCPUProfile(w io.Writer) error           { return errMatchStr }
+func (f matchString) StopCPUProfile()                             {}
+func (f matchString) WriteProfileTo(string, io.Writer, int) error { return errMatchStr }
 func (f matchString) ImportPath() string                          { return "" }
 func (f matchString) StartTestLog(io.Writer)                      {}
-
-// func (f matchString) StopTestLog() error {return errors.New("testing: unexpected use of func Main")}
-func (f matchString) StopTestLog() error { return nil }
+func (f matchString) StopTestLog() error                          { return errMatchStr }

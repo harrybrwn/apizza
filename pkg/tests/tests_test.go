@@ -87,20 +87,18 @@ func TestMatchString(t *testing.T) {
 		t.Error("should be true")
 	}
 
-	if err := m.StartCPUProfile(&bytes.Buffer{}); err != nil {
-		t.Error(err)
+	if err := m.StartCPUProfile(&bytes.Buffer{}); err == nil {
+		t.Error("expected error")
 	}
-
-	if err := m.WriteProfileTo("", &bytes.Buffer{}, 0); err != nil {
-		t.Error(err)
+	if err := m.WriteProfileTo("", &bytes.Buffer{}, 0); err == nil {
+		t.Error("expected error")
+	}
+	if err := m.StopTestLog(); err == nil {
+		t.Error("expected error")
 	}
 
 	if m.ImportPath() != "" {
 		t.Error("wrong path")
-	}
-
-	if err := m.StopTestLog(); err != nil {
-		t.Error(err)
 	}
 
 	m.StartTestLog(&bytes.Buffer{})
