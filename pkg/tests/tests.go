@@ -34,22 +34,23 @@ func WithTempFile(test func(file string, t *testing.T)) func(*testing.T) {
 	}
 }
 
+// TempDir returns a temproary directory.
+func TempDir() string {
+	dir := randFile(os.TempDir(), "", "")
+	if err := os.Mkdir(dir, 0777); err != nil {
+		return ""
+	}
+	return dir
+}
+
 // Parts of this function came from the Go standard library io/ioutil/tempfile.go
 func randFile(dir string, prefix, suffix string) (fname string) {
-	var (
-		f   *os.File
-		err error
-	)
 	for i := 0; i < 1000; i++ {
 		fname = filepath.Join(dir, prefix+nextRandom()+suffix)
-		f, err = os.OpenFile(fname, os.O_RDWR|os.O_CREATE|os.O_EXCL, 0600)
-		if os.IsExist(err) {
+		if _, err := os.Stat(fname); os.IsExist(err) {
 			continue
 		}
 		break
-	}
-	if f.Close() != nil || os.Remove(fname) != nil {
-		panic("could not remove temp file after creation")
 	}
 	return fname
 }
