@@ -6,7 +6,8 @@ TODO
 # Test Data
 data
 *.json
-test*
+test
+test.cmd
 testdata/
 test-coverage
 coverage.html
