@@ -39,9 +39,11 @@ func GetAllNearbyStores(addr Address, service string) ([]Store, error) {
 		return nil, err
 	}
 	for i := range all.Stores {
-		err = InitStore(all.Stores[i].ID, &all.Stores[i])
+		if err = InitStore(all.Stores[i].ID, &all.Stores[i]); err != nil {
+			return nil, err
+		}
 	}
-	return all.Stores, err
+	return all.Stores, nil
 }
 
 // NewStore returns the default Store object given a store id.
@@ -54,8 +56,7 @@ func GetAllNearbyStores(addr Address, service string) ([]Store, error) {
 // store itself.
 func NewStore(id string, service string, addr Address) (*Store, error) {
 	store := &Store{userService: service, userAddress: addr}
-	err := InitStore(id, store)
-	return store, err
+	return store, InitStore(id, store)
 }
 
 // InitStore allows for the creation of arbitrary store objects. The main
@@ -72,6 +73,9 @@ func InitStore(id string, obj interface{}) error {
 	}
 	if bytes.HasPrefix(b, []byte("<!DOCTYPE html>")) {
 		return errors.New("invalid 'id' argument")
+	}
+	if err := dominosErr(b); err != nil {
+		return err
 	}
 	return json.Unmarshal(b, obj)
 }
@@ -165,11 +169,11 @@ func findNearbyStores(addr Address, service string) (*storeLocs, error) {
 	}
 	locs := &storeLocs{}
 	err = json.Unmarshal(b, locs)
-	if err == nil && locs.Status == -1 {
-		return locs, errors.New("Dominos server Failure: -1")
+	if err != nil {
+		return nil, err
 	}
 	for i := range locs.Stores {
 		locs.Stores[i].userAddress, locs.Stores[i].userService = addr, service
 	}
-	return locs, err
+	return locs, dominosErr(b)
 }

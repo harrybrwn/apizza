@@ -4,6 +4,8 @@ import (
 	"net/http"
 	"net/url"
 
+	"github.com/mitchellh/mapstructure"
+
 	"bytes"
 	"encoding/json"
 	"fmt"
@@ -41,35 +43,58 @@ var (
 	}
 )
 
+func dominosErr(resp []byte) *DominosError {
+	e := &DominosError{}
+	if err := e.init(resp); err != nil {
+		panic(err)
+	}
+
+	if e.IsOk() {
+		return nil
+	}
+	return e
+}
+
 // DominosError represents an error sent back by the dominos servers
 type DominosError struct {
-	Status      int                 `json:"Status"`
-	StatusItems []map[string]string `json:"StatusItems"`
+	Status      int          `json:"Status"`
+	StatusItems []statusItem `json:"StatusItems"`
 	Order       struct {
-		Status      int                      `json:"Status"`
-		StatusItems []map[string]interface{} `json:"StatusItems"`
+		Status      int          `json:"Status"`
+		StatusItems []statusItem `json:"StatusItems"`
 	} `json:"Order"`
-	Msg string
+	Msg     string
+	fullErr map[string]interface{}
+}
+
+type statusItem struct {
+	Code      string
+	Message   string
+	PulseCode int
+	PulseText string
 }
 
 // Init initializes the error from json data.
-func (err *DominosError) Init(jsonData []byte) error {
-	return json.Unmarshal(jsonData, err)
+func (err *DominosError) init(jsonData []byte) error {
+	err.fullErr = map[string]interface{}{}
+
+	if err := json.Unmarshal(jsonData, &err.fullErr); err != nil {
+		return err
+	}
+	return mapstructure.Decode(err.fullErr, err)
 }
 
 func (err *DominosError) Error() string {
 	var errmsg string
-	for i := range err.StatusItems {
-		if v, ok := err.StatusItems[i]["Code"]; ok {
-			errmsg += fmt.Sprintf("Dominos %s:\n", v)
-		}
+	for _, item := range err.StatusItems {
+		errmsg += fmt.Sprintf("Dominos %s:\n", item.Code)
 	}
 	for _, item := range err.Order.StatusItems {
-		errmsg += "    " + item["Code"].(string)
-		if msg, ok := item["Message"]; ok {
-			errmsg += ":\n        " + msg.(string)
-		} else if msg, ok := item["PulseText"]; ok {
-			errmsg += ":\n        " + msg.(string)
+		errmsg += fmt.Sprintf("    Code: '%s'", item.Code)
+		if item.Message != "" {
+			errmsg += ":\n        " + item.Message
+		} else if item.PulseText != "" {
+			errmsg += fmt.Sprintf("PulseCode: '%d'", item.PulseCode) + ":\n        " + item.PulseText
 		} else {
 			errmsg += "\n"
 		}
@@ -86,6 +111,11 @@ func (err *DominosError) IsWarning() bool {
 // system from working
 func (err *DominosError) IsFailure() bool {
 	return err.Status == FailureStatus
+}
+
+// IsOk returns true is the error is not a failure else returns false
+func (err *DominosError) IsOk() bool {
+	return err.Status != FailureStatus
 }
 
 func get(path string, params URLParam) ([]byte, error) {

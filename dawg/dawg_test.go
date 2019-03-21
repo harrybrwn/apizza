@@ -76,3 +76,59 @@ func TestNetworking_Err(t *testing.T) {
 		t.Error("expected error")
 	}
 }
+
+func _TestDominosErrors(t *testing.T) {
+	fmt.Println("try to find the fields that dominos gives when giving errors")
+	order := &Order{
+		LanguageCode:  "en",
+		ServiceMethod: "Delivery",
+		// ServiceMethod: "",
+		Products: []*Product{
+			&Product{
+				Code: "12SCREEN",
+				Options: map[string]interface{}{
+					"C": map[string]string{"1/1": "1"},
+					"P": map[string]string{"1/1": "1.5"},
+				},
+				Qty: 1,
+			},
+		},
+		StoreID: "4336",
+		OrderID: "",
+		Address: &StreetAddr{
+			// StreetNum: "1600",
+			StreetLineOne: "1600 Pennsylvania Ave.",
+			// StreetName: "Pennsylvania Ave.",
+			CityName: "Washington",
+			State:    "DC",
+			Zipcode:  "20500",
+			AddrType: "House",
+		},
+	}
+	resp, err := post("/power/price-order", order.rawData())
+	if err != nil {
+		t.Error(err)
+	}
+	if err := dominosErr(resp); err != nil {
+		t.Error(err)
+		for k, v := range err.fullErr {
+			if k != "Order" {
+				fmt.Println(k, v)
+			}
+		}
+		print("\n")
+		for k, v := range err.fullErr["Order"].(map[string]interface{}) {
+			fmt.Println(k, v)
+		}
+	} else {
+		fmt.Printf("we chillin\n%+v\n", order)
+	}
+	// fmt.Println(err)
+	// e := &DominosError{}
+	// if err := e.init(resp); err != nil {
+	// 	panic(err)
+	// }
+	// if e.IsFailure() {
+	// 	fmt.Println(e)
+	// }
+}
