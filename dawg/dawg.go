@@ -113,6 +113,7 @@ func (err *DominosError) IsFailure() bool {
 	return err.Status == FailureStatus
 }
 
+// IsOk returns true is the error is not a failure else returns false
 func (err *DominosError) IsOk() bool {
 	return err.Status != FailureStatus
 }

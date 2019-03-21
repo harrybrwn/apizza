@@ -74,17 +74,7 @@ func sendOrder(path string, ordr *Order) (map[string]interface{}, error) {
 	if err := json.Unmarshal(b, &respData); err != nil {
 		return nil, err
 	}
-
-	dominoserr := &DominosError{}
-	if err := dominoserr.init(b); err != nil {
-		return respData, err
-	}
-	if dominoserr.IsFailure() {
-		return respData, dominoserr
-	} else if dominoserr.IsWarning() && Warnings {
-		fmt.Println(dominoserr)
-	}
-	return respData, nil
+	return respData, dominosErr(b)
 }
 
 func getOrderPrice(ordr Order) (map[string]interface{}, error) {
