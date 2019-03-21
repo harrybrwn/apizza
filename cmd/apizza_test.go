@@ -23,7 +23,7 @@ func TestRunner(t *testing.T) {
 
 	b := newBuilder()
 
-	var tests = []func(*testing.T){
+	var testsfunctions = []func(*testing.T){
 		dummyCheckForinit,
 		withTwoCmd(b.newCartCmd(), b.newAddOrderCmd(), testOrderNew),
 		withTwoCmd(b.newCartCmd(), b.newAddOrderCmd(), testAddOrder),
@@ -42,8 +42,23 @@ func TestRunner(t *testing.T) {
 		testConfigSet,
 	}
 
-	for _, f := range tests {
+	for _, f := range testsfunctions {
 		t.Run(funcname(f), f)
+	}
+}
+
+func testAll(t *testing.T, pTests []func(*testing.T)) {
+	var funcName = func(a interface{}) string {
+		return runtime.FuncForPC(reflect.ValueOf(a).Pointer()).Name()
+	}
+
+	allTests := append([]func(*testing.T){dummyCheckForinit}, pTests...)
+
+	setupTests()
+	defer teardownTests()
+
+	for _, f := range allTests {
+		t.Run(funcName(f), f)
 	}
 }
 

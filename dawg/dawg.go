@@ -43,7 +43,7 @@ var (
 	}
 )
 
-func dominosErr(resp []byte) *DominosError {
+func dominosErr(resp []byte) error {
 	e := &DominosError{}
 	if err := e.init(resp); err != nil {
 		panic(err)

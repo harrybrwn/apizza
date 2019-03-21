@@ -77,6 +77,7 @@ func sendOrder(path string, ordr *Order) (map[string]interface{}, error) {
 	return respData, dominosErr(b)
 }
 
+// does not take a pointer because ordr.Payments = nil should not be remembered
 func getOrderPrice(ordr Order) (map[string]interface{}, error) {
 	ordr.Payments = nil
 	return sendOrder("/power/price-order", &ordr)
