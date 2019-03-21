@@ -2,12 +2,11 @@ package cache
 
 import (
 	"errors"
-	"io/ioutil"
-	"os"
 	"testing"
 	"time"
 
 	"github.com/boltdb/bolt"
+	"github.com/harrybrwn/apizza/pkg/tests"
 )
 
 func TestUtils(t *testing.T) {
@@ -21,7 +20,7 @@ func TestUtils(t *testing.T) {
 }
 
 func TestGetDB(t *testing.T) {
-	db, err := GetDB(tempfile())
+	db, err := GetDB(tests.TempFile())
 	if err != nil {
 		t.Error(err)
 	}
@@ -48,7 +47,7 @@ func TestGetDB_ExpectedErr(t *testing.T) {
 	}
 }
 func TestDB_Put(t *testing.T) {
-	dbfname := tempfile()
+	dbfname := tests.TempFile()
 	fname := filename(dbfname)
 	db, err := GetDB(dbfname)
 	if err != nil || db == nil {
@@ -117,7 +116,7 @@ func TestDB_Put(t *testing.T) {
 }
 
 func TestDB_Get(t *testing.T) {
-	dbfname := tempfile()
+	dbfname := tests.TempFile()
 	fname := filename(dbfname)
 	db, err := GetDB(dbfname)
 	if err != nil || db == nil {
@@ -150,7 +149,7 @@ func TestDB_Get(t *testing.T) {
 }
 
 func TestTimeStamp(t *testing.T) {
-	db, err := GetDB(tempfile())
+	db, err := GetDB(tests.TempFile())
 	if err != nil || db == nil {
 		t.Fatal("bad db creation")
 	}
@@ -191,7 +190,7 @@ func TestTimeStamp(t *testing.T) {
 }
 
 func TestAutoTimeStamp(t *testing.T) {
-	db, err := GetDB(tempfile())
+	db, err := GetDB(tests.TempFile())
 	if err != nil || db == nil {
 		t.Fatal("bad db creation")
 	}
@@ -239,18 +238,4 @@ func TestAutoTimeStamp(t *testing.T) {
 	); err != nil {
 		t.Error(err)
 	}
-}
-
-func tempfile() string {
-	f, err := ioutil.TempFile("", "")
-	if err != nil {
-		panic(err)
-	}
-	if err := f.Close(); err != nil {
-		panic(err)
-	}
-	if err := os.Remove(f.Name()); err != nil {
-		panic(err)
-	}
-	return f.Name()
 }

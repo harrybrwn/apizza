@@ -2,16 +2,15 @@ package cache_test
 
 import (
 	"fmt"
-	"io/ioutil"
 	"log"
-	"os"
 
 	"github.com/harrybrwn/apizza/pkg/cache"
+	"github.com/harrybrwn/apizza/pkg/tests"
 )
 
 func ExampleDataBase() {
 	// open the database
-	db, err := cache.GetDB(tempfile())
+	db, err := cache.GetDB(tests.TempFile())
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -33,18 +32,4 @@ func ExampleDataBase() {
 
 	// Output:
 	// some string of values
-}
-
-func tempfile() string {
-	f, err := ioutil.TempFile("", "")
-	if err != nil {
-		panic(err)
-	}
-	if err := f.Close(); err != nil {
-		panic(err)
-	}
-	if err := os.Remove(f.Name()); err != nil {
-		panic(err)
-	}
-	return f.Name()
 }

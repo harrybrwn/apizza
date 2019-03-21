@@ -5,12 +5,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"path/filepath"
 	"reflect"
 	"runtime"
 	"testing"
 
 	"github.com/harrybrwn/apizza/pkg/cache"
+	"github.com/harrybrwn/apizza/pkg/tests"
 )
 
 func TestRunner(t *testing.T) {
@@ -21,17 +21,19 @@ func TestRunner(t *testing.T) {
 	setupTests()
 	defer teardownTests()
 
+	b := newBuilder()
+
 	var tests = []func(*testing.T){
 		dummyCheckForinit,
-		testOrderNew,
-		testAddOrder,
-		testOrderNewErr,
-		testOrderRunAdd,
-		testOrderPriceOutput,
-		testOrderRunDelete,
+		withTwoCmd(b.newCartCmd(), b.newAddOrderCmd(), testOrderNew),
+		withTwoCmd(b.newCartCmd(), b.newAddOrderCmd(), testAddOrder),
+		withCmd(b.newAddOrderCmd(), testOrderNewErr),
+		withCmd(b.newCartCmd(), testOrderRunAdd),
+		withCartCmd(b, testOrderPriceOutput),
+		withCartCmd(b, testOrderRunDelete),
 		testFindProduct,
-		testApizzaCmdRun,
-		withDummyDB(testApizzaResetflag),
+		withApizza(newApizzaCmd(), testApizzaCmdRun),
+		withDummyDB(withApizza(newApizzaCmd(), testApizzaResetflag)),
 		testMenuRun,
 		testExec,
 		testConfigStruct,
@@ -45,11 +47,7 @@ func TestRunner(t *testing.T) {
 	}
 }
 
-func testApizzaCmdRun(t *testing.T) {
-	c := newApizzaCmd().(*apizzaCmd)
-	buf := &bytes.Buffer{}
-	c.setOutput(buf)
-
+func testApizzaCmdRun(c cliCommand, t *testing.T) {
 	c.command().ParseFlags([]string{})
 	if err := c.run(c.command(), []string{}); err != nil {
 		t.Error(err)
@@ -61,11 +59,7 @@ func testApizzaCmdRun(t *testing.T) {
 	}
 }
 
-func testApizzaResetflag(t *testing.T) {
-	c := newApizzaCmd().(*apizzaCmd)
-	buf := &bytes.Buffer{}
-	c.setOutput(buf)
-
+func testApizzaResetflag(c cliCommand, t *testing.T) {
 	c.command().ParseFlags([]string{"--clear-cache"})
 	if err := c.run(c.command(), []string{}); err != nil {
 		t.Error(err)
@@ -99,11 +93,7 @@ func dummyCheckForinit(t *testing.T) {
 }
 
 func withDummyDB(fn func(*testing.T)) func(*testing.T) {
-	wd, err := os.Getwd()
-	check(err, "working dir")
-
-	dbPath := filepath.Join(wd, "testdata", "testing_dummyDB.db")
-	newDatabase, err := cache.GetDB(dbPath)
+	newDatabase, err := cache.GetDB(tests.NamedTempFile("testdata", "testing_dummyDB.db"))
 	check(err, "dummy database")
 	err = newDatabase.Put("test", []byte("this is a testvalue"))
 	check(err, "db.Put")
@@ -114,17 +104,15 @@ func withDummyDB(fn func(*testing.T)) func(*testing.T) {
 		defer func() {
 			db = oldDatabase
 			check(newDatabase.Close(), "deleting dummy database")
-			os.Remove(dbPath)
+			os.Remove(newDatabase.Path) // ignoring errors because it may already be gone
 		}()
 		fn(t)
 	}
 }
 
 func setupTests() {
-	wd, err := os.Getwd()
-	check(err, "working dir")
-
-	db, err = cache.GetDB(filepath.Join(wd, "testdata", "test.db"))
+	var err error
+	db, err = cache.GetDB(tests.NamedTempFile("testdata", "test.db"))
 	check(err, "database")
 	err = db.Put("test", []byte("this is some test data"))
 	check(err, "database put")
@@ -154,16 +142,49 @@ func teardownTests() {
 	if err := db.Close(); err != nil {
 		panic(err)
 	}
+	if err := os.Remove(db.Path); err != nil {
+		panic(err)
+	}
+}
 
-	wd, err := os.Getwd()
-	if err != nil {
-		panic(err)
+func withCmd(
+	c cliCommand,
+	f func(cliCommand, *bytes.Buffer, *testing.T),
+) func(*testing.T) {
+	return func(t *testing.T) {
+		buf := &bytes.Buffer{}
+		c.setOutput(buf)
+		f(c, buf, t)
 	}
-	if err = os.Remove(filepath.Join(wd, "testdata", "test.db")); err != nil {
-		panic(err)
+}
+
+func withTwoCmd(
+	c1, c2 cliCommand,
+	f func(cliCommand, cliCommand, *bytes.Buffer, *testing.T),
+) func(*testing.T) {
+	buf := &bytes.Buffer{}
+	c1.setOutput(buf)
+	c2.setOutput(buf)
+	return func(t *testing.T) { f(c1, c2, buf, t) }
+}
+
+func withApizza(c cliCommand, f func(cliCommand, *testing.T)) func(*testing.T) {
+	return func(t *testing.T) {
+		c.setOutput(&bytes.Buffer{})
+		f(c, t)
 	}
-	if err = os.Remove(filepath.Join(wd, "testdata")); err != nil {
-		panic(err)
+}
+
+func withCartCmd(
+	b *cliBuilder,
+	f func(*cartCmd, *bytes.Buffer, *testing.T),
+) func(*testing.T) {
+	return func(t *testing.T) {
+		cart := b.newCartCmd().(*cartCmd)
+		buf := &bytes.Buffer{}
+		cart.setOutput(buf)
+
+		f(cart, buf, t)
 	}
 }
 

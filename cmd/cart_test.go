@@ -6,15 +6,7 @@ import (
 	"testing"
 )
 
-func testOrderNew(t *testing.T) {
-	b := newBuilder()
-	cart := b.newCartCmd().(*cartCmd)
-	add := b.newAddOrderCmd().(*addOrderCmd)
-
-	buf := &bytes.Buffer{}
-	add.setOutput(buf)
-	cart.setOutput(buf)
-
+func testOrderNew(cart, add cliCommand, buf *bytes.Buffer, t *testing.T) {
 	add.command().ParseFlags([]string{"--name=testorder", "--products=12SCMEATZA"})
 	err := add.run(add.command(), []string{})
 	if err != nil {
@@ -40,11 +32,7 @@ func testOrderNew(t *testing.T) {
 	}
 }
 
-func testAddOrder(t *testing.T) {
-	add := newBuilder().newAddOrderCmd().(*addOrderCmd)
-	buf := &bytes.Buffer{}
-	add.setOutput(buf)
-
+func testAddOrder(cart, add cliCommand, buf *bytes.Buffer, t *testing.T) {
 	if err := add.run(add.command(), []string{"testing"}); err != nil {
 		t.Error(err)
 	}
@@ -53,9 +41,6 @@ func testAddOrder(t *testing.T) {
 	}
 	buf.Reset()
 
-	cart := newBuilder().newCartCmd().(*cartCmd)
-	cart.setOutput(buf)
-
 	cart.command().ParseFlags([]string{"-d"})
 	if err := cart.run(cart.command(), []string{"testing"}); err != nil {
 		t.Error(err)
@@ -63,19 +48,13 @@ func testAddOrder(t *testing.T) {
 	buf.Reset()
 }
 
-func testOrderNewErr(t *testing.T) {
-	new := newBuilder().newAddOrderCmd().(*addOrderCmd)
+func testOrderNewErr(new cliCommand, buf *bytes.Buffer, t *testing.T) {
 	if err := new.run(new.command(), []string{}); err == nil {
 		t.Error("expected error")
 	}
 }
 
-func testOrderRunAdd(t *testing.T) {
-	cart := newBuilder().newCartCmd().(*cartCmd)
-
-	buf := &bytes.Buffer{}
-	cart.setOutput(buf)
-
+func testOrderRunAdd(cart cliCommand, buf *bytes.Buffer, t *testing.T) {
 	if err := cart.run(cart.command(), []string{}); err != nil {
 		t.Error(err)
 	}
@@ -101,12 +80,7 @@ func testOrderRunAdd(t *testing.T) {
 	}
 }
 
-func testOrderPriceOutput(t *testing.T) {
-	cart := newBuilder().newCartCmd().(*cartCmd)
-
-	buf := &bytes.Buffer{}
-	cart.setOutput(buf)
-
+func testOrderPriceOutput(cart *cartCmd, buf *bytes.Buffer, t *testing.T) {
 	cart.price = true
 	if err := cart.run(cart.command(), []string{"testorder"}); err != nil {
 		t.Error(err)
@@ -131,12 +105,7 @@ func testOrderPriceOutput(t *testing.T) {
 	}
 }
 
-func testOrderRunDelete(t *testing.T) {
-	cart := newBuilder().newCartCmd().(*cartCmd)
-
-	buf := &bytes.Buffer{}
-	cart.setOutput(buf)
-
+func testOrderRunDelete(cart *cartCmd, buf *bytes.Buffer, t *testing.T) {
 	cart.delete = true
 	if err := cart.run(cart.command(), []string{"testorder"}); err != nil {
 		t.Error(err)

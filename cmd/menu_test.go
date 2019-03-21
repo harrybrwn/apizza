@@ -8,8 +8,7 @@ import (
 
 func testMenuRun(t *testing.T) {
 	c := newBuilder().newMenuCmd().(*menuCmd)
-	buf := &bytes.Buffer{}
-	c.setOutput(buf)
+	c.setOutput(&bytes.Buffer{})
 
 	if err := c.run(c.command(), []string{}); err != nil {
 		t.Error(err)
@@ -35,11 +34,11 @@ func testMenuRun(t *testing.T) {
 
 func testFindProduct(t *testing.T) {
 	c := newBuilder().newMenuCmd().(*menuCmd)
+	buf := &bytes.Buffer{}
+	c.setOutput(buf)
 	if err := db.AutoTimeStamp("menu", 12*time.Hour, c.cacheNewMenu, c.getCachedMenu); err != nil {
 		t.Error(err)
 	}
-	buf := &bytes.Buffer{}
-	c.setOutput(buf)
 
 	c.all = true
 
