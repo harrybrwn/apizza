@@ -46,28 +46,21 @@ func TestGetOrderPrice(t *testing.T) {
 		t.Error("order.Payments should not be nil after getOrderPrice")
 	}
 
-	order.StoreID = ""
+	order.StoreID = "" // should cause dominos to reject the order and send an error
 	_, err = getOrderPrice(order)
-	if err != nil {
-		t.Log(err.Error())
-	}
 	if err == nil {
 		t.Error("Should have raised an error", "\n\b", err)
 	}
 }
 
 func TestNewOrder(t *testing.T) {
-	var addr = &StreetAddr{
-		StreetNum:  "1600",
-		StreetName: "Pennsylvania Ave NW",
-		CityName:   "Washington",
-		State:      "DC",
-		Zipcode:    "20500",
-		AddrType:   "House",
-	}
-	s, err := NearestStore(addr, "Delivery")
+	addr := testAddress()
+	s, err := NearestStore(addr, "Carryout")
 	if err != nil {
 		t.Error(err)
+	}
+	if s == nil {
+		t.Error("store is <nil>")
 	}
 	_, err = s.GetProduct("S_PIZZA")
 	if err == nil {
