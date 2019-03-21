@@ -41,7 +41,7 @@ it will be overwritten the next time the program is run.
 
 
 ### Config
-The `config get` and `config set` comands can be used with one config variable
+The `config get` and `config set` commands can be used with one config variable
 at a time...
 ```
 apizza config set email=bob@example.com
@@ -56,7 +56,7 @@ apizza config set name=Bob email=bob@example.com service=Carryout
 
 
 ### Cart
-To save a new order, use `apizza cart add` along with at least the `--name` flag or an argument representing an order name. The name flag is the name that the app will use when refering to that order. The `--products` flag takes at least one string but accepts a list of comma separated product codes that can be found in the menu command.
+To save a new order, use `apizza cart add` along with at least the `--name` flag or an argument representing an order name. The name flag is the name that the app will use when referring to that order. The `--products` flag takes at least one string but accepts a list of comma separated product codes that can be found in the menu command.
 
 Viewing all of the saved orders is as simple as `apizza cart`.
 
