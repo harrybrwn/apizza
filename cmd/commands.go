@@ -119,12 +119,15 @@ func (bc *basecmd) cacheNewMenu() (err error) {
 }
 
 func (bc *basecmd) getCachedMenu() error {
-	raw, err := db.Get("menu")
-	if err != nil {
-		return err
+	if bc.menu == nil {
+		raw, err := db.Get("menu")
+		if err != nil {
+			return err
+		}
+		bc.menu = &dawg.Menu{}
+		return json.Unmarshal(raw, bc.menu)
 	}
-	bc.menu = &dawg.Menu{}
-	return json.Unmarshal(raw, bc.menu)
+	return nil
 }
 
 type runFunc func(*cobra.Command, []string) error
