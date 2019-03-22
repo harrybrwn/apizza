@@ -61,7 +61,7 @@ func handle(e error, msg string, code int) { fmt.Printf("%s: %s\n", msg, e); os.
 
 type cliCommand interface {
 	command() *cobra.Command
-	AddCmd(...cliCommand) cliCommand
+	addcmd(...cliCommand) cliCommand
 	run(*cobra.Command, []string) error
 	setOutput(io.Writer)
 }
@@ -77,7 +77,7 @@ func (bc *basecmd) command() *cobra.Command {
 	return bc.cmd
 }
 
-func (bc *basecmd) AddCmd(cmds ...cliCommand) cliCommand {
+func (bc *basecmd) addcmd(cmds ...cliCommand) cliCommand {
 	for _, cmd := range cmds {
 		bc.cmd.AddCommand(cmd.command())
 	}
@@ -179,11 +179,11 @@ func newBuilder() *cliBuilder {
 }
 
 func (b *cliBuilder) exec() (*cobra.Command, error) {
-	b.root.AddCmd(
-		b.newCartCmd().AddCmd(
+	b.root.addcmd(
+		b.newCartCmd().addcmd(
 			b.newAddOrderCmd(),
 		),
-		newConfigCmd().AddCmd(
+		newConfigCmd().addcmd(
 			newConfigSet(),
 			newConfigGet(),
 		),

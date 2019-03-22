@@ -110,6 +110,7 @@ type addOrderCmd struct {
 	*basecmd
 	name     string
 	products []string
+	toppings []string
 }
 
 func (c *addOrderCmd) run(cmd *cobra.Command, args []string) (err error) {
@@ -117,6 +118,7 @@ func (c *addOrderCmd) run(cmd *cobra.Command, args []string) (err error) {
 		return errors.New("No order name... use '--name=<order name>' or give name as an argument")
 	}
 	var orderName string
+
 	if c.name == "" {
 		orderName = args[0]
 	} else {
@@ -129,13 +131,18 @@ func (c *addOrderCmd) run(cmd *cobra.Command, args []string) (err error) {
 	order := store.NewOrder()
 
 	if len(c.products) > 0 {
-		for _, p := range c.products {
+		for i, p := range c.products {
 			prod, err := store.GetProduct(p)
 			if err != nil {
 				return err
 			}
+			if i < len(c.toppings) {
+				prod.AddTopping(c.toppings[i], dawg.ToppingFull, 1.0)
+			}
 			order.AddProduct(prod)
 		}
+	} else if len(c.toppings) > 0 {
+		return errors.New("cannot add just a toppings without products")
 	}
 	return saveOrder(orderName, order)
 }
@@ -150,6 +157,7 @@ func (b *cliBuilder) newAddOrderCmd() cliCommand {
 
 	c.cmd.Flags().StringVarP(&c.name, "name", "n", c.name, "set the name of a new order")
 	c.cmd.Flags().StringSliceVarP(&c.products, "products", "p", c.products, "product codes for the new order")
+	c.cmd.Flags().StringSliceVarP(&c.toppings, "toppings", "t", c.toppings, "toppings for the products being added")
 	return c
 }
 

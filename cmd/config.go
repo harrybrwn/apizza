@@ -159,8 +159,8 @@ func (c *configSetCmd) run(cmd *cobra.Command, args []string) error {
 
 	for _, arg := range args {
 		keys := strings.Split(arg, "=")
-		if len(keys) < 2 {
-			return errors.New("use '<key>=<value>' format")
+		if len(keys) < 2 || keys[0] == "" || keys[1] == "" {
+			return errors.New(`use '<key>=<value>' format (no spaces)`)
 		}
 		err := cfg.Set(keys[0], keys[1])
 		if err != nil {
