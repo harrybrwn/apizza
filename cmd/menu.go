@@ -26,7 +26,6 @@ import (
 
 type menuCmd struct {
 	*basecmd
-	// menu          *dawg.Menu
 	all           bool
 	toppings      bool
 	preconfigured bool

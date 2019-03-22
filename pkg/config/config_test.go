@@ -155,3 +155,31 @@ func TestEmptyConfig(t *testing.T) {
 		t.Errorf("the emptyConfig function returned:\n%s\nand should have returned\n%s", raw, expected)
 	}
 }
+
+func TestIsField(t *testing.T) {
+	var c Config = &testCnfg{}
+
+	if !IsField(c, "more.one") {
+		t.Error("should register as field")
+	}
+	if IsField(c, "not_a_field") {
+		t.Error("should not register as a field")
+	}
+}
+
+func TestFieldName(t *testing.T) {
+	var c Config = &testCnfg{}
+
+	if FieldName(c, "msg") != "Msg" {
+		t.Error("bad field name")
+	}
+	if FieldName(c, "more.one") != "More.One" {
+		t.Error("bad field name")
+	}
+	if FieldName(c, "more") != "More" {
+		t.Error("bad field name")
+	}
+	if FieldName(c, "badFieldName") != "" {
+		t.Error("bad field name")
+	}
+}

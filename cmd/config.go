@@ -54,6 +54,11 @@ func (c *Config) Get(key string) interface{} {
 
 // Set a config variable
 func (c *Config) Set(key string, val interface{}) error {
+	if config.FieldName(c, key) == "Service" {
+		if val != "Delivery" && val != "Carryout" {
+			return errors.New("service must be either 'Delivery' or 'Carryout'")
+		}
+	}
 	return config.Set(c, key, val)
 }
 
@@ -74,7 +79,7 @@ var _ dawg.Address = (*address)(nil)
 
 type address struct {
 	Street   string `config:"street"`
-	CityName string `config:"city_name"`
+	CityName string `config:"cityname"`
 	State    string `config:"state"`
 	Zipcode  string `config:"zipcode"`
 }
@@ -119,11 +124,7 @@ func (c *configCmd) run(cmd *cobra.Command, args []string) error {
 		return nil
 	}
 	if c.resetCache {
-		err := os.Remove(filepath.Join(config.Folder(), "cache", "apizza.db"))
-		if err != nil {
-			return err
-		}
-		return nil
+		return os.Remove(filepath.Join(config.Folder(), "cache", "apizza.db"))
 	}
 	if c.getall {
 		return cfg.printAll(c.output)

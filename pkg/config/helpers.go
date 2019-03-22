@@ -30,7 +30,7 @@ type Config interface {
 // note: this will only work if the struct implements the Config interface.
 func Get(config Config, key string) interface{} {
 	value := reflect.ValueOf(config).Elem()
-	v := find(value, key)
+	v := find(value, strings.Split(key, "."))
 	switch v.Kind() {
 	case reflect.String:
 		return v.String()
@@ -55,7 +55,7 @@ func Get(config Config, key string) interface{} {
 // note: this will only work if the struct implements the Config interface.
 func Set(config Config, key string, val interface{}) error {
 	v := reflect.ValueOf(config).Elem()
-	field := find(v, key)
+	field := find(v, strings.Split(key, "."))
 	if !field.IsValid() {
 		return fmt.Errorf("cannot find '%s'", key)
 	}
@@ -79,8 +79,18 @@ func Set(config Config, key string, val interface{}) error {
 	return nil
 }
 
-func find(val reflect.Value, key string) reflect.Value {
-	keys := strings.Split(key, ".")
+// IsField will return true is the Config argumetn has either a field or a
+// config tag that coressponds with the key given.
+func IsField(conf Config, key string) bool {
+	return find(reflect.ValueOf(conf).Elem(), strings.Split(key, ".")) != reflect.ValueOf(nil)
+}
+
+// FieldName will return the name of the struct field based on a config key.
+func FieldName(config Config, key string) string {
+	return findName(reflect.ValueOf(config).Elem(), strings.Split(key, "."))
+}
+
+func find(val reflect.Value, keys []string) reflect.Value {
 	t := val.Type()
 	for i := 0; i < val.NumField(); i++ {
 		tfield := t.Field(i)
@@ -88,7 +98,7 @@ func find(val reflect.Value, key string) reflect.Value {
 			rtVal := val.Field(i)
 			if rtVal.Kind() == reflect.Struct {
 				if len(keys) > 1 {
-					return find(rtVal, keys[1])
+					return find(rtVal, keys[1:])
 				} else if len(keys) == 1 {
 					return rtVal
 				}
@@ -97,4 +107,23 @@ func find(val reflect.Value, key string) reflect.Value {
 		}
 	}
 	return reflect.ValueOf(nil)
+}
+
+func findName(val reflect.Value, keys []string) string {
+	t := val.Type()
+	for i := 0; i < val.NumField(); i++ {
+		tfield := t.Field(i)
+		if tfield.Name == keys[0] || tfield.Tag.Get("config") == keys[0] {
+			rtVal := val.Field(i)
+			if rtVal.Kind() == reflect.Struct {
+				if len(keys) > 1 {
+					return fmt.Sprintf("%s.%s", tfield.Name, findName(rtVal, keys[1:]))
+				} else if len(keys) == 1 {
+					return tfield.Name
+				}
+			}
+			return tfield.Name
+		}
+	}
+	return ""
 }
