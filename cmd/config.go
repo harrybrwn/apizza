@@ -103,7 +103,21 @@ func (a *address) Zip() string {
 	if strLen(a.Zipcode) == 5 {
 		return a.Zipcode
 	}
-	return ""
+	panic(fmt.Sprintf("bad zipcode %s", a.Zipcode))
+}
+
+func addressStr(a dawg.Address) string {
+	return fmt.Sprintf("%s\n%s, %s %s", a.LineOne(), a.City(), a.StateCode(), a.Zip())
+}
+
+func addressStrIndent(a dawg.Address, tablen int) string {
+	return fmt.Sprintf(
+		"%s\n%s%s, %s %s",
+		a.LineOne(), spaces(tablen), a.City(), a.StateCode(), a.Zip())
+}
+
+func (a address) String() string {
+	return addressStr(&a)
 }
 
 type configCmd struct {

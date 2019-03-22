@@ -15,6 +15,7 @@
 package cmd
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -29,9 +30,10 @@ var orderPrefix = "user_order_"
 
 type cartCmd struct {
 	*basecmd
-	price  bool
-	delete bool
-	add    []string
+	price   bool
+	delete  bool
+	verbose bool
+	add     []string
 }
 
 func (c *cartCmd) run(cmd *cobra.Command, args []string) (err error) {
@@ -94,8 +96,41 @@ func (c *cartCmd) printall() error {
 	return nil
 }
 
+func (c *cartCmd) printOrder(name string, o *dawg.Order) (err error) {
+	buffer := &bytes.Buffer{}
+
+	fmt.Fprintln(buffer, name)
+	if c.price {
+		p, err := o.Price()
+		if err != nil {
+			return err
+		}
+		fmt.Fprintf(buffer, "  Price: %f\n", p)
+	}
+
+	fmt.Fprintln(buffer, "  Products:")
+	for _, p := range o.Products {
+		fmt.Fprintf(buffer, "    %s", p.Code)
+		if c.verbose {
+			fmt.Fprintf(buffer, " - quantity: %d, options: %v\n", p.Qty, p.Options)
+		} else {
+			fmt.Fprint(buffer, "\n")
+		}
+	}
+	fmt.Fprintf(buffer, "  StoreID: %s\n", o.StoreID)
+	fmt.Fprintf(buffer, "  Method:  %s\n", o.ServiceMethod)
+	fmt.Fprintf(buffer, "  Address: %+v\n", addressStrIndent(o.Address, 11))
+	if test {
+		for _, prod := range o.Products {
+			fmt.Fprintf(buffer, "%+v\n", prod)
+		}
+	}
+	_, err = c.output.Write(buffer.Bytes())
+	return err
+}
+
 func (b *cliBuilder) newCartCmd() cliCommand {
-	c := &cartCmd{price: false, delete: false}
+	c := &cartCmd{price: false, delete: false, verbose: false}
 	c.basecmd = b.newBaseCommand("cart <order name>", "Manage user created orders", c.run)
 	c.basecmd.cmd.Long = `The cart command gets information on all of the user
 created orders. Use 'apizza cart <order name>' for info on a specific order`
@@ -103,6 +138,7 @@ created orders. Use 'apizza cart <order name>' for info on a specific order`
 	c.cmd.Flags().BoolVarP(&c.price, "price", "p", c.price, "show to price of an order")
 	c.cmd.Flags().StringSliceVarP(&c.add, "add", "a", c.add, "add any number of products to a specific order")
 	c.cmd.Flags().BoolVarP(&c.delete, "delete", "d", c.delete, "delete the order from the database")
+	c.cmd.Flags().BoolVarP(&c.verbose, "verbose", "v", c.verbose, "print cart verbosly")
 	return c
 }
 
@@ -182,28 +218,4 @@ func saveOrder(name string, o *dawg.Order) error {
 		return err
 	}
 	return db.Put(orderPrefix+name, raw)
-}
-
-func (c *cartCmd) printOrder(name string, o *dawg.Order) (err error) {
-	var p float64
-	if c.price {
-		p, err = o.Price()
-		if err != nil {
-			return err
-		}
-	}
-
-	fmt.Fprintln(c.output, name)
-	if c.price {
-		fmt.Fprintf(c.output, "  Price: %f\n", p)
-	}
-
-	fmt.Fprintln(c.output, "  Products:")
-	for _, p := range o.Products {
-		fmt.Fprintf(c.output, "    %s - quantity: %d, options: %v\n", p.Code, p.Qty, p.Options)
-	}
-	fmt.Fprintf(c.output, "  StoreID: %s\n", o.StoreID)
-	fmt.Fprintf(c.output, "  Method:  %s\n", o.ServiceMethod)
-	fmt.Fprintf(c.output, "  Address: %+v\n", o.Address)
-	return nil
 }
