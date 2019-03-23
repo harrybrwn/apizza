@@ -22,6 +22,7 @@ import (
 	"path/filepath"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 
 	"github.com/harrybrwn/apizza/dawg"
 	"github.com/harrybrwn/apizza/pkg/cache"
@@ -100,6 +101,10 @@ func (c *basecmd) getstore() (err error) {
 		}
 	}
 	return nil
+}
+
+func (c *basecmd) Flags() *pflag.FlagSet {
+	return c.cmd.Flags()
 }
 
 func (c *basecmd) cacheNewMenu() (err error) {

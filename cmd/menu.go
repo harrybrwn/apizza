@@ -62,11 +62,11 @@ func (b *cliBuilder) newMenuCmd() cliCommand {
 	c := &menuCmd{all: false, toppings: false, preconfigured: false}
 	c.basecmd = b.newBaseCommand("menu", "Get the Dominos menu.", c.run)
 
-	c.cmd.Flags().BoolVarP(&c.all, "all", "a", c.all, "show the entire menu")
-	c.cmd.Flags().BoolVarP(&c.toppings, "toppings", "t", c.toppings, "print out the toppings on the menu")
-	c.cmd.Flags().BoolVarP(&c.preconfigured, "preconfigured",
+	c.Flags().BoolVarP(&c.all, "all", "a", c.all, "show the entire menu")
+	c.Flags().BoolVarP(&c.toppings, "toppings", "t", c.toppings, "print out the toppings on the menu")
+	c.Flags().BoolVarP(&c.preconfigured, "preconfigured",
 		"p", c.preconfigured, "show the pre-configured products on the dominos menu")
-	c.cmd.Flags().StringVarP(&c.item, "item", "i", "", "show info on the menu item given")
+	c.Flags().StringVarP(&c.item, "item", "i", "", "show info on the menu item given")
 	return c
 }
 

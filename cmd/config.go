@@ -31,18 +31,15 @@ var cfg = &Config{}
 
 // Config is the configuration struct
 type Config struct {
-	Name    string  `config:"name"`
-	Email   string  `config:"email"`
-	Address address `config:"address"`
+	Name    string  `config:"name" json:"name"`
+	Email   string  `config:"email" json:"email"`
+	Address address `config:"address" json:"address"`
 	Card    struct {
-		Number     string `config:"number"`
-		Expiration string `config:"expiration"`
-		CVV        string `config:"cvv"`
-	} `config:"card"`
-	Service  string `config:"service" default:"\"Delivery\""`
-	MyOrders []struct {
-		Name string `config:"name"`
-	} `config:"myorders"`
+		Number     string `config:"number" json:"number"`
+		Expiration string `config:"expiration" json:"expiration"`
+		CVV        string `config:"cvv" json:"cvv"`
+	} `config:"card" json:"card"`
+	Service string `config:"service" default:"\"Delivery\"" json:"service"`
 }
 
 // Get a config variable
@@ -63,10 +60,10 @@ func (c *Config) Set(key string, val interface{}) error {
 var _ dawg.Address = (*address)(nil)
 
 type address struct {
-	Street   string `config:"street"`
-	CityName string `config:"cityname"`
-	State    string `config:"state"`
-	Zipcode  string `config:"zipcode"`
+	Street   string `config:"street" json:"street"`
+	CityName string `config:"cityname" json:"cityname"`
+	State    string `config:"state" json:"state"`
+	Zipcode  string `config:"zipcode" json:"zipcode"`
 }
 
 func (a *address) LineOne() string {
@@ -126,11 +123,11 @@ type configCmd struct {
 
 func (c *configCmd) run(cmd *cobra.Command, args []string) error {
 	if c.file {
-		fmt.Println(config.File())
+		fmt.Fprintln(c.output, config.File())
 		return nil
 	}
 	if c.dir {
-		fmt.Println(config.Folder())
+		fmt.Fprintln(c.output, config.Folder())
 		return nil
 	}
 	if c.resetCache {
@@ -140,7 +137,7 @@ func (c *configCmd) run(cmd *cobra.Command, args []string) error {
 		config.FprintAll(c.output, cfg)
 		return nil
 	}
-	return c.cmd.Usage()
+	return cmd.Usage()
 }
 
 func newConfigCmd() cliCommand {
@@ -152,10 +149,10 @@ by hand or use the 'config' command.
 
 ex. 'apizza config get name' or 'apizza config set name=<your name>'`
 
-	c.cmd.Flags().BoolVarP(&c.file, "file", "f", c.file, "show the path to the config.json file")
-	c.cmd.Flags().BoolVarP(&c.dir, "dir", "d", c.dir, "show the apizza config directory path")
-	c.cmd.Flags().BoolVarP(&c.resetCache, "reset-cache", "r", c.resetCache, "reset the database cache")
-	c.cmd.Flags().BoolVar(&c.getall, "get-all", c.getall, "show all the contents of the config file")
+	c.Flags().BoolVarP(&c.file, "file", "f", c.file, "show the path to the config.json file")
+	c.Flags().BoolVarP(&c.dir, "dir", "d", c.dir, "show the apizza config directory path")
+	c.Flags().BoolVarP(&c.resetCache, "reset-cache", "r", c.resetCache, "reset the database cache")
+	c.Flags().BoolVar(&c.getall, "get-all", c.getall, "show all the contents of the config file")
 	return c
 }
 

@@ -70,6 +70,6 @@ func newApizzaCmd() cliCommand {
 	c.cmd.PersistentFlags().BoolVar(&test, "test", false, "testing flag (for development)")
 	c.cmd.PersistentFlags().MarkHidden("test")
 
-	c.cmd.Flags().BoolVar(&c.clearCache, "clear-cache", c.clearCache, "delete the database used for caching")
+	c.Flags().BoolVar(&c.clearCache, "clear-cache", c.clearCache, "delete the database used for caching")
 	return c
 }
