@@ -17,13 +17,13 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
-	"io"
 	"os"
 	"path/filepath"
 
 	"github.com/spf13/cobra"
-	"github.com/spf13/pflag"
 
+	"github.com/harrybrwn/apizza/cmd/internal/base"
+	"github.com/harrybrwn/apizza/cmd/internal/obj"
 	"github.com/harrybrwn/apizza/dawg"
 	"github.com/harrybrwn/apizza/pkg/cache"
 	"github.com/harrybrwn/apizza/pkg/config"
@@ -60,51 +60,18 @@ func Execute() {
 
 func handle(e error, msg string, code int) { fmt.Fprintf(os.Stderr, "%s: %s\n", msg, e); os.Exit(code) }
 
-type cliCommand interface {
-	command() *cobra.Command
-	addcmd(...cliCommand) cliCommand
-	run(*cobra.Command, []string) error
-	setOutput(io.Writer)
-}
-
 type basecmd struct {
-	cmd    *cobra.Command
-	addr   *address
-	menu   *dawg.Menu
-	output io.Writer
-}
-
-func (c *basecmd) command() *cobra.Command {
-	return c.cmd
-}
-
-func (c *basecmd) addcmd(cmds ...cliCommand) cliCommand {
-	for _, cmd := range cmds {
-		c.cmd.AddCommand(cmd.command())
-	}
-	return c
-}
-
-func (c *basecmd) run(cmd *cobra.Command, args []string) error {
-	return c.cmd.Usage()
-}
-
-func (c *basecmd) setOutput(output io.Writer) {
-	c.output = output
-	c.cmd.SetOutput(output)
+	*base.Command
+	menu *dawg.Menu
 }
 
 func (c *basecmd) getstore() (err error) {
 	if store == nil {
-		if store, err = dawg.NearestStore(c.addr, cfg.Service); err != nil {
+		if store, err = dawg.NearestStore(c.Addr, cfg.Service); err != nil {
 			return err
 		}
 	}
 	return nil
-}
-
-func (c *basecmd) Flags() *pflag.FlagSet {
-	return c.cmd.Flags()
 }
 
 func (c *basecmd) cacheNewMenu() (err error) {
@@ -138,31 +105,21 @@ func (c *basecmd) getCachedMenu() error {
 type runFunc func(*cobra.Command, []string) error
 
 func newVerboseBaseCommand(use, short string, f runFunc) *basecmd {
-	base := &basecmd{
-		cmd: &cobra.Command{
-			Use:   use,
-			Short: short,
-			RunE:  f,
-		},
-		output: os.Stdout,
-	}
+	// base := &basecmd{
+	// 	cmd: &cobra.Command{
+	// 		Use:   use,
+	// 		Short: short,
+	// 		RunE:  f,
+	// 	},
+	// 	output: os.Stdout,
+	// }
 
-	return base
+	// return base
+	return newBaseCommand(use, short, f)
 }
 
-func newBaseCommand(use, short string, f runFunc) *basecmd {
-	base := &basecmd{
-		cmd: &cobra.Command{
-			Use:           use,
-			Short:         short,
-			RunE:          f,
-			SilenceErrors: true,
-			SilenceUsage:  true,
-		},
-		output: os.Stdout,
-	}
-
-	return base
+func newBaseCommand(use, short string, f func(*cobra.Command, []string) error) *basecmd {
+	return &basecmd{Command: base.NewCommand(use, short, f)}
 }
 
 type commandBuilder interface {
@@ -170,8 +127,8 @@ type commandBuilder interface {
 }
 
 type cliBuilder struct {
-	root cliCommand
-	addr *address
+	root base.CliCommand
+	addr *obj.Address
 }
 
 func newBuilder() *cliBuilder {
@@ -187,23 +144,23 @@ func newBuilder() *cliBuilder {
 }
 
 func (b *cliBuilder) exec() (*cobra.Command, error) {
-	b.root.addcmd(
-		b.newCartCmd().addcmd(
+	b.root.Addcmd(
+		b.newCartCmd().Addcmd(
 			b.newAddOrderCmd(),
 		),
-		newConfigCmd().addcmd(
+		newConfigCmd().Addcmd(
 			newConfigSet(),
 			newConfigGet(),
 		),
 		b.newMenuCmd(),
 	)
-	return b.root.command().ExecuteC()
+	return b.root.Cmd().ExecuteC()
 }
 
 // this is here for future plans
 func (b *cliBuilder) newBaseCommand(use, short string, f runFunc) *basecmd {
 	base := newBaseCommand(use, short, f)
-	base.addr = b.addr
+	base.Addr = b.addr
 	return base
 }
 

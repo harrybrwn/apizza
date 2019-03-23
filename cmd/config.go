@@ -23,7 +23,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/harrybrwn/apizza/dawg"
+	"github.com/harrybrwn/apizza/cmd/internal/base"
+	"github.com/harrybrwn/apizza/cmd/internal/obj"
 	"github.com/harrybrwn/apizza/pkg/config"
 )
 
@@ -31,9 +32,9 @@ var cfg = &Config{}
 
 // Config is the configuration struct
 type Config struct {
-	Name    string  `config:"name" json:"name"`
-	Email   string  `config:"email" json:"email"`
-	Address address `config:"address" json:"address"`
+	Name    string      `config:"name" json:"name"`
+	Email   string      `config:"email" json:"email"`
+	Address obj.Address `config:"address" json:"address"`
 	Card    struct {
 		Number     string `config:"number" json:"number"`
 		Expiration string `config:"expiration" json:"expiration"`
@@ -57,62 +58,6 @@ func (c *Config) Set(key string, val interface{}) error {
 	return config.Set(c, key, val)
 }
 
-var _ dawg.Address = (*address)(nil)
-
-type address struct {
-	Street   string `config:"street" json:"street"`
-	CityName string `config:"cityname" json:"cityname"`
-	State    string `config:"state" json:"state"`
-	Zipcode  string `config:"zipcode" json:"zipcode"`
-}
-
-func (a *address) LineOne() string {
-	return a.Street
-}
-
-func (a *address) StateCode() string {
-	if strLen(a.State) == 2 {
-		return strings.ToUpper(a.State)
-	} else if len(a.State) == 0 {
-		return ""
-	}
-	panic(fmt.Sprintf("bad statecode %s", a.State))
-}
-
-func (a *address) City() string {
-	return a.CityName
-}
-
-func (a *address) Zip() string {
-	if strings.Contains(a.Zipcode, " ") {
-		panic(fmt.Sprintf("bad zipcode %s", a.Zipcode))
-	}
-	if strLen(a.Zipcode) == 5 {
-		return a.Zipcode
-	}
-	panic(fmt.Sprintf("bad zipcode %s", a.Zipcode))
-}
-
-func addressStr(a dawg.Address) string {
-	return addressStrIndent(a, 0)
-}
-
-func addressStrIndent(a dawg.Address, tablen int) string {
-	var format string
-	if strLen(a.StateCode()) == 0 {
-		format = "%s\n%s%s, %s%s"
-	} else {
-		format = "%s\n%s%s, %s %s"
-	}
-
-	return fmt.Sprintf(format,
-		a.LineOne(), spaces(tablen), a.City(), a.StateCode(), a.Zip())
-}
-
-func (a address) String() string {
-	return addressStr(&a)
-}
-
 type configCmd struct {
 	*basecmd
 	file       bool
@@ -121,29 +66,29 @@ type configCmd struct {
 	getall     bool
 }
 
-func (c *configCmd) run(cmd *cobra.Command, args []string) error {
+func (c *configCmd) Run(cmd *cobra.Command, args []string) error {
 	if c.file {
-		fmt.Fprintln(c.output, config.File())
+		c.Println(config.File())
 		return nil
 	}
 	if c.dir {
-		fmt.Fprintln(c.output, config.Folder())
+		c.Println(config.Folder())
 		return nil
 	}
 	if c.resetCache {
 		return os.Remove(filepath.Join(config.Folder(), "cache", "apizza.db"))
 	}
 	if c.getall {
-		config.FprintAll(c.output, cfg)
+		config.FprintAll(cmd.OutOrStdout(), cfg)
 		return nil
 	}
 	return cmd.Usage()
 }
 
-func newConfigCmd() cliCommand {
+func newConfigCmd() base.CliCommand {
 	c := &configCmd{file: false, dir: false, resetCache: false}
-	c.basecmd = newVerboseBaseCommand("config", "Configure apizza", c.run)
-	c.cmd.Long = `The 'config' command is used for accessing the .apizza config file
+	c.basecmd = newVerboseBaseCommand("config", "Configure apizza", c.Run)
+	c.Cmd().Long = `The 'config' command is used for accessing the .apizza config file
 in your home directory. Feel free to edit the .apizza json file
 by hand or use the 'config' command.
 
@@ -160,7 +105,7 @@ type configSetCmd struct {
 	*basecmd
 }
 
-func (c *configSetCmd) run(cmd *cobra.Command, args []string) error {
+func (c *configSetCmd) Run(cmd *cobra.Command, args []string) error {
 	if len(args) < 1 {
 		return errors.New("no variable given")
 	}
@@ -178,12 +123,12 @@ func (c *configSetCmd) run(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func newConfigSet() cliCommand {
+func newConfigSet() base.CliCommand {
 	c := &configSetCmd{}
 	c.basecmd = newBaseCommand(
 		"set",
 		"change variables in the config file",
-		c.run,
+		c.Run,
 	)
 	return c
 }
@@ -192,7 +137,7 @@ type configGetCmd struct {
 	*basecmd
 }
 
-func (c *configGetCmd) run(cmd *cobra.Command, args []string) error {
+func (c *configGetCmd) Run(cmd *cobra.Command, args []string) error {
 	if len(args) < 1 {
 		return errors.New("no variable given")
 	}
@@ -202,17 +147,17 @@ func (c *configGetCmd) run(cmd *cobra.Command, args []string) error {
 		if v == nil {
 			return fmt.Errorf("cannot find %s", arg)
 		}
-		fmt.Fprintln(c.output, v)
+		c.Printf("%v", v)
 	}
 	return nil
 }
 
-func newConfigGet() cliCommand {
+func newConfigGet() base.CliCommand {
 	c := &configGetCmd{}
 	c.basecmd = newBaseCommand(
 		"get",
 		"print the specified config variable to screen",
-		c.run,
+		c.Run,
 	)
 	return c
 }

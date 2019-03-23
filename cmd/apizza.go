@@ -15,16 +15,16 @@
 package cmd
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/spf13/cobra"
 
+	"github.com/harrybrwn/apizza/cmd/internal/base"
 	"github.com/harrybrwn/apizza/dawg"
 )
 
 var (
-	addr  *dawg.Address
+	// addr  *dawg.Address
 	store *dawg.Store
 )
 
@@ -37,14 +37,14 @@ type apizzaCmd struct {
 	clearCache bool
 }
 
-func (c *apizzaCmd) run(cmd *cobra.Command, args []string) (err error) {
+func (c *apizzaCmd) Run(cmd *cobra.Command, args []string) (err error) {
 	if test {
 		all, err := db.GetAll()
 		if err != nil {
 			return err
 		}
 		for k := range all {
-			fmt.Fprintf(c.output, "%v\n", k)
+			c.Printf("%v\n", k)
 		}
 		return nil
 	}
@@ -52,7 +52,7 @@ func (c *apizzaCmd) run(cmd *cobra.Command, args []string) (err error) {
 		if err := db.Close(); err != nil {
 			return err
 		}
-		fmt.Fprintln(c.output, "removing", db.Path)
+		c.Printf("removing %s\n", db.Path)
 		return os.Remove(db.Path)
 	}
 	return cmd.Usage()
@@ -60,15 +60,15 @@ func (c *apizzaCmd) run(cmd *cobra.Command, args []string) (err error) {
 
 var test bool
 
-func newApizzaCmd() cliCommand {
+func newApizzaCmd() base.CliCommand {
 	c := &apizzaCmd{address: "", service: cfg.Service, clearCache: false}
-	c.basecmd = newBaseCommand("apizza", "Dominos pizza from the command line.", c.run)
+	c.basecmd = newBaseCommand("apizza", "Dominos pizza from the command line.", c.Run)
 
 	// c.cmd.PersistentFlags().StringVar(&c.address, "address", c.address, "use a specific address")
-	c.cmd.PersistentFlags().StringVar(&c.service, "service", c.service, "select a Dominos service, either 'Delivery' or 'Carryout'")
+	c.Cmd().PersistentFlags().StringVar(&c.service, "service", c.service, "select a Dominos service, either 'Delivery' or 'Carryout'")
 
-	c.cmd.PersistentFlags().BoolVar(&test, "test", false, "testing flag (for development)")
-	c.cmd.PersistentFlags().MarkHidden("test")
+	c.Cmd().PersistentFlags().BoolVar(&test, "test", false, "testing flag (for development)")
+	c.Cmd().PersistentFlags().MarkHidden("test")
 
 	c.Flags().BoolVar(&c.clearCache, "clear-cache", c.clearCache, "delete the database used for caching")
 	return c
