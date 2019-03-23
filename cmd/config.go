@@ -75,62 +75,6 @@ func (c *Config) printAll(output io.Writer) error {
 	return nil
 }
 
-// var _ dawg.Address = (*address)(nil)
-
-// type address struct {
-// 	Street   string `config:"street"`
-// 	CityName string `config:"cityname"`
-// 	State    string `config:"state"`
-// 	Zipcode  string `config:"zipcode"`
-// }
-
-// func (a *address) LineOne() string {
-// 	return a.Street
-// }
-
-// func (a *address) StateCode() string {
-// 	if strLen(a.State) == 2 {
-// 		return strings.ToUpper(a.State)
-// 	} else if len(a.State) == 0 {
-// 		return ""
-// 	}
-// 	panic(fmt.Sprintf("bad statecode %s", a.State))
-// }
-
-// func (a *address) City() string {
-// 	return a.CityName
-// }
-
-// func (a *address) Zip() string {
-// 	if strings.Contains(a.Zipcode, " ") {
-// 		panic(fmt.Sprintf("bad zipcode %s", a.Zipcode))
-// 	}
-// 	if strLen(a.Zipcode) == 5 {
-// 		return a.Zipcode
-// 	}
-// 	panic(fmt.Sprintf("bad zipcode %s", a.Zipcode))
-// }
-
-// func addressStr(a dawg.Address) string {
-// 	return addressStrIndent(a, 0)
-// }
-
-// func addressStrIndent(a dawg.Address, tablen int) string {
-// 	var format string
-// 	if strLen(a.StateCode()) == 0 {
-// 		format = "%s\n%s%s, %s%s"
-// 	} else {
-// 		format = "%s\n%s%s, %s %s"
-// 	}
-
-// 	return fmt.Sprintf(format,
-// 		a.LineOne(), spaces(tablen), a.City(), a.StateCode(), a.Zip())
-// }
-
-// func (a address) String() string {
-// 	return addressStr(&a)
-// }
-
 type configCmd struct {
 	*basecmd
 	file       bool

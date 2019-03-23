@@ -5,7 +5,6 @@ import (
 	"io"
 
 	"github.com/harrybrwn/apizza/cmd/internal/obj"
-	"github.com/harrybrwn/apizza/dawg"
 	"github.com/spf13/cobra"
 )
 
@@ -21,7 +20,6 @@ type CliCommand interface {
 type Command struct {
 	cmd    *cobra.Command
 	Addr   *obj.Address
-	Menu   *dawg.Menu
 	output io.Writer
 }
 
