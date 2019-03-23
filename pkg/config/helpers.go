@@ -92,14 +92,14 @@ func FieldName(config Config, key string) string {
 }
 
 // PrintAll prints out the config struct.
-func PrintAll(config Config) {
+func PrintAll(config interface{}) {
 	fmt.Print(
 		visitAll(reflect.ValueOf(config).Elem(), 0, DefaultFormatter),
 	)
 }
 
 // FprintAll prints the config to an io.Writer interface.
-func FprintAll(w io.Writer, config Config) {
+func FprintAll(w io.Writer, config interface{}) {
 	fmt.Fprint(
 		w, visitAll(reflect.ValueOf(config).Elem(), 0, DefaultFormatter),
 	)

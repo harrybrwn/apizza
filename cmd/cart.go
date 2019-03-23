@@ -73,7 +73,6 @@ func (c *cartCmd) run(cmd *cobra.Command, args []string) (err error) {
 		fmt.Fprintln(c.output, "updated order successfully saved.")
 		return nil
 	}
-
 	return c.printOrder(args[0], order)
 }
 

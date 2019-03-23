@@ -9,25 +9,6 @@ import (
 )
 
 func testConfigStruct(t *testing.T) {
-	// 	buf := &bytes.Buffer{}
-	// 	cfg.printAll(buf)
-	// 	output := string(buf.Bytes())
-
-	// 	expected := `name: "joe"
-	// email: "nojoe@mail.com"
-	// address:
-	//   street: "1600 Pennsylvania Ave NW"
-	//   cityname: "Washington DC"
-	//   state: ""
-	//   zipcode: "20500"
-	// card:
-	//   number: ""
-	//   expiration: ""
-	//   cvv: ""
-	// service: "Carryout"
-	// myorders: []
-	// `
-
 	if cfg.Get("name").(string) != "joe" {
 		t.Error("wrong value")
 	}
@@ -53,18 +34,14 @@ func testConfigCmd(t *testing.T) {
 		t.Error(err)
 	}
 	c.file = false
-	if string(buf.Bytes()) != "" {
-		t.Error("got unexpected output")
-	}
+	tests.Compare(t, string(buf.Bytes()), "\n")
 	buf.Reset()
 
 	c.dir = true
 	if err = c.run(c.command(), []string{}); err != nil {
 		t.Error(err)
 	}
-	if string(buf.Bytes()) != "" {
-		t.Error("got unexpected output")
-	}
+	tests.Compare(t, string(buf.Bytes()), "\n")
 	c.dir = false
 	buf.Reset()
 
@@ -83,22 +60,6 @@ func testConfigCmd(t *testing.T) {
 	if err := c.run(c.command(), []string{}); err != nil {
 		t.Error(err)
 	}
-	/*
-			expected := `name: "joe"
-		email: "nojoe@mail.com"
-		address:
-		  street: "1600 Pennsylvania Ave NW"
-		  cityname: "Washington DC"
-		  state: ""
-		  zipcode: "20500"
-		card:
-		  number: ""
-		  expiration: ""
-		  cvv: ""
-		service: "Carryout"
-		myorders: []
-		`
-	*/
 
 	expected := `name: "joe"
 email: "nojoe@mail.com"
@@ -112,7 +73,6 @@ card:
   expiration: ""
   cvv: ""
 service: "Carryout"
-myorders: []
 `
 	tests.Compare(t, string(buf.Bytes()), expected)
 	c.getall = false

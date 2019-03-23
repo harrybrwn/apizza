@@ -137,21 +137,20 @@ func setupTests() {
 
 	raw := []byte(`
 {
-	"Name":"joe",
-	"Email":"nojoe@mail.com",
-	"Address":{
-		"Street":"1600 Pennsylvania Ave NW",
-		"CityName":"Washington DC",
-		"State":"",
-		"Zipcode":"20500"
+	"name":"joe",
+	"email":"nojoe@mail.com",
+	"address":{
+		"street":"1600 Pennsylvania Ave NW",
+		"cityName":"Washington DC",
+		"state":"",
+		"zipcode":"20500"
 	},
-	"Card":{
-		"Number":"",
-		"Expiration":"",
-		"CVV":""
+	"card":{
+		"number":"",
+		"expiration":"",
+		"cvv":""
 	},
-	"Service":"Carryout",
-	"MyOrders":null
+	"service":"Carryout"
 }`)
 	check(json.Unmarshal(raw, cfg), "json")
 }
