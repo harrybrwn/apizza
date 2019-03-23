@@ -1,8 +1,9 @@
 package base
 
 import (
-	"errors"
+	"bytes"
 	"io"
+	"testing"
 
 	"github.com/harrybrwn/apizza/cmd/internal/obj"
 	"github.com/spf13/cobra"
@@ -38,11 +39,29 @@ func (c *Command) Addcmd(cmds ...CliCommand) CliCommand {
 
 // Run runs the command.
 func (c *Command) Run(cmd *cobra.Command, args []string) error {
-	return errors.New("not implimented")
+	return c.cmd.Usage()
 }
 
 // SetOutput sets the command output
 func (c *Command) SetOutput(out io.Writer) {
 	c.output = out
 	c.cmd.SetOutput(c.output)
+}
+
+// WithCmds returns a general test given a more specific test function.
+//
+// This wrapper function is meant for testing only.
+func WithCmds(
+	test func(*testing.T, *bytes.Buffer, ...CliCommand),
+	cmds ...CliCommand,
+) func(*testing.T) {
+	return func(t *testing.T) {
+		buf := &bytes.Buffer{}
+
+		for i := range cmds {
+			cmds[i].SetOutput(buf)
+		}
+
+		test(t, buf, cmds...)
+	}
 }
