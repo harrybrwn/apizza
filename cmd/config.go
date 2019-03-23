@@ -17,12 +17,10 @@ package cmd
 import (
 	"errors"
 	"fmt"
-	"io"
 	"os"
 	"path/filepath"
 	"strings"
 
-	"github.com/mitchellh/mapstructure"
 	"github.com/spf13/cobra"
 
 	"github.com/harrybrwn/apizza/dawg"
@@ -60,19 +58,6 @@ func (c *Config) Set(key string, val interface{}) error {
 		}
 	}
 	return config.Set(c, key, val)
-}
-
-func (c *Config) printAll(output io.Writer) error {
-	m := map[string]interface{}{}
-	err := mapstructure.Decode(c, &m)
-	if err != nil {
-		return err
-	}
-
-	for k, v := range m {
-		fmt.Fprintln(output, k, v)
-	}
-	return nil
 }
 
 var _ dawg.Address = (*address)(nil)
@@ -152,7 +137,8 @@ func (c *configCmd) run(cmd *cobra.Command, args []string) error {
 		return os.Remove(filepath.Join(config.Folder(), "cache", "apizza.db"))
 	}
 	if c.getall {
-		return cfg.printAll(c.output)
+		config.PrintAll(cfg)
+		return nil
 	}
 	return c.cmd.Usage()
 }

@@ -99,11 +99,10 @@ func emptyJSONConfig(t reflect.Type, level int) string {
 	spacer := "    "
 	rawcnfg := "{\n"
 
-	nfields := t.NumField()
-	for i := 0; i < nfields; i++ {
+	for i := 0; i < t.NumField(); i++ {
 		comma := ",\n"
 		end := "},\n"
-		if i == nfields-1 {
+		if i == t.NumField()-1 {
 			comma = "\n"
 			end = "}\n"
 		}
@@ -114,7 +113,7 @@ func emptyJSONConfig(t reflect.Type, level int) string {
 		}
 		rawcnfg += fmt.Sprintf("%s\"%s\": ", spacer, f.Name)
 
-		if deflt := f.Tag.Get("default"); deflt != "" {
+		if deflt, ok := f.Tag.Lookup("default"); ok {
 			rawcnfg += deflt + comma
 			continue
 		}
@@ -146,4 +145,11 @@ func getdir(fname string) string {
 		panic(err)
 	}
 	return filepath.Join(home, fname)
+}
+
+func rightLable(key string, field reflect.StructField) bool {
+	if key == field.Name || key == field.Tag.Get("config") {
+		return true
+	}
+	return false
 }

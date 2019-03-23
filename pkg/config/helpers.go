@@ -90,11 +90,19 @@ func FieldName(config Config, key string) string {
 	return findName(reflect.ValueOf(config).Elem(), strings.Split(key, "."))
 }
 
+// PrintAll prints out the config struct.
+func PrintAll(config Config) {
+	fmt.Print(
+		visitAll(reflect.ValueOf(config).Elem(), 0, DefaultFormatter),
+	)
+}
+
 func find(val reflect.Value, keys []string) reflect.Value {
-	t := val.Type()
+	typ := val.Type()
 	for i := 0; i < val.NumField(); i++ {
-		tfield := t.Field(i)
-		if tfield.Name == keys[0] || tfield.Tag.Get("config") == keys[0] {
+
+		tfield := typ.Field(i)
+		if rightLable(keys[0], tfield) {
 			rtVal := val.Field(i)
 			if rtVal.Kind() == reflect.Struct {
 				if len(keys) > 1 {
@@ -113,7 +121,7 @@ func findName(val reflect.Value, keys []string) string {
 	t := val.Type()
 	for i := 0; i < val.NumField(); i++ {
 		tfield := t.Field(i)
-		if tfield.Name == keys[0] || tfield.Tag.Get("config") == keys[0] {
+		if rightLable(keys[0], tfield) {
 			rtVal := val.Field(i)
 			if rtVal.Kind() == reflect.Struct {
 				if len(keys) > 1 {
@@ -126,4 +134,90 @@ func findName(val reflect.Value, keys []string) string {
 		}
 	}
 	return ""
+}
+
+// Formatter is a struct holding a collection of formatting functions.
+type Formatter struct {
+	// KeyVal handles key-value pairs
+	KeyValFormat func(string, string) string
+
+	// StructFormat handles key-value pairs where the value is a struct.
+	StructFormat func(string, string) string
+
+	// ValueHandler handles reflection values given the correct field number.
+	ValueHandler func(reflect.Value, int) string
+
+	// TabSize is the length of tab used for formatting.
+	TabSize int
+
+	indentLength int
+}
+
+func visitAll(val reflect.Value, depth int, fmtr Formatter) string {
+	var (
+		display string
+		name    string
+		ok      bool
+	)
+	if fmtr.TabSize == 0 {
+		fmtr.TabSize = 2
+	}
+
+	typ := val.Type()
+	for i := 0; i < typ.NumField(); i++ {
+		name, ok = typ.Field(i).Tag.Lookup("config")
+		if !ok {
+			name = typ.Field(i).Name
+		}
+
+		fieldVal := val.Field(i)
+		if fieldVal.Kind() == reflect.Struct {
+			display += fmtr.StructFormat(name, visitAll(fieldVal, depth+1, fmtr))
+		} else if fieldVal.Kind() == reflect.Interface && fieldVal.IsNil() {
+			display += fmtr.KeyValFormat(name, "null")
+		} else {
+			display += fmt.Sprintf("%s%s",
+				strings.Repeat(" ", depth*fmtr.TabSize), fmtr.KeyValFormat(name, fmtr.ValueHandler(val, i)))
+		}
+	}
+	return display
+}
+
+// DefaultFormatter is the default formatter object.
+var DefaultFormatter = Formatter{
+	KeyValFormat: func(k, v string) string { return fmt.Sprintf("%s: %s\n", k, v) },
+	StructFormat: func(k, v string) string { return fmt.Sprintf("%s: \n%s", k, v) },
+	ValueHandler: func(v reflect.Value, i int) string {
+		field := v.Field(i)
+		var val string
+
+		switch field.Kind() {
+		case reflect.String:
+			val = fmt.Sprintf("\"%s\"", field.String())
+		default:
+			val = fmt.Sprintf("%v", field)
+		}
+		return val
+	},
+	TabSize: 2,
+}
+
+type comparison func(string, reflect.StructField) bool
+
+func finder(val reflect.Value, keys []string, comp comparison) (*reflect.StructField, reflect.Value) {
+	typ := val.Type()
+	for i := 0; i < typ.NumField(); i++ {
+
+		if comp(keys[0], typ.Field(i)) {
+			typFld := typ.Field(i)
+
+			if len(keys) > 1 {
+				return finder(val.Field(i), keys[1:], comp)
+			} else if len(keys) == 1 {
+				return &typFld, val.Field(i)
+			}
+			return &typFld, val.Field(i)
+		}
+	}
+	return nil, reflect.ValueOf(nil)
 }
