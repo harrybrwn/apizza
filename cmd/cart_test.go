@@ -21,10 +21,11 @@ func testOrderNew(t *testing.T, buf *bytes.Buffer, cmds ...cliCommand) {
 
 	expected := `testorder
   Products:
-    12SCMEATZA - quantity: 1, options: map[]
+    12SCMEATZA
   StoreID: 4336
   Method:  Carryout
-  Address: &{StreetLineOne:1600 Pennsylvania Ave NW StreetNum:1600 CityName:Washington DC State: Zipcode:20500 AddrType: StreetName:Pennsylvania Ave NW}
+  Address: 1600 Pennsylvania Ave NW
+           Washington DC, 20500
 `
 	if string(buf.Bytes()) != expected {
 		t.Error("wrong output from apizza order")
@@ -92,12 +93,13 @@ func testOrderPriceOutput(cart *cartCmd, buf *bytes.Buffer, t *testing.T) {
 	expected := `testorder
   Price: 34.070000
   Products:
-    12SCMEATZA - quantity: 1, options: map[]
-    W08PBNLW - quantity: 1, options: map[]
-    W08PPLNW - quantity: 1, options: map[]
+    12SCMEATZA
+    W08PBNLW
+    W08PPLNW
   StoreID: 4336
   Method:  Carryout
-  Address: &{StreetLineOne:1600 Pennsylvania Ave NW StreetNum:1600 CityName:Washington DC State: Zipcode:20500 AddrType: StreetName:Pennsylvania Ave NW}
+  Address: 1600 Pennsylvania Ave NW
+           Washington DC, 20500
 `
 	if string(buf.Bytes()) != expected {
 		t.Error("unexpected price output")

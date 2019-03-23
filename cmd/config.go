@@ -91,8 +91,10 @@ func (a *address) LineOne() string {
 func (a *address) StateCode() string {
 	if strLen(a.State) == 2 {
 		return strings.ToUpper(a.State)
+	} else if len(a.State) == 0 {
+		return ""
 	}
-	return ""
+	panic(fmt.Sprintf("bad statecode %s", a.State))
 }
 
 func (a *address) City() string {
@@ -100,6 +102,9 @@ func (a *address) City() string {
 }
 
 func (a *address) Zip() string {
+	if strings.Contains(a.Zipcode, " ") {
+		panic(fmt.Sprintf("bad zipcode %s", a.Zipcode))
+	}
 	if strLen(a.Zipcode) == 5 {
 		return a.Zipcode
 	}
@@ -107,12 +112,18 @@ func (a *address) Zip() string {
 }
 
 func addressStr(a dawg.Address) string {
-	return fmt.Sprintf("%s\n%s, %s %s", a.LineOne(), a.City(), a.StateCode(), a.Zip())
+	return addressStrIndent(a, 0)
 }
 
 func addressStrIndent(a dawg.Address, tablen int) string {
-	return fmt.Sprintf(
-		"%s\n%s%s, %s %s",
+	var format string
+	if strLen(a.StateCode()) == 0 {
+		format = "%s\n%s%s, %s%s"
+	} else {
+		format = "%s\n%s%s, %s %s"
+	}
+
+	return fmt.Sprintf(format,
 		a.LineOne(), spaces(tablen), a.City(), a.StateCode(), a.Zip())
 }
 

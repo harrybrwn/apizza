@@ -119,7 +119,7 @@ func (c *cartCmd) printOrder(name string, o *dawg.Order) (err error) {
 	}
 	fmt.Fprintf(buffer, "  StoreID: %s\n", o.StoreID)
 	fmt.Fprintf(buffer, "  Method:  %s\n", o.ServiceMethod)
-	fmt.Fprintf(buffer, "  Address: %+v\n", addressStrIndent(o.Address, 11))
+	fmt.Fprintf(buffer, "  Address: %s\n", addressStrIndent(o.Address, 11))
 	if test {
 		for _, prod := range o.Products {
 			fmt.Fprintf(buffer, "%+v\n", prod)
