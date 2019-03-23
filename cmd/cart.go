@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/harrybrwn/apizza/cmd/internal/base"
 	"github.com/harrybrwn/apizza/cmd/internal/obj"
 
 	"github.com/spf13/cobra"
@@ -38,7 +39,7 @@ type cartCmd struct {
 	add     []string
 }
 
-func (c *cartCmd) run(cmd *cobra.Command, args []string) (err error) {
+func (c *cartCmd) Run(cmd *cobra.Command, args []string) (err error) {
 	if len(args) < 1 {
 		return c.printall()
 	} else if len(args) > 1 {
@@ -49,7 +50,7 @@ func (c *cartCmd) run(cmd *cobra.Command, args []string) (err error) {
 		if err = db.Delete(orderPrefix + args[0]); err != nil {
 			return err
 		}
-		fmt.Fprintln(c.output, args[0], "successfully deleted.")
+		c.Printf("%s successfully deleted.\n", args[0])
 		return nil
 	}
 
@@ -72,7 +73,8 @@ func (c *cartCmd) run(cmd *cobra.Command, args []string) (err error) {
 		if err := saveOrder(args[0], order); err != nil {
 			return err
 		}
-		fmt.Fprintln(c.output, "updated order successfully saved.")
+		// fmt.Fprintln(c.output, "updated order successfully saved.")
+		c.Printf("%s\n", "updated order successfully saved.")
 		return nil
 	}
 
@@ -85,14 +87,14 @@ func (c *cartCmd) printall() error {
 		return err
 	}
 	if len(all) < 1 {
-		fmt.Fprintln(c.output, "No orders saved.")
+		c.Println("No orders saved.")
 		return nil
 	}
 
-	fmt.Fprintln(c.output, "Your Orders:")
+	c.Println("Your Orders:")
 	for k := range all {
 		if strings.Contains(k, orderPrefix) {
-			fmt.Fprintln(c.output, " ", strings.Replace(k, orderPrefix, "", -1))
+			c.Println(" ", strings.Replace(k, orderPrefix, "", -1))
 		}
 	}
 	return nil
@@ -127,20 +129,22 @@ func (c *cartCmd) printOrder(name string, o *dawg.Order) (err error) {
 			fmt.Fprintf(buffer, "%+v\n", prod)
 		}
 	}
-	_, err = c.output.Write(buffer.Bytes())
-	return err
+	// _, err = c.output.Write(buffer.Bytes())
+	// return err
+	c.Printf("%s", string(buffer.Bytes()))
+	return nil
 }
 
-func (b *cliBuilder) newCartCmd() cliCommand {
+func (b *cliBuilder) newCartCmd() base.CliCommand {
 	c := &cartCmd{price: false, delete: false, verbose: false}
-	c.basecmd = b.newBaseCommand("cart <order name>", "Manage user created orders", c.run)
-	c.basecmd.cmd.Long = `The cart command gets information on all of the user
+	c.basecmd = b.newBaseCommand("cart <order name>", "Manage user created orders", c.Run)
+	c.basecmd.Cmd().Long = `The cart command gets information on all of the user
 created orders. Use 'apizza cart <order name>' for info on a specific order`
 
-	c.cmd.Flags().BoolVarP(&c.price, "price", "p", c.price, "show to price of an order")
-	c.cmd.Flags().StringSliceVarP(&c.add, "add", "a", c.add, "add any number of products to a specific order")
-	c.cmd.Flags().BoolVarP(&c.delete, "delete", "d", c.delete, "delete the order from the database")
-	c.cmd.Flags().BoolVarP(&c.verbose, "verbose", "v", c.verbose, "print cart verbosly")
+	c.Flags().BoolVarP(&c.price, "price", "p", c.price, "show to price of an order")
+	c.Flags().StringSliceVarP(&c.add, "add", "a", c.add, "add any number of products to a specific order")
+	c.Flags().BoolVarP(&c.delete, "delete", "d", c.delete, "delete the order from the database")
+	c.Flags().BoolVarP(&c.verbose, "verbose", "v", c.verbose, "print cart verbosly")
 	return c
 }
 
@@ -151,7 +155,7 @@ type addOrderCmd struct {
 	toppings []string
 }
 
-func (c *addOrderCmd) run(cmd *cobra.Command, args []string) (err error) {
+func (c *addOrderCmd) Run(cmd *cobra.Command, args []string) (err error) {
 	if c.name == "" && len(args) < 1 {
 		return errors.New("No order name... use '--name=<order name>' or give name as an argument")
 	}
@@ -185,17 +189,17 @@ func (c *addOrderCmd) run(cmd *cobra.Command, args []string) (err error) {
 	return saveOrder(orderName, order)
 }
 
-func (b *cliBuilder) newAddOrderCmd() cliCommand {
+func (b *cliBuilder) newAddOrderCmd() base.CliCommand {
 	c := &addOrderCmd{name: "", products: []string{}}
 	c.basecmd = b.newBaseCommand(
 		"add <new order name>",
 		"Create a new order that will be stored in the cart.",
-		c.run,
+		c.Run,
 	)
 
-	c.cmd.Flags().StringVarP(&c.name, "name", "n", c.name, "set the name of a new order")
-	c.cmd.Flags().StringSliceVarP(&c.products, "products", "p", c.products, "product codes for the new order")
-	c.cmd.Flags().StringSliceVarP(&c.toppings, "toppings", "t", c.toppings, "toppings for the products being added")
+	c.Flags().StringVarP(&c.name, "name", "n", c.name, "set the name of a new order")
+	c.Flags().StringSliceVarP(&c.products, "products", "p", c.products, "product codes for the new order")
+	c.Flags().StringSliceVarP(&c.toppings, "toppings", "t", c.toppings, "toppings for the products being added")
 	return c
 }
 

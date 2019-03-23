@@ -8,26 +8,26 @@ import (
 
 func testMenuRun(t *testing.T) {
 	c := newBuilder().newMenuCmd().(*menuCmd)
-	c.setOutput(&bytes.Buffer{})
+	c.SetOutput(&bytes.Buffer{})
 
-	if err := c.run(c.command(), []string{}); err != nil {
+	if err := c.Run(c.Cmd(), []string{}); err != nil {
 		t.Error(err)
 	}
 
 	c.item = "not a thing"
-	if err := c.run(c.command(), []string{}); err == nil {
+	if err := c.Run(c.Cmd(), []string{}); err == nil {
 		t.Error("should raise error")
 	}
 
 	store = nil
 	c.item = "10SCREEN"
-	if err := c.run(c.command(), []string{}); err != nil {
+	if err := c.Run(c.Cmd(), []string{}); err != nil {
 		t.Error(err)
 	}
 
 	c.item = ""
 	c.toppings = true
-	if err := c.run(c.command(), []string{}); err != nil {
+	if err := c.Run(c.Cmd(), []string{}); err != nil {
 		t.Error(err)
 	}
 }
@@ -35,7 +35,7 @@ func testMenuRun(t *testing.T) {
 func testFindProduct(t *testing.T) {
 	c := newBuilder().newMenuCmd().(*menuCmd)
 	buf := &bytes.Buffer{}
-	c.setOutput(buf)
+	c.SetOutput(buf)
 	if err := db.AutoTimeStamp("menu", 12*time.Hour, c.cacheNewMenu, c.getCachedMenu); err != nil {
 		t.Error(err)
 	}

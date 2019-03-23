@@ -25,6 +25,7 @@ import (
 	"github.com/mitchellh/mapstructure"
 	"github.com/spf13/cobra"
 
+	"github.com/harrybrwn/apizza/cmd/internal/base"
 	"github.com/harrybrwn/apizza/cmd/internal/obj"
 	"github.com/harrybrwn/apizza/pkg/config"
 )
@@ -83,37 +84,37 @@ type configCmd struct {
 	getall     bool
 }
 
-func (c *configCmd) run(cmd *cobra.Command, args []string) error {
+func (c *configCmd) Run(cmd *cobra.Command, args []string) error {
 	if c.file {
-		fmt.Println(config.File())
+		c.Printf("%s\n", config.File())
 		return nil
 	}
 	if c.dir {
-		fmt.Println(config.Folder())
+		c.Printf("%s\n", config.Folder())
 		return nil
 	}
 	if c.resetCache {
 		return os.Remove(filepath.Join(config.Folder(), "cache", "apizza.db"))
 	}
 	if c.getall {
-		return cfg.printAll(c.output)
+		return cfg.printAll(cmd.OutOrStdout())
 	}
-	return c.cmd.Usage()
+	return cmd.Usage()
 }
 
-func newConfigCmd() cliCommand {
+func newConfigCmd() base.CliCommand {
 	c := &configCmd{file: false, dir: false, resetCache: false}
-	c.basecmd = newVerboseBaseCommand("config", "Configure apizza", c.run)
-	c.cmd.Long = `The 'config' command is used for accessing the .apizza config file
+	c.basecmd = newVerboseBaseCommand("config", "Configure apizza", c.Run)
+	c.Cmd().Long = `The 'config' command is used for accessing the .apizza config file
 in your home directory. Feel free to edit the .apizza json file
 by hand or use the 'config' command.
 
 ex. 'apizza config get name' or 'apizza config set name=<your name>'`
 
-	c.cmd.Flags().BoolVarP(&c.file, "file", "f", c.file, "show the path to the config.json file")
-	c.cmd.Flags().BoolVarP(&c.dir, "dir", "d", c.dir, "show the apizza config directory path")
-	c.cmd.Flags().BoolVarP(&c.resetCache, "reset-cache", "r", c.resetCache, "reset the database cache")
-	c.cmd.Flags().BoolVar(&c.getall, "get-all", c.getall, "show all the contents of the config file")
+	c.Flags().BoolVarP(&c.file, "file", "f", c.file, "show the path to the config.json file")
+	c.Flags().BoolVarP(&c.dir, "dir", "d", c.dir, "show the apizza config directory path")
+	c.Flags().BoolVarP(&c.resetCache, "reset-cache", "r", c.resetCache, "reset the database cache")
+	c.Flags().BoolVar(&c.getall, "get-all", c.getall, "show all the contents of the config file")
 	return c
 }
 
@@ -121,7 +122,7 @@ type configSetCmd struct {
 	*basecmd
 }
 
-func (c *configSetCmd) run(cmd *cobra.Command, args []string) error {
+func (c *configSetCmd) Run(cmd *cobra.Command, args []string) error {
 	if len(args) < 1 {
 		return errors.New("no variable given")
 	}
@@ -139,12 +140,12 @@ func (c *configSetCmd) run(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func newConfigSet() cliCommand {
+func newConfigSet() base.CliCommand {
 	c := &configSetCmd{}
 	c.basecmd = newBaseCommand(
 		"set",
 		"change variables in the config file",
-		c.run,
+		c.Run,
 	)
 	return c
 }
@@ -153,7 +154,7 @@ type configGetCmd struct {
 	*basecmd
 }
 
-func (c *configGetCmd) run(cmd *cobra.Command, args []string) error {
+func (c *configGetCmd) Run(cmd *cobra.Command, args []string) error {
 	if len(args) < 1 {
 		return errors.New("no variable given")
 	}
@@ -163,17 +164,17 @@ func (c *configGetCmd) run(cmd *cobra.Command, args []string) error {
 		if v == nil {
 			return fmt.Errorf("cannot find %s", arg)
 		}
-		fmt.Fprintln(c.output, v)
+		c.Printf("%v", v)
 	}
 	return nil
 }
 
-func newConfigGet() cliCommand {
+func newConfigGet() base.CliCommand {
 	c := &configGetCmd{}
 	c.basecmd = newBaseCommand(
 		"get",
 		"print the specified config variable to screen",
-		c.run,
+		c.Run,
 	)
 	return c
 }

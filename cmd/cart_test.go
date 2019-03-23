@@ -4,18 +4,20 @@ import (
 	"bytes"
 	"fmt"
 	"testing"
+
+	"github.com/harrybrwn/apizza/cmd/internal/base"
 )
 
-func testOrderNew(t *testing.T, buf *bytes.Buffer, cmds ...cliCommand) {
+func testOrderNew(t *testing.T, buf *bytes.Buffer, cmds ...base.CliCommand) {
 	cart, add := cmds[0], cmds[1]
-	add.command().ParseFlags([]string{"--name=testorder", "--products=12SCMEATZA"})
-	err := add.run(add.command(), []string{})
+	add.Cmd().ParseFlags([]string{"--name=testorder", "--products=12SCMEATZA"})
+	err := add.Run(add.Cmd(), []string{})
 	if err != nil {
 		t.Error(err)
 	}
 	buf.Reset()
 
-	if err := cart.run(cart.command(), []string{"testorder"}); err != nil {
+	if err := cart.Run(cart.Cmd(), []string{"testorder"}); err != nil {
 		t.Error(err)
 	}
 
@@ -34,9 +36,9 @@ func testOrderNew(t *testing.T, buf *bytes.Buffer, cmds ...cliCommand) {
 	}
 }
 
-func testAddOrder(t *testing.T, buf *bytes.Buffer, cmds ...cliCommand) {
+func testAddOrder(t *testing.T, buf *bytes.Buffer, cmds ...base.CliCommand) {
 	cart, add := cmds[0], cmds[1]
-	if err := add.run(add.command(), []string{"testing"}); err != nil {
+	if err := add.Run(add.Cmd(), []string{"testing"}); err != nil {
 		t.Error(err)
 	}
 	if string(buf.Bytes()) != "" {
@@ -44,22 +46,22 @@ func testAddOrder(t *testing.T, buf *bytes.Buffer, cmds ...cliCommand) {
 	}
 	buf.Reset()
 
-	cart.command().ParseFlags([]string{"-d"})
-	if err := cart.run(cart.command(), []string{"testing"}); err != nil {
+	cart.Cmd().ParseFlags([]string{"-d"})
+	if err := cart.Run(cart.Cmd(), []string{"testing"}); err != nil {
 		t.Error(err)
 	}
 	buf.Reset()
 }
 
-func testOrderNewErr(t *testing.T, buf *bytes.Buffer, cmds ...cliCommand) {
-	if err := cmds[0].run(cmds[0].command(), []string{}); err == nil {
+func testOrderNewErr(t *testing.T, buf *bytes.Buffer, cmds ...base.CliCommand) {
+	if err := cmds[0].Run(cmds[0].Cmd(), []string{}); err == nil {
 		t.Error("expected error")
 	}
 }
 
-func testOrderRunAdd(t *testing.T, buf *bytes.Buffer, cmds ...cliCommand) {
+func testOrderRunAdd(t *testing.T, buf *bytes.Buffer, cmds ...base.CliCommand) {
 	cart := cmds[0]
-	if err := cart.run(cart.command(), []string{}); err != nil {
+	if err := cart.Run(cart.Cmd(), []string{}); err != nil {
 		t.Error(err)
 	}
 
@@ -73,8 +75,8 @@ func testOrderRunAdd(t *testing.T, buf *bytes.Buffer, cmds ...cliCommand) {
 	}
 	buf.Reset()
 
-	cart.command().ParseFlags([]string{"--add", "W08PBNLW,W08PPLNW"})
-	if err := cart.run(cart.command(), []string{"testorder"}); err != nil {
+	cart.Cmd().ParseFlags([]string{"--add", "W08PBNLW,W08PPLNW"})
+	if err := cart.Run(cart.Cmd(), []string{"testorder"}); err != nil {
 		t.Error(err)
 	}
 	if string(buf.Bytes()) != "updated order successfully saved.\n" {
@@ -86,7 +88,7 @@ func testOrderRunAdd(t *testing.T, buf *bytes.Buffer, cmds ...cliCommand) {
 
 func testOrderPriceOutput(cart *cartCmd, buf *bytes.Buffer, t *testing.T) {
 	cart.price = true
-	if err := cart.run(cart.command(), []string{"testorder"}); err != nil {
+	if err := cart.Run(cart.Cmd(), []string{"testorder"}); err != nil {
 		t.Error(err)
 	}
 
@@ -105,14 +107,14 @@ func testOrderPriceOutput(cart *cartCmd, buf *bytes.Buffer, t *testing.T) {
 		t.Error("unexpected price output")
 	}
 
-	if err := cart.run(cart.command(), []string{"to-many", "args"}); err == nil {
+	if err := cart.Run(cart.Cmd(), []string{"to-many", "args"}); err == nil {
 		t.Error("expected error")
 	}
 }
 
 func testOrderRunDelete(cart *cartCmd, buf *bytes.Buffer, t *testing.T) {
 	cart.delete = true
-	if err := cart.run(cart.command(), []string{"testorder"}); err != nil {
+	if err := cart.Run(cart.Cmd(), []string{"testorder"}); err != nil {
 		t.Error(err)
 	}
 	if string(buf.Bytes()) != "testorder successfully deleted.\n" {
@@ -122,8 +124,8 @@ func testOrderRunDelete(cart *cartCmd, buf *bytes.Buffer, t *testing.T) {
 	cart.delete = false
 	buf.Reset()
 
-	cart.command().ParseFlags([]string{})
-	if err := cart.run(cart.command(), []string{}); err != nil {
+	cart.Cmd().ParseFlags([]string{})
+	if err := cart.Run(cart.Cmd(), []string{}); err != nil {
 		t.Error(err)
 	}
 	expected := `No orders saved.
@@ -135,7 +137,7 @@ func testOrderRunDelete(cart *cartCmd, buf *bytes.Buffer, t *testing.T) {
 	}
 	buf.Reset()
 
-	if err := cart.run(cart.command(), []string{"not_a_real_order"}); err == nil {
+	if err := cart.Run(cart.Cmd(), []string{"not_a_real_order"}); err == nil {
 		t.Error("expected error")
 	}
 }

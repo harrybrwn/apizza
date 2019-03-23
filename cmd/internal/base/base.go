@@ -2,8 +2,12 @@ package base
 
 import (
 	"bytes"
+	"fmt"
 	"io"
+	"os"
 	"testing"
+
+	"github.com/spf13/pflag"
 
 	"github.com/harrybrwn/apizza/cmd/internal/obj"
 	"github.com/spf13/cobra"
@@ -15,6 +19,23 @@ type CliCommand interface {
 	Addcmd(...CliCommand) CliCommand
 	Run(*cobra.Command, []string) error
 	SetOutput(io.Writer)
+	Printf(string, ...interface{})
+	Println(...interface{})
+	Flags() *pflag.FlagSet
+}
+
+// NewCommand returns a new base command.
+func NewCommand(use, short string, f runFunction) *Command {
+	return &Command{
+		cmd: &cobra.Command{
+			Use:           use,
+			Short:         short,
+			RunE:          f,
+			SilenceErrors: true,
+			SilenceUsage:  true,
+		},
+		output: os.Stdout,
+	}
 }
 
 // Command is a cli command
@@ -48,6 +69,21 @@ func (c *Command) SetOutput(out io.Writer) {
 	c.cmd.SetOutput(c.output)
 }
 
+// Flags returns the flag set.
+func (c *Command) Flags() *pflag.FlagSet {
+	return c.cmd.Flags()
+}
+
+// Printf prints to the command's output.
+func (c *Command) Printf(format string, a ...interface{}) {
+	fmt.Fprintf(c.output, format, a...)
+}
+
+// Println prints to the command's output.
+func (c *Command) Println(a ...interface{}) {
+	fmt.Fprintln(c.output, a...)
+}
+
 // WithCmds returns a general test given a more specific test function.
 //
 // This wrapper function is meant for testing only.
@@ -65,3 +101,5 @@ func WithCmds(
 		test(t, buf, cmds...)
 	}
 }
+
+type runFunction func(*cobra.Command, []string) error
