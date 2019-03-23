@@ -137,7 +137,7 @@ func (c *configCmd) run(cmd *cobra.Command, args []string) error {
 		return os.Remove(filepath.Join(config.Folder(), "cache", "apizza.db"))
 	}
 	if c.getall {
-		config.PrintAll(cfg)
+		config.FprintAll(c.output, cfg)
 		return nil
 	}
 	return c.cmd.Usage()

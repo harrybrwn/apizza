@@ -53,6 +53,7 @@ closing tests.
 	if string(output.Bytes()) != expected {
 		t.Error("output should be as expected")
 	}
+	Compare(t, string(output.Bytes()), expected)
 }
 
 func TestNewRunner(t *testing.T) {

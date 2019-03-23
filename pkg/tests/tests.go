@@ -2,6 +2,7 @@
 package tests
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -41,6 +42,32 @@ func TempDir() string {
 		return ""
 	}
 	return dir
+}
+
+// Compare two strings and fail the test with an error message if they are not
+// the same.
+func Compare(t *testing.T, got, expected string) {
+	msg := fmt.Sprintf("wrong output:\ngot:\n'%s'\nexpected:\n'%s'\n", got, expected)
+	if got != expected {
+		t.Errorf(msg)
+	}
+	if len(got) != len(expected) {
+		t.Error("they are different lengths too", len(got), len(expected))
+	}
+
+	var min int
+	if len(got) > len(expected) {
+		min = len(expected)
+	} else {
+		min = len(got)
+	}
+
+	for i := 0; i < min; i++ {
+		// fmt.Sprintf("'%s' == '%s'\n", string(got[i]), string(expected[i]))
+		if got[i] != expected[i] {
+			t.Errorf("'%s' == '%s'\n", string(got[i]), string(expected[i]))
+		}
+	}
 }
 
 // Parts of this function came from the Go standard library io/ioutil/tempfile.go

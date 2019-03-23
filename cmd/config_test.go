@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"strings"
 	"testing"
+
+	"github.com/harrybrwn/apizza/pkg/tests"
 )
 
 func testConfigStruct(t *testing.T) {
@@ -22,7 +24,7 @@ func testConfigStruct(t *testing.T) {
 	//   number: ""
 	//   expiration: ""
 	//   cvv: ""
-	// service: "Delivery"
+	// service: "Carryout"
 	// myorders: []
 	// `
 
@@ -77,24 +79,42 @@ func testConfigCmd(t *testing.T) {
 	c.resetCache = false
 	buf.Reset()
 
-	phrases := []string{
-		"Service Carryout",
-		"Name joe",
-		"Email nojoe@mail.com",
-		"Washington DC",
-		"1600 Pennsylvania Ave NW",
-		"20500",
-	}
 	c.getall = true
 	if err := c.run(c.command(), []string{}); err != nil {
 		t.Error(err)
 	}
-	getAllOutput := string(buf.Bytes())
-	for _, phrase := range phrases {
-		if !strings.Contains(getAllOutput, phrase) {
-			t.Error("wrong output")
-		}
-	}
+	/*
+			expected := `name: "joe"
+		email: "nojoe@mail.com"
+		address:
+		  street: "1600 Pennsylvania Ave NW"
+		  cityname: "Washington DC"
+		  state: ""
+		  zipcode: "20500"
+		card:
+		  number: ""
+		  expiration: ""
+		  cvv: ""
+		service: "Carryout"
+		myorders: []
+		`
+	*/
+
+	expected := `name: "joe"
+email: "nojoe@mail.com"
+address: 
+  street: "1600 Pennsylvania Ave NW"
+  cityname: "Washington DC"
+  state: ""
+  zipcode: "20500"
+card: 
+  number: ""
+  expiration: ""
+  cvv: ""
+service: "Carryout"
+myorders: []
+`
+	tests.Compare(t, string(buf.Bytes()), expected)
 	c.getall = false
 	buf.Reset()
 

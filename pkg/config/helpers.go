@@ -3,6 +3,7 @@ package config
 import (
 	"errors"
 	"fmt"
+	"io"
 	"reflect"
 	"strings"
 )
@@ -94,6 +95,13 @@ func FieldName(config Config, key string) string {
 func PrintAll(config Config) {
 	fmt.Print(
 		visitAll(reflect.ValueOf(config).Elem(), 0, DefaultFormatter),
+	)
+}
+
+// FprintAll prints the config to an io.Writer interface.
+func FprintAll(w io.Writer, config Config) {
+	fmt.Fprint(
+		w, visitAll(reflect.ValueOf(config).Elem(), 0, DefaultFormatter),
 	)
 }
 
