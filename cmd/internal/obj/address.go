@@ -46,11 +46,14 @@ func (a *Address) Zip() string {
 	panic(fmt.Sprintf("bad zipcode %s", a.Zipcode))
 }
 
-func addressStr(a dawg.Address) string {
-	return addressStrIndent(a, 0)
+// AddressFmt returns a formatted address string from and Address interface.
+func AddressFmt(a dawg.Address) string {
+	return AddressFmtIndent(a, 0)
 }
 
-func addressStrIndent(a dawg.Address, tablen int) string {
+// AddressFmtIndent returns AddressFmt but with the second line indented to some
+// length l.
+func AddressFmtIndent(a dawg.Address, l int) string {
 	var format string
 	if len(a.StateCode()) == 0 {
 		format = "%s\n%s%s, %s%s"
@@ -59,9 +62,14 @@ func addressStrIndent(a dawg.Address, tablen int) string {
 	}
 
 	return fmt.Sprintf(format,
-		a.LineOne(), strings.Repeat(" ", tablen), a.City(), a.StateCode(), a.Zip())
+		a.LineOne(),
+		strings.Repeat(" ", l),
+		a.City(),
+		a.StateCode(),
+		a.Zip(),
+	)
 }
 
 func (a Address) String() string {
-	return addressStr(&a)
+	return AddressFmt(&a)
 }
