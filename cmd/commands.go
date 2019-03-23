@@ -57,7 +57,7 @@ func Execute() {
 	}
 }
 
-func handle(e error, msg string, code int) { fmt.Printf("%s: %s\n", msg, e); os.Exit(code) }
+func handle(e error, msg string, code int) { fmt.Fprintf(os.Stderr, "%s: %s\n", msg, e); os.Exit(code) }
 
 type cliCommand interface {
 	command() *cobra.Command
@@ -73,59 +73,59 @@ type basecmd struct {
 	output io.Writer
 }
 
-func (bc *basecmd) command() *cobra.Command {
-	return bc.cmd
+func (c *basecmd) command() *cobra.Command {
+	return c.cmd
 }
 
-func (bc *basecmd) addcmd(cmds ...cliCommand) cliCommand {
+func (c *basecmd) addcmd(cmds ...cliCommand) cliCommand {
 	for _, cmd := range cmds {
-		bc.cmd.AddCommand(cmd.command())
+		c.cmd.AddCommand(cmd.command())
 	}
-	return bc
+	return c
 }
 
-func (bc *basecmd) run(cmd *cobra.Command, args []string) error {
-	return bc.cmd.Usage()
+func (c *basecmd) run(cmd *cobra.Command, args []string) error {
+	return c.cmd.Usage()
 }
 
-func (bc *basecmd) setOutput(output io.Writer) {
-	bc.output = output
-	bc.cmd.SetOutput(output)
+func (c *basecmd) setOutput(output io.Writer) {
+	c.output = output
+	c.cmd.SetOutput(output)
 }
 
-func (bc *basecmd) getstore() (err error) {
+func (c *basecmd) getstore() (err error) {
 	if store == nil {
-		if store, err = dawg.NearestStore(bc.addr, cfg.Service); err != nil {
+		if store, err = dawg.NearestStore(c.addr, cfg.Service); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func (bc *basecmd) cacheNewMenu() (err error) {
-	if err = bc.getstore(); err != nil {
+func (c *basecmd) cacheNewMenu() (err error) {
+	if err = c.getstore(); err != nil {
 		return err
 	}
 
-	bc.menu, err = store.Menu()
+	c.menu, err = store.Menu()
 	if err != nil {
 		return err
 	}
-	raw, err := json.Marshal(bc.menu)
+	raw, err := json.Marshal(c.menu)
 	if err != nil {
 		return err
 	}
 	return db.Put("menu", raw)
 }
 
-func (bc *basecmd) getCachedMenu() error {
-	if bc.menu == nil {
+func (c *basecmd) getCachedMenu() error {
+	if c.menu == nil {
 		raw, err := db.Get("menu")
 		if err != nil {
 			return err
 		}
-		bc.menu = &dawg.Menu{}
-		return json.Unmarshal(raw, bc.menu)
+		c.menu = &dawg.Menu{}
+		return json.Unmarshal(raw, c.menu)
 	}
 	return nil
 }
