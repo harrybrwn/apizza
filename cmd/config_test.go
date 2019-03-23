@@ -168,17 +168,3 @@ func testConfigSet(t *testing.T) {
 		t.Error("wrong error message, got:", err.Error())
 	}
 }
-
-func TestAddressStr(t *testing.T) {
-	a := &address{
-		Street: "1600 Pennsylvania Ave NW", CityName: "Washington",
-		State: "DC", Zipcode: "20500",
-	}
-	expected := `1600 Pennsylvania Ave NW
-Washington, DC 20500`
-
-	formatted := addressStr(a)
-	if addressStr(a) != expected {
-		t.Errorf("unexpected output...\ngot:\n%s\nwanted:\n%s\n", formatted, expected)
-	}
-}

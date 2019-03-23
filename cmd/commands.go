@@ -23,6 +23,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/harrybrwn/apizza/cmd/internal/obj"
 	"github.com/harrybrwn/apizza/dawg"
 	"github.com/harrybrwn/apizza/pkg/cache"
 	"github.com/harrybrwn/apizza/pkg/config"
@@ -68,7 +69,7 @@ type cliCommand interface {
 
 type basecmd struct {
 	cmd    *cobra.Command
-	addr   *address
+	addr   *obj.Address
 	menu   *dawg.Menu
 	output io.Writer
 }
@@ -166,7 +167,7 @@ type commandBuilder interface {
 
 type cliBuilder struct {
 	root cliCommand
-	addr *address
+	addr *obj.Address
 }
 
 func newBuilder() *cliBuilder {
