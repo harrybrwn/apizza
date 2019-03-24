@@ -23,8 +23,8 @@ func stackTrace() {
 }
 
 type testCnfg struct {
-	Test    string      `config:"test" default:"\"this is a test config file\""`
-	Msg     string      `config:"msg" default:"\"this should have been deleted, please remove it\""`
+	Test    string      `config:"test" default:"this is a test config file"`
+	Msg     string      `config:"msg" default:"this should have been deleted, please remove it"`
 	Number  int         `config:"number" default:"50"`
 	Number2 int         `config:"number2"`
 	NullVal interface{} `config:"nullval"`
@@ -187,3 +187,8 @@ func TestFieldName(t *testing.T) {
 		t.Error("bad field name")
 	}
 }
+
+// func TestThing(t *testing.T) {
+// 	elem := reflect.ValueOf(&testCnfg{}).Elem()
+// 	fmt.Println(emptyJSONConfig(elem.Type(), 0))
+// }

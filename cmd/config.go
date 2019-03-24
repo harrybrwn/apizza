@@ -40,7 +40,7 @@ type Config struct {
 		Expiration string `config:"expiration" json:"expiration"`
 		CVV        string `config:"cvv" json:"cvv"`
 	} `config:"card" json:"card"`
-	Service string `config:"service" default:"\"Delivery\"" json:"service"`
+	Service string `config:"service" default:"Delivery" json:"service"`
 }
 
 // Get a config variable

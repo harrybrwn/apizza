@@ -140,6 +140,9 @@ func emptyJSONConfig(t reflect.Type, level int) string {
 		rawcnfg += fmt.Sprintf("%s\"%s\": ", spacer, f.Name)
 
 		if deflt, ok := f.Tag.Lookup("default"); ok {
+			if f.Type.Kind() == reflect.String {
+				deflt = fmt.Sprintf("\"%s\"", deflt)
+			}
 			rawcnfg += deflt + comma
 			continue
 		}
