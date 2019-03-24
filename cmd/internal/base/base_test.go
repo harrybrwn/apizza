@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"testing"
 
+	"github.com/harrybrwn/apizza/pkg/tests"
 	"github.com/spf13/cobra"
 )
 
@@ -34,7 +35,5 @@ func testCmd(t *testing.T, buf *bytes.Buffer, cmds ...CliCommand) {
 	if err := c.Run(c.Cmd(), []string{}); err != nil {
 		t.Error(err)
 	}
-	if string(buf.Bytes()) != "test output" {
-		t.Error("wrong output")
-	}
+	tests.Compare(t, string(buf.Bytes()), "test output\n")
 }
