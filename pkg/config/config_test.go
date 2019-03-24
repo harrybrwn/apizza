@@ -9,6 +9,8 @@ import (
 	"runtime"
 	"strings"
 	"testing"
+
+	"github.com/harrybrwn/apizza/pkg/tests"
 )
 
 func stackTrace() {
@@ -110,6 +112,7 @@ func TestSetConfig(t *testing.T) {
 	if err == nil {
 		t.Error("The second call to SetConfig should have returned an error")
 	}
+	tests.Compare(t, err.Error(), "cannot set multiple config files")
 
 	err = Reset()
 	if err != nil {

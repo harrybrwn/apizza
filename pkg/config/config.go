@@ -98,6 +98,11 @@ func GetInt(key string) int {
 	return GetField(cfg.conf, key).(int)
 }
 
+// GetFloat returns the config key value as a float.
+func GetFloat(key string) float64 {
+	return GetField(cfg.conf, key).(float64)
+}
+
 // Set will set a value at a key for the config struct passed to SetConfig
 func Set(key string, val interface{}) error {
 	return SetField(cfg.conf, key, val)

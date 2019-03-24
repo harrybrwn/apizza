@@ -31,14 +31,14 @@ type Config interface {
 // note: this will only work if the struct implements the Config interface.
 func GetField(config Config, key string) interface{} {
 	value := reflect.ValueOf(config).Elem()
-	v := find(value, strings.Split(key, "."))
-	switch v.Kind() {
+	_, _, val := find(value, strings.Split(key, "."))
+	switch val.Kind() {
 	case reflect.String:
-		return v.String()
+		return val.String()
 	case reflect.Int:
-		return v.Int()
+		return val.Int()
 	case reflect.Struct:
-		return v
+		return val
 	default:
 		return nil
 	}
@@ -56,7 +56,7 @@ func GetField(config Config, key string) interface{} {
 // note: this will only work if the struct implements the Config interface.
 func SetField(config Config, key string, val interface{}) error {
 	v := reflect.ValueOf(config).Elem()
-	field := find(v, strings.Split(key, "."))
+	_, _, field := find(v, strings.Split(key, "."))
 	if !field.IsValid() {
 		return fmt.Errorf("cannot find '%s'", key)
 	}
@@ -82,13 +82,15 @@ func SetField(config Config, key string, val interface{}) error {
 
 // IsField will return true is the Config argumetn has either a field or a
 // config tag that coressponds with the key given.
-func IsField(conf Config, key string) bool {
-	return find(reflect.ValueOf(conf).Elem(), strings.Split(key, ".")) != reflect.ValueOf(nil)
+func IsField(c Config, key string) bool {
+	_, _, val := find(reflect.ValueOf(c).Elem(), strings.Split(key, "."))
+	return val != reflect.ValueOf(nil)
 }
 
 // FieldName will return the name of the struct field based on a config key.
-func FieldName(config Config, key string) string {
-	return findName(reflect.ValueOf(config).Elem(), strings.Split(key, "."))
+func FieldName(c Config, key string) string {
+	name, _, _ := find(reflect.ValueOf(c).Elem(), strings.Split(key, "."))
+	return name
 }
 
 // PrintAll prints out the config struct.
@@ -105,43 +107,23 @@ func FprintAll(w io.Writer, config interface{}) {
 	)
 }
 
-func find(val reflect.Value, keys []string) reflect.Value {
+func find(val reflect.Value, keys []string) (string, *reflect.StructField, reflect.Value) {
 	typ := val.Type()
-	for i := 0; i < val.NumField(); i++ {
+	for i := 0; i < typ.NumField(); i++ {
 
-		tfield := typ.Field(i)
-		if rightLable(keys[0], tfield) {
-			rtVal := val.Field(i)
-			if rtVal.Kind() == reflect.Struct {
-				if len(keys) > 1 {
-					return find(rtVal, keys[1:])
-				} else if len(keys) == 1 {
-					return rtVal
-				}
+		if rightLable(keys[0], typ.Field(i)) {
+			typFld := typ.Field(i)
+
+			if len(keys) > 1 {
+				name, sf, v := find(val.Field(i), keys[1:])
+				return fmt.Sprintf("%s.%s", typFld.Name, name), sf, v
+			} else if len(keys) == 1 {
+				return typFld.Name, &typFld, val.Field(i)
 			}
-			return rtVal
+			return typFld.Name, &typFld, val.Field(i)
 		}
 	}
-	return reflect.ValueOf(nil)
-}
-
-func findName(val reflect.Value, keys []string) string {
-	t := val.Type()
-	for i := 0; i < val.NumField(); i++ {
-		tfield := t.Field(i)
-		if rightLable(keys[0], tfield) {
-			rtVal := val.Field(i)
-			if rtVal.Kind() == reflect.Struct {
-				if len(keys) > 1 {
-					return fmt.Sprintf("%s.%s", tfield.Name, findName(rtVal, keys[1:]))
-				} else if len(keys) == 1 {
-					return tfield.Name
-				}
-			}
-			return tfield.Name
-		}
-	}
-	return ""
+	return "", nil, reflect.ValueOf(nil)
 }
 
 // Formatter is a struct holding a collection of formatting functions.
@@ -208,24 +190,4 @@ var DefaultFormatter = Formatter{
 		return val
 	},
 	TabSize: 2,
-}
-
-type comparison func(string, reflect.StructField) bool
-
-func finder(val reflect.Value, keys []string, comp comparison) (*reflect.StructField, reflect.Value) {
-	typ := val.Type()
-	for i := 0; i < typ.NumField(); i++ {
-
-		if comp(keys[0], typ.Field(i)) {
-			typFld := typ.Field(i)
-
-			if len(keys) > 1 {
-				return finder(val.Field(i), keys[1:], comp)
-			} else if len(keys) == 1 {
-				return &typFld, val.Field(i)
-			}
-			return &typFld, val.Field(i)
-		}
-	}
-	return nil, reflect.ValueOf(nil)
 }
