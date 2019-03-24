@@ -41,7 +41,7 @@ func (c *testCnfg) Set(key string, val interface{}) error { return nil }
 
 func TestConfigGetandSet(t *testing.T) {
 	var c = &testCnfg{}
-	cfg = &configfile{conf: c}
+	cfg = configfile{conf: c}
 	if GetField(c, "msg") != GetField(c, "Msg") {
 		t.Error("the Get function should auto convert 'msg' to 'Msg'.")
 	}

@@ -13,7 +13,7 @@ import (
 )
 
 var (
-	cfg *configfile
+	cfg configfile
 )
 
 // SetConfig sets the config file and also runs through the configuration
@@ -24,14 +24,17 @@ func SetConfig(foldername string, c Config) error {
 	}
 	dir := getdir(foldername)
 
-	cfg = &configfile{
+	cfg = configfile{
 		conf: c,
 		dir:  dir,
 		file: filepath.Join(dir, "config.json"),
 	}
 
 	if !cfg.exists() {
-		os.Mkdir(cfg.dir, 0700)
+		if err := os.Mkdir(cfg.dir, 0700); err != nil {
+			fmt.Println(os.IsExist(err))
+			return err
+		}
 		fmt.Printf("setting up config file at %s\n", cfg.file)
 		cfg.setup()
 	}
@@ -75,7 +78,7 @@ func (c *configfile) init() error {
 func (c *configfile) exists() bool {
 	_, dirErr := os.Stat(c.dir)
 	_, fileErr := os.Stat(c.file)
-	return os.IsExist(dirErr) && os.IsExist(fileErr)
+	return !os.IsNotExist(dirErr) && !os.IsNotExist(fileErr)
 }
 
 // Object returns the configuration struct passes to SetConfig.
