@@ -17,6 +17,11 @@ var (
 	reset     func()
 	cfgFolder string
 	cfgFile   string
+
+	// Object of the config object that os passes to SetConfig
+	Object Config
+
+	conf Config
 )
 
 // SetConfig sets the config file and also runs through the configuration
@@ -54,7 +59,28 @@ func SetConfig(foldername string, cfg Config) error {
 		os.Remove(cfgFile)
 		setup(cfgFile, cfg)
 	}
+	conf = cfg
 	return nil
+}
+
+// Get returns the value at a key for the config struct passes into SetConfig
+func Get(key string) interface{} {
+	return GetField(conf, key)
+}
+
+// GetString returns the config key value as a string.
+func GetString(key string) string {
+	return GetField(conf, key).(string)
+}
+
+// GetInt returns the config key value as an integer.
+func GetInt(key string) int {
+	return GetField(conf, key).(int)
+}
+
+// Set will set a value at a key for the config struct passed to SetConfig
+func Set(key string, val interface{}) error {
+	return SetField(conf, key, val)
 }
 
 // Folder returns the path to the folder that was set in SetConfig

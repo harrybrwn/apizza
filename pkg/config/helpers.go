@@ -19,17 +19,17 @@ type Config interface {
 	Set(string, interface{}) error
 }
 
-// Get is a helper function that finds the field of the config object that
+// GetField is a helper function that finds the field of the config object that
 // matches the key and then returns the value. This function is meant to be
-// wrapped by a config object. Get will return nil if it does not find the key.
+// wrapped by a config object. GetField will return nil if it does not find the key.
 //
 // Example:
 // 	type MyConfig struct {}
 //
-// 	func (c *MyConfig) Get(key string) interface{} { return config.Get(c, key) }
+// 	func (c *MyConfig) Get(key string) interface{} { return config.GetField(c, key) }
 //
 // note: this will only work if the struct implements the Config interface.
-func Get(config Config, key string) interface{} {
+func GetField(config Config, key string) interface{} {
 	value := reflect.ValueOf(config).Elem()
 	v := find(value, strings.Split(key, "."))
 	switch v.Kind() {
@@ -44,17 +44,17 @@ func Get(config Config, key string) interface{} {
 	}
 }
 
-// Set is a helper function that binds a variable to the field that
+// SetField is a helper function that binds a variable to the field that
 // matches the key argument. This function is meant to be
 // wrapped by a config object.
 //
 // Example:
 // 	type MyConfig struct {}
 //
-// 	func (c *MyConfig) Get(key string, val interface{}) error { return config.Set(c, key, val) }
+// 	func (c *MyConfig) Get(key string, val interface{}) error { return config.SetField(c, key, val) }
 //
 // note: this will only work if the struct implements the Config interface.
-func Set(config Config, key string, val interface{}) error {
+func SetField(config Config, key string, val interface{}) error {
 	v := reflect.ValueOf(config).Elem()
 	field := find(v, strings.Split(key, "."))
 	if !field.IsValid() {

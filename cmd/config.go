@@ -45,7 +45,7 @@ type Config struct {
 
 // Get a config variable
 func (c *Config) Get(key string) interface{} {
-	return config.Get(c, key)
+	return config.GetField(c, key)
 }
 
 // Set a config variable
@@ -55,7 +55,7 @@ func (c *Config) Set(key string, val interface{}) error {
 			return errors.New("service must be either 'Delivery' or 'Carryout'")
 		}
 	}
-	return config.Set(c, key, val)
+	return config.SetField(c, key, val)
 }
 
 type configCmd struct {
@@ -114,6 +114,10 @@ func (c *configSetCmd) Run(cmd *cobra.Command, args []string) error {
 		keys := strings.Split(arg, "=")
 		if len(keys) < 2 || keys[0] == "" || keys[1] == "" {
 			return errors.New(`use '<key>=<value>' format (no spaces)`)
+		}
+
+		if keys[1] == "." {
+			keys[1] = ""
 		}
 		err := cfg.Set(keys[0], keys[1])
 		if err != nil {

@@ -39,53 +39,57 @@ func (c *testCnfg) Set(key string, val interface{}) error { return nil }
 
 func TestConfigGetandSet(t *testing.T) {
 	var c = &testCnfg{}
-	if Get(c, "msg") != Get(c, "Msg") {
+	conf = c
+	if GetField(c, "msg") != GetField(c, "Msg") {
 		t.Error("the Get function should auto convert 'msg' to 'Msg'.")
 	}
-	if Get(c, "msg").(string) != c.Msg {
+	if Get("msg") != GetField(c, "Msg") {
+		t.Error("the Get function should auto convert 'msg' to 'Msg'.")
+	}
+	if GetField(c, "msg").(string) != c.Msg {
 		t.Error("The Get function should be returning the same value as acessing the struct literal.")
 	}
-	Set(c, "more.one", "hey is this shit workin")
+	SetField(c, "more.one", "hey is this shit workin")
 	if c.More.One != "hey is this shit workin" {
 		t.Error("Setting variables using dot notation in the key didn't work")
 	}
-	Set(c, "Test", "this config is part of a test. it should't be here")
+	SetField(c, "Test", "this config is part of a test. it should't be here")
 	test := "this config is part of a test. it should't be here"
 	if c.Test != test {
 		t.Errorf("Error in 'Set':\n\twant: %s\n\tgot: %s", test, c.Test)
 	}
-	if Get(c, "invalidkey") != nil {
+	if GetField(c, "invalidkey") != nil {
 		t.Error("an invalid key should have resulted in a nil value")
 	}
-	if err := Set(c, "invalidkey", ""); err == nil {
+	if err := SetField(c, "invalidkey", ""); err == nil {
 		t.Error("this should have raised an error")
 	}
-	if v := Get(c, "number"); v == nil {
+	if v := GetField(c, "number"); v == nil {
 		t.Errorf("Get(c, `number`) should have returned and integer, got %T", v)
 	}
-	if Get(c, "More") == nil {
+	if GetField(c, "More") == nil {
 		t.Error("didn't get struct value")
 	}
-	err := Set(c, "number", "what")
+	err := SetField(c, "number", "what")
 	if err == nil {
 		t.Error("should have returned a bad type error")
 	}
-	err = Set(c, "number2", int64(3))
+	err = SetField(c, "number2", int64(3))
 	if err != nil {
 		t.Error(err)
 	}
-	err = Set(c, "number", int64(6))
+	err = SetField(c, "number", int64(6))
 	if err != nil {
 		t.Error(err)
 	}
-	if Get(c, "number").(int64) != int64(6) {
+	if GetField(c, "number").(int64) != int64(6) {
 		t.Error("wrong number")
 	}
-	err = Set(c, "msg", 5)
+	err = SetField(c, "msg", 5)
 	if err == nil {
 		t.Error("expected error")
 	}
-	err = Set(c, "more", struct{ a string }{"what"})
+	err = SetField(c, "more", struct{ a string }{"what"})
 	if err == nil {
 		t.Error("expected error")
 	}
