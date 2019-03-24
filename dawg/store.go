@@ -129,16 +129,7 @@ func (s *Store) GetProduct(code string) (*Product, error) {
 	if err != nil {
 		return nil, err
 	}
-	var p *Product
-
-	if data, ok := menu.Variants[code]; ok {
-		p, err = makeProduct(data.(map[string]interface{}))
-	} else if data, ok := menu.Preconfigured[code]; ok {
-		p, err = makeProduct(data.(map[string]interface{}))
-	} else {
-		return nil, errors.New("cannot find product")
-	}
-	return p, err
+	return menu.GetProduct(code)
 }
 
 // WaitTime returns a pair of integers that are the maximum and

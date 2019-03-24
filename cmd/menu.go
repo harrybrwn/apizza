@@ -18,10 +18,12 @@ import (
 	"fmt"
 	"io"
 	"strings"
+	"text/template"
 	"time"
 	"unicode/utf8"
 
 	"github.com/harrybrwn/apizza/cmd/internal/base"
+	"github.com/harrybrwn/apizza/dawg"
 	"github.com/spf13/cobra"
 )
 
@@ -166,7 +168,12 @@ func (c *menuCmd) printToppings() {
 	}
 }
 
-func (c *menuCmd) findProduct(key string) (map[string]interface{}, error) {
+func (c *basecmd) findProduct(key string) (map[string]interface{}, error) {
+	if c.menu == nil {
+		if err := db.AutoTimeStamp("menu", 12*time.Hour, c.cacheNewMenu, c.getCachedMenu); err != nil {
+			return nil, err
+		}
+	}
 	var product map[string]interface{}
 	if prod, ok := c.menu.Products[key]; ok {
 		product = prod.(map[string]interface{})
@@ -178,6 +185,21 @@ func (c *menuCmd) findProduct(key string) (map[string]interface{}, error) {
 		return nil, fmt.Errorf("could not find %s", key)
 	}
 	return product, nil
+}
+
+func (c *basecmd) product(code string) (*dawg.Product, error) {
+	if c.menu == nil {
+		if err := db.AutoTimeStamp("menu", 12*time.Hour, c.cacheNewMenu, c.getCachedMenu); err != nil {
+			return nil, err
+		}
+	}
+	return c.menu.GetProduct(code)
+}
+
+func tmpl(w io.Writer, templt string, a interface{}) error {
+	t := template.New("apizza")
+	template.Must(t.Parse(templt))
+	return t.Execute(w, a)
 }
 
 func maxStrLen(list []interface{}) int {

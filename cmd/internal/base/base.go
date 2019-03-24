@@ -19,6 +19,7 @@ type CliCommand interface {
 	Addcmd(...CliCommand) CliCommand
 	Run(*cobra.Command, []string) error
 	SetOutput(io.Writer)
+	Output() io.Writer
 	Printf(string, ...interface{})
 	Println(...interface{})
 	Flags() *pflag.FlagSet
@@ -67,6 +68,11 @@ func (c *Command) Run(cmd *cobra.Command, args []string) error {
 func (c *Command) SetOutput(out io.Writer) {
 	c.output = out
 	c.cmd.SetOutput(c.output)
+}
+
+// Output returns the command's output writer.
+func (c *Command) Output() io.Writer {
+	return c.output
 }
 
 // Flags returns the flag set.

@@ -20,6 +20,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/harrybrwn/apizza/cmd/internal/base"
 	"github.com/harrybrwn/apizza/cmd/internal/obj"
@@ -60,11 +61,11 @@ func (c *cartCmd) Run(cmd *cobra.Command, args []string) (err error) {
 	}
 
 	if len(c.add) > 0 {
-		if err := c.getstore(); err != nil {
+		if err := db.AutoTimeStamp("menu", 12*time.Hour, c.cacheNewMenu, c.getCachedMenu); err != nil {
 			return err
 		}
 		for _, newP := range c.add {
-			p, err := store.GetProduct(newP)
+			p, err := c.menu.GetProduct(newP)
 			if err != nil {
 				return err
 			}
@@ -77,6 +78,11 @@ func (c *cartCmd) Run(cmd *cobra.Command, args []string) (err error) {
 		c.Printf("%s\n", "updated order successfully saved.")
 		return nil
 	}
+	if c.verbose {
+		if err := db.AutoTimeStamp("menu", 12*time.Hour, c.cacheNewMenu, c.getCachedMenu); err != nil {
+			return err
+		}
+	}
 	return c.printOrder(args[0], order)
 }
 
@@ -85,54 +91,50 @@ func (c *cartCmd) printall() error {
 	if err != nil {
 		return err
 	}
-	if len(all) < 1 {
+	var orders []string
+
+	for k := range all {
+		if strings.Contains(k, orderPrefix) {
+			orders = append(orders, strings.Replace(k, orderPrefix, "", -1))
+		}
+	}
+	if len(orders) < 1 {
 		c.Println("No orders saved.")
 		return nil
 	}
-
 	c.Println("Your Orders:")
-	for k := range all {
-		if strings.Contains(k, orderPrefix) {
-			c.Println(" ", strings.Replace(k, orderPrefix, "", -1))
-		}
+	for _, o := range orders {
+		c.Println(" ", o)
 	}
 	return nil
 }
 
 func (c *cartCmd) printOrder(name string, o *dawg.Order) (err error) {
 	buffer := &bytes.Buffer{}
-
 	fmt.Fprintln(buffer, name)
 	if c.price {
 		p, err := o.Price()
 		if err != nil {
 			return err
 		}
-		fmt.Fprintf(buffer, "  Price: %f\n", p)
+		fmt.Fprintf(buffer, "  price: $%0.2f\n", p)
 	}
-
-	fmt.Fprintln(buffer, "  Products:")
-	for _, p := range o.Products {
-		fmt.Fprintf(buffer, "    %s", p.Code)
-		if c.verbose {
-			fmt.Fprintf(buffer, " - quantity: %d, options: %v\n", p.Qty, p.Options)
-		} else {
-			fmt.Fprint(buffer, "\n")
-		}
+	if err = tmpl(buffer, orderTempl, o); err != nil {
+		return err
 	}
-	fmt.Fprintf(buffer, "  StoreID: %s\n", o.StoreID)
-	fmt.Fprintf(buffer, "  Method:  %s\n", o.ServiceMethod)
-	fmt.Fprintf(buffer, "  Address: %s\n", obj.AddressFmtIndent(o.Address, 11))
-	if test {
-		for _, prod := range o.Products {
-			fmt.Fprintf(buffer, "%+v\n", prod)
-		}
-	}
-	// _, err = c.output.Write(buffer.Bytes())
-	// return err
-	c.Printf("%s", string(buffer.Bytes()))
-	return nil
+	fmt.Fprintf(buffer, "  address: %s\n", obj.AddressFmtIndent(o.Address, 11))
+	_, err = c.Output().Write(buffer.Bytes())
+	return err
 }
+
+var orderTempl = `  products: {{ range .Products}}
+    {{.Name}}
+      code:     {{.Code}}
+      options:  {{.Options}}
+      quantity: {{.Qty}}{{end}}
+  storeID: {{.StoreID}}
+  method:  {{.ServiceMethod}}
+`
 
 func (b *cliBuilder) newCartCmd() base.CliCommand {
 	c := &cartCmd{price: false, delete: false, verbose: false}
