@@ -63,7 +63,7 @@ func (c *menuCmd) Run(cmd *cobra.Command, args []string) error {
 
 func (b *cliBuilder) newMenuCmd() base.CliCommand {
 	c := &menuCmd{all: false, toppings: false, preconfigured: false}
-	c.basecmd = b.newBaseCommand("menu", "Get the Dominos menu.", c.Run)
+	c.basecmd = b.newCommand("menu", "Get the Dominos menu.", c)
 
 	c.Flags().BoolVarP(&c.all, "all", "a", c.all, "show the entire menu")
 	c.Flags().BoolVarP(&c.toppings, "toppings", "t", c.toppings, "print out the toppings on the menu")
@@ -119,21 +119,6 @@ func (c *menuCmd) printMenuItem(product map[string]interface{}, spacer string) {
 		max := maxStrLen(varients)
 
 		for _, v := range varients {
-			// c.Printf("%v - %v %v %v %v\n",
-			// 	spaces(strLen(spacer)+3),
-			// 	"-",
-			// 	v,
-			// 	spaces(max-strLen(v.(string))),
-			// 	c.menu.Variants[v.(string)].(map[string]interface{})["Name"])
-
-			// fmt.Fprintln(
-			// 	c.output,
-			// 	spaces(strLen(spacer)+3),
-			// 	"-",
-			// 	v,
-			// 	spaces(max-strLen(v.(string))),
-			// 	c.menu.Variants[v.(string)].(map[string]interface{})["Name"])
-
 			c.Println(spaces(strLen(spacer)+3), "-", v,
 				spaces(max-strLen(v.(string))),
 				c.menu.Variants[v.(string)].(map[string]interface{})["Name"])

@@ -138,7 +138,7 @@ var orderTempl = `  products: {{ range .Products}}
 
 func (b *cliBuilder) newCartCmd() base.CliCommand {
 	c := &cartCmd{price: false, delete: false, verbose: false}
-	c.basecmd = b.newBaseCommand("cart <order name>", "Manage user created orders", c.Run)
+	c.basecmd = b.newCommand("cart <order name>", "Manage user created orders", c)
 	c.basecmd.Cmd().Long = `The cart command gets information on all of the user
 created orders. Use 'apizza cart <order name>' for info on a specific order`
 
@@ -192,10 +192,10 @@ func (c *addOrderCmd) Run(cmd *cobra.Command, args []string) (err error) {
 
 func (b *cliBuilder) newAddOrderCmd() base.CliCommand {
 	c := &addOrderCmd{name: "", products: []string{}}
-	c.basecmd = b.newBaseCommand(
+	c.basecmd = b.newCommand(
 		"add <new order name>",
 		"Create a new order that will be stored in the cart.",
-		c.Run,
+		c,
 	)
 
 	c.Flags().StringVarP(&c.name, "name", "n", c.name, "set the name of a new order")

@@ -62,7 +62,7 @@ var test bool
 
 func newApizzaCmd() base.CliCommand {
 	c := &apizzaCmd{address: "", service: cfg.Service, clearCache: false}
-	c.basecmd = newBaseCommand("apizza", "Dominos pizza from the command line.", c.Run)
+	c.basecmd = newCommand("apizza", "Dominos pizza from the command line.", c)
 
 	// c.cmd.PersistentFlags().StringVar(&c.address, "address", c.address, "use a specific address")
 	c.Cmd().PersistentFlags().StringVar(&c.service, "service", c.service, "select a Dominos service, either 'Delivery' or 'Carryout'")

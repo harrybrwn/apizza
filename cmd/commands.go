@@ -102,10 +102,6 @@ func (c *basecmd) getCachedMenu() error {
 	return nil
 }
 
-func newBaseCommand(use, short string, f func(*cobra.Command, []string) error) *basecmd {
-	return &basecmd{Command: base.NewCommand(use, short, f)}
-}
-
 func newCommand(use, short string, c base.CliCommand) *basecmd {
 	return &basecmd{Command: base.NewCommand(use, short, c.Run)}
 }
@@ -145,16 +141,12 @@ func (b *cliBuilder) exec() (*cobra.Command, error) {
 	return b.root.Cmd().ExecuteC()
 }
 
-// this is here for future plans
-func (b *cliBuilder) newBaseCommand(
-	use, short string,
-	f func(*cobra.Command, []string) error,
-) *basecmd {
-	base := newBaseCommand(use, short, f)
-	base.Addr = b.addr
-	return base
-}
-
 func (b *cliBuilder) dbPath() string {
 	return filepath.Join(config.Folder(), "cache", "apizza.db")
+}
+
+func (b *cliBuilder) newCommand(use, short string, c base.CliCommand) *basecmd {
+	base := newCommand(use, short, c)
+	base.Addr = b.addr
+	return base
 }
