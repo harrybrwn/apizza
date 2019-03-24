@@ -39,7 +39,7 @@ func (c *testCnfg) Set(key string, val interface{}) error { return nil }
 
 func TestConfigGetandSet(t *testing.T) {
 	var c = &testCnfg{}
-	conf = c
+	cfg = &configfile{conf: c}
 	if GetField(c, "msg") != GetField(c, "Msg") {
 		t.Error("the Get function should auto convert 'msg' to 'Msg'.")
 	}
@@ -85,6 +85,7 @@ func TestConfigGetandSet(t *testing.T) {
 	if GetField(c, "number").(int64) != int64(6) {
 		t.Error("wrong number")
 	}
+
 	err = SetField(c, "msg", 5)
 	if err == nil {
 		t.Error("expected error")
@@ -187,8 +188,3 @@ func TestFieldName(t *testing.T) {
 		t.Error("bad field name")
 	}
 }
-
-// func TestThing(t *testing.T) {
-// 	elem := reflect.ValueOf(&testCnfg{}).Elem()
-// 	fmt.Println(emptyJSONConfig(elem.Type(), 0))
-// }

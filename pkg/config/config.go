@@ -13,100 +13,114 @@ import (
 )
 
 var (
-	save      func() error
-	reset     func()
-	cfgFolder string
-	cfgFile   string
-
-	// Object of the config object that os passes to SetConfig
-	Object Config
-
-	conf Config
+	cfg *configfile
 )
 
 // SetConfig sets the config file and also runs through the configuration
 // setup process.
-func SetConfig(foldername string, cfg Config) error {
-	if cfgFile != "" {
+func SetConfig(foldername string, c Config) error {
+	if cfg.file != "" {
 		return errors.New("cannot set multiple config files")
 	}
-	cfgFolder = getdir(foldername)
-	cfgFile = filepath.Join(cfgFolder, "config.json")
+	dir := getdir(foldername)
 
-	if !exists() {
-		os.Mkdir(cfgFolder, 0700)
-		fmt.Printf("setting up config file at %s\n", cfgFile)
-		setup(cfgFile, cfg)
+	cfg = &configfile{
+		conf: c,
+		dir:  dir,
+		file: filepath.Join(dir, "config.json"),
 	}
-	b, err := ioutil.ReadFile(cfgFile)
+
+	if !cfg.exists() {
+		os.Mkdir(cfg.dir, 0700)
+		fmt.Printf("setting up config file at %s\n", cfg.file)
+		cfg.setup()
+	}
+	return cfg.init()
+}
+
+type configfile struct {
+	conf Config
+	file string
+	dir  string
+}
+
+func (c *configfile) save() error {
+	raw, err := json.MarshalIndent(c.conf, "", "    ")
 	if err != nil {
 		return err
 	}
-	err = json.Unmarshal(b, cfg)
+	return ioutil.WriteFile(c.file, raw, 0644)
+}
+
+func (c *configfile) reset() error {
+	err := os.Remove(c.file)
 	if err != nil {
 		return err
 	}
+	return setup(c.file, c.conf)
+}
 
-	save = func() error {
-		raw, err := json.MarshalIndent(cfg, "", "    ")
-		if err != nil {
-			return err
-		}
-		return ioutil.WriteFile(cfgFile, raw, 0644)
-	}
+func (c *configfile) setup() error {
+	return setup(c.file, c.conf)
+}
 
-	reset = func() {
-		os.Remove(cfgFile)
-		setup(cfgFile, cfg)
+func (c *configfile) init() error {
+	b, err := ioutil.ReadFile(c.file)
+	if err != nil {
+		return err
 	}
-	conf = cfg
-	return nil
+	return json.Unmarshal(b, c.conf)
+}
+
+func (c *configfile) exists() bool {
+	_, dirErr := os.Stat(c.dir)
+	_, fileErr := os.Stat(c.file)
+	return os.IsExist(dirErr) && os.IsExist(fileErr)
+}
+
+// Object returns the configuration struct passes to SetConfig.
+func Object() Config {
+	return cfg.conf
 }
 
 // Get returns the value at a key for the config struct passes into SetConfig
 func Get(key string) interface{} {
-	return GetField(conf, key)
+	return GetField(cfg.conf, key)
 }
 
 // GetString returns the config key value as a string.
 func GetString(key string) string {
-	return GetField(conf, key).(string)
+	return GetField(cfg.conf, key).(string)
 }
 
 // GetInt returns the config key value as an integer.
 func GetInt(key string) int {
-	return GetField(conf, key).(int)
+	return GetField(cfg.conf, key).(int)
 }
 
 // Set will set a value at a key for the config struct passed to SetConfig
 func Set(key string, val interface{}) error {
-	return SetField(conf, key, val)
+	return SetField(cfg.conf, key, val)
 }
 
 // Folder returns the path to the folder that was set in SetConfig
 func Folder() string {
-	return cfgFolder
+	return cfg.dir
 }
 
 // File returns the config file
 func File() string {
-	return cfgFile
+	return cfg.file
 }
 
 // Save saves the config file
 func Save() error {
-	return save()
+	return cfg.save()
 }
 
 // Reset deletes the config file and runs through the setup process
 func Reset() error {
-	reset()
-	return save()
-}
-
-func exists() bool {
-	_, err := os.Stat(cfgFolder)
-	return !os.IsNotExist(err)
+	return cfg.reset()
 }
 
 func setup(fname string, obj interface{}) error {
@@ -139,6 +153,7 @@ func emptyJSONConfig(t reflect.Type, level int) string {
 		}
 		rawcnfg += fmt.Sprintf("%s\"%s\": ", spacer, f.Name)
 
+		// look for a default value
 		if deflt, ok := f.Tag.Lookup("default"); ok {
 			if f.Type.Kind() == reflect.String {
 				deflt = fmt.Sprintf("\"%s\"", deflt)
@@ -147,13 +162,16 @@ func emptyJSONConfig(t reflect.Type, level int) string {
 			continue
 		}
 
+		// add an empty value
 		switch f.Type.Kind() {
 		case reflect.Struct:
 			rawcnfg += emptyJSONConfig(f.Type, level+1) + end
 		case reflect.Int:
 			rawcnfg += "0" + comma
+		case reflect.Float64:
+			rawcnfg += "0.0" + comma
 		case reflect.String:
-			rawcnfg += "\"\"" + comma
+			rawcnfg += fmt.Sprintf("\"%s\"%s", "", comma)
 		default:
 			rawcnfg += "null" + comma
 		}
