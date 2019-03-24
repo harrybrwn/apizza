@@ -82,17 +82,13 @@ service: "Carryout"
 	if err = c.Run(c.Cmd(), []string{}); err != nil {
 		t.Error(err)
 	}
-	if string(buf.Bytes()) != cmdUseage {
-		t.Error("usage does not match")
-	}
+	tests.Compare(t, string(buf.Bytes()), cmdUseage)
 	buf.Reset()
 
 	if err = c.basecmd.Run(c.Cmd(), []string{}); err != nil {
 		t.Error(err)
 	}
-	if string(buf.Bytes()) != c.Cmd().UsageString() {
-		t.Error("usage does not match")
-	}
+	tests.Compare(t, string(buf.Bytes()), c.Cmd().UsageString())
 }
 
 func testConfigGet(t *testing.T) {
@@ -104,9 +100,7 @@ func testConfigGet(t *testing.T) {
 	if err := c.Run(c.Cmd(), []string{"email", "name"}); err != nil {
 		t.Error(err)
 	}
-	if string(buf.Bytes()) != "nojoe@mail.com\njoe\n" {
-		t.Error("wrong email config output")
-	}
+	tests.Compare(t, string(buf.Bytes()), "nojoe@mail.com\njoe\n")
 	buf.Reset()
 
 	if err := c.Run(c.Cmd(), []string{}); err == nil {

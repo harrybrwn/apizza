@@ -87,7 +87,7 @@ func (c *configCmd) Run(cmd *cobra.Command, args []string) error {
 
 func newConfigCmd() base.CliCommand {
 	c := &configCmd{file: false, dir: false, resetCache: false}
-	c.basecmd = newVerboseBaseCommand("config", "Configure apizza", c.Run)
+	c.basecmd = newBaseCommand("config", "Configure apizza", c.Run)
 	c.Cmd().Long = `The 'config' command is used for accessing the .apizza config file
 in your home directory. Feel free to edit the .apizza json file
 by hand or use the 'config' command.
@@ -147,7 +147,7 @@ func (c *configGetCmd) Run(cmd *cobra.Command, args []string) error {
 		if v == nil {
 			return fmt.Errorf("cannot find %s", arg)
 		}
-		c.Printf("%v", v)
+		c.Println(v)
 	}
 	return nil
 }

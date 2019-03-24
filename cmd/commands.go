@@ -102,24 +102,12 @@ func (c *basecmd) getCachedMenu() error {
 	return nil
 }
 
-type runFunc func(*cobra.Command, []string) error
-
-func newVerboseBaseCommand(use, short string, f runFunc) *basecmd {
-	// base := &basecmd{
-	// 	cmd: &cobra.Command{
-	// 		Use:   use,
-	// 		Short: short,
-	// 		RunE:  f,
-	// 	},
-	// 	output: os.Stdout,
-	// }
-
-	// return base
-	return newBaseCommand(use, short, f)
-}
-
 func newBaseCommand(use, short string, f func(*cobra.Command, []string) error) *basecmd {
 	return &basecmd{Command: base.NewCommand(use, short, f)}
+}
+
+func newCommand(use, short string, c base.CliCommand) *basecmd {
+	return &basecmd{Command: base.NewCommand(use, short, c.Run)}
 }
 
 type commandBuilder interface {
@@ -158,7 +146,10 @@ func (b *cliBuilder) exec() (*cobra.Command, error) {
 }
 
 // this is here for future plans
-func (b *cliBuilder) newBaseCommand(use, short string, f runFunc) *basecmd {
+func (b *cliBuilder) newBaseCommand(
+	use, short string,
+	f func(*cobra.Command, []string) error,
+) *basecmd {
 	base := newBaseCommand(use, short, f)
 	base.Addr = b.addr
 	return base

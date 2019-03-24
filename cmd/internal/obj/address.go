@@ -7,12 +7,14 @@ import (
 	"github.com/harrybrwn/apizza/dawg"
 )
 
+var _ dawg.Address = (*Address)(nil)
+
 // Address represents a street address
 type Address struct {
-	Street   string `config:"street"`
-	CityName string `config:"cityname"`
-	State    string `config:"state"`
-	Zipcode  string `config:"zipcode"`
+	Street   string `config:"street" json:"street"`
+	CityName string `config:"cityname" json:"cityname"`
+	State    string `config:"state" json:"state"`
+	Zipcode  string `config:"zipcode" json:"zipcode"`
 }
 
 // LineOne returns the first line of the address
