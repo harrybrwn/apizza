@@ -24,7 +24,7 @@ func TestRunner(t *testing.T) {
 		base.WithCmds(testOrderRunAdd, b.newCartCmd()),
 		withCartCmd(b, testOrderPriceOutput),
 		withCartCmd(b, testOrderRunDelete),
-		testFindProduct,
+		// testFindProduct,
 		withApizzaCmd(testApizzaCmdRun, newApizzaCmd()),
 		withDummyDB(withApizzaCmd(testApizzaResetflag, newApizzaCmd())),
 		testMenuRun,
@@ -74,13 +74,13 @@ func testApizzaResetflag(t *testing.T, buf *bytes.Buffer, c *apizzaCmd) {
 		t.Error(err)
 	}
 
-	if _, err := os.Stat(db.Path); os.IsExist(err) {
+	if _, err := os.Stat(db.Path()); os.IsExist(err) {
 		t.Error("database should not exitst")
 	} else if !os.IsNotExist(err) {
 		t.Error("database should not exitst")
 	}
 
-	if string(buf.Bytes()) != fmt.Sprintf("removing %s\n", db.Path) {
+	if string(buf.Bytes()) != fmt.Sprintf("removing %s\n", db.Path()) {
 		t.Error("wrong output")
 	}
 }
@@ -123,7 +123,7 @@ func withDummyDB(fn func(*testing.T)) func(*testing.T) {
 		defer func() {
 			db = oldDatabase
 			check(newDatabase.Close(), "deleting dummy database")
-			os.Remove(newDatabase.Path) // ignoring errors because it may already be gone
+			os.Remove(newDatabase.Path()) // ignoring errors because it may already be gone
 		}()
 		fn(t)
 	}
@@ -157,10 +157,7 @@ func setupTests() {
 }
 
 func teardownTests() {
-	if err := db.Close(); err != nil {
-		panic(err)
-	}
-	if err := os.Remove(db.Path); err != nil {
+	if err := db.Destroy(); err != nil {
 		panic(err)
 	}
 }

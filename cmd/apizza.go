@@ -52,8 +52,8 @@ func (c *apizzaCmd) Run(cmd *cobra.Command, args []string) (err error) {
 		if err := db.Close(); err != nil {
 			return err
 		}
-		c.Printf("removing %s\n", db.Path)
-		return os.Remove(db.Path)
+		c.Printf("removing %s\n", db.Path())
+		return os.Remove(db.Path())
 	}
 	return cmd.Usage()
 }

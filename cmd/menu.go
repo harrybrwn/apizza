@@ -19,7 +19,6 @@ import (
 	"io"
 	"strings"
 	"text/template"
-	"time"
 	"unicode/utf8"
 
 	"github.com/harrybrwn/apizza/cmd/internal/base"
@@ -40,7 +39,7 @@ func (c *menuCmd) Run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	if err := db.AutoTimeStamp("menu", 12*time.Hour, c.cacheNewMenu, c.getCachedMenu); err != nil {
+	if err := db.UpdateTS("menu", c); err != nil {
 		return err
 	}
 
@@ -155,7 +154,7 @@ func (c *menuCmd) printToppings() {
 
 func (c *basecmd) findProduct(key string) (map[string]interface{}, error) {
 	if c.menu == nil {
-		if err := db.AutoTimeStamp("menu", 12*time.Hour, c.cacheNewMenu, c.getCachedMenu); err != nil {
+		if err := db.UpdateTS("menu", c); err != nil {
 			return nil, err
 		}
 	}
@@ -174,7 +173,10 @@ func (c *basecmd) findProduct(key string) (map[string]interface{}, error) {
 
 func (c *basecmd) product(code string) (*dawg.Product, error) {
 	if c.menu == nil {
-		if err := db.AutoTimeStamp("menu", 12*time.Hour, c.cacheNewMenu, c.getCachedMenu); err != nil {
+		// if err := db.AutoTimeStamp("menu", 12*time.Hour, c.cacheNewMenu, c.getCachedMenu); err != nil {
+		// 	return nil, err
+		// }
+		if err := db.UpdateTS("menu", c); err != nil {
 			return nil, err
 		}
 	}

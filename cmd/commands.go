@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/spf13/cobra"
 
@@ -62,7 +63,8 @@ func handle(e error, msg string, code int) { fmt.Fprintf(os.Stderr, "%s: %s\n", 
 
 type basecmd struct {
 	*base.Command
-	menu *dawg.Menu
+	menu    *dawg.Menu
+	tsDecay time.Duration
 }
 
 func (c *basecmd) getstore() (err error) {
@@ -102,8 +104,20 @@ func (c *basecmd) getCachedMenu() error {
 	return nil
 }
 
+func (c *basecmd) OnUpdate() error {
+	return c.cacheNewMenu()
+}
+
+func (c *basecmd) NotUpdate() error {
+	return c.getCachedMenu()
+}
+
+func (c *basecmd) Decay() time.Duration {
+	return c.tsDecay
+}
+
 func newCommand(use, short string, c base.CliCommand) *basecmd {
-	return &basecmd{Command: base.NewCommand(use, short, c.Run)}
+	return &basecmd{Command: base.NewCommand(use, short, c.Run), tsDecay: 12 * time.Hour}
 }
 
 type commandBuilder interface {

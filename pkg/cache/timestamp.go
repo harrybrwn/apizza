@@ -141,19 +141,21 @@ func timestamp(db Storage, key string) (time.Time, error) {
 	return time.Time{}, err
 }
 
-// AutoTimeStamp will check the timestamp at a given key everytime AutoTimeStamp
+// AutoTimeStamp (Deprecated) will check the timestamp at a given key everytime AutoTimeStamp
 // is run. The function given as the 'update' argument will be run if the stored
 // timestamp is past the decay argument or if the timestamp associated with that
 // key does not exist. The 'notUpdate' argument is a function that will run if
 // the timestamp has not expired.
 //
-// depricated.
+// deprecated.
 func (db *DataBase) AutoTimeStamp(
 	key string,
 	decay time.Duration,
 	update, notUpdate func() error,
 ) error {
-	return check(db, key, newUpdater(decay, update, notUpdate))
+	fmt.Println("Warning: AutoTimeStamp is deprecated.")
+	return check(db, ts(key), newUpdater(decay, update, notUpdate))
+	// return errors.New("should not be using DataBase.AutoTimeStamp")
 }
 
 func newUpdater(decay time.Duration, update, notUpdate func() error) Updater {
@@ -182,9 +184,9 @@ func (t *tempUpdater) Decay() time.Duration {
 	return t.decay
 }
 
-// Check will execute an Updater's methods in correspondence with the database's
-// timestamp at the key given
-func (db *DataBase) Check(key string, updater Updater) error {
+// UpdateTS or "UpdateTimeStamp" will execute an Updater's methods in correspondence with the
+// database's timestamp at the key given
+func (db *DataBase) UpdateTS(key string, updater Updater) error {
 	return check(db, ts(key), updater)
 }
 

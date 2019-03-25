@@ -61,7 +61,7 @@ func (c *cartCmd) Run(cmd *cobra.Command, args []string) (err error) {
 	}
 
 	if len(c.add) > 0 {
-		if err := db.AutoTimeStamp("menu", 12*time.Hour, c.cacheNewMenu, c.getCachedMenu); err != nil {
+		if err := db.UpdateTS("menu", c); err != nil {
 			return err
 		}
 		for _, newP := range c.add {
