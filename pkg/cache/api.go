@@ -16,9 +16,16 @@ type Putter interface {
 	Put(string, []byte) error
 }
 
+// Storage is a combination of Putter and Getter.
+type Storage interface {
+	Getter
+	Putter
+}
+
 // TimeStamper defines objects that support named timestamps.
 type TimeStamper interface {
 	TimeStamp(string) (time.Time, error)
+	ResetTimeStamp(string) error
 }
 
 type internalDB interface {

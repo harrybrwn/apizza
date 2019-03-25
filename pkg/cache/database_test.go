@@ -1,9 +1,8 @@
 package cache
 
 import (
-	"errors"
+	"os"
 	"testing"
-	"time"
 
 	"github.com/boltdb/bolt"
 	"github.com/harrybrwn/apizza/pkg/tests"
@@ -20,17 +19,24 @@ func TestUtils(t *testing.T) {
 }
 
 func TestGetDB(t *testing.T) {
-	db, err := GetDB(tests.TempFile())
+	file := tests.TempFile()
+	// file := filepath.Join(os.TempDir(), "test.db")
+	db, err := GetDB(file)
 	if err != nil {
 		t.Error(err)
 	}
+
 	if db == nil {
 		t.Error("GetDB returned a 'nil' value DataBase")
 	}
-	if db.Path != db.db.Path() {
+	if db.Path() != db.db.Path() {
 		t.Error("the path tracked by the inner database was different than the wrapper.")
 	}
 
+	_, err = os.Stat(db.Path())
+	if os.IsNotExist(err) {
+		t.Error("path does not exist")
+	}
 	if err := db.Close(); err != nil {
 		t.Error("didn't close db:", err)
 	}
@@ -145,97 +151,5 @@ func TestDB_Get(t *testing.T) {
 	}
 	if err := db.Close(); err != nil {
 		t.Error("didn't close db:", err)
-	}
-}
-
-func TestTimeStamp(t *testing.T) {
-	db, err := GetDB(tests.TempFile())
-	if err != nil || db == nil {
-		t.Fatal("bad db creation")
-	}
-
-	stamp, err := db.TimeStamp("test")
-	if err != nil {
-		t.Error(err)
-	}
-	time.Sleep(time.Second / 4)
-	tdiff := time.Since(stamp)
-	if time.Millisecond*240 > tdiff || tdiff > time.Millisecond*260 {
-		t.Error("time stamp is not in the right range")
-	}
-
-	time.Sleep(time.Second / 4)
-	stamp2, err := db.TimeStamp("test")
-	if err != nil {
-		t.Error(err)
-	}
-	time.Sleep(time.Second * 2)
-	t1, t2 := time.Since(stamp), time.Since(stamp2)
-	if t1 > t2 {
-		t.Error("time one shouldn't be bigger than t1")
-	}
-	if t2-t1 > time.Second {
-		t.Error("time difference is way too big")
-	}
-	if err := db.ResetTimeStamp("test"); err != nil {
-		t.Error(err)
-	}
-	stampRe, err := db.TimeStamp("test")
-	if err != nil {
-		t.Error(err)
-	}
-	if time.Since(stampRe) > t2 {
-		t.Error("timestamp didn't reset")
-	}
-}
-
-func TestAutoTimeStamp(t *testing.T) {
-	db, err := GetDB(tests.TempFile())
-	if err != nil || db == nil {
-		t.Fatal("bad db creation")
-	}
-	if err = db.AutoTimeStamp("test", time.Second/10,
-		func() error { return nil },
-		func() error { return nil },
-	); err != nil {
-		t.Error(err)
-	}
-
-	time.Sleep(time.Second / 2)
-
-	if err = db.AutoTimeStamp("test", time.Second/10,
-		func() error { return nil },
-		func() error { return nil },
-	); err != nil {
-		t.Error(err)
-	}
-
-	time.Sleep(time.Second / 2)
-
-	if err = db.AutoTimeStamp("test", time.Second/10,
-		func() error { return errors.New("this error should be raised") },
-		func() error { return nil },
-	); err == nil {
-		t.Error("expected error from update func")
-	}
-
-	if err = db.AutoTimeStamp("test", time.Second*2,
-		func() error { return nil },
-		func() error { return errors.New("this error should be raised") },
-	); err == nil {
-		t.Error("expected error from notUpdate func")
-	}
-
-	if err = db.AutoTimeStamp("test", time.Second*2,
-		func() error { return nil }, nil,
-	); err != nil {
-		t.Error("notUpdate passed as nil:", err)
-	}
-
-	if err = db.AutoTimeStamp("test", time.Second*2,
-		func() error { return errors.New("update func shouldn't be run but was") },
-		func() error { return nil },
-	); err != nil {
-		t.Error(err)
 	}
 }

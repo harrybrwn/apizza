@@ -191,7 +191,7 @@ func filename(file string) string {
 func ensurePath(path string) error {
 	p := filepath.Dir(path)
 	if _, err := os.Stat(p); os.IsNotExist(err) {
-		return os.Mkdir(p, 0700)
+		return os.Mkdir(p, 0777)
 	}
 	return nil
 }

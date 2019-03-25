@@ -81,7 +81,7 @@ func CompareV(t *testing.T, got, expected string) {
 func randFile(dir string, prefix, suffix string) (fname string) {
 	for i := 0; i < 1000; i++ {
 		fname = filepath.Join(dir, prefix+nextRandom()+suffix)
-		if _, err := os.Stat(fname); os.IsExist(err) {
+		if _, err := os.Stat(fname); !os.IsNotExist(err) {
 			continue
 		}
 		break
