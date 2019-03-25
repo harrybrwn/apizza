@@ -104,6 +104,8 @@ func (c *basecmd) getCachedMenu() error {
 	return nil
 }
 
+var _ cache.Updater = (*basecmd)(nil)
+
 func (c *basecmd) OnUpdate() error {
 	return c.cacheNewMenu()
 }
@@ -117,7 +119,10 @@ func (c *basecmd) Decay() time.Duration {
 }
 
 func newCommand(use, short string, c base.CliCommand) *basecmd {
-	return &basecmd{Command: base.NewCommand(use, short, c.Run), tsDecay: 12 * time.Hour}
+	return &basecmd{
+		Command: base.NewCommand(use, short, c.Run),
+		tsDecay: 12 * time.Hour,
+	}
 }
 
 type commandBuilder interface {

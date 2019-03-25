@@ -5,8 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"reflect"
-	"runtime"
 	"testing"
 
 	"github.com/harrybrwn/apizza/cmd/internal/base"
@@ -15,9 +13,11 @@ import (
 )
 
 func TestRunner(t *testing.T) {
+	r := tests.NewRunner(t, setupTests, teardownTests)
 	b := newBuilder()
 
-	var apizzaTests = []func(*testing.T){
+	r.AddTest(
+		dummyCheckForinit,
 		base.WithCmds(testOrderNew, b.newCartCmd(), b.newAddOrderCmd()),
 		base.WithCmds(testAddOrder, b.newCartCmd(), b.newAddOrderCmd()),
 		base.WithCmds(testOrderNewErr, b.newAddOrderCmd()),
@@ -33,23 +33,8 @@ func TestRunner(t *testing.T) {
 		testConfigCmd,
 		testConfigGet,
 		testConfigSet,
-	}
-	runtests(t, apizzaTests)
-}
-
-func runtests(t *testing.T, pTests []func(*testing.T)) {
-	var funcName = func(a interface{}) string {
-		return runtime.FuncForPC(reflect.ValueOf(a).Pointer()).Name()
-	}
-
-	allTests := append([]func(*testing.T){dummyCheckForinit}, pTests...)
-
-	setupTests()
-	defer teardownTests()
-
-	for _, f := range allTests {
-		t.Run(funcName(f), f)
-	}
+	)
+	r.Run()
 }
 
 func testApizzaCmdRun(t *testing.T, buf *bytes.Buffer, c *apizzaCmd) {
