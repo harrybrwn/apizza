@@ -4,7 +4,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"time"
 
 	"github.com/boltdb/bolt"
 )
@@ -16,38 +15,6 @@ type DB interface {
 	Delete(string) error
 	Path() string
 	Close() error
-}
-
-// TimerDB is an interface that defines a database that can store timestamps.
-type TimerDB interface {
-	DB
-	TimeStamper
-}
-
-// AutoTimerDB is a TimerDB with the AutoTimeStamp convenience function.
-type AutoTimerDB interface {
-	TimerDB
-	AutoTimeStamp(string, time.Duration, func() error, func() error) error
-}
-
-// MapDB defines a database that can be converted to a map.
-type MapDB interface {
-	DB
-	Map() (map[string][]byte, error)
-}
-
-// FullDB defines a fully featured database.
-type FullDB interface {
-	MapDB
-	Exists(string) bool
-	Destroy() error
-}
-
-// FullTimerDB defines an interface for fully featured timer database.
-type FullTimerDB interface {
-	AutoTimerDB
-	Exists(string) bool
-	Destroy() error
 }
 
 var _ FullTimerDB = (*DataBase)(nil)

@@ -15,12 +15,15 @@
 package cmd
 
 import (
+	"fmt"
 	"os"
+	"path/filepath"
 
 	"github.com/spf13/cobra"
 
 	"github.com/harrybrwn/apizza/cmd/internal/base"
 	"github.com/harrybrwn/apizza/dawg"
+	"github.com/harrybrwn/apizza/pkg/config"
 )
 
 var (
@@ -39,6 +42,7 @@ type apizzaCmd struct {
 
 func (c *apizzaCmd) Run(cmd *cobra.Command, args []string) (err error) {
 	if test {
+		fmt.Printf("database: %+v\n", db)
 		all, err := db.Map()
 		if err != nil {
 			return err
@@ -47,6 +51,21 @@ func (c *apizzaCmd) Run(cmd *cobra.Command, args []string) (err error) {
 			c.Printf("%v\n", k)
 		}
 		return nil
+	}
+	if reset {
+		if err = db.Destroy(); err != nil {
+			return err
+		}
+		if err = os.Remove(filepath.Dir(db.Path())); err != nil {
+			return err
+		}
+		if err = os.Remove(config.File()); err != nil {
+			return err
+		}
+		if err = os.Remove(config.Folder()); err != nil {
+			return err
+		}
+		return err
 	}
 	if c.clearCache {
 		if err := db.Close(); err != nil {
@@ -58,7 +77,8 @@ func (c *apizzaCmd) Run(cmd *cobra.Command, args []string) (err error) {
 	return cmd.Usage()
 }
 
-var test bool
+var test = false
+var reset = false
 
 func newApizzaCmd() base.CliCommand {
 	c := &apizzaCmd{address: "", service: cfg.Service, clearCache: false}
@@ -68,8 +88,8 @@ func newApizzaCmd() base.CliCommand {
 	c.Cmd().PersistentFlags().StringVar(&c.service, "service", c.service, "select a Dominos service, either 'Delivery' or 'Carryout'")
 
 	c.Cmd().PersistentFlags().BoolVar(&test, "test", false, "testing flag (for development)")
+	c.Cmd().PersistentFlags().BoolVar(&reset, "reset", false, "reset the program (for development)")
 	c.Cmd().PersistentFlags().MarkHidden("test")
-
-	c.Flags().BoolVar(&c.clearCache, "clear-cache", c.clearCache, "delete the database used for caching")
+	c.Cmd().PersistentFlags().MarkHidden("reset")
 	return c
 }

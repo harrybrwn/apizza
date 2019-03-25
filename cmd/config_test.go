@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"bytes"
-	"strings"
 	"testing"
 
 	"github.com/harrybrwn/apizza/pkg/tests"
@@ -43,17 +42,6 @@ func testConfigCmd(t *testing.T) {
 	}
 	tests.Compare(t, string(buf.Bytes()), "\n")
 	c.dir = false
-	buf.Reset()
-
-	builder := newBuilder()
-	c.resetCache = true
-	if err = c.Run(c.Cmd(), []string{}); err == nil {
-		t.Error("expected error")
-	}
-	if !strings.Contains(err.Error(), builder.dbPath()) {
-		t.Error("error given does not match dbPath()")
-	}
-	c.resetCache = false
 	buf.Reset()
 
 	c.getall = true
