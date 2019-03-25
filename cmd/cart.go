@@ -87,7 +87,7 @@ func (c *cartCmd) Run(cmd *cobra.Command, args []string) (err error) {
 }
 
 func (c *cartCmd) printall() error {
-	all, err := db.GetAll()
+	all, err := db.Map()
 	if err != nil {
 		return err
 	}

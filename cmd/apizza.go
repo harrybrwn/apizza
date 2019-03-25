@@ -39,7 +39,7 @@ type apizzaCmd struct {
 
 func (c *apizzaCmd) Run(cmd *cobra.Command, args []string) (err error) {
 	if test {
-		all, err := db.GetAll()
+		all, err := db.Map()
 		if err != nil {
 			return err
 		}

@@ -102,7 +102,7 @@ func TestDB_Put(t *testing.T) {
 		t.Error("shouldn't exist")
 	}
 
-	all, err := db.GetAll()
+	all, err := db.Map()
 	if err != nil {
 		t.Error(err)
 	}
