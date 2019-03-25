@@ -24,7 +24,7 @@ func TestRunner(t *testing.T) {
 		base.WithCmds(testOrderRunAdd, b.newCartCmd()),
 		withCartCmd(b, testOrderPriceOutput),
 		withCartCmd(b, testOrderRunDelete),
-		// testFindProduct,
+		testFindProduct,
 		withApizzaCmd(testApizzaCmdRun, newApizzaCmd()),
 		withDummyDB(withApizzaCmd(testApizzaResetflag, newApizzaCmd())),
 		testMenuRun,
