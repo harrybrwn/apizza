@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/boltdb/bolt"
-	"github.com/harrybrwn/apizza/pkg/tests"
+	. "github.com/harrybrwn/apizza/pkg/tests"
 )
 
 func TestUtils(t *testing.T) {
@@ -23,7 +23,7 @@ func TestUtils(t *testing.T) {
 }
 
 func TestGetDB(t *testing.T) {
-	file := tests.TempFile()
+	file := TempFile()
 	// file := filepath.Join(os.TempDir(), "test.db")
 	db, err := GetDB(file)
 	if err != nil {
@@ -57,7 +57,7 @@ func TestGetDB_ExpectedErr(t *testing.T) {
 	}
 }
 func TestDB_Put(t *testing.T) {
-	dbfname := tests.TempFile()
+	dbfname := TempFile()
 	fname := filename(dbfname)
 	db, err := GetDB(dbfname)
 	if err != nil || db == nil {
@@ -126,7 +126,7 @@ func TestDB_Put(t *testing.T) {
 }
 
 func TestDB_Get(t *testing.T) {
-	dbfname := tests.TempFile()
+	dbfname := TempFile()
 	fname := filename(dbfname)
 	db, err := GetDB(dbfname)
 	if err != nil || db == nil {

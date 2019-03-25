@@ -73,7 +73,7 @@ func TestAutoTimeStamp(t *testing.T) {
 	}
 
 	time.Sleep(time.Second / 2)
-	updater := newUpdater(
+	updater := NewUpdater(
 		time.Second/10,
 		func() error { return errors.New("this error should be raised") },
 		func() error { return nil })

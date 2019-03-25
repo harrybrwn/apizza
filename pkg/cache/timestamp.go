@@ -24,6 +24,12 @@ func (db *DataBase) TimeStamp(key string) (time.Time, error) {
 	return timestamp(db, ts(key))
 }
 
+// UpdateTS or "UpdateTimeStamp" will execute an Updater's methods in correspondence with the
+// database's timestamp at the key given
+func (db *DataBase) UpdateTS(key string, updater Updater) error {
+	return check(db, ts(key), updater)
+}
+
 // IsTimeStampNotFound returns true when the error given was raised because a
 // timestamp was not found.
 func IsTimeStampNotFound(e error) bool {
@@ -73,11 +79,12 @@ func (db *DataBase) AutoTimeStamp(
 	update, notUpdate func() error,
 ) error {
 	fmt.Println("Warning: AutoTimeStamp is deprecated.")
-	return check(db, ts(key), newUpdater(decay, update, notUpdate))
+	return check(db, ts(key), NewUpdater(decay, update, notUpdate))
 	// return errors.New("should not be using DataBase.AutoTimeStamp")
 }
 
-func newUpdater(decay time.Duration, update, notUpdate func() error) Updater {
+// NewUpdater returns an updater from a decay time and two functions.
+func NewUpdater(decay time.Duration, update, notUpdate func() error) Updater {
 	return &tempUpdater{
 		decay:     decay,
 		update:    update,
@@ -101,12 +108,6 @@ func (t *tempUpdater) NotUpdate() error {
 
 func (t *tempUpdater) Decay() time.Duration {
 	return t.decay
-}
-
-// UpdateTS or "UpdateTimeStamp" will execute an Updater's methods in correspondence with the
-// database's timestamp at the key given
-func (db *DataBase) UpdateTS(key string, updater Updater) error {
-	return check(db, ts(key), updater)
 }
 
 func check(db Storage, key string, updater Updater) error {
