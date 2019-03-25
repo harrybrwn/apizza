@@ -5,98 +5,17 @@ import (
 	"fmt"
 	"strconv"
 	"time"
-
-	"github.com/boltdb/bolt"
 )
 
 var (
 	timestampSuffix = "_timestamp"
 )
 
-// TimeChecker is an object that supports named timestamps and runs a set of
-// update functions based on those timestamps
-type TimeChecker interface {
-	Updater
-	TimeStamper
-	private()
-}
-
 // Updater defines an interface for objects used while updating cached timestamps.
 type Updater interface {
 	OnUpdate() error
 	NotUpdate() error
 	Decay() time.Duration
-}
-
-// NewTimeChecker creates a timestamper from a DB object and an Updater object.
-func NewTimeChecker(database DB, updater Updater) TimeChecker {
-	var inner *innerdb
-
-	switch db := database.(type) {
-	case *DataBase:
-		inner = db.innerdb
-	case *innerdb:
-		inner = db
-	default:
-		if err := database.Close(); err != nil {
-			panic(err)
-		}
-		boltdb, err := bolt.Open(database.Path(), 0777, nil)
-		if err != nil {
-			panic(err)
-		}
-		inner = &innerdb{
-			db:            boltdb,
-			DefaultBucket: "TimeStamps",
-		}
-	}
-
-	return &tChecker{
-		innerdb: inner,
-		updater: updater,
-	}
-}
-
-// NewTimeCheckerFromBolt creates a TestChecker from an Updater and a *bolt.DB.
-func NewTimeCheckerFromBolt(db *bolt.DB, updater Updater) TimeChecker {
-	return &tChecker{
-		innerdb: &innerdb{
-			db:            db,
-			DefaultBucket: "TimeStamps",
-		},
-		updater: updater,
-	}
-}
-
-type tChecker struct {
-	*innerdb
-	updater Updater
-}
-
-func (tc *tChecker) private() {}
-
-func (tc *tChecker) TimeStamp(key string) (time.Time, error) {
-	return timestamp(tc, key)
-}
-
-func (tc *tChecker) ResetTimeStamp(key string) error {
-	return tc.Put(ts(key), unixNow())
-}
-
-func (tc *tChecker) OnUpdate() error {
-	return tc.updater.OnUpdate()
-}
-
-func (tc *tChecker) NotUpdate() error {
-	return tc.updater.NotUpdate()
-}
-
-func (tc *tChecker) Decay() time.Duration {
-	return tc.updater.Decay()
-}
-
-func (tc *tChecker) Exists(key string) bool {
-	return exists(tc.innerdb, key)
 }
 
 // TimeStamp gets the timestamp for a given key and will also create one if it does

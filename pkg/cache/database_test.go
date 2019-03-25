@@ -2,6 +2,7 @@ package cache
 
 import (
 	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/boltdb/bolt"
@@ -15,6 +16,9 @@ func TestUtils(t *testing.T) {
 	}
 	if filename("notapath.test") != "notapath" {
 		t.Error("filename didn't work for just the name of a file")
+	}
+	if err := ensurePath(filepath.Join(os.TempDir(), "test_dir", "name")); err != nil {
+		t.Error(err)
 	}
 }
 
