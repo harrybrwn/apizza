@@ -31,7 +31,10 @@ type Order struct {
 }
 
 // PlaceOrder is the method that sends the final order to dominos
-func (o *Order) PlaceOrder(p Payment) {}
+func (o *Order) PlaceOrder() error {
+	_, err := sendOrder("/power/place-order", o)
+	return err
+}
 
 // Price method returns the total price of an order.
 func (o *Order) Price() (float64, error) {
@@ -41,10 +44,10 @@ func (o *Order) Price() (float64, error) {
 	}
 	data = data["Order"].(map[string]interface{})
 	price, ok := data["Amounts"].(map[string]interface{})["Customer"]
-	if ok {
-		return price.(float64), nil
+	if !ok {
+		return -1.0, errors.New("Price not found")
 	}
-	return -1.0, errors.New("Price not found")
+	return price.(float64), nil
 }
 
 // AddProduct adds a product to the Order from a Product Object
