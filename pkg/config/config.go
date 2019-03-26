@@ -32,13 +32,24 @@ func SetConfig(foldername string, c Config) error {
 
 	if !cfg.exists() {
 		if err := os.Mkdir(cfg.dir, 0700); err != nil {
-			fmt.Println(os.IsExist(err))
 			return err
 		}
 		fmt.Printf("setting up config file at %s\n", cfg.file)
 		cfg.setup()
 	}
 	return cfg.init()
+}
+
+// SetNonFileConfig sets a configuration struct without creating a file.
+func SetNonFileConfig(c Config) error {
+	cfg = configfile{
+		conf: c,
+		dir:  "",
+		file: "",
+	}
+	t := reflect.ValueOf(c).Elem()
+	autogen := emptyJSONConfig(t.Type(), 0)
+	return json.Unmarshal([]byte(autogen), c)
 }
 
 type configfile struct {

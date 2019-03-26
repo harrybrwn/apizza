@@ -116,7 +116,7 @@ func (c *configSetCmd) Run(cmd *cobra.Command, args []string) error {
 		if keys[1] == "-" {
 			keys[1] = ""
 		}
-		err := cfg.Set(keys[0], keys[1])
+		err := config.Set(keys[0], keys[1])
 		if err != nil {
 			return err
 		}
@@ -140,7 +140,7 @@ func (c *configGetCmd) Run(cmd *cobra.Command, args []string) error {
 	}
 
 	for _, arg := range args {
-		v := cfg.Get(arg)
+		v := config.Get(arg)
 		if v == nil {
 			return fmt.Errorf("cannot find %s", arg)
 		}

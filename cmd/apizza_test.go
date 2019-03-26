@@ -9,6 +9,7 @@ import (
 
 	"github.com/harrybrwn/apizza/cmd/internal/base"
 	"github.com/harrybrwn/apizza/pkg/cache"
+	"github.com/harrybrwn/apizza/pkg/config"
 	"github.com/harrybrwn/apizza/pkg/tests"
 )
 
@@ -121,6 +122,7 @@ func setupTests() {
 	err = db.Put("test", []byte("this is some test data"))
 	check(err, "database put")
 
+	config.SetNonFileConfig(cfg) // don't want it to over ride the file on disk
 	raw := []byte(`
 {
 	"name":"joe",
