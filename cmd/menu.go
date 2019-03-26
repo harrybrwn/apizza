@@ -35,10 +35,6 @@ type menuCmd struct {
 }
 
 func (c *menuCmd) Run(cmd *cobra.Command, args []string) error {
-	if err := c.getstore(); err != nil {
-		return err
-	}
-
 	if err := db.UpdateTS("menu", c); err != nil {
 		return err
 	}
@@ -146,7 +142,6 @@ func (c *menuCmd) printToppings() {
 		for k, v := range val.(map[string]interface{}) {
 			spacer := strings.Repeat(" ", 3-strLen(k))
 			c.Println(indent, k, spacer, v.(map[string]interface{})["Name"])
-			// c.Printf("%v %v %v %v\n", indent, k, spacer, v.(map[string]interface{})["Name"])
 		}
 		c.Println("")
 	}
@@ -173,9 +168,6 @@ func (c *basecmd) findProduct(key string) (map[string]interface{}, error) {
 
 func (c *basecmd) product(code string) (*dawg.Product, error) {
 	if c.menu == nil {
-		// if err := db.AutoTimeStamp("menu", 12*time.Hour, c.cacheNewMenu, c.getCachedMenu); err != nil {
-		// 	return nil, err
-		// }
 		if err := db.UpdateTS("menu", c); err != nil {
 			return nil, err
 		}

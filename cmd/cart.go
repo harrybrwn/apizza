@@ -20,7 +20,6 @@ import (
 	"errors"
 	"fmt"
 	"strings"
-	"time"
 
 	"github.com/harrybrwn/apizza/cmd/internal/base"
 	"github.com/harrybrwn/apizza/cmd/internal/obj"
@@ -77,11 +76,6 @@ func (c *cartCmd) Run(cmd *cobra.Command, args []string) (err error) {
 		// fmt.Fprintln(c.output, "updated order successfully saved.")
 		c.Printf("%s\n", "updated order successfully saved.")
 		return nil
-	}
-	if c.verbose {
-		if err := db.AutoTimeStamp("menu", 12*time.Hour, c.cacheNewMenu, c.getCachedMenu); err != nil {
-			return err
-		}
 	}
 	return c.printOrder(args[0], order)
 }
@@ -140,7 +134,7 @@ func (b *cliBuilder) newCartCmd() base.CliCommand {
 	c := &cartCmd{price: false, delete: false, verbose: false}
 	c.basecmd = b.newCommand("cart <order name>", "Manage user created orders", c)
 	c.basecmd.Cmd().Long = `The cart command gets information on all of the user
-created orders. Use 'apizza cart <order name>' for info on a specific order`
+created orders.`
 
 	c.Flags().BoolVarP(&c.price, "price", "p", c.price, "show to price of an order")
 	c.Flags().StringSliceVarP(&c.add, "add", "a", c.add, "add any number of products to a specific order")
@@ -168,14 +162,11 @@ func (c *addOrderCmd) Run(cmd *cobra.Command, args []string) (err error) {
 		orderName = c.name
 	}
 
-	if err := c.getstore(); err != nil {
-		return err
-	}
-	order := store.NewOrder()
+	order := c.store().NewOrder()
 
 	if len(c.products) > 0 {
 		for i, p := range c.products {
-			prod, err := store.GetProduct(p)
+			prod, err := c.store().GetProduct(p)
 			if err != nil {
 				return err
 			}

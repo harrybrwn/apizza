@@ -61,27 +61,32 @@ func Execute() {
 
 func handle(e error, msg string, code int) { fmt.Fprintf(os.Stderr, "%s: %s\n", msg, e); os.Exit(code) }
 
+var _ base.CliCommand = (*basecmd)(nil)
+
 type basecmd struct {
 	*base.Command
 	menu    *dawg.Menu
+	dstore  *dawg.Store
 	tsDecay time.Duration
 }
 
-func (c *basecmd) getstore() (err error) {
-	if store == nil {
-		if store, err = dawg.NearestStore(c.Addr, cfg.Service); err != nil {
-			return err
+func (c *basecmd) store() *dawg.Store {
+	var s *dawg.Store
+	var err error
+
+	if c.dstore == nil {
+		if s, err = dawg.NearestStore(c.Addr, cfg.Service); err != nil {
+			handle(err, "Internal Error", 1) // will exit
+			return nil
 		}
+		c.dstore = s
+		return s
 	}
-	return nil
+	return c.dstore
 }
 
 func (c *basecmd) cacheNewMenu() (err error) {
-	if err = c.getstore(); err != nil {
-		return err
-	}
-
-	c.menu, err = store.Menu()
+	c.menu, err = c.store().Menu()
 	if err != nil {
 		return err
 	}

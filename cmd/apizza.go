@@ -15,20 +15,13 @@
 package cmd
 
 import (
-	"fmt"
 	"os"
 	"path/filepath"
 
 	"github.com/spf13/cobra"
 
 	"github.com/harrybrwn/apizza/cmd/internal/base"
-	"github.com/harrybrwn/apizza/dawg"
 	"github.com/harrybrwn/apizza/pkg/config"
-)
-
-var (
-	// addr  *dawg.Address
-	store *dawg.Store
 )
 
 type apizzaCmd struct {
@@ -42,7 +35,6 @@ type apizzaCmd struct {
 
 func (c *apizzaCmd) Run(cmd *cobra.Command, args []string) (err error) {
 	if test {
-		fmt.Printf("database: %+v\n", db)
 		all, err := db.Map()
 		if err != nil {
 			return err

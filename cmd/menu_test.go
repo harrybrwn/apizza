@@ -18,7 +18,7 @@ func testMenuRun(t *testing.T) {
 		t.Error("should raise error")
 	}
 
-	store = nil
+	c.dstore = nil
 	c.item = "10SCREEN"
 	if err := c.Run(c.Cmd(), []string{}); err != nil {
 		t.Error(err)
@@ -35,9 +35,6 @@ func testFindProduct(t *testing.T) {
 	c := newBuilder().newMenuCmd().(*menuCmd)
 	buf := &bytes.Buffer{}
 	c.SetOutput(buf)
-	// if err := db.AutoTimeStamp("menu", 12*time.Hour, c.cacheNewMenu, c.getCachedMenu); err != nil {
-	// 	t.Error(err)
-	// }
 	if err := db.UpdateTS("menu", c); err != nil {
 		t.Error(err)
 	}
