@@ -99,11 +99,11 @@ func (c *basecmd) cacheNewMenu() (err error) {
 
 func (c *basecmd) getCachedMenu() error {
 	if c.menu == nil {
+		c.menu = new(dawg.Menu)
 		raw, err := db.Get("menu")
 		if err != nil {
 			return err
 		}
-		c.menu = &dawg.Menu{}
 		return json.Unmarshal(raw, c.menu)
 	}
 	return nil
