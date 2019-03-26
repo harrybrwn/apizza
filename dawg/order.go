@@ -22,7 +22,7 @@ type Order struct {
 	Products      []*Product             `json:"Products"`
 	StoreID       string                 `json:"StoreID"`
 	OrderID       string                 `json:"OrderID"`
-	Address       *StreetAddr            `json:"Address"`
+	Address       Address                `json:"Address"`
 	MetaData      map[string]interface{} `json:"metaData"` // only for orders sent back
 	FirstName     string                 `json:"FirstName"`
 	LastName      string                 `json:"LastName"`
@@ -53,6 +53,27 @@ func (o *Order) Price() (float64, error) {
 // AddProduct adds a product to the Order from a Product Object
 func (o *Order) AddProduct(item *Product) {
 	o.Products = append(o.Products, item)
+}
+
+// RemoveProduct will remove the product with a given code from the order.
+func (o *Order) RemoveProduct(code string) error {
+	var (
+		found     = false
+		tempProds = []*Product{}
+	)
+
+	for _, p := range o.Products {
+		if p.Code == code {
+			found = true
+			continue
+		}
+		tempProds = append(tempProds, p)
+	}
+	if !found {
+		return errors.New("product not in order")
+	}
+	o.Products = tempProds
+	return nil
 }
 
 // AddPayment adds a payment object to an order

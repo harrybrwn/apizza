@@ -120,6 +120,20 @@ func (err *DominosError) IsOk() bool {
 	return err.Status != FailureStatus
 }
 
+// PrintData prints the raw data. (just for testing... you shouldn't be seeing this)
+func (err *DominosError) PrintData() {
+	for key, value := range err.fullErr {
+		if key == "Order" {
+			fmt.Println("Order:")
+			for k, v := range value.(map[string]interface{}) {
+				fmt.Printf("  %s: %v\n", k, v)
+			}
+		} else {
+			fmt.Printf("%s: %v\n", key, value)
+		}
+	}
+}
+
 func get(path string, params URLParam) ([]byte, error) {
 	if params == nil {
 		params = &Params{}

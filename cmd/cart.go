@@ -33,10 +33,11 @@ var orderPrefix = "user_order_"
 
 type cartCmd struct {
 	*basecmd
-	price   bool
-	delete  bool
-	verbose bool
-	add     []string
+	price      bool
+	delete     bool
+	verbose    bool
+	add        []string
+	removeProd string
 }
 
 func (c *cartCmd) Run(cmd *cobra.Command, args []string) (err error) {
@@ -57,6 +58,10 @@ func (c *cartCmd) Run(cmd *cobra.Command, args []string) (err error) {
 	order, err := getOrder(args[0])
 	if err != nil {
 		return err
+	}
+
+	if len(c.removeProd) > 0 {
+		return order.RemoveProduct(c.removeProd)
 	}
 
 	if len(c.add) > 0 {
@@ -138,6 +143,7 @@ created orders.`
 
 	c.Flags().BoolVarP(&c.price, "price", "p", c.price, "show to price of an order")
 	c.Flags().StringSliceVarP(&c.add, "add", "a", c.add, "add any number of products to a specific order")
+	c.Flags().StringVarP(&c.removeProd, "remove-product", "r", c.removeProd, "remove a product from the order")
 	c.Flags().BoolVarP(&c.delete, "delete", "d", c.delete, "delete the order from the database")
 	c.Flags().BoolVarP(&c.verbose, "verbose", "v", c.verbose, "print cart verbosly")
 	return c

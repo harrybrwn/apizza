@@ -58,6 +58,7 @@ type StreetAddr struct {
 func StreetAddrFromAddress(addr Address) *StreetAddr {
 	parts := strings.Split(addr.LineOne(), " ")
 	var streetNum, streetName string
+
 	if _, err := strconv.Atoi(parts[0]); err == nil {
 		streetNum = parts[0]
 		streetName = strings.Join(parts[1:], " ")
