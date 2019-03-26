@@ -1,6 +1,7 @@
 package cache
 
 import (
+	"bytes"
 	"os"
 	"path/filepath"
 	"strings"
@@ -36,16 +37,17 @@ func GetDB(dbfile string) (db *DataBase, err error) {
 		return nil, err
 	}
 
-	name := filename(dbfile)
+	name := []byte(filename(dbfile))
 	err = boltdb.Update(func(tx *bolt.Tx) error {
-		_, err := tx.CreateBucketIfNotExists([]byte(name))
+		_, err := tx.CreateBucketIfNotExists(name)
 		return err
 	})
 	db = &DataBase{
 		innerdb: &innerdb{
-			DefaultBucket: name,
+			defaultBucket: name,
 			db:            boltdb,
 			path:          dbfile,
+			bucketHEAD:    name,
 		},
 	}
 	return db, err
@@ -53,7 +55,8 @@ func GetDB(dbfile string) (db *DataBase, err error) {
 
 type innerdb struct {
 	db            *bolt.DB
-	DefaultBucket string
+	defaultBucket []byte
+	bucketHEAD    []byte
 	path          string
 }
 
@@ -127,27 +130,64 @@ func (db *DataBase) Destroy() error {
 // Map returns a map of all the key-value pairs in the database.
 func (db *DataBase) Map() (all map[string][]byte, err error) {
 	all = map[string][]byte{}
-	err = db.view(func(b *bolt.Bucket) error {
+	return all, db.view(func(b *bolt.Bucket) error {
 		return b.ForEach(func(k, v []byte) error {
 			all[string(k)] = v
 			return nil
 		})
 	})
-	return all, err
+}
+
+// WithBucket temporaraly sets the bucket to the string given and returns the
+// database with the new bucket.
+//
+// The default bucket will be reset when the database calls Put, Get, Exists,
+// Map, TimeStamp, and UpdateTS (any method that calls view or update internaly).
+func (db *DataBase) WithBucket(bucket string) *DataBase {
+	db.bucketHEAD = []byte(bucket)
+	db.db.Update(func(tx *bolt.Tx) error {
+		_, err := tx.CreateBucketIfNotExists([]byte(db.bucketHEAD))
+		return err
+	})
+	return db
+}
+
+// SetBucket will set the bucket used in all database transactions.
+func (db *DataBase) SetBucket(name string) {
+	db.defaultBucket = []byte(name)
+	db.bucketHEAD = []byte(name)
+}
+
+// DeleteBucket will delete the bucket given.
+//
+// Will panic if the name argument is the same as the database's default bucket.
+func (db *DataBase) DeleteBucket(name string) {
+	if name == string(db.defaultBucket) {
+		panic("cannot delete defautlt bucket")
+	}
+	panic("DeleteBucket method not finished")
 }
 
 func (idb *innerdb) view(fn func(*bolt.Bucket) error) error {
 	return idb.db.View(func(tx *bolt.Tx) error {
-		bucket := tx.Bucket([]byte(idb.DefaultBucket))
+		bucket := tx.Bucket([]byte(idb.bucketHEAD))
+		defer idb.resetHEAD()
 		return fn(bucket)
 	})
 }
 
 func (idb *innerdb) update(fn func(*bolt.Bucket) error) error {
 	return idb.db.Update(func(tx *bolt.Tx) error {
-		bucket := tx.Bucket([]byte(idb.DefaultBucket))
+		bucket := tx.Bucket([]byte(idb.bucketHEAD))
+		defer idb.resetHEAD()
 		return fn(bucket)
 	})
+}
+
+func (idb *innerdb) resetHEAD() {
+	if bytes.Compare(idb.bucketHEAD, idb.defaultBucket) != 0 {
+		idb.bucketHEAD = idb.defaultBucket
+	}
 }
 
 func filename(file string) string {

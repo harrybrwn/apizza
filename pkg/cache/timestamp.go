@@ -3,6 +3,7 @@ package cache
 import (
 	"errors"
 	"fmt"
+	"os"
 	"strconv"
 	"time"
 )
@@ -78,7 +79,7 @@ func (db *DataBase) AutoTimeStamp(
 	decay time.Duration,
 	update, notUpdate func() error,
 ) error {
-	fmt.Println("Warning: AutoTimeStamp is deprecated.")
+	fmt.Fprintln(os.Stderr, "Developer Warning: AutoTimeStamp is deprecated.")
 	return check(db, ts(key), NewUpdater(decay, update, notUpdate))
 	// return errors.New("should not be using DataBase.AutoTimeStamp")
 }
