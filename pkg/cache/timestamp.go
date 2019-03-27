@@ -20,13 +20,19 @@ type Updater interface {
 // TimeStamp gets the timestamp for a given key and will also create one if it does
 // not already exist.
 func (db *DataBase) TimeStamp(key string) (time.Time, error) {
+	key = ts(key)
 	stamp, err := timestampE(db, key)
 	if err == nil {
 		return stamp, nil
-	} else if IsTimeStampNotFound(err) {
+	} else if isTimeStampNotFound(err) {
 		return time.Now(), db.Put(key, unixNow())
 	}
 	return time.Time{}, err
+}
+
+// ResetTimeStamp stores a new timestamp for the given key.
+func (db *DataBase) ResetTimeStamp(key string) error {
+	return db.Put(ts(key), unixNow())
 }
 
 // UpdateTS or "UpdateTimeStamp" will execute an Updater's methods in correspondence with the
@@ -35,9 +41,9 @@ func (db *DataBase) UpdateTS(key string, updater Updater) error {
 	return check(db, ts(key), updater)
 }
 
-// IsTimeStampNotFound returns true when the error given was raised because a
+// isTimeStampNotFound returns true when the error given was raised because a
 // timestamp was not found.
-func IsTimeStampNotFound(e error) bool {
+func isTimeStampNotFound(e error) bool {
 	return e == errTimeStampNotFound
 }
 
@@ -61,11 +67,11 @@ func timestampE(db Getter, key string) (time.Time, error) {
 	return time.Unix(tStamp, 0), err
 }
 
-// AutoTimeStamp (Deprecated) will check the timestamp at a given key everytime AutoTimeStamp
-// is run. The function given as the 'update' argument will be run if the stored
-// timestamp is past the decay argument or if the timestamp associated with that
-// key does not exist. The 'notUpdate' argument is a function that will run if
-// the timestamp has not expired.
+// AutoTimeStamp (Deprecated) will check the timestamp at a given key everytime
+// AutoTimeStamp is run. The function given as the 'update' argument will be run
+// if the stored timestamp is past the decay argument or if the timestamp
+// associated with that key does not exist. The 'notUpdate' argument is a
+// function that will run if the timestamp has not expired.
 //
 // deprecated.
 func (db *DataBase) AutoTimeStamp(
@@ -108,7 +114,7 @@ func check(db Storage, key string, updater Updater) error {
 	stamp, err := timestampE(db, key)
 
 	if err != nil {
-		if IsTimeStampNotFound(err) {
+		if isTimeStampNotFound(err) {
 			if err = db.Put(key, unixNow()); err == nil {
 				return updater.OnUpdate()
 			}

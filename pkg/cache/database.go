@@ -108,11 +108,6 @@ func (idb *innerdb) Path() string {
 	return idb.path
 }
 
-// ResetTimeStamp stores a new timestamp for the given key.
-func (db *DataBase) ResetTimeStamp(key string) error {
-	return db.Put(key+"_timestamp", unixNow())
-}
-
 // Close will close the DataBase's inner bolt.DB
 func (idb *innerdb) Close() error {
 	return idb.db.Close()
