@@ -29,7 +29,6 @@ type apizzaCmd struct {
 	address    string
 	service    string
 	storeID    string
-	test       bool
 	clearCache bool
 }
 

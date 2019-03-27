@@ -106,7 +106,12 @@ func (c *basecmd) getCachedMenu() error {
 		if err != nil {
 			return err
 		}
-		return json.Unmarshal(raw, c.menu)
+		if err = json.Unmarshal(raw, c.menu); err != nil {
+			return err
+		}
+		if c.menu.ID != c.store().ID {
+			return c.cacheNewMenu()
+		}
 	}
 	return nil
 }

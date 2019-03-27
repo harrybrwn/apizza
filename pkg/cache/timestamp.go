@@ -20,7 +20,13 @@ type Updater interface {
 // TimeStamp gets the timestamp for a given key and will also create one if it does
 // not already exist.
 func (db *DataBase) TimeStamp(key string) (time.Time, error) {
-	return timestamp(db, ts(key))
+	stamp, err := timestampE(db, key)
+	if err == nil {
+		return stamp, nil
+	} else if IsTimeStampNotFound(err) {
+		return time.Now(), db.Put(key, unixNow())
+	}
+	return time.Time{}, err
 }
 
 // UpdateTS or "UpdateTimeStamp" will execute an Updater's methods in correspondence with the
@@ -55,16 +61,6 @@ func timestampE(db Getter, key string) (time.Time, error) {
 	return time.Unix(tStamp, 0), err
 }
 
-func timestamp(db Storage, key string) (time.Time, error) {
-	stamp, err := timestampE(db, key)
-	if err == nil {
-		return stamp, nil
-	} else if IsTimeStampNotFound(err) {
-		return time.Now(), db.Put(key, unixNow())
-	}
-	return time.Time{}, err
-}
-
 // AutoTimeStamp (Deprecated) will check the timestamp at a given key everytime AutoTimeStamp
 // is run. The function given as the 'update' argument will be run if the stored
 // timestamp is past the decay argument or if the timestamp associated with that
@@ -79,7 +75,6 @@ func (db *DataBase) AutoTimeStamp(
 ) error {
 	fmt.Fprintln(os.Stderr, "Developer Warning: AutoTimeStamp is deprecated.")
 	return check(db, ts(key), NewUpdater(decay, update, notUpdate))
-	// return errors.New("should not be using DataBase.AutoTimeStamp")
 }
 
 // NewUpdater returns an updater from a decay time and two functions.
