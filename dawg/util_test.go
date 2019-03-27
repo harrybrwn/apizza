@@ -52,11 +52,11 @@ func TestURLParams(t *testing.T) {
 
 func ExampleNearestStore() {
 	var addr = &dawg.StreetAddr{
-		StreetLineOne: "1600 Pennsylvania Ave.",
-		CityName:      "Washington",
-		State:         "DC",
-		Zipcode:       "20500",
-		AddrType:      "House",
+		Street:   "1600 Pennsylvania Ave.",
+		CityName: "Washington",
+		State:    "DC",
+		Zipcode:  "20500",
+		AddrType: "House",
 	}
 	store, err := dawg.NearestStore(addr, "Delivery")
 	if err != nil {
@@ -73,11 +73,11 @@ func ExampleNearestStore() {
 
 func ExampleOrder_AddProduct() {
 	var addr = &dawg.StreetAddr{
-		StreetLineOne: "1600 Pennsylvania Ave.",
-		CityName:      "Washington",
-		State:         "DC",
-		Zipcode:       "20500",
-		AddrType:      "House",
+		Street:   "1600 Pennsylvania Ave.",
+		CityName: "Washington",
+		State:    "DC",
+		Zipcode:  "20500",
+		AddrType: "House",
 	}
 
 	store, err := dawg.NearestStore(addr, "Delivery")
@@ -96,11 +96,11 @@ func ExampleOrder_AddProduct() {
 
 func ExampleProduct_AddTopping() {
 	var addr = &dawg.StreetAddr{
-		StreetLineOne: "1600 Pennsylvania Ave.",
-		CityName:      "Washington",
-		State:         "DC",
-		Zipcode:       "20500",
-		AddrType:      "House",
+		Street:   "1600 Pennsylvania Ave.",
+		CityName: "Washington",
+		State:    "DC",
+		Zipcode:  "20500",
+		AddrType: "House",
 	}
 
 	store, err := dawg.NearestStore(addr, "Delivery")

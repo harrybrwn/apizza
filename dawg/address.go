@@ -20,12 +20,12 @@ var (
 func ParseAddress(raw string) *StreetAddr {
 	parsed := parse([]byte(raw))
 	return &StreetAddr{
-		StreetNum:     string(parsed[1]),
-		StreetLineOne: string(parsed[1]) + " " + string(parsed[2]),
-		StreetName:    string(parsed[2]),
-		CityName:      string(parsed[3]),
-		State:         string(parsed[4]),
-		Zipcode:       string(parsed[5]),
+		StreetNum:  string(parsed[1]),
+		Street:     string(parsed[1]) + " " + string(parsed[2]),
+		StreetName: string(parsed[2]),
+		CityName:   string(parsed[3]),
+		State:      string(parsed[4]),
+		Zipcode:    string(parsed[5]),
 	}
 }
 
@@ -45,13 +45,13 @@ var _ Address = (*StreetAddr)(nil)
 
 // StreetAddr represents a street address
 type StreetAddr struct {
-	StreetLineOne string `json:"Street"`
-	StreetNum     string `json:"StreetNumber"`
-	CityName      string `json:"City"`
-	State         string `json:"Region"`
-	Zipcode       string `json:"PostalCode"`
-	AddrType      string `json:"Type"`
-	StreetName    string `json:"StreetName"`
+	Street     string `json:"Street"`
+	StreetNum  string `json:"StreetNumber"`
+	CityName   string `json:"City"`
+	State      string `json:"Region"`
+	Zipcode    string `json:"PostalCode"`
+	AddrType   string `json:"Type"`
+	StreetName string `json:"StreetName"`
 }
 
 // StreetAddrFromAddress returns a StreetAddr pointer from an Address interface.
@@ -65,12 +65,12 @@ func StreetAddrFromAddress(addr Address) *StreetAddr {
 	}
 
 	return &StreetAddr{
-		StreetLineOne: addr.LineOne(),
-		StreetNum:     streetNum,
-		CityName:      addr.City(),
-		State:         addr.StateCode(),
-		Zipcode:       addr.Zip(),
-		StreetName:    streetName,
+		Street:     addr.LineOne(),
+		StreetNum:  streetNum,
+		CityName:   addr.City(),
+		State:      addr.StateCode(),
+		Zipcode:    addr.Zip(),
+		StreetName: streetName,
 	}
 }
 
@@ -82,7 +82,7 @@ func (s *StreetAddr) LineOne() string {
 	if s.StreetNum != "" && s.StreetName != "" {
 		return fmt.Sprintf("%s %s", s.StreetNum, s.StreetName)
 	}
-	return s.StreetLineOne
+	return s.Street
 }
 
 // Zip returns the zipcode of the address
@@ -98,4 +98,8 @@ func (s *StreetAddr) StateCode() string {
 // City returns the city of the address
 func (s *StreetAddr) City() string {
 	return s.CityName
+}
+
+func tojson(a Address) []byte {
+	return nil
 }

@@ -118,7 +118,7 @@ func TestNewOrder(t *testing.T) {
 func TestOrder_Err(t *testing.T) {
 	// store, err := NearestStore(testAddress(), "Delivery")
 	addr := testAddress()
-	addr.StreetLineOne = ""
+	addr.Street = ""
 	store, err := NearestStore(addr, "Delivery")
 	if err != nil {
 		t.Error(err)

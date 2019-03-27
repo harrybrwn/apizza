@@ -1,16 +1,15 @@
 package dawg
 
 import (
-	"net/http"
-	"net/url"
-
-	"github.com/mitchellh/mapstructure"
-
 	"bytes"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"net/http"
+	"net/url"
 	"time"
+
+	"github.com/mitchellh/mapstructure"
 )
 
 const (
@@ -31,11 +30,12 @@ var (
 	Warnings = false
 
 	cli = &http.Client{
-		Timeout: time.Duration(5 * time.Second),
+		Timeout: time.Duration(10 * time.Second),
 		CheckRedirect: func(req *http.Request, via []*http.Request) error {
 			return http.ErrUseLastResponse
 		},
 	}
+
 	errCodes = map[int]string{
 		FailureStatus: "Failure -1",
 		WarnigStatus:  "Warning 1",
@@ -150,22 +150,8 @@ func get(path string, params URLParam) ([]byte, error) {
 			RawQuery: params.Encode(),
 		},
 	}
-	t := time.Now()
-	req.Header.Add("User-Agent", "Dominos API Wrapper for GO-"+t.String())
-	resp, err := cli.Do(req)
-
-	if err != nil {
-		return nil, err
-	}
-
-	var buf bytes.Buffer
-	if _, err = buf.ReadFrom(resp.Body); err != nil {
-		return nil, err
-	}
-	if resp.StatusCode != http.StatusOK {
-		return buf.Bytes(), fmt.Errorf("bad response code: %d", resp.StatusCode)
-	}
-	return buf.Bytes(), nil
+	req.Header.Add("User-Agent", "Dominos API Wrapper for GO-"+time.Now().String())
+	return send(req)
 }
 
 func post(path string, data []byte) ([]byte, error) {
@@ -180,13 +166,16 @@ func post(path string, data []byte) ([]byte, error) {
 			Path:   path,
 		},
 	}
+	return send(req)
+}
+
+func send(req *http.Request) ([]byte, error) {
 	var buf bytes.Buffer
 	resp, err := cli.Do(req)
 	if err != nil {
 		return nil, err
 	}
-	_, err = buf.ReadFrom(resp.Body)
-	if err != nil {
+	if _, err = buf.ReadFrom(resp.Body); err != nil {
 		return nil, err
 	}
 	if resp.StatusCode != http.StatusOK {
