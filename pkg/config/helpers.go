@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"os"
 	"reflect"
 	"strings"
 )
@@ -95,9 +96,7 @@ func FieldName(c Config, key string) string {
 
 // PrintAll prints out the config struct.
 func PrintAll(config interface{}) {
-	fmt.Print(
-		visitAll(reflect.ValueOf(config).Elem(), 0, DefaultFormatter),
-	)
+	FprintAll(os.Stdout, config)
 }
 
 // FprintAll prints the config to an io.Writer interface.
@@ -149,9 +148,6 @@ func visitAll(val reflect.Value, depth int, fmtr Formatter) string {
 		name    string
 		ok      bool
 	)
-	if fmtr.TabSize == 0 {
-		fmtr.TabSize = 2
-	}
 
 	typ := val.Type()
 	for i := 0; i < typ.NumField(); i++ {

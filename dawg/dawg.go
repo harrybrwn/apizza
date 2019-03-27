@@ -140,16 +140,11 @@ func get(path string, params URLParam) ([]byte, error) {
 	if params == nil {
 		params = &Params{}
 	}
-
-	var header = map[string][]string{
-		"User-Agent": {"Dominos API Wrapper for GO-" + time.Now().String()},
-	}
-
 	return send(&http.Request{
 		Method: "GET",
 		Host:   host,
 		Proto:  "HTTP/1.1",
-		Header: header,
+		Header: make(http.Header),
 		URL: &url.URL{
 			Scheme:   "https",
 			Host:     host,
@@ -165,6 +160,7 @@ func post(path string, data []byte) ([]byte, error) {
 		Host:   host,
 		Proto:  "HTTP/1.1",
 		Body:   ioutil.NopCloser(bytes.NewReader(data)),
+		Header: make(http.Header),
 		URL: &url.URL{
 			Scheme: "https",
 			Host:   host,
@@ -175,6 +171,8 @@ func post(path string, data []byte) ([]byte, error) {
 
 func send(req *http.Request) ([]byte, error) {
 	var buf bytes.Buffer
+
+	req.Header.Add("User-Agent", "Dominos API Wrapper for GO - "+time.Now().String())
 
 	resp, err := cli.Do(req)
 	if err != nil {

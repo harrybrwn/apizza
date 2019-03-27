@@ -2,66 +2,24 @@
 package tests
 
 import (
+	"bytes"
 	"fmt"
+	"io"
 	"os"
-	"path/filepath"
-	"strconv"
+	"runtime"
 	"strings"
-	"sync"
 	"testing"
-	"time"
 )
-
-var rand uint32
-var mu sync.Mutex
-
-// TempFile returns the path to a temporary file that does not exits.
-// Tempfile is essentially a random filename generator.
-func TempFile() string {
-	return randFile(os.TempDir(), "", "")
-}
-
-// NamedTempFile gives the opton to give a named temporary file with
-//
-// will return "/path/to/temp_dir/<prefix>random_filename<suffix>"
-func NamedTempFile(prefix, suffix string) string {
-	return randFile(os.TempDir(), prefix, suffix)
-}
-
-// WithTempFile is a test wrapper that accepts a function with the file
-// and testing.T as arguments.
-func WithTempFile(test func(string, *testing.T)) func(*testing.T) {
-	return func(t *testing.T) {
-		test(TempFile(), t)
-	}
-}
-
-// TempDir returns a temproary directory.
-func TempDir() string {
-	dir := randFile(os.TempDir(), "", "")
-	if err := os.Mkdir(dir, 0777); err != nil {
-		return ""
-	}
-	return dir
-}
 
 // Compare two strings and fail the test with an error message if they are not
 // the same.
 func Compare(t *testing.T, got, expected string) {
-	got = strings.Replace(got, " ", "_", -1)
-	expected = strings.Replace(expected, " ", "_", -1)
-	msg := fmt.Sprintf("wrong output:\ngot:\n'%s'\nexpected:\n'%s'\n", got, expected)
-	if got != expected {
-		t.Errorf(msg)
-	}
-	if len(got) != len(expected) {
-		t.Error("they are different lengths too", len(got), len(expected))
-	}
+	compare(t, got, expected, 2)
 }
 
 // CompareV compairs strings verbosly.
 func CompareV(t *testing.T, got, expected string) {
-	Compare(t, got, expected)
+	compare(t, got, expected, 2)
 	var min int
 	if len(got) > len(expected) {
 		min = len(expected)
@@ -77,27 +35,40 @@ func CompareV(t *testing.T, got, expected string) {
 	}
 }
 
-// Parts of this function came from the Go standard library io/ioutil/tempfile.go
-func randFile(dir string, prefix, suffix string) (fname string) {
-	for i := 0; i < 1000; i++ {
-		fname = filepath.Join(dir, prefix+nextRandom()+suffix)
-		if _, err := os.Stat(fname); !os.IsNotExist(err) {
-			continue
-		}
-		break
+func CompareOutput(t *testing.T, expected string, f func()) {
+	stdout := os.Stdout
+	r, w, err := os.Pipe()
+	if err != nil {
+		t.Error(err)
 	}
-	return fname
+	os.Stdout = w
+	out := make(chan string)
+
+	f()
+
+	go func() {
+		var buf bytes.Buffer
+		io.Copy(&buf, r)
+		out <- buf.String()
+	}()
+	w.Close()
+	os.Stdout = stdout
+
+	compare(t, <-out, expected, 2)
 }
 
-// This function came from the Go standard library io/ioutil/tempfile.go
-func nextRandom() string {
-	mu.Lock()
-	r := rand
-	if r == 0 {
-		r = uint32(time.Now().UnixNano() + int64(os.Getpid()))
+func compare(t *testing.T, got, exp string, depth int) {
+	got = strings.Replace(got, " ", "_", -1)
+	exp = strings.Replace(exp, " ", "_", -1)
+	msg := fmt.Sprintf("wrong output!\n\ngot:\n'%s'\nexpected:\n'%s'\n", got, exp)
+	if got != exp {
+		_, file, line, ok := runtime.Caller(depth)
+		if ok && depth > 0 {
+			msg = fmt.Sprintf("\nComparison Failure - %s:%d\n\n%s", file, line, msg)
+		}
+		if len(got) != len(exp) {
+			msg += fmt.Sprintf("\nthey are different lengths too: %d %d", len(got), len(exp))
+		}
+		t.Errorf(msg)
 	}
-	r = r*1664525 + 1013904223 // constants from Numerical Recipes
-	rand = r
-	mu.Unlock()
-	return strconv.Itoa(int(1e9 + r%1e9))[1:]
 }
