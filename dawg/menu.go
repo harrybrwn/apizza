@@ -12,9 +12,11 @@ const (
 	// ToppingFull is the code sent to dominos to tell them you
 	// want a topping that covers the whole pizza.
 	ToppingFull = "1/1"
+
 	// ToppingLeft is the code sent to dominos to tell them you
 	// want a topping that covers the left side of the pizza
 	ToppingLeft = "1/2"
+
 	// ToppingRight is the code sent to dominos to tell them you
 	// want a topping that covers the right side of the pizza
 	ToppingRight = "2/2"

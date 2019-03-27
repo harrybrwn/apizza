@@ -57,12 +57,12 @@ func dominosErr(resp []byte) error {
 
 // DominosError represents an error sent back by the dominos servers
 type DominosError struct {
-	Status      int          `json:"Status"`
-	StatusItems []statusItem `json:"StatusItems"`
+	Status      int
+	StatusItems []statusItem
 	Order       struct {
-		Status      int          `json:"Status"`
-		StatusItems []statusItem `json:"StatusItems"`
-	} `json:"Order"`
+		Status      int
+		StatusItems []statusItem
+	}
 	Msg     string
 	fullErr map[string]interface{}
 }
@@ -86,6 +86,7 @@ func (err *DominosError) init(jsonData []byte) error {
 
 func (err *DominosError) Error() string {
 	var errmsg string
+
 	for _, item := range err.StatusItems {
 		errmsg += fmt.Sprintf("Dominos %s:\n", item.Code)
 	}
@@ -138,24 +139,27 @@ func get(path string, params URLParam) ([]byte, error) {
 	if params == nil {
 		params = &Params{}
 	}
-	req := &http.Request{
+
+	var header = map[string][]string{
+		"User-Agent": {"Dominos API Wrapper for GO-" + time.Now().String()},
+	}
+
+	return send(&http.Request{
 		Method: "GET",
 		Host:   host,
 		Proto:  "HTTP/1.1",
-		Header: http.Header{},
+		Header: header,
 		URL: &url.URL{
 			Scheme:   "https",
 			Host:     host,
 			Path:     path,
 			RawQuery: params.Encode(),
 		},
-	}
-	req.Header.Add("User-Agent", "Dominos API Wrapper for GO-"+time.Now().String())
-	return send(req)
+	})
 }
 
 func post(path string, data []byte) ([]byte, error) {
-	req := &http.Request{
+	return send(&http.Request{
 		Method: "POST",
 		Host:   host,
 		Proto:  "HTTP/1.1",
@@ -165,12 +169,12 @@ func post(path string, data []byte) ([]byte, error) {
 			Host:   host,
 			Path:   path,
 		},
-	}
-	return send(req)
+	})
 }
 
 func send(req *http.Request) ([]byte, error) {
 	var buf bytes.Buffer
+
 	resp, err := cli.Do(req)
 	if err != nil {
 		return nil, err
