@@ -14,10 +14,6 @@ Dominos pizza from the command line.
 	- [Cart](#cart)
 	- [Menu](#menu)
 - [DAWG](#the-dominos-api-wrapper-for-go)
-- [Packages](#packages)
-	- [pkg/cache](#pkg/cache)
-	- [pkg/config](#pkg/config)
-	- [pkg/tests](#pkg/tests)
 
 ### Installation
 ```
@@ -106,9 +102,3 @@ func main() {
 	}
 }
 ```
-
-### Packages
-
-### pkg/cache
-### pkg/config
-### pkg/tests
