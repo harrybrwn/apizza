@@ -19,10 +19,11 @@ const (
 	FailureStatus = -1
 	// OkStatus  is the status code dominos serves use to signify no problems
 	OkStatus = 0
-	host     = "order.dominos.com"
 
 	// DefaultLang is the package language variable
 	DefaultLang = "en"
+
+	host = "order.dominos.com"
 )
 
 var (

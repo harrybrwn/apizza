@@ -21,9 +21,10 @@ import (
 	"text/template"
 	"unicode/utf8"
 
+	"github.com/spf13/cobra"
+
 	"github.com/harrybrwn/apizza/cmd/internal/base"
 	"github.com/harrybrwn/apizza/dawg"
-	"github.com/spf13/cobra"
 )
 
 type menuCmd struct {
@@ -31,6 +32,7 @@ type menuCmd struct {
 	all           bool
 	toppings      bool
 	preconfigured bool
+	categories    bool
 	item          string
 }
 
@@ -57,7 +59,7 @@ func (c *menuCmd) Run(cmd *cobra.Command, args []string) error {
 }
 
 func (b *cliBuilder) newMenuCmd() base.CliCommand {
-	c := &menuCmd{all: false, toppings: false, preconfigured: false}
+	c := &menuCmd{all: false, toppings: false, preconfigured: false, categories: false}
 	c.basecmd = b.newCommand("menu", "Get the Dominos menu.", c)
 
 	c.Flags().BoolVarP(&c.all, "all", "a", c.all, "show the entire menu")
@@ -65,6 +67,7 @@ func (b *cliBuilder) newMenuCmd() base.CliCommand {
 	c.Flags().BoolVarP(&c.preconfigured, "preconfigured",
 		"p", c.preconfigured, "show the pre-configured products on the dominos menu")
 	c.Flags().StringVarP(&c.item, "item", "i", "", "show info on the menu item given")
+	c.Flags().BoolVarP(&c.categories, "categories", "c", c.categories, "print categories")
 	return c
 }
 
@@ -83,7 +86,7 @@ func (c *menuCmd) printMenu() {
 			for _, c := range cats {
 				f(c.(map[string]interface{}), spacer+"  ")
 			}
-		} else if len(prods) > 0 { // the printing part
+		} else if len(prods) > 0 && !c.categories { // the printing part
 			for _, p := range prods {
 				product, err := c.findProduct(p.(string))
 				if err != nil {

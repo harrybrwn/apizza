@@ -8,9 +8,7 @@ import (
 	"time"
 )
 
-var (
-	timestampSuffix = "_timestamp"
-)
+const timestampSuffix = "_timestamp"
 
 // Updater defines an interface for objects used while updating cached timestamps.
 type Updater interface {
@@ -117,7 +115,7 @@ func check(db Storage, key string, updater Updater) error {
 	if err != nil {
 		if IsTimeStampNotFound(err) {
 			if err = db.Put(key, unixNow()); err == nil {
-				err = updater.OnUpdate()
+				return updater.OnUpdate()
 			}
 		}
 		return err

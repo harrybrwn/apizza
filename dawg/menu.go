@@ -22,8 +22,6 @@ const (
 	ToppingRight = "2/2"
 )
 
-// var cachedMenu *Menu
-
 // Product represents a product on the dominos menu.
 type Product struct {
 	Code    string                 `json:"Code"`
