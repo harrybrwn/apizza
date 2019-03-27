@@ -41,7 +41,8 @@ func Execute() {
 
 	builder := newBuilder()
 
-	if db, err = cache.GetDB(builder.dbPath()); err != nil {
+	dbPath := filepath.Join(config.Folder(), "cache", "apizza.db")
+	if db, err = cache.GetDB(dbPath); err != nil {
 		handle(err, "Internal Error", 1)
 	}
 
@@ -68,6 +69,7 @@ type basecmd struct {
 	menu    *dawg.Menu
 	dstore  *dawg.Store
 	tsDecay time.Duration
+	addr    *obj.Address
 }
 
 func (c *basecmd) store() *dawg.Store {
@@ -75,7 +77,7 @@ func (c *basecmd) store() *dawg.Store {
 	var err error
 
 	if c.dstore == nil {
-		if s, err = dawg.NearestStore(c.Addr, cfg.Service); err != nil {
+		if s, err = dawg.NearestStore(c.addr, cfg.Service); err != nil {
 			handle(err, "Internal Error", 1) // will exit
 			return nil
 		}
@@ -123,15 +125,11 @@ func (c *basecmd) Decay() time.Duration {
 	return c.tsDecay
 }
 
-func newCommand(use, short string, c base.CliCommand) *basecmd {
+func newCommand(use, short string, c base.Runner) *basecmd {
 	return &basecmd{
 		Command: base.NewCommand(use, short, c.Run),
 		tsDecay: 12 * time.Hour,
 	}
-}
-
-type commandBuilder interface {
-	exec()
 }
 
 type cliBuilder struct {
@@ -141,13 +139,7 @@ type cliBuilder struct {
 
 func newBuilder() *cliBuilder {
 	b := &cliBuilder{root: newApizzaCmd()}
-
-	addrStr := b.root.(*apizzaCmd).address
-	if addrStr == "" {
-		b.addr = &cfg.Address
-	} else {
-		b.addr = nil
-	}
+	b.addr = &cfg.Address
 	return b
 }
 
@@ -165,12 +157,8 @@ func (b *cliBuilder) exec() (*cobra.Command, error) {
 	return b.root.Cmd().ExecuteC()
 }
 
-func (b *cliBuilder) dbPath() string {
-	return filepath.Join(config.Folder(), "cache", "apizza.db")
-}
-
-func (b *cliBuilder) newCommand(use, short string, c base.CliCommand) *basecmd {
+func (b *cliBuilder) newCommand(use, short string, c base.Runner) *basecmd {
 	base := newCommand(use, short, c)
-	base.Addr = b.addr
+	base.addr = b.addr
 	return base
 }

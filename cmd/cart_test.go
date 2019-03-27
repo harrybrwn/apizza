@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"bytes"
-	"fmt"
 	"strings"
 	"testing"
 
@@ -52,7 +51,7 @@ func testAddOrder(t *testing.T, buf *bytes.Buffer, cmds ...base.CliCommand) {
 	if err := add.Run(add.Cmd(), []string{"testing"}); err != nil {
 		t.Error(err)
 	}
-	if string(buf.Bytes()) != "" {
+	if buf.String() != "" {
 		t.Error("wrong output: should have no output")
 	}
 	buf.Reset()
@@ -79,22 +78,14 @@ func testOrderRunAdd(t *testing.T, buf *bytes.Buffer, cmds ...base.CliCommand) {
 	expected := `Your Orders:
   testorder
 `
-	if string(buf.Bytes()) != expected {
-		t.Error("wrong output from apizza order")
-		fmt.Println("got this:", string(buf.Bytes()))
-		fmt.Println("expected this:", expected)
-	}
+	tests.Compare(t, buf.String(), expected)
 	buf.Reset()
 
 	cart.Cmd().ParseFlags([]string{"--add", "W08PBNLW,W08PPLNW"})
 	if err := cart.Run(cart.Cmd(), []string{"testorder"}); err != nil {
 		t.Error(err)
 	}
-	if string(buf.Bytes()) != "updated order successfully saved.\n" {
-		t.Error("wrong output message")
-		fmt.Println("expected:", "updated order successfully saved.")
-		fmt.Println("got:", string(buf.Bytes()))
-	}
+	tests.Compare(t, buf.String(), "order successfully updated.\n")
 }
 
 func testOrderPriceOutput(cart *cartCmd, buf *bytes.Buffer, t *testing.T) {
@@ -116,10 +107,7 @@ func testOrderRunDelete(cart *cartCmd, buf *bytes.Buffer, t *testing.T) {
 	if err := cart.Run(cart.Cmd(), []string{"testorder"}); err != nil {
 		t.Error(err)
 	}
-	if string(buf.Bytes()) != "testorder successfully deleted.\n" {
-		t.Error("wrong output message")
-		fmt.Println("got:", string(buf.Bytes()))
-	}
+	tests.Compare(t, buf.String(), "testorder successfully deleted.\n")
 	cart.delete = false
 	buf.Reset()
 
@@ -129,11 +117,7 @@ func testOrderRunDelete(cart *cartCmd, buf *bytes.Buffer, t *testing.T) {
 	}
 	expected := `No orders saved.
 `
-	if string(buf.Bytes()) != expected {
-		t.Error("wrong output")
-		fmt.Println("expected:", expected)
-		fmt.Println("got:", string(buf.Bytes()))
-	}
+	tests.Compare(t, buf.String(), expected)
 	buf.Reset()
 
 	if err := cart.Run(cart.Cmd(), []string{"not_a_real_order"}); err == nil {

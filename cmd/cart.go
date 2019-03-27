@@ -21,11 +21,10 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/harrybrwn/apizza/cmd/internal/base"
-	"github.com/harrybrwn/apizza/cmd/internal/obj"
-
 	"github.com/spf13/cobra"
 
+	"github.com/harrybrwn/apizza/cmd/internal/base"
+	"github.com/harrybrwn/apizza/cmd/internal/obj"
 	"github.com/harrybrwn/apizza/dawg"
 )
 
@@ -46,16 +45,17 @@ func (c *cartCmd) Run(cmd *cobra.Command, args []string) (err error) {
 	} else if len(args) > 1 {
 		return errors.New("cannot handle multiple orders")
 	}
+	name := args[0]
 
 	if c.delete {
-		if err = db.Delete(orderPrefix + args[0]); err != nil {
+		if err = db.Delete(orderPrefix + name); err != nil {
 			return err
 		}
-		c.Printf("%s successfully deleted.\n", args[0])
+		c.Printf("%s successfully deleted.\n", name)
 		return nil
 	}
 
-	order, err := getOrder(args[0])
+	order, err := getOrder(name)
 	if err != nil {
 		return err
 	}
@@ -75,14 +75,13 @@ func (c *cartCmd) Run(cmd *cobra.Command, args []string) (err error) {
 			}
 			order.AddProduct(p)
 		}
-		if err := saveOrder(args[0], order); err != nil {
+		if err := saveOrder(name, order); err != nil {
 			return err
 		}
-		// fmt.Fprintln(c.output, "updated order successfully saved.")
-		c.Printf("%s\n", "updated order successfully saved.")
+		c.Printf("%s\n", "order successfully updated.")
 		return nil
 	}
-	return c.printOrder(args[0], order)
+	return c.printOrder(name, order)
 }
 
 func (c *cartCmd) printall() error {

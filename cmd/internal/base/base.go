@@ -7,22 +7,25 @@ import (
 	"os"
 	"testing"
 
-	"github.com/spf13/pflag"
-
-	"github.com/harrybrwn/apizza/cmd/internal/obj"
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 )
 
 // CliCommand is an interface for base commands
 type CliCommand interface {
+	Runner
 	Cmd() *cobra.Command
 	Addcmd(...CliCommand) CliCommand
-	Run(*cobra.Command, []string) error
 	SetOutput(io.Writer)
 	Output() io.Writer
 	Printf(string, ...interface{})
 	Println(...interface{})
 	Flags() *pflag.FlagSet
+}
+
+// Runner defines an interface for an object that can be run.
+type Runner interface {
+	Run(*cobra.Command, []string) error
 }
 
 // NewCommand returns a new base command.
@@ -42,7 +45,6 @@ func NewCommand(use, short string, f runFunction) *Command {
 // Command is a cli command
 type Command struct {
 	cmd    *cobra.Command
-	Addr   *obj.Address
 	output io.Writer
 }
 
