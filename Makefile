@@ -3,8 +3,6 @@ COVER=go tool cover
 
 all: test install clean
 
-.PHONY: install test setup clean
-
 install:
 	go install github.com/harrybrwn/apizza
 
@@ -17,3 +15,5 @@ setup:
 
 clean:
 	rm $(COVER_FILE)
+
+.PHONY: install test setup clean

@@ -17,12 +17,14 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
-	"io"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/spf13/cobra"
 
+	"github.com/harrybrwn/apizza/cmd/internal/base"
+	"github.com/harrybrwn/apizza/cmd/internal/obj"
 	"github.com/harrybrwn/apizza/dawg"
 	"github.com/harrybrwn/apizza/pkg/cache"
 	"github.com/harrybrwn/apizza/pkg/config"
@@ -39,7 +41,8 @@ func Execute() {
 
 	builder := newBuilder()
 
-	if db, err = cache.GetDB(builder.dbPath()); err != nil {
+	dbPath := filepath.Join(config.Folder(), "cache", "apizza.db")
+	if db, err = cache.GetDB(dbPath); err != nil {
 		handle(err, "Internal Error", 1)
 	}
 
@@ -57,148 +60,105 @@ func Execute() {
 	}
 }
 
-func handle(e error, msg string, code int) { fmt.Printf("%s: %s\n", msg, e); os.Exit(code) }
+func handle(e error, msg string, code int) { fmt.Fprintf(os.Stderr, "%s: %s\n", msg, e); os.Exit(code) }
 
-type cliCommand interface {
-	command() *cobra.Command
-	AddCmd(...cliCommand) cliCommand
-	run(*cobra.Command, []string) error
-	setOutput(io.Writer)
-}
+var _ base.CliCommand = (*basecmd)(nil)
 
 type basecmd struct {
-	cmd    *cobra.Command
-	addr   *address
-	menu   *dawg.Menu
-	output io.Writer
+	*base.Command
+	menu    *dawg.Menu
+	dstore  *dawg.Store
+	tsDecay time.Duration
+	addr    *obj.Address
 }
 
-func (bc *basecmd) command() *cobra.Command {
-	return bc.cmd
-}
+func (c *basecmd) store() *dawg.Store {
+	var s *dawg.Store
+	var err error
 
-func (bc *basecmd) AddCmd(cmds ...cliCommand) cliCommand {
-	for _, cmd := range cmds {
-		bc.cmd.AddCommand(cmd.command())
-	}
-	return bc
-}
-
-func (bc *basecmd) run(cmd *cobra.Command, args []string) error {
-	return bc.cmd.Usage()
-}
-
-func (bc *basecmd) setOutput(output io.Writer) {
-	bc.output = output
-	bc.cmd.SetOutput(output)
-}
-
-func (bc *basecmd) getstore() (err error) {
-	if store == nil {
-		if store, err = dawg.NearestStore(bc.addr, cfg.Service); err != nil {
-			return err
+	if c.dstore == nil {
+		if s, err = dawg.NearestStore(c.addr, cfg.Service); err != nil {
+			handle(err, "Internal Error", 1) // will exit
+			return nil
 		}
+		c.dstore = s
+		return s
 	}
-	return nil
+	return c.dstore
 }
 
-func (bc *basecmd) cacheNewMenu() (err error) {
-	if err = bc.getstore(); err != nil {
-		return err
-	}
-
-	bc.menu, err = store.Menu()
+func (c *basecmd) cacheNewMenu() (err error) {
+	c.menu, err = c.store().Menu()
 	if err != nil {
 		return err
 	}
-	raw, err := json.Marshal(bc.menu)
+	raw, err := json.Marshal(c.menu)
 	if err != nil {
 		return err
 	}
 	return db.Put("menu", raw)
 }
 
-func (bc *basecmd) getCachedMenu() error {
-	raw, err := db.Get("menu")
-	if err != nil {
-		return err
+func (c *basecmd) getCachedMenu() error {
+	if c.menu == nil {
+		c.menu = new(dawg.Menu)
+		raw, err := db.Get("menu")
+		if err != nil {
+			return err
+		}
+		return json.Unmarshal(raw, c.menu)
 	}
-	bc.menu = &dawg.Menu{}
-	return json.Unmarshal(raw, bc.menu)
+	return nil
 }
 
-type runFunc func(*cobra.Command, []string) error
+var _ cache.Updater = (*basecmd)(nil)
 
-func newVerboseBaseCommand(use, short string, f runFunc) *basecmd {
-	base := &basecmd{
-		cmd: &cobra.Command{
-			Use:   use,
-			Short: short,
-			RunE:  f,
-		},
-		output: os.Stdout,
-	}
-
-	return base
+func (c *basecmd) OnUpdate() error {
+	return c.cacheNewMenu()
 }
 
-func newBaseCommand(use, short string, f runFunc) *basecmd {
-	base := &basecmd{
-		cmd: &cobra.Command{
-			Use:           use,
-			Short:         short,
-			RunE:          f,
-			SilenceErrors: true,
-			SilenceUsage:  true,
-		},
-		output: os.Stdout,
-	}
-
-	return base
+func (c *basecmd) NotUpdate() error {
+	return c.getCachedMenu()
 }
 
-type commandBuilder interface {
-	exec()
+func (c *basecmd) Decay() time.Duration {
+	return c.tsDecay
+}
+
+func newCommand(use, short string, c base.Runner) *basecmd {
+	return &basecmd{
+		Command: base.NewCommand(use, short, c.Run),
+		tsDecay: 12 * time.Hour,
+	}
 }
 
 type cliBuilder struct {
-	root cliCommand
-	addr *address
+	root base.CliCommand
+	addr *obj.Address
 }
 
 func newBuilder() *cliBuilder {
 	b := &cliBuilder{root: newApizzaCmd()}
-
-	addrStr := b.root.(*apizzaCmd).address
-	if addrStr == "" {
-		b.addr = &cfg.Address
-	} else {
-		b.addr = nil
-	}
+	b.addr = &cfg.Address
 	return b
 }
 
 func (b *cliBuilder) exec() (*cobra.Command, error) {
-	b.root.AddCmd(
-		b.newCartCmd().AddCmd(
+	b.root.Addcmd(
+		b.newCartCmd().Addcmd(
 			b.newAddOrderCmd(),
 		),
-		newConfigCmd().AddCmd(
+		newConfigCmd().Addcmd(
 			newConfigSet(),
 			newConfigGet(),
 		),
 		b.newMenuCmd(),
 	)
-	return b.root.command().ExecuteC()
+	return b.root.Cmd().ExecuteC()
 }
 
-// this is here for future plans
-func (b *cliBuilder) newBaseCommand(use, short string, f runFunc) *basecmd {
-	base := newBaseCommand(use, short, f)
+func (b *cliBuilder) newCommand(use, short string, c base.Runner) *basecmd {
+	base := newCommand(use, short, c)
 	base.addr = b.addr
 	return base
-}
-
-func (b *cliBuilder) dbPath() string {
-	return filepath.Join(config.Folder(), "cache", "apizza.db")
 }

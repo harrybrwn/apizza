@@ -5,22 +5,24 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"reflect"
-	"runtime"
 	"testing"
 
+	"github.com/harrybrwn/apizza/cmd/internal/base"
 	"github.com/harrybrwn/apizza/pkg/cache"
+	"github.com/harrybrwn/apizza/pkg/config"
 	"github.com/harrybrwn/apizza/pkg/tests"
 )
 
 func TestRunner(t *testing.T) {
+	r := tests.NewRunner(t, setupTests, teardownTests)
 	b := newBuilder()
 
-	var apizzaTests = []func(*testing.T){
-		withCmds(testOrderNew, b.newCartCmd(), b.newAddOrderCmd()),
-		withCmds(testAddOrder, b.newCartCmd(), b.newAddOrderCmd()),
-		withCmds(testOrderNewErr, b.newAddOrderCmd()),
-		withCmds(testOrderRunAdd, b.newCartCmd()),
+	r.AddTest(
+		dummyCheckForinit,
+		base.WithCmds(testOrderNew, b.newCartCmd(), b.newAddOrderCmd()),
+		base.WithCmds(testAddOrder, b.newCartCmd(), b.newAddOrderCmd()),
+		base.WithCmds(testOrderNewErr, b.newAddOrderCmd()),
+		base.WithCmds(testOrderRunAdd, b.newCartCmd()),
 		withCartCmd(b, testOrderPriceOutput),
 		withCartCmd(b, testOrderRunDelete),
 		testFindProduct,
@@ -32,33 +34,18 @@ func TestRunner(t *testing.T) {
 		testConfigCmd,
 		testConfigGet,
 		testConfigSet,
-	}
-	runtests(t, apizzaTests)
-}
-
-func runtests(t *testing.T, pTests []func(*testing.T)) {
-	var funcName = func(a interface{}) string {
-		return runtime.FuncForPC(reflect.ValueOf(a).Pointer()).Name()
-	}
-
-	allTests := append([]func(*testing.T){dummyCheckForinit}, pTests...)
-
-	setupTests()
-	defer teardownTests()
-
-	for _, f := range allTests {
-		t.Run(funcName(f), f)
-	}
+	)
+	r.Run()
 }
 
 func testApizzaCmdRun(t *testing.T, buf *bytes.Buffer, c *apizzaCmd) {
-	c.command().ParseFlags([]string{})
-	if err := c.run(c.command(), []string{}); err != nil {
+	c.Cmd().ParseFlags([]string{})
+	if err := c.Run(c.Cmd(), []string{}); err != nil {
 		t.Error(err)
 	}
 
-	c.command().ParseFlags([]string{"--test"})
-	if err := c.run(c.command(), []string{}); err != nil {
+	c.Cmd().ParseFlags([]string{"--test"})
+	if err := c.Run(c.Cmd(), []string{}); err != nil {
 		t.Error(err)
 	}
 	test = false
@@ -66,27 +53,27 @@ func testApizzaCmdRun(t *testing.T, buf *bytes.Buffer, c *apizzaCmd) {
 }
 
 func testApizzaResetflag(t *testing.T, buf *bytes.Buffer, c *apizzaCmd) {
-	c.command().ParseFlags([]string{"--clear-cache"})
+	c.Cmd().ParseFlags([]string{"--clear-cache"})
 	c.clearCache = true
 	test = false
-	if err := c.run(c.command(), []string{}); err != nil {
+	if err := c.Run(c.Cmd(), []string{}); err != nil {
 		t.Error(err)
 	}
 
-	if _, err := os.Stat(db.Path); os.IsExist(err) {
+	if _, err := os.Stat(db.Path()); os.IsExist(err) {
 		t.Error("database should not exitst")
 	} else if !os.IsNotExist(err) {
 		t.Error("database should not exitst")
 	}
 
-	if string(buf.Bytes()) != fmt.Sprintf("removing %s\n", db.Path) {
+	if string(buf.Bytes()) != fmt.Sprintf("removing %s\n", db.Path()) {
 		t.Error("wrong output")
 	}
 }
 
 func testExec(t *testing.T) {
 	b := newBuilder()
-	b.root.command().SetOutput(&bytes.Buffer{})
+	b.root.Cmd().SetOutput(&bytes.Buffer{})
 
 	_, err := b.exec()
 	if err != nil {
@@ -122,7 +109,7 @@ func withDummyDB(fn func(*testing.T)) func(*testing.T) {
 		defer func() {
 			db = oldDatabase
 			check(newDatabase.Close(), "deleting dummy database")
-			os.Remove(newDatabase.Path) // ignoring errors because it may already be gone
+			os.Remove(newDatabase.Path()) // ignoring errors because it may already be gone
 		}()
 		fn(t)
 	}
@@ -135,55 +122,41 @@ func setupTests() {
 	err = db.Put("test", []byte("this is some test data"))
 	check(err, "database put")
 
+	config.SetNonFileConfig(cfg) // don't want it to over ride the file on disk
 	raw := []byte(`
 {
-	"Name":"joe",
-	"Email":"nojoe@mail.com",
-	"Address":{
-		"Street":"1600 Pennsylvania Ave NW",
-		"CityName":"Washington DC",
-		"State":"",
-		"Zipcode":"20500"
+	"name":"joe",
+	"email":"nojoe@mail.com",
+	"address":{
+		"street":"1600 Pennsylvania Ave NW",
+		"cityName":"Washington DC",
+		"state":"",
+		"zipcode":"20500"
 	},
-	"Card":{
-		"Number":"",
-		"Expiration":"",
-		"CVV":""
+	"card":{
+		"number":"",
+		"expiration":"",
+		"cvv":""
 	},
-	"Service":"Carryout",
-	"MyOrders":null
+	"service":"Carryout"
 }`)
 	check(json.Unmarshal(raw, cfg), "json")
 }
 
 func teardownTests() {
-	if err := db.Close(); err != nil {
-		panic(err)
-	}
-	if err := os.Remove(db.Path); err != nil {
+	if err := db.Destroy(); err != nil {
 		panic(err)
 	}
 }
 
-func withCmds(test func(*testing.T, *bytes.Buffer, ...cliCommand), cmds ...cliCommand) func(*testing.T) {
-	return func(t *testing.T) {
-		buf := &bytes.Buffer{}
-		for i := range cmds {
-			cmds[i].setOutput(buf)
-		}
-		test(t, buf, cmds...)
-	}
-}
-
-func withApizzaCmd(f func(*testing.T, *bytes.Buffer, *apizzaCmd), c cliCommand) func(*testing.T) {
+func withApizzaCmd(f func(*testing.T, *bytes.Buffer, *apizzaCmd), c base.CliCommand) func(*testing.T) {
 	return func(t *testing.T) {
 		cmd, ok := c.(*apizzaCmd)
 		if !ok {
 			t.Error("not an *apizzaCmd")
-			return
 		}
 		buf := &bytes.Buffer{}
-		cmd.setOutput(buf)
+		cmd.SetOutput(buf)
 		f(t, buf, cmd)
 	}
 }
@@ -195,7 +168,7 @@ func withCartCmd(
 	return func(t *testing.T) {
 		cart := b.newCartCmd().(*cartCmd)
 		buf := &bytes.Buffer{}
-		cart.setOutput(buf)
+		cart.SetOutput(buf)
 
 		f(cart, buf, t)
 	}

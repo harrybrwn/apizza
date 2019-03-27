@@ -1,16 +1,15 @@
 package dawg
 
 import (
-	"net/http"
-	"net/url"
-
-	"github.com/mitchellh/mapstructure"
-
 	"bytes"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"net/http"
+	"net/url"
 	"time"
+
+	"github.com/mitchellh/mapstructure"
 )
 
 const (
@@ -20,10 +19,11 @@ const (
 	FailureStatus = -1
 	// OkStatus  is the status code dominos serves use to signify no problems
 	OkStatus = 0
-	host     = "order.dominos.com"
 
 	// DefaultLang is the package language variable
 	DefaultLang = "en"
+
+	host = "order.dominos.com"
 )
 
 var (
@@ -31,11 +31,12 @@ var (
 	Warnings = false
 
 	cli = &http.Client{
-		Timeout: time.Duration(5 * time.Second),
+		Timeout: time.Duration(10 * time.Second),
 		CheckRedirect: func(req *http.Request, via []*http.Request) error {
 			return http.ErrUseLastResponse
 		},
 	}
+
 	errCodes = map[int]string{
 		FailureStatus: "Failure -1",
 		WarnigStatus:  "Warning 1",
@@ -57,12 +58,12 @@ func dominosErr(resp []byte) error {
 
 // DominosError represents an error sent back by the dominos servers
 type DominosError struct {
-	Status      int          `json:"Status"`
-	StatusItems []statusItem `json:"StatusItems"`
+	Status      int
+	StatusItems []statusItem
 	Order       struct {
-		Status      int          `json:"Status"`
-		StatusItems []statusItem `json:"StatusItems"`
-	} `json:"Order"`
+		Status      int
+		StatusItems []statusItem
+	}
 	Msg     string
 	fullErr map[string]interface{}
 }
@@ -86,6 +87,7 @@ func (err *DominosError) init(jsonData []byte) error {
 
 func (err *DominosError) Error() string {
 	var errmsg string
+
 	for _, item := range err.StatusItems {
 		errmsg += fmt.Sprintf("Dominos %s:\n", item.Code)
 	}
@@ -120,42 +122,45 @@ func (err *DominosError) IsOk() bool {
 	return err.Status != FailureStatus
 }
 
+// PrintData prints the raw data. (just for testing... you shouldn't be seeing this)
+func (err *DominosError) PrintData() {
+	for key, value := range err.fullErr {
+		if key == "Order" {
+			fmt.Println("Order:")
+			for k, v := range value.(map[string]interface{}) {
+				fmt.Printf("  %s: %v\n", k, v)
+			}
+		} else {
+			fmt.Printf("%s: %v\n", key, value)
+		}
+	}
+}
+
 func get(path string, params URLParam) ([]byte, error) {
 	if params == nil {
 		params = &Params{}
 	}
-	req := &http.Request{
+
+	var header = map[string][]string{
+		"User-Agent": {"Dominos API Wrapper for GO-" + time.Now().String()},
+	}
+
+	return send(&http.Request{
 		Method: "GET",
 		Host:   host,
 		Proto:  "HTTP/1.1",
-		Header: http.Header{},
+		Header: header,
 		URL: &url.URL{
 			Scheme:   "https",
 			Host:     host,
 			Path:     path,
 			RawQuery: params.Encode(),
 		},
-	}
-	t := time.Now()
-	req.Header.Add("User-Agent", "Dominos API Wrapper for GO-"+t.String())
-	resp, err := cli.Do(req)
-
-	if err != nil {
-		return nil, err
-	}
-
-	var buf bytes.Buffer
-	if _, err = buf.ReadFrom(resp.Body); err != nil {
-		return nil, err
-	}
-	if resp.StatusCode != http.StatusOK {
-		return buf.Bytes(), fmt.Errorf("bad response code: %d", resp.StatusCode)
-	}
-	return buf.Bytes(), nil
+	})
 }
 
 func post(path string, data []byte) ([]byte, error) {
-	req := &http.Request{
+	return send(&http.Request{
 		Method: "POST",
 		Host:   host,
 		Proto:  "HTTP/1.1",
@@ -165,14 +170,17 @@ func post(path string, data []byte) ([]byte, error) {
 			Host:   host,
 			Path:   path,
 		},
-	}
+	})
+}
+
+func send(req *http.Request) ([]byte, error) {
 	var buf bytes.Buffer
+
 	resp, err := cli.Do(req)
 	if err != nil {
 		return nil, err
 	}
-	_, err = buf.ReadFrom(resp.Body)
-	if err != nil {
+	if _, err = buf.ReadFrom(resp.Body); err != nil {
 		return nil, err
 	}
 	if resp.StatusCode != http.StatusOK {

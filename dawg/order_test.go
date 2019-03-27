@@ -6,9 +6,9 @@ import (
 )
 
 func TestGetOrderPrice(t *testing.T) {
+	var err error
 	o := Order{}
-	_, err := getOrderPrice(o)
-	if err == nil {
+	if _, err = getOrderPrice(o); err == nil {
 		t.Error("Should have returned an error")
 	}
 	order := Order{
@@ -43,6 +43,9 @@ func TestGetOrderPrice(t *testing.T) {
 	}
 	if order.Payments == nil {
 		t.Error("order.Payments should not be nil after getOrderPrice")
+	}
+	if err = order.PlaceOrder(); err == nil {
+		t.Error("expected error")
 	}
 
 	order.StoreID = "" // should cause dominos to reject the order and send an error
@@ -115,7 +118,7 @@ func TestNewOrder(t *testing.T) {
 func TestOrder_Err(t *testing.T) {
 	// store, err := NearestStore(testAddress(), "Delivery")
 	addr := testAddress()
-	addr.StreetLineOne = ""
+	addr.Street = ""
 	store, err := NearestStore(addr, "Delivery")
 	if err != nil {
 		t.Error(err)
@@ -134,5 +137,43 @@ func TestOrder_Err(t *testing.T) {
 	}
 	if price != -1.0 {
 		t.Error("expected bad price")
+	}
+}
+
+func TestRemoveProduct(t *testing.T) {
+	s, err := NearestStore(testAddress(), "Carryout")
+	if err != nil {
+		t.Error(err)
+	}
+	order := s.NewOrder()
+	menu, err := s.Menu()
+	if err != nil {
+		t.Error(err)
+	}
+	productCodes := []string{"2LDCOKE", "12SCREEN", "PSANSABC", "B2PCLAVA"}
+	for _, code := range productCodes {
+		p, err := menu.GetProduct(code)
+		if err != nil {
+			t.Error(err)
+		}
+		order.AddProduct(p)
+	}
+
+	err = order.RemoveProduct("12SCREEN")
+	if err != nil {
+		t.Error(err)
+	}
+	err = order.RemoveProduct("B2PCLAVA")
+	if err != nil {
+		t.Error(err)
+	}
+
+	for _, p := range order.Products {
+		if p.Code == "12SCREEN" || p.Code == "B2PCLAVA" {
+			t.Error("should have been removed")
+		}
+	}
+	if err = order.RemoveProduct("nothere"); err == nil {
+		t.Error("expected error")
 	}
 }

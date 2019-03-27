@@ -2,30 +2,12 @@ package cmd
 
 import (
 	"bytes"
-	"strings"
 	"testing"
+
+	"github.com/harrybrwn/apizza/pkg/tests"
 )
 
 func testConfigStruct(t *testing.T) {
-	buf := &bytes.Buffer{}
-	cfg.printAll(buf)
-	output := string(buf.Bytes())
-
-	phrases := []string{
-		"Service Carryout",
-		"Name joe",
-		"Email nojoe@mail.com",
-		"Washington DC",
-		"1600 Pennsylvania Ave NW",
-		"20500",
-	}
-
-	for _, phrase := range phrases {
-		if !strings.Contains(output, phrase) {
-			t.Error("wrong output")
-		}
-	}
-
 	if cfg.Get("name").(string) != "joe" {
 		t.Error("wrong value")
 	}
@@ -44,98 +26,78 @@ func testConfigCmd(t *testing.T) {
 	var err error
 	c := newConfigCmd().(*configCmd)
 	buf := &bytes.Buffer{}
-	c.setOutput(buf)
+	c.SetOutput(buf)
 
 	c.file = true
-	if err = c.run(c.command(), []string{}); err != nil {
+	if err = c.Run(c.Cmd(), []string{}); err != nil {
 		t.Error(err)
 	}
 	c.file = false
-	if string(buf.Bytes()) != "" {
-		t.Error("got unexpected output")
-	}
+	tests.Compare(t, string(buf.Bytes()), "\n")
 	buf.Reset()
 
 	c.dir = true
-	if err = c.run(c.command(), []string{}); err != nil {
+	if err = c.Run(c.Cmd(), []string{}); err != nil {
 		t.Error(err)
 	}
-	if string(buf.Bytes()) != "" {
-		t.Error("got unexpected output")
-	}
+	tests.Compare(t, string(buf.Bytes()), "\n")
 	c.dir = false
 	buf.Reset()
 
-	builder := newBuilder()
-	c.resetCache = true
-	if err = c.run(c.command(), []string{}); err == nil {
-		t.Error("expected error")
-	}
-	if !strings.Contains(err.Error(), builder.dbPath()) {
-		t.Error("error given does not match dbPath()")
-	}
-	c.resetCache = false
-	buf.Reset()
-
-	phrases := []string{
-		"Service Carryout",
-		"Name joe",
-		"Email nojoe@mail.com",
-		"Washington DC",
-		"1600 Pennsylvania Ave NW",
-		"20500",
-	}
 	c.getall = true
-	if err := c.run(c.command(), []string{}); err != nil {
+	if err := c.Run(c.Cmd(), []string{}); err != nil {
 		t.Error(err)
 	}
-	getAllOutput := string(buf.Bytes())
-	for _, phrase := range phrases {
-		if !strings.Contains(getAllOutput, phrase) {
-			t.Error("wrong output")
-		}
-	}
+
+	expected := `name: "joe"
+email: "nojoe@mail.com"
+address: 
+  street: "1600 Pennsylvania Ave NW"
+  cityname: "Washington DC"
+  state: ""
+  zipcode: "20500"
+card: 
+  number: ""
+  expiration: ""
+  cvv: ""
+service: "Carryout"
+`
+	tests.Compare(t, string(buf.Bytes()), expected)
 	c.getall = false
 	buf.Reset()
 
-	cmdUseage := c.command().UsageString()
-	if err = c.run(c.command(), []string{}); err != nil {
+	cmdUseage := c.Cmd().UsageString()
+	if err = c.Run(c.Cmd(), []string{}); err != nil {
 		t.Error(err)
 	}
-	if string(buf.Bytes()) != cmdUseage {
-		t.Error("usage does not match")
-	}
+	tests.Compare(t, string(buf.Bytes()), cmdUseage)
 	buf.Reset()
 
-	if err = c.basecmd.run(c.command(), []string{}); err != nil {
+	if err = c.basecmd.Run(c.Cmd(), []string{}); err != nil {
 		t.Error(err)
 	}
-	if string(buf.Bytes()) != c.command().UsageString() {
-		t.Error("usage does not match")
-	}
+	tests.Compare(t, string(buf.Bytes()), c.Cmd().UsageString())
 }
 
 func testConfigGet(t *testing.T) {
 	c := newConfigGet().(*configGetCmd)
 
 	buf := &bytes.Buffer{}
-	c.setOutput(buf)
+	c.SetOutput(buf)
 
-	if err := c.run(c.command(), []string{"email", "name"}); err != nil {
+	if err := c.Run(c.Cmd(), []string{"email", "name"}); err != nil {
 		t.Error(err)
 	}
-	if string(buf.Bytes()) != "nojoe@mail.com\njoe\n" {
-		t.Error("wrong email config output")
-	}
+	tests.Compare(t, string(buf.Bytes()), "nojoe@mail.com\njoe\n")
 	buf.Reset()
 
-	if err := c.run(c.command(), []string{}); err == nil {
+	if err := c.Run(c.Cmd(), []string{}); err == nil {
 		t.Error("expected error")
 	} else if err.Error() != "no variable given" {
 		t.Error("wrong error message, got:", err.Error())
 	}
 
-	if err := c.run(c.command(), []string{"nonExistantKey"}); err == nil {
+	if err := c.Run(c.Cmd(), []string{"nonExistantKey"}); err == nil {
 		t.Error("expected error")
 	} else if err.Error() != "cannot find nonExistantKey" {
 		t.Error("wrong error message, got:", err.Error())
@@ -145,26 +107,26 @@ func testConfigGet(t *testing.T) {
 func testConfigSet(t *testing.T) {
 	c := newConfigSet().(*configSetCmd)
 
-	if err := c.run(c.command(), []string{"name=someNameOtherThanJoe"}); err != nil {
+	if err := c.Run(c.Cmd(), []string{"name=someNameOtherThanJoe"}); err != nil {
 		t.Error(err)
 	}
 	if cfg.Name != "someNameOtherThanJoe" {
 		t.Error("did not set the name correctly")
 	}
 
-	if err := c.run(c.command(), []string{}); err == nil {
+	if err := c.Run(c.Cmd(), []string{}); err == nil {
 		t.Error("expected error")
 	} else if err.Error() != "no variable given" {
 		t.Error("wrong error message, got:", err.Error())
 	}
 
-	if err := c.run(c.command(), []string{"nonExistantKey=someValue"}); err == nil {
+	if err := c.Run(c.Cmd(), []string{"nonExistantKey=someValue"}); err == nil {
 		t.Error("expected error")
 	}
 
-	if err := c.run(c.command(), []string{"badformat"}); err == nil {
+	if err := c.Run(c.Cmd(), []string{"badformat"}); err == nil {
 		t.Error(err)
-	} else if err.Error() != "use '<key>=<value>' format" {
+	} else if err.Error() != "use '<key>=<value>' format (no spaces)" {
 		t.Error("wrong error message, got:", err.Error())
 	}
 }

@@ -25,13 +25,13 @@ func TestAddressTable(t *testing.T) {
 		{
 			`1600 Pennsylvania Ave. Washington, DC 20500`,
 			StreetAddr{StreetNum: "1600", StreetName: "Pennsylvania Ave.",
-				StreetLineOne: "1600 Pennsylvania Ave.", CityName: "Washington",
+				Street: "1600 Pennsylvania Ave.", CityName: "Washington",
 				State: "DC", Zipcode: "20500", AddrType: "House"},
 		},
 		{
 			`378 James St. Chicago, IL 60621`,
 			StreetAddr{StreetNum: "378", StreetName: "James St.",
-				StreetLineOne: "378 James St.", CityName: "Chicago", State: "IL",
+				Street: "378 James St.", CityName: "Chicago", State: "IL",
 				Zipcode: "60621"},
 		},
 	}
@@ -41,7 +41,7 @@ func TestAddressTable(t *testing.T) {
 		if addr.StreetNum != tc.expected.StreetNum {
 			t.Error("wrong street num")
 		}
-		if addr.StreetLineOne != tc.expected.StreetLineOne {
+		if addr.Street != tc.expected.Street {
 			t.Error("wrong street")
 		}
 		if addr.CityName != tc.expected.CityName {

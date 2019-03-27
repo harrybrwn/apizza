@@ -7,11 +7,11 @@ import (
 
 func testAddress() *StreetAddr {
 	return &StreetAddr{
-		StreetLineOne: "1600 Pennsylvania Ave NW",
-		CityName:      "Washington",
-		State:         "DC",
-		Zipcode:       "20500",
-		AddrType:      "House",
+		Street:   "1600 Pennsylvania Ave NW",
+		CityName: "Washington",
+		State:    "DC",
+		Zipcode:  "20500",
+		AddrType: "House",
 	}
 }
 

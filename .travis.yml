@@ -1,4 +1,4 @@
 language: go
 
 before_install:
-  - go get -u $(go list -f '{{ join .Imports "\n" }}' apizza/... | grep '^github.com/.*' | grep 'apizza' -v)
+  - go get -u $(go list -f '{{ join .Imports "\n" }}' github.com/harrybrwn/apizza/... | grep '^github.com/.*' | grep 'apizza' -v)

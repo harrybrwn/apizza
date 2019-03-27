@@ -15,17 +15,13 @@
 package cmd
 
 import (
-	"fmt"
 	"os"
+	"path/filepath"
 
 	"github.com/spf13/cobra"
 
-	"github.com/harrybrwn/apizza/dawg"
-)
-
-var (
-	addr  *dawg.Address
-	store *dawg.Store
+	"github.com/harrybrwn/apizza/cmd/internal/base"
+	"github.com/harrybrwn/apizza/pkg/config"
 )
 
 type apizzaCmd struct {
@@ -37,39 +33,55 @@ type apizzaCmd struct {
 	clearCache bool
 }
 
-func (c *apizzaCmd) run(cmd *cobra.Command, args []string) (err error) {
+func (c *apizzaCmd) Run(cmd *cobra.Command, args []string) (err error) {
 	if test {
-		all, err := db.GetAll()
+		all, err := db.Map()
 		if err != nil {
 			return err
 		}
 		for k := range all {
-			fmt.Fprintf(c.output, "%v\n", k)
+			c.Printf("%v\n", k)
 		}
 		return nil
+	}
+	if reset {
+		if err = db.Destroy(); err != nil {
+			return err
+		}
+		if err = os.Remove(filepath.Dir(db.Path())); err != nil {
+			return err
+		}
+		if err = os.Remove(config.File()); err != nil {
+			return err
+		}
+		if err = os.Remove(config.Folder()); err != nil {
+			return err
+		}
+		return err
 	}
 	if c.clearCache {
 		if err := db.Close(); err != nil {
 			return err
 		}
-		fmt.Fprintln(c.output, "removing", db.Path)
-		return os.Remove(db.Path)
+		c.Printf("removing %s\n", db.Path())
+		return os.Remove(db.Path())
 	}
 	return cmd.Usage()
 }
 
-var test bool
+var test = false
+var reset = false
 
-func newApizzaCmd() cliCommand {
+func newApizzaCmd() base.CliCommand {
 	c := &apizzaCmd{address: "", service: cfg.Service, clearCache: false}
-	c.basecmd = newBaseCommand("apizza", "Dominos pizza from the command line.", c.run)
+	c.basecmd = newCommand("apizza", "Dominos pizza from the command line.", c)
 
-	c.cmd.PersistentFlags().StringVar(&c.address, "address", c.address, "use a specific address")
-	c.cmd.PersistentFlags().StringVar(&c.service, "service", c.service, "select a Dominos service, either 'Delivery' or 'Carryout'")
+	// c.cmd.PersistentFlags().StringVar(&c.address, "address", c.address, "use a specific address")
+	c.Cmd().PersistentFlags().StringVar(&c.service, "service", c.service, "select a Dominos service, either 'Delivery' or 'Carryout'")
 
-	c.cmd.PersistentFlags().BoolVar(&test, "test", false, "testing flag (for development)")
-	c.cmd.PersistentFlags().MarkHidden("test")
-
-	c.cmd.Flags().BoolVar(&c.clearCache, "clear-cache", c.clearCache, "delete the database used for caching")
+	c.Cmd().PersistentFlags().BoolVar(&test, "test", false, "testing flag (for development)")
+	c.Cmd().PersistentFlags().BoolVar(&reset, "reset", false, "reset the program (for development)")
+	c.Cmd().PersistentFlags().MarkHidden("test")
+	c.Cmd().PersistentFlags().MarkHidden("reset")
 	return c
 }

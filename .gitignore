@@ -3,18 +3,16 @@ demo
 TODO
 *.txt
 
-# Test Data
-data
+# Tests
 *.json
+*.test
 test
 test.cmd
-testdata/
 test-coverage
 coverage.html
-setup
 
 # Other
 .vscode
 *.out
 *.exe
-*.test
+*.png

@@ -18,27 +18,26 @@ import (
 	"fmt"
 	"io"
 	"strings"
-	"time"
+	"text/template"
 	"unicode/utf8"
 
 	"github.com/spf13/cobra"
+
+	"github.com/harrybrwn/apizza/cmd/internal/base"
+	"github.com/harrybrwn/apizza/dawg"
 )
 
 type menuCmd struct {
 	*basecmd
-	// menu          *dawg.Menu
 	all           bool
 	toppings      bool
 	preconfigured bool
+	categories    bool
 	item          string
 }
 
-func (c *menuCmd) run(cmd *cobra.Command, args []string) error {
-	if err := c.getstore(); err != nil {
-		return err
-	}
-
-	if err := db.AutoTimeStamp("menu", 12*time.Hour, c.cacheNewMenu, c.getCachedMenu); err != nil {
+func (c *menuCmd) Run(cmd *cobra.Command, args []string) error {
+	if err := db.UpdateTS("menu", c); err != nil {
 		return err
 	}
 
@@ -47,7 +46,7 @@ func (c *menuCmd) run(cmd *cobra.Command, args []string) error {
 		if err != nil {
 			return err
 		}
-		iteminfo(prod, c.output)
+		iteminfo(prod, cmd.OutOrStdout())
 		return nil
 	}
 
@@ -59,15 +58,16 @@ func (c *menuCmd) run(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func (b *cliBuilder) newMenuCmd() cliCommand {
-	c := &menuCmd{all: false, toppings: false, preconfigured: false}
-	c.basecmd = b.newBaseCommand("menu", "Get the Dominos menu.", c.run)
+func (b *cliBuilder) newMenuCmd() base.CliCommand {
+	c := &menuCmd{all: false, toppings: false, preconfigured: false, categories: false}
+	c.basecmd = b.newCommand("menu", "Get the Dominos menu.", c)
 
-	c.cmd.Flags().BoolVarP(&c.all, "all", "a", c.all, "show the entire menu")
-	c.cmd.Flags().BoolVarP(&c.toppings, "toppings", "t", c.toppings, "print out the toppings on the menu")
-	c.cmd.Flags().BoolVarP(&c.preconfigured, "preconfigured",
+	c.Flags().BoolVarP(&c.all, "all", "a", c.all, "show the entire menu")
+	c.Flags().BoolVarP(&c.toppings, "toppings", "t", c.toppings, "print out the toppings on the menu")
+	c.Flags().BoolVarP(&c.preconfigured, "preconfigured",
 		"p", c.preconfigured, "show the pre-configured products on the dominos menu")
-	c.cmd.Flags().StringVarP(&c.item, "item", "i", "", "show info on the menu item given")
+	c.Flags().StringVarP(&c.item, "item", "i", "", "show info on the menu item given")
+	c.Flags().BoolVarP(&c.categories, "categories", "c", c.categories, "print categories")
 	return c
 }
 
@@ -80,13 +80,13 @@ func (c *menuCmd) printMenu() {
 
 		// if there is nothing in that category, dont print the code name
 		if len(cats) != 0 || len(prods) != 0 {
-			fmt.Fprint(c.output, spacer, m["Code"], "\n")
+			c.Printf("%s%v\n", spacer, m["Code"])
 		}
 		if len(cats) > 0 { // the recursive part
 			for _, c := range cats {
 				f(c.(map[string]interface{}), spacer+"  ")
 			}
-		} else if len(prods) > 0 { // the printing part
+		} else if len(prods) > 0 && !c.categories { // the printing part
 			for _, p := range prods {
 				product, err := c.findProduct(p.(string))
 				if err != nil {
@@ -94,7 +94,7 @@ func (c *menuCmd) printMenu() {
 				}
 				c.printMenuItem(product, spacer)
 			}
-			fmt.Fprint(c.output, "\n")
+			c.Printf("%s", "\n")
 		}
 	}
 	keys := []string{"Food"}
@@ -113,16 +113,17 @@ func (c *menuCmd) printMenu() {
 func (c *menuCmd) printMenuItem(product map[string]interface{}, spacer string) {
 	// if product has varients, print them
 	if varients, ok := product["Variants"].([]interface{}); ok {
-		fmt.Fprintf(c.output, "%s  \"%s\" [%s]\n", spacer, product["Name"], product["Code"])
+		c.Printf("%s  \"%s\" [%s]\n", spacer, product["Name"], product["Code"])
 		max := maxStrLen(varients)
 
 		for _, v := range varients {
-			fmt.Fprintln(
-				c.output, spaces(strLen(spacer)+3), "-", v, spaces(max-strLen(v.(string))), c.menu.Variants[v.(string)].(map[string]interface{})["Name"])
+			c.Println(spaces(strLen(spacer)+3), "-", v,
+				spaces(max-strLen(v.(string))),
+				c.menu.Variants[v.(string)].(map[string]interface{})["Name"])
 		}
 	} else {
 		// if product has no varients, it is a preconfigured product
-		fmt.Fprintf(c.output, "%s  \"%s\"\n%s - %s", spacer, product["Name"], spacer+"    ", product["Code"])
+		c.Printf("%s  \"%s\"\n%s - %s", spacer, product["Name"], spacer+"    ", product["Code"])
 	}
 }
 
@@ -140,17 +141,21 @@ func iteminfo(prod map[string]interface{}, output io.Writer) {
 func (c *menuCmd) printToppings() {
 	indent := strings.Repeat(" ", 4)
 	for key, val := range c.menu.Toppings {
-		fmt.Fprint(c.output, "  ", key, "\n")
+		c.Println("  ", key)
 		for k, v := range val.(map[string]interface{}) {
 			spacer := strings.Repeat(" ", 3-strLen(k))
-			fmt.Fprintln(
-				c.output, indent, k, spacer, v.(map[string]interface{})["Name"])
+			c.Println(indent, k, spacer, v.(map[string]interface{})["Name"])
 		}
-		fmt.Fprint(c.output, "\n")
+		c.Println("")
 	}
 }
 
-func (c *menuCmd) findProduct(key string) (map[string]interface{}, error) {
+func (c *basecmd) findProduct(key string) (map[string]interface{}, error) {
+	if c.menu == nil {
+		if err := db.UpdateTS("menu", c); err != nil {
+			return nil, err
+		}
+	}
 	var product map[string]interface{}
 	if prod, ok := c.menu.Products[key]; ok {
 		product = prod.(map[string]interface{})
@@ -162,6 +167,21 @@ func (c *menuCmd) findProduct(key string) (map[string]interface{}, error) {
 		return nil, fmt.Errorf("could not find %s", key)
 	}
 	return product, nil
+}
+
+func (c *basecmd) product(code string) (*dawg.Product, error) {
+	if c.menu == nil {
+		if err := db.UpdateTS("menu", c); err != nil {
+			return nil, err
+		}
+	}
+	return c.menu.GetProduct(code)
+}
+
+func tmpl(w io.Writer, templt string, a interface{}) error {
+	t := template.New("apizza")
+	template.Must(t.Parse(templt))
+	return t.Execute(w, a)
 }
 
 func maxStrLen(list []interface{}) int {

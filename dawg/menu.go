@@ -2,6 +2,7 @@ package dawg
 
 import (
 	"encoding/json"
+	"fmt"
 	"strconv"
 
 	"github.com/mitchellh/mapstructure"
@@ -11,15 +12,15 @@ const (
 	// ToppingFull is the code sent to dominos to tell them you
 	// want a topping that covers the whole pizza.
 	ToppingFull = "1/1"
+
 	// ToppingLeft is the code sent to dominos to tell them you
 	// want a topping that covers the left side of the pizza
 	ToppingLeft = "1/2"
+
 	// ToppingRight is the code sent to dominos to tell them you
 	// want a topping that covers the right side of the pizza
 	ToppingRight = "2/2"
 )
-
-// var cachedMenu *Menu
 
 // Product represents a product on the dominos menu.
 type Product struct {
@@ -27,7 +28,7 @@ type Product struct {
 	IsNew   bool                   `json:"isNew"`
 	Qty     int                    `json:"Qty"`
 	Options map[string]interface{} `json:"Options"`
-	Name    string                 `json:"-"`
+	Name    string                 `json:"Name"`
 	Tags    map[string]interface{} `json:"-"`
 	other   map[string]interface{}
 }
@@ -123,6 +124,18 @@ type Menu struct {
 	Toppings       map[string]interface{} `json:"Toppings"`
 	Categorization map[string]interface{} `json:"Categorization"`
 	Preconfigured  map[string]interface{} `json:"PreconfiguredProducts"`
+}
+
+// GetProduct find the menu item given a product code.
+func (m *Menu) GetProduct(code string) (p *Product, err error) {
+	if data, ok := m.Variants[code]; ok {
+		p, err = makeProduct(data.(map[string]interface{}))
+	} else if data, ok := m.Preconfigured[code]; ok {
+		p, err = makeProduct(data.(map[string]interface{}))
+	} else {
+		return nil, fmt.Errorf("could not find %s", code)
+	}
+	return p, err
 }
 
 func newMenu(id string) (*Menu, error) {

@@ -2,9 +2,11 @@
 package tests
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -43,11 +45,43 @@ func TempDir() string {
 	return dir
 }
 
+// Compare two strings and fail the test with an error message if they are not
+// the same.
+func Compare(t *testing.T, got, expected string) {
+	got = strings.Replace(got, " ", "_", -1)
+	expected = strings.Replace(expected, " ", "_", -1)
+	msg := fmt.Sprintf("wrong output:\ngot:\n'%s'\nexpected:\n'%s'\n", got, expected)
+	if got != expected {
+		t.Errorf(msg)
+	}
+	if len(got) != len(expected) {
+		t.Error("they are different lengths too", len(got), len(expected))
+	}
+}
+
+// CompareV compairs strings verbosly.
+func CompareV(t *testing.T, got, expected string) {
+	Compare(t, got, expected)
+	var min int
+	if len(got) > len(expected) {
+		min = len(expected)
+	} else {
+		min = len(got)
+	}
+
+	for i := 0; i < min; i++ {
+		// fmt.Sprintf("'%s' == '%s'\n", string(got[i]), string(expected[i]))
+		if got[i] != expected[i] {
+			t.Errorf("char %d: '%s' == '%s'\n", i, string(got[i]), string(expected[i]))
+		}
+	}
+}
+
 // Parts of this function came from the Go standard library io/ioutil/tempfile.go
 func randFile(dir string, prefix, suffix string) (fname string) {
 	for i := 0; i < 1000; i++ {
 		fname = filepath.Join(dir, prefix+nextRandom()+suffix)
-		if _, err := os.Stat(fname); os.IsExist(err) {
+		if _, err := os.Stat(fname); !os.IsNotExist(err) {
 			continue
 		}
 		break
