@@ -24,6 +24,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/harrybrwn/apizza/cmd/internal/base"
+	"github.com/harrybrwn/apizza/cmd/internal/cmds"
 	"github.com/harrybrwn/apizza/cmd/internal/obj"
 	"github.com/harrybrwn/apizza/dawg"
 	"github.com/harrybrwn/apizza/pkg/cache"
@@ -159,6 +160,7 @@ func (b *cliBuilder) exec() (*cobra.Command, error) {
 		),
 		b.newMenuCmd(),
 	)
+	b.root.AddCobraCmd(cmds.OrderCmd)
 	return b.root.Cmd().ExecuteC()
 }
 

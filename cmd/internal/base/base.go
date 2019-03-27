@@ -16,6 +16,7 @@ type CliCommand interface {
 	Runner
 	Cmd() *cobra.Command
 	Addcmd(...CliCommand) CliCommand
+	AddCobraCmd(*cobra.Command)
 	SetOutput(io.Writer)
 	Output() io.Writer
 	Printf(string, ...interface{})
@@ -59,6 +60,11 @@ func (c *Command) Addcmd(cmds ...CliCommand) CliCommand {
 		c.cmd.AddCommand(cmd.Cmd())
 	}
 	return c
+}
+
+// AddCobraCmd adds a cobra.Command
+func (c *Command) AddCobraCmd(cmd *cobra.Command) {
+	c.cmd.AddCommand(cmd)
 }
 
 // Run runs the command.

@@ -19,11 +19,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"strings"
 
 	"github.com/spf13/cobra"
 
 	"github.com/harrybrwn/apizza/cmd/internal/base"
+	"github.com/harrybrwn/apizza/cmd/internal/data"
 	"github.com/harrybrwn/apizza/cmd/internal/obj"
 	"github.com/harrybrwn/apizza/dawg"
 )
@@ -41,14 +41,14 @@ type cartCmd struct {
 
 func (c *cartCmd) Run(cmd *cobra.Command, args []string) (err error) {
 	if len(args) < 1 {
-		return c.printall()
+		return data.PrintOrders(db, cmd.OutOrStdout())
 	} else if len(args) > 1 {
 		return errors.New("cannot handle multiple orders")
 	}
 	name := args[0]
 
 	if c.delete {
-		if err = db.Delete(orderPrefix + name); err != nil {
+		if err = db.Delete(data.OrderPrefix + name); err != nil {
 			return err
 		}
 		c.Printf("%s successfully deleted.\n", name)
@@ -82,29 +82,6 @@ func (c *cartCmd) Run(cmd *cobra.Command, args []string) (err error) {
 		return nil
 	}
 	return c.printOrder(name, order)
-}
-
-func (c *cartCmd) printall() error {
-	all, err := db.Map()
-	if err != nil {
-		return err
-	}
-	var orders []string
-
-	for k := range all {
-		if strings.Contains(k, orderPrefix) {
-			orders = append(orders, strings.Replace(k, orderPrefix, "", -1))
-		}
-	}
-	if len(orders) < 1 {
-		c.Println("No orders saved.")
-		return nil
-	}
-	c.Println("Your Orders:")
-	for _, o := range orders {
-		c.Println(" ", o)
-	}
-	return nil
 }
 
 func (c *cartCmd) printOrder(name string, o *dawg.Order) (err error) {

@@ -56,53 +56,33 @@ func TestAutoTimeStamp(t *testing.T) {
 	if err != nil || db == nil {
 		t.Fatal("bad db creation")
 	}
-	if err = db.AutoTimeStamp("test", time.Second/10,
-		func() error { return nil },
-		func() error { return nil },
-	); err != nil {
+	if err = db.UpdateTS("test", NewUpdater(time.Second/10, func() error { return nil }, func() error { return nil })); err != nil {
 		t.Error(err)
 	}
 
 	time.Sleep(time.Second / 2)
 
-	if err = db.AutoTimeStamp("test", time.Second/10,
-		func() error { return nil },
-		func() error { return nil },
-	); err != nil {
+	if err = db.UpdateTS("test", NewUpdater(time.Second/10, func() error { return nil }, func() error { return nil })); err != nil {
 		t.Error(err)
 	}
 
 	time.Sleep(time.Second / 2)
-	updater := NewUpdater(
-		time.Second/10,
-		func() error { return errors.New("this error should be raised") },
-		func() error { return nil })
-	// if err = db.AutoTimeStamp("test", time.Second/10,
-	// 	func() error { return errors.New("this error should be raised") },
-	// 	func() error { return nil },
-	// ); err == nil {
-	// 	t.Error("expected error from update func")
-	// }
+	updater := NewUpdater(time.Second/10, func() error { return errors.New("this error should be raised") }, func() error { return nil })
 	if err = db.UpdateTS("test", updater); err == nil {
 		t.Error("expected error from update func")
 	}
 
-	if err = db.AutoTimeStamp("test", time.Second*2,
-		func() error { return nil },
-		func() error { return errors.New("this error should be raised") },
-	); err == nil {
+	if err = db.UpdateTS("test", NewUpdater(time.Second*2, func() error { return nil }, func() error { return errors.New("this error should be raised") })); err == nil {
 		t.Error("expected error from notUpdate func")
 	}
 
-	if err = db.AutoTimeStamp("test", time.Second*2,
-		func() error { return nil }, func() error { return nil },
-	); err != nil {
+	if err = db.UpdateTS("test", NewUpdater(time.Second*2, func() error { return nil }, func() error { return nil })); err != nil {
 		t.Error("notUpdate passed as nil:", err)
 	}
 
-	if err = db.AutoTimeStamp("test", time.Second*2,
+	if err = db.UpdateTS("test", NewUpdater(time.Second*2,
 		func() error { return errors.New("update func shouldn't be run but was") },
-		func() error { return nil },
+		func() error { return nil }),
 	); err != nil {
 		t.Error(err)
 	}
