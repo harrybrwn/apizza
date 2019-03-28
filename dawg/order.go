@@ -6,7 +6,7 @@ import (
 	"fmt"
 )
 
-// Payment just a way to compartimentalize a payment sent to dominos.
+// Payment just a way to compartmentalize a payment sent to dominos.
 type Payment struct {
 	Number     string `json:"Number"`
 	Expiration string `json:"Expiration"`
@@ -28,6 +28,7 @@ type Order struct {
 	LastName      string                 `json:"LastName"`
 	Payments      []Payment              `json:"Payments"`
 	price         float64
+	orderName     string
 }
 
 // PlaceOrder is the method that sends the final order to dominos
@@ -79,6 +80,16 @@ func (o *Order) RemoveProduct(code string) error {
 // AddPayment adds a payment object to an order
 func (o *Order) AddPayment(payment Payment) {
 	o.Payments = append(o.Payments, payment)
+}
+
+// Name returns the name that was set by the user.
+func (o *Order) Name() string {
+	return o.orderName
+}
+
+// SetName allows users to name a particular order.
+func (o *Order) SetName(name string) {
+	o.orderName = name
 }
 
 func (o *Order) rawData() []byte {

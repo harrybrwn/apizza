@@ -26,6 +26,7 @@ import (
 	"github.com/harrybrwn/apizza/cmd/internal/data"
 	"github.com/harrybrwn/apizza/cmd/internal/obj"
 	"github.com/harrybrwn/apizza/dawg"
+	"github.com/harrybrwn/apizza/pkg/cache"
 )
 
 var orderPrefix = "user_order_"
@@ -41,31 +42,30 @@ type cartCmd struct {
 
 func (c *cartCmd) Run(cmd *cobra.Command, args []string) (err error) {
 	if len(args) < 1 {
-		return data.PrintOrders(db, cmd.OutOrStdout())
+		return data.PrintOrders(c.db(), cmd.OutOrStdout())
 	} else if len(args) > 1 {
 		return errors.New("cannot handle multiple orders")
 	}
 	name := args[0]
 
 	if c.delete {
-		if err = db.Delete(data.OrderPrefix + name); err != nil {
+		if err = c.db().Delete(data.OrderPrefix + name); err != nil {
 			return err
 		}
 		c.Printf("%s successfully deleted.\n", name)
 		return nil
 	}
 
-	order, err := getOrder(name)
+	order, err := getOrder(name, c.db())
 	if err != nil {
 		return err
 	}
-
 	if len(c.removeProd) > 0 {
 		return order.RemoveProduct(c.removeProd)
 	}
 
 	if len(c.add) > 0 {
-		if err := db.UpdateTS("menu", c); err != nil {
+		if err := c.db().UpdateTS("menu", c); err != nil {
 			return err
 		}
 		for _, newP := range c.add {
@@ -75,7 +75,7 @@ func (c *cartCmd) Run(cmd *cobra.Command, args []string) (err error) {
 			}
 			order.AddProduct(p)
 		}
-		if err := saveOrder(name, order); err != nil {
+		if err := saveOrder(order, c.db()); err != nil {
 			return err
 		}
 		c.Printf("%s\n", "order successfully updated.")
@@ -145,6 +145,7 @@ func (c *addOrderCmd) Run(cmd *cobra.Command, args []string) (err error) {
 	}
 
 	order := c.store().NewOrder()
+	order.SetName(orderName)
 
 	if len(c.products) > 0 {
 		for i, p := range c.products {
@@ -160,7 +161,7 @@ func (c *addOrderCmd) Run(cmd *cobra.Command, args []string) (err error) {
 	} else if len(c.toppings) > 0 {
 		return errors.New("cannot add just a toppings without products")
 	}
-	return saveOrder(orderName, order)
+	return saveOrder(order, c.db())
 }
 
 func (b *cliBuilder) newAddOrderCmd() base.CliCommand {
@@ -177,7 +178,7 @@ func (b *cliBuilder) newAddOrderCmd() base.CliCommand {
 	return c
 }
 
-func getOrder(name string) (*dawg.Order, error) {
+func getOrder(name string, db cache.Getter) (*dawg.Order, error) {
 	raw, err := db.Get(orderPrefix + name)
 	if err != nil {
 		return nil, err
@@ -189,13 +190,14 @@ func getOrder(name string) (*dawg.Order, error) {
 	if err = json.Unmarshal(raw, order); err != nil {
 		return nil, err
 	}
+	order.SetName(name)
 	return order, nil
 }
 
-func saveOrder(name string, o *dawg.Order) error {
+func saveOrder(o *dawg.Order, db cache.Putter) error {
 	raw, err := json.Marshal(o)
 	if err != nil {
 		return err
 	}
-	return db.Put(orderPrefix+name, raw)
+	return db.Put(orderPrefix+o.Name(), raw)
 }
