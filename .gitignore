@@ -7,7 +7,6 @@ TODO
 *.json
 *.test
 test
-test.cmd
 test-coverage
 coverage.html
 

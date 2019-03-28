@@ -6,6 +6,7 @@ import (
 	"io"
 	"strings"
 
+	"github.com/harrybrwn/apizza/cmd/internal/out"
 	"github.com/harrybrwn/apizza/dawg"
 	"github.com/harrybrwn/apizza/pkg/cache"
 )
@@ -14,25 +15,49 @@ import (
 const OrderPrefix = "user_order_"
 
 // PrintOrders will print all the names of the saved user orders
-func PrintOrders(db cache.MapDB, w io.Writer) error {
+func PrintOrders(db cache.MapDB, w io.Writer, verbose bool) error {
 	all, err := db.Map()
 	if err != nil {
 		return err
 	}
-	var orders []string
+	out.SetOutput(w)
 
-	for k := range all {
+	var (
+		orders    []string
+		uOrders   []*dawg.Order
+		tempOrder *dawg.Order
+	)
+
+	for k, v := range all {
 		if strings.Contains(k, OrderPrefix) {
-			orders = append(orders, strings.Replace(k, OrderPrefix, "", -1))
+			name := strings.Replace(k, OrderPrefix, "", -1)
+			orders = append(orders, name)
+
+			if verbose {
+				tempOrder = new(dawg.Order)
+				if err = json.Unmarshal(v, tempOrder); err != nil {
+					return err
+				}
+				tempOrder.OrderName = name
+				uOrders = append(uOrders, tempOrder)
+			}
 		}
 	}
 	if len(orders) < 1 {
 		fmt.Fprintln(w, "No orders saved.")
 		return nil
 	}
+
 	fmt.Fprintln(w, "Your Orders:")
-	for _, o := range orders {
-		fmt.Fprintln(w, " ", o)
+	for i, o := range orders {
+		if verbose {
+			err = out.PrintOrder(uOrders[i], false)
+			if err != nil {
+				return err
+			}
+		} else {
+			fmt.Fprintln(w, " ", o)
+		}
 	}
 	return nil
 }

@@ -27,8 +27,8 @@ type Order struct {
 	FirstName     string                 `json:"FirstName"`
 	LastName      string                 `json:"LastName"`
 	Payments      []Payment              `json:"Payments"`
+	OrderName     string                 `json:"-"`
 	price         float64
-	orderName     string
 }
 
 // PlaceOrder is the method that sends the final order to dominos
@@ -84,12 +84,12 @@ func (o *Order) AddPayment(payment Payment) {
 
 // Name returns the name that was set by the user.
 func (o *Order) Name() string {
-	return o.orderName
+	return o.OrderName
 }
 
 // SetName allows users to name a particular order.
 func (o *Order) SetName(name string) {
-	o.orderName = name
+	o.OrderName = name
 }
 
 func (o *Order) rawData() []byte {

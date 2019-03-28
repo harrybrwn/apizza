@@ -58,7 +58,7 @@ Viewing all of the saved orders is as simple as `apizza cart`.
 
 
 ### Menu
-`apizza menu`
+Run `apizza menu` to print the dominos menu.
 
 
 ### The Domios API Wrapper for Go

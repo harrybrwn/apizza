@@ -1,13 +1,14 @@
 COVER_FILE=test-coverage
 COVER=go tool cover
+PKG=github.com/harrybrwn/apizza
 
 all: test install clean
 
 install:
-	go install github.com/harrybrwn/apizza
+	go install $(PKG)
 
 test: setup
-	go test -cover ./... -coverprofile=$(COVER_FILE)
+	go test -cover $(PKG)/... -coverprofile=$(COVER_FILE)
 	$(COVER) -func=$(COVER_FILE)
 
 setup:

@@ -27,7 +27,7 @@ func TestDBManagment(t *testing.T) {
 	o.SetName("test_order")
 	buf := &bytes.Buffer{}
 
-	if err = PrintOrders(db, buf); err != nil {
+	if err = PrintOrders(db, buf, false); err != nil {
 		t.Error(err)
 	}
 	tests.Compare(t, buf.String(), "No orders saved.\n")
@@ -39,7 +39,7 @@ func TestDBManagment(t *testing.T) {
 	tests.Compare(t, buf.String(), "order successfully updated.\n")
 	buf.Reset()
 
-	if err = PrintOrders(db, buf); err != nil {
+	if err = PrintOrders(db, buf, false); err != nil {
 		t.Error(err)
 	}
 	tests.Compare(t, buf.String(), "Your Orders:\n  test_order\n")
@@ -55,7 +55,10 @@ func TestDBManagment(t *testing.T) {
 	if newO.Name() != o.Name() {
 		t.Error("wrong order")
 	}
-	if newO.Address != o.Address {
-		t.Error("wrong address")
+	if newO.Address.LineOne() != o.Address.LineOne() {
+		t.Error("wrong address saved")
+	}
+	if newO.Address.City() != o.Address.City() {
+		t.Error("wrong address saved")
 	}
 }

@@ -85,7 +85,7 @@ func TestNewOrder(t *testing.T) {
 		t.Error("NewOrder should not be nil")
 	}
 	o.SetName("test_order")
-	if o.orderName != o.Name() {
+	if o.OrderName != o.Name() || o.OrderName != "test_order" {
 		t.Error("incorrect order name")
 	}
 	o.AddProduct(p)

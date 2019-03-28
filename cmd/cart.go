@@ -19,6 +19,8 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/harrybrwn/apizza/cmd/internal/out"
+
 	"github.com/spf13/cobra"
 
 	"github.com/harrybrwn/apizza/cmd/internal/base"
@@ -38,7 +40,7 @@ type cartCmd struct {
 
 func (c *cartCmd) Run(cmd *cobra.Command, args []string) (err error) {
 	if len(args) < 1 {
-		return data.PrintOrders(db, c.Output())
+		return data.PrintOrders(db, c.Output(), c.verbose)
 	} else if len(args) > 1 {
 		return errors.New("cannot handle multiple orders")
 	}
@@ -80,8 +82,13 @@ func (c *cartCmd) Run(cmd *cobra.Command, args []string) (err error) {
 
 func (c *cartCmd) printOrder(name string, o *dawg.Order) (err error) {
 	buffer := &bytes.Buffer{}
+	out.SetOutput(buffer)
 
-	fmt.Fprintln(buffer, name)
+	if err := out.PrintOrder(o, true); err != nil {
+		return err
+	}
+	fmt.Fprintf(buffer, "  address: %s\n", obj.AddressFmtIndent(o.Address, 11))
+
 	if c.price {
 		p, err := o.Price()
 		if err != nil {
@@ -89,22 +96,9 @@ func (c *cartCmd) printOrder(name string, o *dawg.Order) (err error) {
 		}
 		fmt.Fprintf(buffer, "  price: $%0.2f\n", p)
 	}
-	if err = tmpl(buffer, orderTempl, o); err != nil {
-		return err
-	}
-	fmt.Fprintf(buffer, "  address: %s\n", obj.AddressFmtIndent(o.Address, 11))
 	_, err = c.Output().Write(buffer.Bytes())
 	return err
 }
-
-var orderTempl = `  products: {{ range .Products}}
-    {{.Name}}
-      code:     {{.Code}}
-      options:  {{.Options}}
-      quantity: {{.Qty}}{{end}}
-  storeID: {{.StoreID}}
-  method:  {{.ServiceMethod}}
-`
 
 func (b *cliBuilder) newCartCmd() base.CliCommand {
 	c := &cartCmd{price: false, delete: false, verbose: false}
