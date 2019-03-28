@@ -18,7 +18,7 @@ func TestRunner(t *testing.T) {
 	b := newBuilder()
 
 	r.AddTest(
-		dummyCheckForinit,
+		dummyCheck,
 		base.WithCmds(testOrderNew, b.newCartCmd(), b.newAddOrderCmd()),
 		base.WithCmds(testAddOrder, b.newCartCmd(), b.newAddOrderCmd()),
 		base.WithCmds(testOrderNewErr, b.newAddOrderCmd()),
@@ -28,12 +28,9 @@ func TestRunner(t *testing.T) {
 		testFindProduct,
 		withApizzaCmd(testApizzaCmdRun, newApizzaCmd()),
 		withDummyDB(withApizzaCmd(testApizzaResetflag, newApizzaCmd())),
-		testMenuRun,
-		testExec,
-		testConfigStruct,
-		testConfigCmd,
-		testConfigGet,
-		testConfigSet,
+		testMenuRun, testExec,
+		testConfigStruct, testConfigCmd,
+		testConfigGet, testConfigSet,
 	)
 	r.Run()
 }
@@ -43,7 +40,6 @@ func testApizzaCmdRun(t *testing.T, buf *bytes.Buffer, c *apizzaCmd) {
 	if err := c.Run(c.Cmd(), []string{}); err != nil {
 		t.Error(err)
 	}
-
 	c.Cmd().ParseFlags([]string{"--test"})
 	if err := c.Run(c.Cmd(), []string{}); err != nil {
 		t.Error(err)
@@ -59,29 +55,23 @@ func testApizzaResetflag(t *testing.T, buf *bytes.Buffer, c *apizzaCmd) {
 	if err := c.Run(c.Cmd(), []string{}); err != nil {
 		t.Error(err)
 	}
-
 	if _, err := os.Stat(db.Path()); os.IsExist(err) {
 		t.Error("database should not exitst")
 	} else if !os.IsNotExist(err) {
 		t.Error("database should not exitst")
 	}
-
-	if string(buf.Bytes()) != fmt.Sprintf("removing %s\n", db.Path()) {
-		t.Error("wrong output")
-	}
+	tests.Compare(t, buf.String(), fmt.Sprintf("removing %s\n", db.Path()))
 }
 
 func testExec(t *testing.T) {
 	b := newBuilder()
 	b.root.Cmd().SetOutput(&bytes.Buffer{})
-
-	_, err := b.exec()
-	if err != nil {
+	if err := b.exec(); err != nil {
 		t.Error(err)
 	}
 }
 
-func dummyCheckForinit(t *testing.T) {
+func dummyCheck(t *testing.T) {
 	data, err := db.Get("test")
 	if err != nil {
 		t.Error(err)

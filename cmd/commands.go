@@ -21,8 +21,6 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/spf13/cobra"
-
 	"github.com/harrybrwn/apizza/cmd/internal/base"
 	"github.com/harrybrwn/apizza/cmd/internal/cmds"
 	"github.com/harrybrwn/apizza/cmd/internal/obj"
@@ -59,7 +57,7 @@ func Execute() {
 		}
 	}()
 
-	if _, err = builder.exec(); err != nil {
+	if err = builder.exec(); err != nil {
 		handle(err, "Error", 0)
 	}
 }
@@ -155,7 +153,7 @@ func newBuilder() *cliBuilder {
 	}
 }
 
-func (b *cliBuilder) exec() (*cobra.Command, error) {
+func (b *cliBuilder) exec() error {
 	b.root.Addcmd(
 		b.newCartCmd().Addcmd(
 			b.newAddOrderCmd(),
@@ -167,7 +165,7 @@ func (b *cliBuilder) exec() (*cobra.Command, error) {
 		b.newMenuCmd(),
 	)
 	b.root.AddCobraCmd(cmds.OrderCmd)
-	return b.root.Cmd().ExecuteC()
+	return b.root.Cmd().Execute()
 }
 
 func (b *cliBuilder) newCommand(use, short string, c base.Runner) *basecmd {

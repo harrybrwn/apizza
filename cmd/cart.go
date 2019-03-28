@@ -43,7 +43,6 @@ func (c *cartCmd) Run(cmd *cobra.Command, args []string) (err error) {
 		return errors.New("cannot handle multiple orders")
 	}
 	name := args[0]
-
 	if c.delete {
 		if err = db.Delete(data.OrderPrefix + name); err != nil {
 			return err
@@ -51,7 +50,6 @@ func (c *cartCmd) Run(cmd *cobra.Command, args []string) (err error) {
 		c.Printf("%s successfully deleted.\n", name)
 		return nil
 	}
-
 	var order *dawg.Order
 	if order, err = data.GetOrder(name, db); err != nil {
 		return err
@@ -77,7 +75,6 @@ func (c *cartCmd) Run(cmd *cobra.Command, args []string) (err error) {
 		}
 		return data.SaveOrder(order, c.Output(), db)
 	}
-
 	return c.printOrder(name, order)
 }
 
@@ -161,11 +158,8 @@ func (c *addOrderCmd) Run(cmd *cobra.Command, args []string) (err error) {
 
 func (b *cliBuilder) newAddOrderCmd() base.CliCommand {
 	c := &addOrderCmd{name: "", products: []string{}}
-	c.basecmd = b.newCommand(
-		"add <new order name>",
-		"Create a new order that will be stored in the cart.",
-		c,
-	)
+	c.basecmd = b.newCommand("add <new order name>",
+		"Create a new order that will be stored in the cart.", c)
 
 	c.Flags().StringVarP(&c.name, "name", "n", c.name, "set the name of a new order")
 	c.Flags().StringSliceVarP(&c.products, "products", "p", c.products, "product codes for the new order")
