@@ -103,10 +103,14 @@ type Store struct {
 	MinDeliveryOrderAmnt float64                        `json:"MinimumDeliveryOrderAmount"`
 	userAddress          Address
 	userService          string
+	menu                 *Menu
 }
 
 // Menu returns the menu for a store object
 func (s *Store) Menu() (*Menu, error) {
+	if s.menu != nil && s.menu.ID == s.ID {
+		return s.menu, nil
+	}
 	return newMenu(s.ID)
 }
 

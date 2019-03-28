@@ -27,8 +27,6 @@ import (
 	"github.com/harrybrwn/apizza/dawg"
 )
 
-var orderPrefix = "user_order_"
-
 type cartCmd struct {
 	*basecmd
 	price      bool
@@ -40,7 +38,7 @@ type cartCmd struct {
 
 func (c *cartCmd) Run(cmd *cobra.Command, args []string) (err error) {
 	if len(args) < 1 {
-		return data.PrintOrders(db, cmd.OutOrStdout())
+		return data.PrintOrders(db, c.Output())
 	} else if len(args) > 1 {
 		return errors.New("cannot handle multiple orders")
 	}
@@ -84,6 +82,7 @@ func (c *cartCmd) Run(cmd *cobra.Command, args []string) (err error) {
 
 func (c *cartCmd) printOrder(name string, o *dawg.Order) (err error) {
 	buffer := &bytes.Buffer{}
+
 	fmt.Fprintln(buffer, name)
 	if c.price {
 		p, err := o.Price()

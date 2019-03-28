@@ -37,6 +37,7 @@ func PrintOrders(db cache.MapDB, w io.Writer) error {
 	return nil
 }
 
+// GetOrder will get an order from a database.
 func GetOrder(name string, db cache.Getter) (*dawg.Order, error) {
 	raw, err := db.Get(OrderPrefix + name)
 	if err != nil {
@@ -53,10 +54,12 @@ func GetOrder(name string, db cache.Getter) (*dawg.Order, error) {
 	return order, nil
 }
 
+// SaveOrder will save an order to a database.
 func SaveOrder(o *dawg.Order, db cache.Putter) error {
 	raw, err := json.Marshal(o)
 	if err != nil {
 		return err
 	}
+	fmt.Println(o.Name())
 	return db.Put(OrderPrefix+o.Name(), raw)
 }
