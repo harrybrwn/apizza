@@ -40,7 +40,10 @@ func Execute() {
 		handle(err, "Internal Error", 1)
 	}
 
-	builder := newBuilder()
+	builder := &cliBuilder{
+		root: newApizzaCmd(),
+		addr: &cfg.Address,
+	}
 
 	dbPath := filepath.Join(config.Folder(), "cache", "apizza.db")
 	if db, err = cache.GetDB(dbPath); err != nil {
@@ -74,8 +77,10 @@ type basecmd struct {
 }
 
 func (c *basecmd) store() *dawg.Store {
-	var s *dawg.Store
-	var err error
+	var (
+		s   *dawg.Store
+		err error
+	)
 
 	if c.dstore == nil {
 		if s, err = dawg.NearestStore(c.addr, cfg.Service); err != nil {
@@ -144,9 +149,10 @@ type cliBuilder struct {
 }
 
 func newBuilder() *cliBuilder {
-	b := &cliBuilder{root: newApizzaCmd()}
-	b.addr = &cfg.Address
-	return b
+	return &cliBuilder{
+		root: newApizzaCmd(),
+		addr: &cfg.Address,
+	}
 }
 
 func (b *cliBuilder) exec() (*cobra.Command, error) {

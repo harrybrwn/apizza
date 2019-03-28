@@ -52,12 +52,16 @@ func (c *cartCmd) Run(cmd *cobra.Command, args []string) (err error) {
 		return nil
 	}
 
-	order, err := data.GetOrder(name, db)
-	if err != nil {
+	var order *dawg.Order
+	if order, err = data.GetOrder(name, db); err != nil {
 		return err
 	}
+
 	if len(c.removeProd) > 0 {
-		return order.RemoveProduct(c.removeProd)
+		if err = order.RemoveProduct(c.removeProd); err != nil {
+			return err
+		}
+		return data.SaveOrder(order, c.Output(), db)
 	}
 
 	if len(c.add) > 0 {
@@ -71,12 +75,9 @@ func (c *cartCmd) Run(cmd *cobra.Command, args []string) (err error) {
 			}
 			order.AddProduct(p)
 		}
-		if err := data.SaveOrder(order, db); err != nil {
-			return err
-		}
-		c.Printf("%s\n", "order successfully updated.")
-		return nil
+		return data.SaveOrder(order, c.Output(), db)
 	}
+
 	return c.printOrder(name, order)
 }
 
@@ -133,16 +134,13 @@ func (c *addOrderCmd) Run(cmd *cobra.Command, args []string) (err error) {
 	if c.name == "" && len(args) < 1 {
 		return errors.New("No order name... use '--name=<order name>' or give name as an argument")
 	}
-	var orderName string
+	order := c.store().NewOrder()
 
 	if c.name == "" {
-		orderName = args[0]
+		order.SetName(args[0])
 	} else {
-		orderName = c.name
+		order.SetName(c.name)
 	}
-
-	order := c.store().NewOrder()
-	order.SetName(orderName)
 
 	if len(c.products) > 0 {
 		for i, p := range c.products {
@@ -158,7 +156,7 @@ func (c *addOrderCmd) Run(cmd *cobra.Command, args []string) (err error) {
 	} else if len(c.toppings) > 0 {
 		return errors.New("cannot add just a toppings without products")
 	}
-	return data.SaveOrder(order, db)
+	return data.SaveOrder(order, &bytes.Buffer{}, db)
 }
 
 func (b *cliBuilder) newAddOrderCmd() base.CliCommand {

@@ -55,11 +55,14 @@ func GetOrder(name string, db cache.Getter) (*dawg.Order, error) {
 }
 
 // SaveOrder will save an order to a database.
-func SaveOrder(o *dawg.Order, db cache.Putter) error {
+func SaveOrder(o *dawg.Order, w io.Writer, db cache.Putter) error {
 	raw, err := json.Marshal(o)
 	if err != nil {
 		return err
 	}
-	fmt.Println(o.Name())
-	return db.Put(OrderPrefix+o.Name(), raw)
+	err = db.Put(OrderPrefix+o.Name(), raw)
+	if err == nil {
+		fmt.Fprintln(w, "order successfully updated.")
+	}
+	return err
 }

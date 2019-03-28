@@ -52,7 +52,7 @@ func testAddOrder(t *testing.T, buf *bytes.Buffer, cmds ...base.CliCommand) {
 		t.Error(err)
 	}
 	if buf.String() != "" {
-		t.Error("wrong output: should have no output")
+		t.Errorf("wrong output: should have no output: '%s'", buf.String())
 	}
 	buf.Reset()
 
