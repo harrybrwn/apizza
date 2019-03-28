@@ -35,6 +35,7 @@ func CompareV(t *testing.T, got, expected string) {
 	}
 }
 
+// CompareOutput will redirect stdout and compair it to the expected string.
 func CompareOutput(t *testing.T, expected string, f func()) {
 	stdout := os.Stdout
 	r, w, err := os.Pipe()

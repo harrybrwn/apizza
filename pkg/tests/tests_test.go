@@ -153,3 +153,13 @@ func TestWrap(t *testing.T) {
 	)
 	r.Run()
 }
+
+func TestComparisons(t *testing.T) {
+	tcases := []string{"testing", "testing this string"}
+	for _, tc := range tcases {
+		Compare(t, tc, tc)
+		CompareV(t, tc, tc)
+		CompareOutput(t, tc, func() { fmt.Print(tc) })
+		CompareV(&testing.T{}, "going_to"+tc+"failcompairison", tc)
+	}
+}
