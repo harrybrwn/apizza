@@ -77,8 +77,7 @@ func (c *configCmd) Run(cmd *cobra.Command, args []string) error {
 		return os.Remove(config.File())
 	}
 	if c.getall {
-		config.FprintAll(cmd.OutOrStdout(), cfg)
-		return nil
+		return config.FprintAll(cmd.OutOrStdout(), config.Object())
 	}
 	return cmd.Usage()
 }

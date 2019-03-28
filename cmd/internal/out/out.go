@@ -9,12 +9,6 @@ import (
 
 var output io.Writer = os.Stdout
 
-func init() {
-	if output == nil {
-		panic("please run out.SetOutput")
-	}
-}
-
 // SetOutput gives the out package an output variable.
 func SetOutput(w io.Writer) {
 	output = w

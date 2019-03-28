@@ -18,7 +18,6 @@ import (
 	"fmt"
 	"io"
 	"strings"
-	"text/template"
 	"unicode/utf8"
 
 	"github.com/spf13/cobra"
@@ -176,12 +175,6 @@ func (c *basecmd) product(code string) (*dawg.Product, error) {
 		}
 	}
 	return c.menu.GetProduct(code)
-}
-
-func tmpl(w io.Writer, templt string, a interface{}) error {
-	t := template.New("apizza")
-	template.Must(t.Parse(templt))
-	return t.Execute(w, a)
 }
 
 func maxStrLen(list []interface{}) int {

@@ -72,7 +72,8 @@ var test = false
 var reset = false
 
 func newApizzaCmd() base.CliCommand {
-	c := &apizzaCmd{address: "", service: cfg.Service, clearCache: false}
+	// service := config.GetString("service")
+	c := &apizzaCmd{address: "", service: "", clearCache: false}
 	c.basecmd = newCommand("apizza", "Dominos pizza from the command line.", c)
 
 	// c.cmd.PersistentFlags().StringVar(&c.address, "address", c.address, "use a specific address")

@@ -95,15 +95,16 @@ func FieldName(c Config, key string) string {
 }
 
 // PrintAll prints out the config struct.
-func PrintAll(config interface{}) {
-	FprintAll(os.Stdout, config)
+func PrintAll(config interface{}) error {
+	return FprintAll(os.Stdout, config)
 }
 
 // FprintAll prints the config to an io.Writer interface.
-func FprintAll(w io.Writer, config interface{}) {
-	fmt.Fprint(
+func FprintAll(w io.Writer, config interface{}) error {
+	_, err := fmt.Fprint(
 		w, visitAll(reflect.ValueOf(config).Elem(), 0, DefaultFormatter),
 	)
+	return err
 }
 
 func find(val reflect.Value, keys []string) (string, *reflect.StructField, reflect.Value) {

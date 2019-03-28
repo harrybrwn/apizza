@@ -197,10 +197,14 @@ func TestPrintAll(t *testing.T) {
 	expected := "test: \"\"\nmsg: \"\"\nnumber: 0\nnumber2: 0\nnullval: null\nmore: \n  one: \"\"\n  two: \"\"\n"
 
 	tests.CompareOutput(t, expected, func() {
-		PrintAll(c)
+		if err := PrintAll(c); err != nil {
+			t.Error(err)
+		}
 	})
 
 	tests.CompareOutput(t, expected, func() {
-		FprintAll(os.Stdout, c)
+		if err := FprintAll(os.Stdout, c); err != nil {
+			t.Error(err)
+		}
 	})
 }
