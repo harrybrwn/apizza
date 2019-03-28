@@ -16,7 +16,6 @@ package cmd
 
 import (
 	"bytes"
-	"encoding/json"
 	"errors"
 	"fmt"
 
@@ -26,7 +25,6 @@ import (
 	"github.com/harrybrwn/apizza/cmd/internal/data"
 	"github.com/harrybrwn/apizza/cmd/internal/obj"
 	"github.com/harrybrwn/apizza/dawg"
-	"github.com/harrybrwn/apizza/pkg/cache"
 )
 
 var orderPrefix = "user_order_"
@@ -42,21 +40,21 @@ type cartCmd struct {
 
 func (c *cartCmd) Run(cmd *cobra.Command, args []string) (err error) {
 	if len(args) < 1 {
-		return data.PrintOrders(c.db(), cmd.OutOrStdout())
+		return data.PrintOrders(db, cmd.OutOrStdout())
 	} else if len(args) > 1 {
 		return errors.New("cannot handle multiple orders")
 	}
 	name := args[0]
 
 	if c.delete {
-		if err = c.db().Delete(data.OrderPrefix + name); err != nil {
+		if err = db.Delete(data.OrderPrefix + name); err != nil {
 			return err
 		}
 		c.Printf("%s successfully deleted.\n", name)
 		return nil
 	}
 
-	order, err := getOrder(name, c.db())
+	order, err := data.GetOrder(name, db)
 	if err != nil {
 		return err
 	}
@@ -65,7 +63,7 @@ func (c *cartCmd) Run(cmd *cobra.Command, args []string) (err error) {
 	}
 
 	if len(c.add) > 0 {
-		if err := c.db().UpdateTS("menu", c); err != nil {
+		if err := db.UpdateTS("menu", c); err != nil {
 			return err
 		}
 		for _, newP := range c.add {
@@ -75,7 +73,7 @@ func (c *cartCmd) Run(cmd *cobra.Command, args []string) (err error) {
 			}
 			order.AddProduct(p)
 		}
-		if err := saveOrder(order, c.db()); err != nil {
+		if err := data.SaveOrder(order, db); err != nil {
 			return err
 		}
 		c.Printf("%s\n", "order successfully updated.")
@@ -161,7 +159,7 @@ func (c *addOrderCmd) Run(cmd *cobra.Command, args []string) (err error) {
 	} else if len(c.toppings) > 0 {
 		return errors.New("cannot add just a toppings without products")
 	}
-	return saveOrder(order, c.db())
+	return data.SaveOrder(order, db)
 }
 
 func (b *cliBuilder) newAddOrderCmd() base.CliCommand {
@@ -176,28 +174,4 @@ func (b *cliBuilder) newAddOrderCmd() base.CliCommand {
 	c.Flags().StringSliceVarP(&c.products, "products", "p", c.products, "product codes for the new order")
 	c.Flags().StringSliceVarP(&c.toppings, "toppings", "t", c.toppings, "toppings for the products being added")
 	return c
-}
-
-func getOrder(name string, db cache.Getter) (*dawg.Order, error) {
-	raw, err := db.Get(orderPrefix + name)
-	if err != nil {
-		return nil, err
-	}
-	if raw == nil {
-		return nil, fmt.Errorf("cannot find order %s", name)
-	}
-	order := &dawg.Order{}
-	if err = json.Unmarshal(raw, order); err != nil {
-		return nil, err
-	}
-	order.SetName(name)
-	return order, nil
-}
-
-func saveOrder(o *dawg.Order, db cache.Putter) error {
-	raw, err := json.Marshal(o)
-	if err != nil {
-		return err
-	}
-	return db.Put(orderPrefix+o.Name(), raw)
 }

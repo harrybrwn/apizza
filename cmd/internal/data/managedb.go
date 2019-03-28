@@ -1,10 +1,12 @@
 package data
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"strings"
 
+	"github.com/harrybrwn/apizza/dawg"
 	"github.com/harrybrwn/apizza/pkg/cache"
 )
 
@@ -33,4 +35,28 @@ func PrintOrders(db cache.MapDB, w io.Writer) error {
 		fmt.Fprintln(w, " ", o)
 	}
 	return nil
+}
+
+func GetOrder(name string, db cache.Getter) (*dawg.Order, error) {
+	raw, err := db.Get(OrderPrefix + name)
+	if err != nil {
+		return nil, err
+	}
+	if raw == nil {
+		return nil, fmt.Errorf("cannot find order %s", name)
+	}
+	order := &dawg.Order{}
+	if err = json.Unmarshal(raw, order); err != nil {
+		return nil, err
+	}
+	order.SetName(name)
+	return order, nil
+}
+
+func SaveOrder(o *dawg.Order, db cache.Putter) error {
+	raw, err := json.Marshal(o)
+	if err != nil {
+		return err
+	}
+	return db.Put(OrderPrefix+o.Name(), raw)
 }
