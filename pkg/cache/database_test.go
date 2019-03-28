@@ -1,6 +1,7 @@
 package cache
 
 import (
+	"bytes"
 	"os"
 	"path/filepath"
 	"testing"
@@ -47,6 +48,11 @@ func TestGetDB(t *testing.T) {
 	err = db.Destroy()
 	if err != nil {
 		t.Error("Error in deleting the database:", err)
+	}
+
+	_, err = GetDB(filepath.Join(TempFile(), "testdatabase"))
+	if err != nil {
+		t.Error(err)
 	}
 }
 
@@ -156,4 +162,60 @@ func TestDB_Get(t *testing.T) {
 	if err := db.Close(); err != nil {
 		t.Error("didn't close db:", err)
 	}
+}
+
+func TestBuckets(t *testing.T) {
+	var err error
+	tcases := []struct {
+		buck string
+		data []byte
+	}{
+		{buck: "bucket1", data: []byte("test data")},
+		{buck: "testbuck2", data: []byte("just some stuff to use for tests")},
+		{buck: "tb3", data: []byte("this is the part I hate about testing")},
+	}
+	key := "testdata"
+	db, _ := GetDB(TempFile())
+	boltdb := db.innerdb.db
+	defbucket := "TestBucket"
+	db.SetBucket(defbucket)
+
+	for i, tc := range tcases {
+		err = db.WithBucket(tc.buck).Put(key, tc.data)
+		if err != nil {
+			t.Error(err)
+		}
+		if string(db.defaultBucket) != defbucket {
+			t.Error("bucket didn't reset")
+		}
+		err = boltdb.View(func(tx *bolt.Tx) error {
+			b := tx.Bucket([]byte(tc.buck))
+			data := b.Get([]byte(key))
+			if bytes.Compare(data, tc.data) != 0 {
+				t.Errorf("didn't get the right data: test case %d", i)
+			}
+			return nil
+		})
+		if err = db.DeleteBucket(tc.buck); err != nil {
+			t.Error(err)
+		}
+		if err != nil {
+			t.Error(err)
+		}
+		err = boltdb.View(func(tx *bolt.Tx) error {
+			if b := tx.Bucket([]byte(tc.buck)); b != nil {
+				t.Error("bucket not deleted")
+			}
+			return err
+		})
+		if err != nil {
+			t.Error(err)
+		}
+	}
+	defer func() {
+		if r := recover(); r == nil {
+			t.Error("should have paniced")
+		}
+	}()
+	db.DeleteBucket(defbucket)
 }

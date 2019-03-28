@@ -46,12 +46,6 @@ type TimerDB interface {
 	TimeStamper
 }
 
-// AutoTimerDB is a TimerDB with the AutoTimeStamp convenience function.
-type AutoTimerDB interface {
-	TimerDB
-	AutoTimeStamp(string, time.Duration, func() error, func() error) error
-}
-
 // MapDB defines a database that can be converted to a map.
 type MapDB interface {
 	DB
@@ -61,13 +55,6 @@ type MapDB interface {
 // FullDB defines a fully featured database.
 type FullDB interface {
 	MapDB
-	Exists(string) bool
-	Destroy() error
-}
-
-// FullTimerDB defines an interface for fully featured timer database.
-type FullTimerDB interface {
-	AutoTimerDB
 	Exists(string) bool
 	Destroy() error
 }

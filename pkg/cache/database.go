@@ -18,8 +18,6 @@ type DB interface {
 	Close() error
 }
 
-var _ FullTimerDB = (*DataBase)(nil)
-
 // DataBase is a wrapper struct for boltdb key-value pair database.
 type DataBase struct {
 	*innerdb
@@ -156,11 +154,13 @@ func (db *DataBase) SetBucket(name string) {
 // DeleteBucket will delete the bucket given.
 //
 // Will panic if the name argument is the same as the database's default bucket.
-func (db *DataBase) DeleteBucket(name string) {
+func (db *DataBase) DeleteBucket(name string) error {
 	if name == string(db.defaultBucket) {
-		panic("cannot delete defautlt bucket")
+		panic("cannot delete default bucket")
 	}
-	panic("DeleteBucket method not finished")
+	return db.db.Update(func(tx *bolt.Tx) error {
+		return tx.DeleteBucket([]byte(name))
+	})
 }
 
 func (idb *innerdb) view(fn func(*bolt.Bucket) error) error {
@@ -190,10 +190,10 @@ func filename(file string) string {
 	return strings.TrimSuffix(name, filepath.Ext(name))
 }
 
-func ensurePath(path string) error {
+func ensurePath(path string) (err error) {
 	p := filepath.Dir(path)
 	if _, err := os.Stat(p); os.IsNotExist(err) {
 		return os.Mkdir(p, 0777)
 	}
-	return nil
+	return err
 }

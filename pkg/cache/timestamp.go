@@ -3,7 +3,6 @@ package cache
 import (
 	"errors"
 	"fmt"
-	"os"
 	"strconv"
 	"time"
 )
@@ -67,46 +66,30 @@ func timestampE(db Getter, key string) (time.Time, error) {
 	return time.Unix(tStamp, 0), err
 }
 
-// AutoTimeStamp (Deprecated) will check the timestamp at a given key everytime
-// AutoTimeStamp is run. The function given as the 'update' argument will be run
-// if the stored timestamp is past the decay argument or if the timestamp
-// associated with that key does not exist. The 'notUpdate' argument is a
-// function that will run if the timestamp has not expired.
-//
-// deprecated.
-func (db *DataBase) AutoTimeStamp(
-	key string,
-	decay time.Duration,
-	update, notUpdate func() error,
-) error {
-	fmt.Fprintln(os.Stderr, "Developer Warning: AutoTimeStamp is deprecated.")
-	return check(db, ts(key), NewUpdater(decay, update, notUpdate))
-}
-
 // NewUpdater returns an updater from a decay time and two functions.
 func NewUpdater(decay time.Duration, update, notUpdate func() error) Updater {
-	return &tempUpdater{
+	return &updater{
 		decay:     decay,
 		update:    update,
 		notUpdate: notUpdate,
 	}
 }
 
-type tempUpdater struct {
+type updater struct {
 	decay     time.Duration
 	update    func() error
 	notUpdate func() error
 }
 
-func (t *tempUpdater) OnUpdate() error {
+func (t *updater) OnUpdate() error {
 	return t.update()
 }
 
-func (t *tempUpdater) NotUpdate() error {
+func (t *updater) NotUpdate() error {
 	return t.notUpdate()
 }
 
-func (t *tempUpdater) Decay() time.Duration {
+func (t *updater) Decay() time.Duration {
 	return t.decay
 }
 
