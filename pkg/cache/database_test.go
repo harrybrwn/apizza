@@ -21,6 +21,9 @@ func TestUtils(t *testing.T) {
 	if err := ensurePath(filepath.Join(os.TempDir(), "test_dir", "name")); err != nil {
 		t.Error(err)
 	}
+	if err := os.Remove(filepath.Join(os.TempDir(), "test_dir")); err != nil {
+		t.Error(err)
+	}
 }
 
 func TestGetDB(t *testing.T) {

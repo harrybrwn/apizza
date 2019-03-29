@@ -10,11 +10,7 @@ import (
 )
 
 func TestTempFile(t *testing.T) {
-	filenames := []string{
-		TempFile(),
-		NamedTempFile("test_prefix", "test_suffix"),
-	}
-
+	filenames := []string{TempFile(), NamedTempFile("test_prefix", "test_suffix")}
 	for _, fname := range filenames {
 		if fname == "" {
 			t.Error("empty file name")
@@ -31,45 +27,24 @@ func TestTempFile(t *testing.T) {
 
 func TestRunner(t *testing.T) {
 	output := &bytes.Buffer{}
-	expected := `setting up tests...
-t1
-t2
-closing tests.
-`
-	r := &Runner{
-		T: t,
-		Setup: func() {
-			fmt.Fprintln(output, "setting up tests...")
-		},
-		Teardown: func() {
-			fmt.Fprintln(output, "closing tests.")
-		},
-	}
-	r.AddTest(
-		func(t *testing.T) { fmt.Fprintln(output, "t1") },
-		func(t *testing.T) { fmt.Fprintln(output, "t2") },
-	)
+	r := &Runner{T: t,
+		Setup:    func() { fmt.Fprintln(output, "setting up tests...") },
+		Teardown: func() { fmt.Fprintln(output, "closing tests.") }}
+	r.AddTest(func(t *testing.T) { fmt.Fprintln(output, "t1") }, func(t *testing.T) { fmt.Fprintln(output, "t2") })
 	r.Run()
-	if string(output.Bytes()) != expected {
-		t.Error("output should be as expected")
-	}
-	Compare(t, string(output.Bytes()), expected)
+	Compare(t, output.String(), "setting up tests...\nt1\nt2\nclosing tests.\n")
 }
 
 func TestNewRunner(t *testing.T) {
-	var (
-		setupRan    = false
-		middleRan   = false
-		teardownRan = false
-	)
-
+	var setupRan = false
+	var middleRan = false
+	var teardownRan = false
 	r := NewRunner(t, func() { setupRan = true }, func() { teardownRan = true })
 	if r.T == nil {
 		t.Error("bad vars")
 	}
 	r.AddTest(func(*testing.T) { middleRan = true })
 	r.Run()
-
 	if !setupRan {
 		t.Error("setup did not run")
 	}
@@ -88,7 +63,6 @@ func TestMatchString(t *testing.T) {
 	} else if !ok {
 		t.Error("should be true")
 	}
-
 	if err := m.StartCPUProfile(&bytes.Buffer{}); err == nil {
 		t.Error("expected error")
 	}
@@ -98,11 +72,9 @@ func TestMatchString(t *testing.T) {
 	if err := m.StopTestLog(); err == nil {
 		t.Error("expected error")
 	}
-
 	if m.ImportPath() != "" {
 		t.Error("wrong path")
 	}
-
 	m.StartTestLog(&bytes.Buffer{})
 	m.StopCPUProfile()
 }
@@ -115,6 +87,9 @@ func TestTempDir(t *testing.T) {
 	if _, err := os.Stat(dir); os.IsNotExist(err) {
 		t.Error(dir, "should exist")
 	}
+	if err := os.Remove(dir); err != nil {
+		t.Error(err)
+	}
 }
 func TestWithTempFile(t *testing.T) {
 	f := func(file string, innerT *testing.T) {
@@ -122,35 +97,20 @@ func TestWithTempFile(t *testing.T) {
 			t.Error(file, "should not exist")
 		}
 	}
-
 	t.Run("inner_test_WithTempFile", WithTempFile(f))
 }
 
 func TestWrap(t *testing.T) {
-	r := &Runner{
-		T:        t,
-		Setup:    func() {},
-		Teardown: func() {},
-	}
-
+	r := &Runner{T: t, Setup: func() {}, Teardown: func() {}}
 	nilErrF := func() error { return nil }
 	errF := func() error { return errors.New("test err") }
-
-	r.AddTest(
-		func(*testing.T) {},
-		r.Wrap(func(*testing.T) {}, nilErrF, nilErrF),
-	)
+	r.AddTest(func(*testing.T) {}, r.Wrap(func(*testing.T) {}, nilErrF, nilErrF))
 	r.Run()
-
 	r.Reset()
 	if len(r.tests) > 0 {
 		t.Error("tests were not reset")
 	}
-
-	r.AddTest(
-		func(*testing.T) {},
-		r.Wrap(func(t *testing.T) { t.Skip("should be skipped") }, nilErrF, errF),
-	)
+	r.AddTest(func(*testing.T) {}, r.Wrap(func(t *testing.T) { t.Skip("should be skipped") }, nilErrF, errF))
 	r.Run()
 }
 
