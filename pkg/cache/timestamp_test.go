@@ -47,6 +47,9 @@ func TestTimeStamp(t *testing.T) {
 	if time.Since(stampRe) > t2 {
 		t.Error("timestamp didn't reset")
 	}
+	if err = db.Destroy(); err != nil {
+		t.Error(err)
+	}
 }
 
 func TestAutoTimeStamp(t *testing.T) {
@@ -72,6 +75,9 @@ func TestAutoTimeStamp(t *testing.T) {
 		t.Error("notUpdate passed as nil:", err)
 	}
 	if err = db.UpdateTS("test", NewUpdater(time.Second*2, func() error { return errors.New("update func shouldn't be run but was") }, func() error { return nil })); err != nil {
+		t.Error(err)
+	}
+	if err = db.Destroy(); err != nil {
 		t.Error(err)
 	}
 }

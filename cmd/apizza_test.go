@@ -27,9 +27,8 @@ func TestRunner(t *testing.T) {
 		testFindProduct,
 		withApizzaCmd(testApizzaCmdRun, newApizzaCmd()),
 		withDummyDB(withApizzaCmd(testApizzaResetflag, newApizzaCmd())),
-		testMenuRun, testExec,
-		testConfigStruct, testConfigCmd,
-		testConfigGet, testConfigSet,
+		testMenuRun, testConfigStruct, testConfigCmd,
+		testConfigGet, testConfigSet, withDummyDB(testExec),
 	)
 	r.Run()
 }
@@ -62,12 +61,16 @@ func testApizzaResetflag(t *testing.T, buf *bytes.Buffer, c *apizzaCmd) {
 	tests.Compare(t, buf.String(), fmt.Sprintf("removing %s\n", db.Path()))
 }
 
+// testExec must be run last.
 func testExec(t *testing.T) {
 	b := newBuilder()
-	b.root.Cmd().SetOutput(&bytes.Buffer{})
+	buf := &bytes.Buffer{}
+	b.root.Cmd().SetOutput(buf)
 	if err := b.exec(); err != nil {
 		t.Error(err)
 	}
+	// Execute()
+	// tests.Compare(t, buf.String(), b.root.Cmd().UsageString())
 }
 
 func dummyCheck(t *testing.T) {
@@ -86,7 +89,7 @@ func dummyCheck(t *testing.T) {
 
 func withDummyDB(fn func(*testing.T)) func(*testing.T) {
 	return func(t *testing.T) {
-		newDatabase, err := cache.GetDB(tests.NamedTempFile("testdata", "testing_dummyDB.db"))
+		newDatabase, err := cache.GetDB(tests.NamedTempFile("testdata", "apizza_dummy.db"))
 		check(err, "dummy database")
 		oldDatabase := db
 		db = newDatabase
@@ -100,11 +103,10 @@ func withDummyDB(fn func(*testing.T)) func(*testing.T) {
 
 func setupTests() {
 	var err error
-	db, err = cache.GetDB(tests.NamedTempFile("testdata", "test.db"))
+	db, err = cache.GetDB(tests.NamedTempFile("testdata", "apizza_test.db"))
 	check(err, "database")
 	err = db.Put("test", []byte("this is some test data"))
 	check(err, "database put")
-
 	config.SetNonFileConfig(cfg) // don't want it to over ride the file on disk
 	raw := []byte(`
 {

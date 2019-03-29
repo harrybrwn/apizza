@@ -16,12 +16,10 @@ package cmd
 
 import (
 	"os"
-	"path/filepath"
 
 	"github.com/spf13/cobra"
 
 	"github.com/harrybrwn/apizza/cmd/internal/base"
-	"github.com/harrybrwn/apizza/pkg/config"
 )
 
 type apizzaCmd struct {
@@ -42,21 +40,6 @@ func (c *apizzaCmd) Run(cmd *cobra.Command, args []string) (err error) {
 			c.Printf("%v\n", k)
 		}
 		return nil
-	}
-	if reset {
-		if err = db.Destroy(); err != nil {
-			return err
-		}
-		if err = os.Remove(filepath.Dir(db.Path())); err != nil {
-			return err
-		}
-		if err = os.Remove(config.File()); err != nil {
-			return err
-		}
-		if err = os.Remove(config.Folder()); err != nil {
-			return err
-		}
-		return err
 	}
 	if c.clearCache {
 		if err := db.Close(); err != nil {

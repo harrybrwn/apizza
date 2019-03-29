@@ -41,18 +41,22 @@ func TestGetDB(t *testing.T) {
 	if err := db.Close(); err != nil {
 		t.Error("didn't close db:", err)
 	}
-	err = db.Destroy()
-	if err != nil {
+	if err = db.Destroy(); err != nil {
 		t.Error("Error in deleting the database:", err)
 	}
-	_, err = GetDB(filepath.Join(TempFile(), "testdatabase"))
+	db, err = GetDB(filepath.Join(TempFile(), "testdatabase"))
 	if err != nil {
 		t.Error(err)
 	}
-
-	_, err = GetDB("")
+	if err = db.Destroy(); err != nil {
+		t.Error(err)
+	}
+	db, err = GetDB("")
 	if err == nil {
 		t.Error("expected error")
+	}
+	if db != nil {
+		t.Error("db should be nil")
 	}
 }
 
@@ -118,6 +122,9 @@ func TestDB_Put(t *testing.T) {
 	if err := db.Close(); err != nil {
 		t.Error("didn't close db:", err)
 	}
+	if err := db.Destroy(); err != nil {
+		t.Error(err)
+	}
 }
 
 func TestDB_Get(t *testing.T) {
@@ -147,6 +154,9 @@ func TestDB_Get(t *testing.T) {
 	}
 	if err := db.Close(); err != nil {
 		t.Error("didn't close db:", err)
+	}
+	if err := db.Destroy(); err != nil {
+		t.Error(err)
 	}
 }
 
@@ -196,6 +206,9 @@ func TestBuckets(t *testing.T) {
 		if err != nil {
 			t.Error(err)
 		}
+	}
+	if err = db.Destroy(); err != nil {
+		t.Error(err)
 	}
 	defer func() {
 		if r := recover(); r == nil {

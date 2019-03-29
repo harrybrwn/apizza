@@ -61,4 +61,7 @@ func TestDBManagment(t *testing.T) {
 	if newO.Address.City() != o.Address.City() {
 		t.Error("wrong address saved")
 	}
+	if err = db.Destroy(); err != nil {
+		t.Error(err)
+	}
 }

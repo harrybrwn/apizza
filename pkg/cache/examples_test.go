@@ -32,4 +32,8 @@ func ExampleDataBase() {
 
 	// Output:
 	// some string of values
+
+	if err = db.Destroy(); err != nil {
+		panic(err)
+	}
 }
