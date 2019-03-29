@@ -24,20 +24,16 @@ func TestUtils(t *testing.T) {
 }
 
 func TestGetDB(t *testing.T) {
-	file := TempFile()
-	// file := filepath.Join(os.TempDir(), "test.db")
-	db, err := GetDB(file)
+	db, err := GetDB(TempFile())
 	if err != nil {
 		t.Error(err)
 	}
-
 	if db == nil {
 		t.Error("GetDB returned a 'nil' value DataBase")
 	}
 	if db.Path() != db.db.Path() {
 		t.Error("the path tracked by the inner database was different than the wrapper.")
 	}
-
 	_, err = os.Stat(db.Path())
 	if os.IsNotExist(err) {
 		t.Error("path does not exist")
@@ -49,19 +45,17 @@ func TestGetDB(t *testing.T) {
 	if err != nil {
 		t.Error("Error in deleting the database:", err)
 	}
-
 	_, err = GetDB(filepath.Join(TempFile(), "testdatabase"))
 	if err != nil {
 		t.Error(err)
 	}
-}
 
-func TestGetDB_ExpectedErr(t *testing.T) {
-	_, err := GetDB("")
+	_, err = GetDB("")
 	if err == nil {
 		t.Error("expected error")
 	}
 }
+
 func TestDB_Put(t *testing.T) {
 	dbfname := TempFile()
 	fname := filename(dbfname)
@@ -82,7 +76,6 @@ func TestDB_Put(t *testing.T) {
 		if string(content) != string(expected) {
 			t.Error("the contents was not found in the inner database")
 		}
-
 		if b.Get([]byte(badkey)) == nil {
 			badkeyExists = false
 		} else {
@@ -93,14 +86,12 @@ func TestDB_Put(t *testing.T) {
 	if err != nil {
 		t.Error("error on boltDB's end")
 	}
-
 	if db.Exists(badkey) != badkeyExists {
 		t.Error("db.Exists does not match reality")
 	}
 	if !db.Exists("test_val") {
 		t.Error("the 'test_val' key should exist")
 	}
-
 	err = db.Put("yes", []byte("'yes' is a key that should exist."))
 	if err != nil {
 		t.Error(err)
@@ -117,7 +108,6 @@ func TestDB_Put(t *testing.T) {
 	if db.Exists("yes") == true {
 		t.Error("shouldn't exist")
 	}
-
 	all, err := db.Map()
 	if err != nil {
 		t.Error(err)
@@ -125,7 +115,6 @@ func TestDB_Put(t *testing.T) {
 	if all == nil {
 		t.Error("got empty map")
 	}
-
 	if err := db.Close(); err != nil {
 		t.Error("didn't close db:", err)
 	}
@@ -139,7 +128,6 @@ func TestDB_Get(t *testing.T) {
 		t.Fatal("bad db creation")
 	}
 	testval := []byte("testing value")
-
 	err = db.db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(fname))
 		return b.Put([]byte("test"), testval)
@@ -147,11 +135,9 @@ func TestDB_Get(t *testing.T) {
 	if err != nil {
 		t.Error("error on boltDB's end")
 	}
-
 	if db.Exists("") {
 		t.Error("should be false")
 	}
-
 	val, err := db.Get("test")
 	if err != nil {
 		t.Error("returned error:", err)
@@ -179,7 +165,6 @@ func TestBuckets(t *testing.T) {
 	boltdb := db.innerdb.db
 	defbucket := "TestBucket"
 	db.SetBucket(defbucket)
-
 	for i, tc := range tcases {
 		err = db.WithBucket(tc.buck).Put(key, tc.data)
 		if err != nil {

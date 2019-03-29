@@ -40,7 +40,7 @@ func Execute() {
 
 	builder := &cliBuilder{
 		root: newApizzaCmd(),
-		addr: configAddr(),
+		addr: &cfg.Address,
 	}
 
 	dbPath := filepath.Join(config.Folder(), "cache", "apizza.db")
@@ -75,18 +75,13 @@ type basecmd struct {
 }
 
 func (c *basecmd) store() *dawg.Store {
-	var (
-		s   *dawg.Store
-		err error
-	)
-
 	if c.dstore == nil {
-		if s, err = dawg.NearestStore(c.addr, config.GetString("service")); err != nil {
+		var err error
+		if c.dstore, err = dawg.NearestStore(c.addr, config.GetString("service")); err != nil {
 			handle(err, "Internal Error", 1) // will exit
 			return nil
 		}
-		c.dstore = s
-		return s
+		return c.dstore
 	}
 	return c.dstore
 }
@@ -172,9 +167,4 @@ func (b *cliBuilder) newCommand(use, short string, c base.Runner) *basecmd {
 	base := newCommand(use, short, c)
 	base.addr = b.addr
 	return base
-}
-
-func configAddr() *obj.Address {
-	a := config.Get("address").(obj.Address)
-	return &a
 }

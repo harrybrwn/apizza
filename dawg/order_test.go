@@ -6,15 +6,13 @@ import (
 )
 
 func TestGetOrderPrice(t *testing.T) {
-	var err error
 	o := Order{}
-	if _, err = getOrderPrice(o); err == nil {
+	if _, err := getOrderPrice(o); err == nil {
 		t.Error("Should have returned an error")
 	}
 	order := Order{
-		LanguageCode:  DefaultLang,
-		ServiceMethod: "Delivery",
-		StoreID:       "4336",
+		LanguageCode: DefaultLang, ServiceMethod: "Delivery",
+		StoreID: "4336", Payments: []Payment{Payment{}}, OrderID: "",
 		Products: []*Product{
 			&Product{
 				Code: "12SCREEN",
@@ -25,8 +23,6 @@ func TestGetOrderPrice(t *testing.T) {
 				Qty: 1,
 			},
 		},
-		Payments: []Payment{Payment{}},
-		OrderID:  "",
 		Address: &StreetAddr{
 			StreetNum:  "1600",
 			StreetName: "Pennsylvania Ave.",
@@ -47,7 +43,6 @@ func TestGetOrderPrice(t *testing.T) {
 	if err = order.PlaceOrder(); err == nil {
 		t.Error("expected error")
 	}
-
 	order.StoreID = "" // should cause dominos to reject the order and send an error
 	_, err = getOrderPrice(order)
 	if err == nil {
@@ -56,30 +51,17 @@ func TestGetOrderPrice(t *testing.T) {
 }
 
 func TestNewOrder(t *testing.T) {
-	addr := &StreetAddr{
-		StreetNum:  "1600",
-		StreetName: "Pennsylvania Ave.",
-		CityName:   "Washington",
-		State:      "DC",
-		Zipcode:    "20500",
-		AddrType:   "House",
-	}
-	s, err := NearestStore(addr, "Carryout")
+	s, err := NearestStore(testAddress(), "Carryout")
 	if err != nil {
 		t.Error(err)
 	}
-	if s == nil {
-		t.Error("store is <nil>")
-	}
-	_, err = s.GetProduct("S_PIZZA")
-	if err == nil {
+	if _, err = s.GetProduct("S_PIZZA"); err == nil {
 		t.Error("should have returned an error")
 	}
 	p, err := s.GetProduct("2LDCOKE")
 	if err != nil {
 		t.Error(err)
 	}
-
 	o := s.NewOrder()
 	if o == nil {
 		t.Error("NewOrder should not be nil")
@@ -120,7 +102,6 @@ func TestNewOrder(t *testing.T) {
 }
 
 func TestOrder_Err(t *testing.T) {
-	// store, err := NearestStore(testAddress(), "Delivery")
 	addr := testAddress()
 	addr.Street = ""
 	store, err := NearestStore(addr, "Delivery")
@@ -128,13 +109,11 @@ func TestOrder_Err(t *testing.T) {
 		t.Error(err)
 	}
 	o := store.NewOrder()
-
 	p, err := store.GetProduct("2LDCOKE")
 	if err != nil {
 		t.Error(err)
 	}
 	o.AddProduct(p)
-
 	price, err := o.Price()
 	if err == nil {
 		t.Error(err)
@@ -162,16 +141,12 @@ func TestRemoveProduct(t *testing.T) {
 		}
 		order.AddProduct(p)
 	}
-
-	err = order.RemoveProduct("12SCREEN")
-	if err != nil {
+	if err = order.RemoveProduct("12SCREEN"); err != nil {
 		t.Error(err)
 	}
-	err = order.RemoveProduct("B2PCLAVA")
-	if err != nil {
+	if err = order.RemoveProduct("B2PCLAVA"); err != nil {
 		t.Error(err)
 	}
-
 	for _, p := range order.Products {
 		if p.Code == "12SCREEN" || p.Code == "B2PCLAVA" {
 			t.Error("should have been removed")

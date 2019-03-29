@@ -16,7 +16,6 @@ import (
 func TestRunner(t *testing.T) {
 	r := tests.NewRunner(t, setupTests, teardownTests)
 	b := newBuilder()
-
 	r.AddTest(
 		dummyCheck,
 		base.WithCmds(testOrderNew, b.newCartCmd(), b.newAddOrderCmd()),
@@ -76,9 +75,7 @@ func dummyCheck(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	if string(data) != "this is some test data" {
-		t.Error("database is broken. go check apizza/pkg/cache tests")
-	}
+	tests.Compare(t, string(data), "this is some test data")
 	if cfg.Name != "joe" || cfg.Email != "nojoe@mail.com" {
 		t.Error("test data is not correct")
 	}
@@ -91,15 +88,11 @@ func withDummyDB(fn func(*testing.T)) func(*testing.T) {
 	return func(t *testing.T) {
 		newDatabase, err := cache.GetDB(tests.NamedTempFile("testdata", "testing_dummyDB.db"))
 		check(err, "dummy database")
-		err = newDatabase.Put("test", []byte("this is a testvalue"))
-		check(err, "db.Put")
-
 		oldDatabase := db
 		db = newDatabase
 		defer func() {
 			db = oldDatabase
-			check(newDatabase.Close(), "deleting dummy database")
-			os.Remove(newDatabase.Path()) // ignoring errors because it may already be gone
+			newDatabase.Destroy()
 		}()
 		fn(t)
 	}
@@ -115,21 +108,14 @@ func setupTests() {
 	config.SetNonFileConfig(cfg) // don't want it to over ride the file on disk
 	raw := []byte(`
 {
-	"name":"joe",
-	"email":"nojoe@mail.com",
+	"name":"joe","email":"nojoe@mail.com",
 	"address":{
 		"street":"1600 Pennsylvania Ave NW",
 		"cityName":"Washington DC",
-		"state":"",
-		"zipcode":"20500"
+		"state":"","zipcode":"20500"
 	},
-	"card":{
-		"number":"",
-		"expiration":"",
-		"cvv":""
-	},
-	"service":"Carryout"
-}`)
+	"card":{"number":"","expiration":"","cvv":""},
+	"service":"Carryout"}`)
 	check(json.Unmarshal(raw, cfg), "json")
 }
 

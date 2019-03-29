@@ -16,22 +16,18 @@ func TestURLParams(t *testing.T) {
 	}
 	p := dawg.Params{"a": "what", "b": 7, "c": false}
 	enc := p.Encode()
-
 	func() {
 		for _, expec := range expected {
-			// exit the closure if one of the possible encodings is found
 			if enc == expec {
 				return
 			}
 		}
 		t.Error("bad url encoding")
 	}()
-
 	p = dawg.Params{"byteobj": []byte("data")}
 	if p.Encode() != "byteobj=data" {
 		t.Error("bad encoding for bytes")
 	}
-
 	t.Run("bad Param type", func(t *testing.T) {
 		defer func() {
 			if r := recover(); r == nil {
@@ -42,7 +38,6 @@ func TestURLParams(t *testing.T) {
 		p = dawg.Params{"struct": test{"no"}}
 		p.Encode()
 	})
-
 	p = nil
 	enc = p.Encode()
 	if enc != "" {

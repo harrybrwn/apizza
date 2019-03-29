@@ -61,12 +61,10 @@ func TestNetworking_Err(t *testing.T) {
 	if err == nil {
 		t.Error("expected error")
 	}
-
 	_, err = get("/invalid path", nil)
 	if err == nil {
 		t.Error("expected error")
 	}
-
 	b, err := post("/invalid path", make([]byte, 1))
 	if len(b) != 0 {
 		t.Error("exepcted zero length response")
@@ -74,7 +72,6 @@ func TestNetworking_Err(t *testing.T) {
 	if err == nil {
 		t.Error("expected error")
 	}
-
 	_, err = post("invalid path", nil)
 	if err == nil {
 		t.Error("expected error")
@@ -83,7 +80,6 @@ func TestNetworking_Err(t *testing.T) {
 	if err == nil {
 		t.Error("expected error")
 	}
-
 	original := cli
 	cli = &http.Client{
 		Transport: &http.Transport{
@@ -99,7 +95,6 @@ func TestNetworking_Err(t *testing.T) {
 	if resp != nil {
 		t.Error("should not have gotten any responce data")
 	}
-
 	b, err = post("/invalid path", make([]byte, 1))
 	if err == nil {
 		t.Error("expected error")
@@ -107,9 +102,7 @@ func TestNetworking_Err(t *testing.T) {
 	if b != nil {
 		t.Error("exepcted zero length response")
 	}
-
 	cli = original
-
 }
 
 func _TestDominosErrors(t *testing.T) {
@@ -117,7 +110,6 @@ func _TestDominosErrors(t *testing.T) {
 	order := &Order{
 		LanguageCode:  "en",
 		ServiceMethod: "Delivery",
-		// ServiceMethod: "",
 		Products: []*Product{
 			&Product{
 				Code: "12SCREEN",
@@ -164,18 +156,13 @@ func TestDominosErrorFailure(t *testing.T) {
 	e := dominosErr([]byte(`
 {
 	"Status":-1,
-	"StatusItems": [
-		{"Code":"Failure","Message":"test msg"}
-	],
-	"Order": {
-		"Status": -1,
+	"StatusItems": [{"Code":"Failure","Message":"test msg"}],
+	"Order": {"Status": -1,
 		"StatusItems": [
 			{"Code":"Failure","Message":"test order msg"},
 			{"Code":"SomeOtherCode"},
 			{"PulseCode": 1, "PulseText": "this isn't the real error format"}
-		]
-	}
-}`))
+		]}}`))
 	if e == nil {
 		t.Error("dominos error should not be nil")
 	}

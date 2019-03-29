@@ -8,22 +8,18 @@ import (
 func testMenuRun(t *testing.T) {
 	c := newBuilder().newMenuCmd().(*menuCmd)
 	c.SetOutput(&bytes.Buffer{})
-
 	if err := c.Run(c.Cmd(), []string{}); err != nil {
 		t.Error(err)
 	}
-
 	c.item = "not a thing"
 	if err := c.Run(c.Cmd(), []string{}); err == nil {
 		t.Error("should raise error")
 	}
-
 	c.dstore = nil
 	c.item = "10SCREEN"
 	if err := c.Run(c.Cmd(), []string{}); err != nil {
 		t.Error(err)
 	}
-
 	c.item = ""
 	c.toppings = true
 	if err := c.Run(c.Cmd(), []string{}); err != nil {
@@ -38,9 +34,7 @@ func testFindProduct(t *testing.T) {
 	if err := db.UpdateTS("menu", c); err != nil {
 		t.Error(err)
 	}
-
 	c.all = true
-
 	c.printMenu()
 	if len(buf.Bytes()) < 10000 {
 		t.Error("the menu seems to be a bit short in length")

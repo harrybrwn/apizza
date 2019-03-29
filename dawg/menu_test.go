@@ -33,14 +33,12 @@ func TestMakeProduct(t *testing.T) {
 		}()
 		p.AddTopping("C", ToppingLeft, 1.6)
 	})
-
 	p, err = store.GetProduct("MARBRWNE")
 	if err != nil {
 		t.Error(err)
 	}
 	p.AddTopping("C", ToppingLeft, 1.0)
 	p.AddTopping("X", ToppingRight, 1.5)
-
 	m, err := store.Menu()
 	if err != nil {
 		t.Error(err)
@@ -59,7 +57,6 @@ func TestMakeProduct(t *testing.T) {
 	if !p.Prepared() {
 		t.Error("should have been false. got true")
 	}
-
 	p = &Product{}
 	if p.Price() != -1 {
 		t.Error("expected -1")
