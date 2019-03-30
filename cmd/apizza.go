@@ -28,6 +28,7 @@ type apizzaCmd struct {
 	service    string
 	storeID    string
 	clearCache bool
+	resetMenu  bool
 }
 
 func (c *apizzaCmd) Run(cmd *cobra.Command, args []string) (err error) {
@@ -48,6 +49,9 @@ func (c *apizzaCmd) Run(cmd *cobra.Command, args []string) (err error) {
 		c.Printf("removing %s\n", db.Path())
 		return os.Remove(db.Path())
 	}
+	if c.resetMenu {
+		return nil
+	}
 	return cmd.Usage()
 }
 
@@ -59,7 +63,12 @@ func newApizzaCmd() base.CliCommand {
 	c := &apizzaCmd{address: "", service: "", clearCache: false}
 	c.basecmd = newCommand("apizza", "Dominos pizza from the command line.", c)
 
-	// c.cmd.PersistentFlags().StringVar(&c.address, "address", c.address, "use a specific address")
+	c.Cmd().PersistentPreRunE = c.preRun
+
+	c.Flags().BoolVar(&c.clearCache, "clear-cache", false, "delete the database")
+	c.Cmd().PersistentFlags().BoolVar(&c.resetMenu, "delete-menu", false, "delete the menu stored in cache")
+
+	c.Cmd().PersistentFlags().StringVar(&c.address, "address", c.address, "use a specific address")
 	c.Cmd().PersistentFlags().StringVar(&c.service, "service", c.service, "select a Dominos service, either 'Delivery' or 'Carryout'")
 
 	c.Cmd().PersistentFlags().BoolVar(&test, "test", false, "testing flag (for development)")
@@ -67,4 +76,13 @@ func newApizzaCmd() base.CliCommand {
 	c.Cmd().PersistentFlags().MarkHidden("test")
 	c.Cmd().PersistentFlags().MarkHidden("reset")
 	return c
+}
+
+func (c *apizzaCmd) preRun(cmd *cobra.Command, args []string) error {
+	if c.resetMenu {
+		if err := db.Delete("menu"); err != nil {
+			return err
+		}
+	}
+	return nil
 }

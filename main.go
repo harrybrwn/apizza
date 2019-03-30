@@ -15,9 +15,26 @@
 package main
 
 import (
+	"flag"
+	"log"
+	"os"
+	"runtime/pprof"
+
 	"github.com/harrybrwn/apizza/cmd"
 )
 
+var profile = flag.String("profile", "", "")
+
 func main() {
+	if len(*profile) > 0 {
+		f, err := os.Create(*profile)
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer f.Close()
+		pprof.StartCPUProfile(f)
+		defer pprof.StopCPUProfile()
+	}
+
 	cmd.Execute()
 }

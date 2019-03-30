@@ -9,6 +9,7 @@ TODO
 test
 test-coverage
 coverage.html
+*.prof
 
 # Other
 .vscode

@@ -102,6 +102,9 @@ func (c *basecmd) getCachedMenu() error {
 	if c.menu == nil {
 		c.menu = new(dawg.Menu)
 		raw, err := db.Get("menu")
+		if raw == nil {
+			return c.cacheNewMenu()
+		}
 		if err != nil {
 			return err
 		}
