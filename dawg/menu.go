@@ -119,11 +119,35 @@ func (p *Product) Prepared() bool {
 // the (*Store).Menu() method.
 type Menu struct {
 	ID             string
-	Products       map[string]interface{} `json:"Products"`
-	Variants       map[string]interface{} `json:"Variants"`
-	Toppings       map[string]interface{} `json:"Toppings"`
-	Categorization map[string]interface{} `json:"Categorization"`
-	Preconfigured  map[string]interface{} `json:"PreconfiguredProducts"`
+	Categorization struct {
+		Food          MenuCategory
+		Coupons       MenuCategory
+		Preconfigured MenuCategory `json:"PreconfiguredProducts"`
+	}
+	Products      map[string]interface{}
+	Variants      map[string]interface{}
+	Toppings      map[string]interface{}
+	Preconfigured map[string]interface{} `json:"PreconfiguredProducts"`
+}
+
+// MenuCategory is a category on the dominos menu.
+type MenuCategory struct {
+	Categories  []MenuCategory
+	Products    []string
+	Name        string
+	Code        string
+	Description string
+}
+
+// HasItems will return true if the category has items and false if only has
+// sub-categories.
+func (m MenuCategory) HasItems() bool {
+	return len(m.Products) > 0 && len(m.Categories) == 0
+}
+
+// IsEmpty returns true when the category has nothing in it.
+func (m MenuCategory) IsEmpty() bool {
+	return len(m.Products) == 0 && len(m.Categories) == 0
 }
 
 // GetProduct find the menu item given a product code.

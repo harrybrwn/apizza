@@ -28,11 +28,12 @@ import (
 
 type menuCmd struct {
 	*basecmd
-	all           bool
-	toppings      bool
-	preconfigured bool
-	categories    bool
-	item          string
+	all            bool
+	toppings       bool
+	preconfigured  bool
+	showCategories bool
+	item           string
+	category       string
 }
 
 func (c *menuCmd) Run(cmd *cobra.Command, args []string) error {
@@ -40,7 +41,7 @@ func (c *menuCmd) Run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	if len(c.item) > 0 {
+	if c.item != "" {
 		prod, err := c.findProduct(c.item)
 		if err != nil {
 			return err
@@ -53,60 +54,75 @@ func (c *menuCmd) Run(cmd *cobra.Command, args []string) error {
 		c.printToppings()
 		return nil
 	}
-	c.printMenu()
-	return nil
+
+	return c.printMenu(c.category) // still works with an empty string
 }
 
 func (b *cliBuilder) newMenuCmd() base.CliCommand {
-	c := &menuCmd{all: false, toppings: false, preconfigured: false, categories: false}
+	c := &menuCmd{
+		all: false, toppings: false,
+		preconfigured: false, showCategories: false}
 	c.basecmd = b.newCommand("menu", "Get the Dominos menu.", c)
+
+	c.Flags().StringVarP(&c.item, "item", "i", "", "show info on the menu item given")
+	c.Flags().StringVarP(&c.category, "category", "c", "", "show one category on the menu")
 
 	c.Flags().BoolVarP(&c.all, "all", "a", c.all, "show the entire menu")
 	c.Flags().BoolVarP(&c.toppings, "toppings", "t", c.toppings, "print out the toppings on the menu")
 	c.Flags().BoolVarP(&c.preconfigured, "preconfigured",
 		"p", c.preconfigured, "show the pre-configured products on the dominos menu")
-	c.Flags().StringVarP(&c.item, "item", "i", "", "show info on the menu item given")
-	c.Flags().BoolVarP(&c.categories, "categories", "c", c.categories, "print categories")
+	c.Flags().BoolVar(&c.showCategories, "show-categories", c.showCategories, "print categories")
 	return c
 }
 
-func (c *menuCmd) printMenu() {
-	var f func(map[string]interface{}, string)
+func (c *menuCmd) printMenu(categoryName string) error {
+	var printfunc func(dawg.MenuCategory, int) error
 
-	f = func(m map[string]interface{}, spacer string) {
-		cats := m["Categories"].([]interface{})
-		prods := m["Products"].([]interface{})
-
-		// if there is nothing in that category, dont print the code name
-		if len(cats) != 0 || len(prods) != 0 {
-			c.Printf("%s%v\n", spacer, m["Code"])
+	printfunc = func(cat dawg.MenuCategory, depth int) error {
+		if cat.IsEmpty() {
+			return nil
 		}
-		if len(cats) > 0 { // the recursive part
-			for _, c := range cats {
-				f(c.(map[string]interface{}), spacer+"  ")
-			}
-		} else if len(prods) > 0 && !c.categories { // the printing part
-			for _, p := range prods {
-				product, err := c.findProduct(p.(string))
+		c.Printf("%s%s\n", strings.Repeat("  ", depth), cat.Name)
+
+		if cat.HasItems() {
+			for _, p := range cat.Products {
+				product, err := c.findProduct(p)
 				if err != nil {
-					continue
+					// continue
+					panic(err)
 				}
-				c.printMenuItem(product, spacer)
+				c.printMenuItem(product, strings.Repeat("  ", depth))
 			}
-			c.Printf("%s", "\n")
+		} else {
+			for _, category := range cat.Categories {
+				printfunc(category, depth+1)
+			}
 		}
-	}
-	keys := []string{"Food"}
-	if c.preconfigured {
-		keys = []string{"PreconfiguredProducts"}
-	}
-	if c.all {
-		keys = []string{"PreconfiguredProducts", "Food"}
+		return nil
 	}
 
-	for _, key := range keys {
-		f(c.menu.Categorization[key].(map[string]interface{}), "")
+	if len(categoryName) > 0 {
+		for _, cat := range c.menu.Categorization.Food.Categories {
+			if categoryName == cat.Name || categoryName == cat.Code {
+				return printfunc(cat, 0)
+			}
+		}
+		return fmt.Errorf("could not find %s", categoryName)
+	} else if c.showCategories {
+		for _, cat := range c.menu.Categorization.Food.Categories {
+			if cat.Name != "" {
+				fmt.Println(cat.Name)
+			}
+		}
+		return nil
 	}
+
+	if c.preconfigured {
+		return printfunc(c.menu.Categorization.Preconfigured, 0)
+	} else if c.all {
+		printfunc(c.menu.Categorization.Preconfigured, 0)
+	}
+	return printfunc(c.menu.Categorization.Food, 0)
 }
 
 func (c *menuCmd) printMenuItem(product map[string]interface{}, spacer string) {
@@ -156,6 +172,7 @@ func (c *basecmd) findProduct(key string) (map[string]interface{}, error) {
 		}
 	}
 	var product map[string]interface{}
+
 	if prod, ok := c.menu.Products[key]; ok {
 		product = prod.(map[string]interface{})
 	} else if prod, ok := c.menu.Variants[key]; ok {

@@ -35,7 +35,7 @@ func testFindProduct(t *testing.T) {
 		t.Error(err)
 	}
 	c.all = true
-	c.printMenu()
+	c.printMenu("")
 	if len(buf.Bytes()) < 10000 {
 		t.Error("the menu seems to be a bit short in length")
 	}

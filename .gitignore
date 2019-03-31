@@ -16,3 +16,4 @@ coverage.html
 *.out
 *.exe
 *.png
+/script/
