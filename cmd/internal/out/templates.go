@@ -23,3 +23,5 @@ var defaultOrderTmpl = `{{ .OrderName }}
 
 var cartOrderTmpl = `  {{ .OrderName }} - {{ range .Products }} {{.Code}}, {{end}}
 `
+
+var menuCategoryTmpl = ``

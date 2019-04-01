@@ -55,7 +55,7 @@ func (c *menuCmd) Run(cmd *cobra.Command, args []string) error {
 		return nil
 	}
 
-	return c.printMenu(c.category) // still works with an empty string
+	return c.printMenu(strings.ToLower(c.category)) // still works with an empty string
 }
 
 func (b *cliBuilder) newMenuCmd() base.CliCommand {
@@ -86,12 +86,7 @@ func (c *menuCmd) printMenu(categoryName string) error {
 
 		if cat.HasItems() {
 			for _, p := range cat.Products {
-				product, err := c.findProduct(p)
-				if err != nil {
-					// continue
-					panic(err)
-				}
-				c.printMenuItem(product, strings.Repeat("  ", depth))
+				c.printCategory(p, depth)
 			}
 		} else {
 			for _, category := range cat.Categories {
@@ -101,28 +96,43 @@ func (c *menuCmd) printMenu(categoryName string) error {
 		return nil
 	}
 
+	var allCategories = c.menu.Categorization.Food.Categories
+
+	if c.preconfigured {
+		allCategories = c.menu.Categorization.Preconfigured.Categories
+	} else if c.all {
+		allCategories = append(allCategories, c.menu.Categorization.Preconfigured.Categories...)
+	}
+
 	if len(categoryName) > 0 {
-		for _, cat := range c.menu.Categorization.Food.Categories {
-			if categoryName == cat.Name || categoryName == cat.Code {
+		for _, cat := range allCategories {
+			if categoryName == strings.ToLower(cat.Name) || categoryName == strings.ToLower(cat.Code) {
 				return printfunc(cat, 0)
 			}
 		}
 		return fmt.Errorf("could not find %s", categoryName)
 	} else if c.showCategories {
-		for _, cat := range c.menu.Categorization.Food.Categories {
+		for _, cat := range allCategories {
 			if cat.Name != "" {
-				fmt.Println(cat.Name)
+				fmt.Println(strings.ToLower(cat.Name))
 			}
 		}
 		return nil
 	}
 
-	if c.preconfigured {
-		return printfunc(c.menu.Categorization.Preconfigured, 0)
-	} else if c.all {
-		printfunc(c.menu.Categorization.Preconfigured, 0)
+	for _, c := range allCategories {
+		printfunc(c, 0)
 	}
-	return printfunc(c.menu.Categorization.Food, 0)
+	return nil
+}
+
+func (c *menuCmd) printCategory(code string, indentLen int) {
+	product := c.menu.Products[code].(map[string]interface{})
+
+	c.Printf("%s[%s] %s\n", strings.Repeat("  ", indentLen), code, product["Name"])
+	for _, variant := range product["Variants"].([]interface{}) {
+		c.Printf("%s%s\n", strings.Repeat("   ", indentLen+1), variant)
+	}
 }
 
 func (c *menuCmd) printMenuItem(product map[string]interface{}, spacer string) {
@@ -140,6 +150,7 @@ func (c *menuCmd) printMenuItem(product map[string]interface{}, spacer string) {
 		// if product has no varients, it is a preconfigured product
 		c.Printf("%s  \"%s\"\n%s - %s", spacer, product["Name"], spacer+"    ", product["Code"])
 	}
+	c.Println("")
 }
 
 func iteminfo(prod map[string]interface{}, output io.Writer) {
