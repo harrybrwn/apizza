@@ -27,7 +27,7 @@ type Order struct {
 
 	// either
 	ServiceMethod string                 `json:"ServiceMethod"`
-	Products      []*Product             `json:"Products"`
+	Products      []*OrderProduct        `json:"Products"`
 	StoreID       string                 `json:"StoreID"`
 	OrderID       string                 `json:"OrderID"`
 	Address       *StreetAddr            `json:"Address"`
@@ -62,7 +62,7 @@ func (o *Order) Price() (float64, error) {
 }
 
 // AddProduct adds a product to the Order from a Product Object
-func (o *Order) AddProduct(item *Product) {
+func (o *Order) AddProduct(item *OrderProduct) {
 	o.Products = append(o.Products, item)
 }
 
@@ -70,7 +70,7 @@ func (o *Order) AddProduct(item *Product) {
 func (o *Order) RemoveProduct(code string) error {
 	var (
 		found     = false
-		tempProds = []*Product{}
+		tempProds = []*OrderProduct{}
 	)
 
 	for _, p := range o.Products {

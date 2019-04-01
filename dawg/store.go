@@ -120,7 +120,7 @@ func (s *Store) NewOrder() *Order {
 		LanguageCode:  DefaultLang,
 		ServiceMethod: s.userService,
 		StoreID:       s.ID,
-		Products:      []*Product{},
+		Products:      []*OrderProduct{},
 		Address:       StreetAddrFromAddress(s.userAddress),
 		Payments:      []Payment{},
 	}

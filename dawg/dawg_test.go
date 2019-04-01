@@ -23,7 +23,7 @@ func TestAddressTable(t *testing.T) {
 		expected StreetAddr
 	}{
 		{
-			raw:`1600 Pennsylvania Ave. Washington, DC 20500`,
+			raw: `1600 Pennsylvania Ave. Washington, DC 20500`,
 			expected: StreetAddr{StreetNum: "1600", StreetName: "Pennsylvania Ave.",
 				Street: "1600 Pennsylvania Ave.", CityName: "Washington",
 				State: "DC", Zipcode: "20500", AddrType: "House"},
@@ -110,8 +110,8 @@ func _TestDominosErrors(t *testing.T) {
 	order := &Order{
 		LanguageCode:  "en",
 		ServiceMethod: "Delivery",
-		Products: []*Product{
-			&Product{
+		Products: []*OrderProduct{
+			&OrderProduct{
 				Code: "12SCREEN",
 				Options: map[string]interface{}{
 					"C": map[string]string{"1/1": "1"},

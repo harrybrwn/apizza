@@ -57,7 +57,7 @@ func TestMakeProduct(t *testing.T) {
 	if !p.Prepared() {
 		t.Error("should have been false. got true")
 	}
-	p = &Product{}
+	p = &OrderProduct{}
 	if p.Price() != -1 {
 		t.Error("expected -1")
 	}

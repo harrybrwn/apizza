@@ -13,8 +13,8 @@ func TestGetOrderPrice(t *testing.T) {
 	order := Order{
 		LanguageCode: DefaultLang, ServiceMethod: "Delivery",
 		StoreID: "4336", Payments: []Payment{Payment{}}, OrderID: "",
-		Products: []*Product{
-			&Product{
+		Products: []*OrderProduct{
+			&OrderProduct{
 				Code: "12SCREEN",
 				Options: map[string]interface{}{
 					"C": map[string]string{"1/1": "1"},
