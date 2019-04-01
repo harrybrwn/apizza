@@ -14,10 +14,18 @@ type Payment struct {
 	CVV        string `json:"SecurityCode"`
 }
 
-// The Order struct is the main work horse of the api wrapper. When an Order
-// is sent to dominos, it is converted to json and sent as a post requests.
+// The Order struct is the main work horse of the api wrapper. The Order struct
+// is what will end up being sent to dominos as a json object.
+//
+// It is suggensted that the order object be constructed from the Store.NewOrder
+// method.
 type Order struct {
-	LanguageCode  string                 `json:"LanguageCode"`
+	// LanguageCode-Payments are the fields that are sent to dominos.
+
+	// LanguageCode is an ISO international language code.
+	LanguageCode string `json:"LanguageCode"`
+
+	// either
 	ServiceMethod string                 `json:"ServiceMethod"`
 	Products      []*Product             `json:"Products"`
 	StoreID       string                 `json:"StoreID"`
@@ -27,8 +35,10 @@ type Order struct {
 	FirstName     string                 `json:"FirstName"`
 	LastName      string                 `json:"LastName"`
 	Payments      []Payment              `json:"Payments"`
-	OrderName     string                 `json:"-"`
-	price         float64
+
+	// OrderName is not a field that is sent to dominos
+	OrderName string `json:"-"`
+	price     float64
 }
 
 // PlaceOrder is the method that sends the final order to dominos

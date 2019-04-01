@@ -22,19 +22,19 @@ const (
 	ToppingRight = "2/2"
 )
 
-// Product represents a product on the dominos menu.
-type Product struct {
+// OrderProduct represents a product on the dominos menu.
+type OrderProduct struct {
 	Code    string                 `json:"Code"`
+	Name    string                 `json:"Name"`
 	IsNew   bool                   `json:"isNew"`
 	Qty     int                    `json:"Qty"`
 	Options map[string]interface{} `json:"Options"`
-	Name    string                 `json:"Name"`
 	Tags    map[string]interface{} `json:"-"`
 	other   map[string]interface{}
 }
 
-func makeProduct(data map[string]interface{}) (*Product, error) {
-	p := &Product{Qty: 1}
+func makeProduct(data map[string]interface{}) (*OrderProduct, error) {
+	p := &OrderProduct{Qty: 1}
 	var md mapstructure.Metadata
 	config := &mapstructure.DecoderConfig{
 		Metadata: &md,
@@ -59,7 +59,7 @@ func makeProduct(data map[string]interface{}) (*Product, error) {
 // parameter is for specifieing which side of the topping should be on for
 // pizza. The 'amount' parameter is 2.0, 1.5, 1.0, or 0.5 and gives the amount
 // of topping should be given.
-func (p *Product) AddTopping(code, coverage string, amount float64) {
+func (p *OrderProduct) AddTopping(code, coverage string, amount float64) {
 	ok := amount == 2.0 || amount == 1.5 || amount == 1.0 || amount == 0.5
 	if !ok {
 		panic("amount must be 2.0, 1.5, 1.0, or 0.5")
@@ -85,7 +85,7 @@ func (p *Product) AddTopping(code, coverage string, amount float64) {
 
 // Size gets the size code of the product. Defaults to -1 if the size
 // cannot be found.
-func (p *Product) Size() int64 {
+func (p *OrderProduct) Size() int64 {
 	if v, ok := p.other["SizeCode"]; ok {
 		if rt, err := strconv.ParseInt(v.(string), 10, 64); err == nil {
 			return rt
@@ -96,7 +96,7 @@ func (p *Product) Size() int64 {
 
 // Price gets the price of the individual product and will return
 // -1.0 if the price is not found.
-func (p *Product) Price() float64 {
+func (p *OrderProduct) Price() float64 {
 	if v, ok := p.other["Price"]; ok {
 		if rt, err := strconv.ParseFloat(v.(string), 64); err == nil {
 			return rt
@@ -107,7 +107,7 @@ func (p *Product) Price() float64 {
 
 // Prepared returns a boolean representing whether or not the
 // product is prepared. Default is false.
-func (p *Product) Prepared() bool {
+func (p *OrderProduct) Prepared() bool {
 	v, ok := p.other["Prepared"]
 	if ok {
 		return v.(bool)
@@ -151,7 +151,7 @@ func (m MenuCategory) IsEmpty() bool {
 }
 
 // GetProduct find the menu item given a product code.
-func (m *Menu) GetProduct(code string) (p *Product, err error) {
+func (m *Menu) GetProduct(code string) (p *OrderProduct, err error) {
 	if data, ok := m.Variants[code]; ok {
 		p, err = makeProduct(data.(map[string]interface{}))
 	} else if data, ok := m.Preconfigured[code]; ok {

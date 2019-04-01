@@ -23,14 +23,14 @@ func TestAddressTable(t *testing.T) {
 		expected StreetAddr
 	}{
 		{
-			`1600 Pennsylvania Ave. Washington, DC 20500`,
-			StreetAddr{StreetNum: "1600", StreetName: "Pennsylvania Ave.",
+			raw:`1600 Pennsylvania Ave. Washington, DC 20500`,
+			expected: StreetAddr{StreetNum: "1600", StreetName: "Pennsylvania Ave.",
 				Street: "1600 Pennsylvania Ave.", CityName: "Washington",
 				State: "DC", Zipcode: "20500", AddrType: "House"},
 		},
 		{
-			`378 James St. Chicago, IL 60621`,
-			StreetAddr{StreetNum: "378", StreetName: "James St.",
+			raw: `378 James St. Chicago, IL 60621`,
+			expected: StreetAddr{StreetNum: "378", StreetName: "James St.",
 				Street: "378 James St.", CityName: "Chicago", State: "IL",
 				Zipcode: "60621"},
 		},

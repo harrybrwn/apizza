@@ -127,7 +127,7 @@ func (s *Store) NewOrder() *Order {
 }
 
 // GetProduct finds the menu item that matchs the given product code.
-func (s *Store) GetProduct(code string) (*Product, error) {
+func (s *Store) GetProduct(code string) (*OrderProduct, error) {
 	// get a menu and find the map that matches the Code
 	menu, err := s.Menu()
 	if err != nil {
