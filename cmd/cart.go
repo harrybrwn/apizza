@@ -68,7 +68,7 @@ func (c *cartCmd) Run(cmd *cobra.Command, args []string) (err error) {
 			return err
 		}
 		for _, newP := range c.add {
-			p, err := c.menu.GetProduct(newP)
+			p, err := c.menu.GetVariant(newP)
 			if err != nil {
 				return err
 			}
