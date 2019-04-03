@@ -15,8 +15,11 @@
 package cmd
 
 import (
+	"bytes"
 	"fmt"
 	"io"
+	"os"
+	"runtime"
 	"strings"
 	"unicode/utf8"
 
@@ -42,9 +45,9 @@ func (c *menuCmd) Run(cmd *cobra.Command, args []string) error {
 	}
 
 	if c.item != "" {
-		prod, err := c.findProduct(c.item)
-		if err != nil {
-			return err
+		prod := c.menu.FindItem(c.item)
+		if prod == nil {
+			return fmt.Errorf("cannot find %s", c.item)
 		}
 		iteminfo(prod, cmd.OutOrStdout())
 		return nil
@@ -55,6 +58,7 @@ func (c *menuCmd) Run(cmd *cobra.Command, args []string) error {
 		return nil
 	}
 
+	// print menu handles most of the menu command's flags
 	return c.printMenu(strings.ToLower(c.category)) // still works with an empty string
 }
 
@@ -86,7 +90,7 @@ func (c *menuCmd) printMenu(categoryName string) error {
 
 		if cat.HasItems() {
 			for _, p := range cat.Products {
-				c.printCategory(p, depth)
+				c.printCategory(p, depth+1)
 			}
 		} else {
 			for _, category := range cat.Categories {
@@ -114,7 +118,7 @@ func (c *menuCmd) printMenu(categoryName string) error {
 	} else if c.showCategories {
 		for _, cat := range allCategories {
 			if cat.Name != "" {
-				fmt.Println(strings.ToLower(cat.Name))
+				c.Println(strings.ToLower(cat.Name))
 			}
 		}
 		return nil
@@ -127,15 +131,29 @@ func (c *menuCmd) printMenu(categoryName string) error {
 }
 
 func (c *menuCmd) printCategory(code string, indentLen int) {
-	product := c.menu.Products[code].(map[string]interface{})
+	item := c.menu.FindItem(code)
 
-	c.Printf("%s[%s] %s\n", strings.Repeat("  ", indentLen), code, product["Name"])
-	for _, variant := range product["Variants"].([]interface{}) {
-		c.Printf("%s%s\n", strings.Repeat("   ", indentLen+1), variant)
+	switch product := item.(type) {
+	case *dawg.Product:
+		c.Printf("%s[code:%s] %s\n", strings.Repeat("  ", indentLen),
+			item.ItemCode(), item.ItemName())
+		for _, variant := range product.Variants {
+			c.Printf("%s%s\n", strings.Repeat("  ", indentLen+1), variant)
+		}
+	case *dawg.PreConfiguredProduct:
+		c.Printf("%s%s - %s\n", strings.Repeat("  ", indentLen),
+			item.ItemCode(), item.ItemName())
+	default:
+		panic("dawg.Product and dawg.PreConfiguredProduct are the only catagories to be printed")
 	}
 }
 
+// deprecated and currently unused
 func (c *menuCmd) printMenuItem(product map[string]interface{}, spacer string) {
+
+	_, file, line, _ := runtime.Caller(1)
+	fmt.Fprintf(os.Stderr, "Dev Warning: printMenuItem is deprecated, called on %s:%d", file, line)
+
 	// if product has varients, print them
 	if varients, ok := product["Variants"].([]interface{}); ok {
 		c.Printf("%s  \"%s\" [%s]\n", spacer, product["Name"], product["Code"])
@@ -144,7 +162,7 @@ func (c *menuCmd) printMenuItem(product map[string]interface{}, spacer string) {
 		for _, v := range varients {
 			c.Println(spaces(strLen(spacer)+3), "-", v,
 				spaces(max-strLen(v.(string))),
-				c.menu.Variants[v.(string)].(map[string]interface{})["Name"])
+				c.menu.Variants[v.(string)].Name)
 		}
 	} else {
 		// if product has no varients, it is a preconfigured product
@@ -153,15 +171,53 @@ func (c *menuCmd) printMenuItem(product map[string]interface{}, spacer string) {
 	c.Println("")
 }
 
-func iteminfo(prod map[string]interface{}, output io.Writer) {
-	fmt.Fprintf(output, "%s [%s]\n", prod["Name"], prod["Code"])
-	fmt.Fprintf(output, "    %s: %v\n", "DefaultToppings", prod["Tags"].(map[string]interface{})["DefaultToppings"])
+func iteminfo(prod dawg.Item, w io.Writer) {
+	o := &bytes.Buffer{}
 
-	for k, v := range prod {
-		if k != "Name" && k != "Tags" && k != "ImageCode" {
-			fmt.Fprintf(output, "    %s: %v\n", k, v)
+	// fmt.Fprintf(o, "%s [%s]\n", prod.ItemName(), prod.ItemCode())
+	fmt.Fprintf(o, "%s ", prod.ItemName())
+
+	switch p := prod.(type) {
+	case *dawg.Variant:
+		fmt.Fprintf(o, "[%s] - (variant)\n", prod.ItemCode())
+		fmt.Fprintf(o, "  price: %s\n", p.Price)
+		prod := p.GetProduct()
+		if defTops, ok := p.Tags["DefaultToppings"]; ok {
+			// if prod != nil {
+			// 	if prod.DefaultToppings != defTops {
+			// 		fmt.Println("dev error in iteminfo:", "the default toppings in the variant are different from it's parent product.")
+			// 	}
+			// }
+			fmt.Fprintf(o, "  default toppings: %s", defTops)
 		}
+		if prod != nil {
+			fmt.Fprintf(o, "  parent: %s - %s", prod.ItemName(), prod.ItemCode())
+		}
+
+	case *dawg.PreConfiguredProduct:
+		fmt.Fprintf(o, "[%s] - (preconfigured product)\n", prod.ItemCode())
+		fmt.Fprintf(o, "  description: %s\n", p.Description)
+		fmt.Fprintf(o, "  size:        %s\n", p.Size)
+
+	case *dawg.Product:
+		fmt.Fprintf(o, "[%s] - (product category)\n", prod.ItemCode())
+		fmt.Fprintf(o, "  description: %s\n", p.Description)
+		fmt.Fprintf(o, "  avalable sides: %s\n", p.AvailableSides)
+		fmt.Fprintf(o, "  avalable toppings: %s\n", p.AvailableToppings)
 	}
+	if _, err := w.Write(o.Bytes()); err != nil {
+		panic(err)
+	}
+	// old version
+
+	// fmt.Fprintf(output, "%s [%s]\n", prod["Name"], prod["Code"])
+	// fmt.Fprintf(output, "    %s: %v\n", "DefaultToppings", prod["Tags"].(map[string]interface{})["DefaultToppings"])
+
+	// for k, v := range prod {
+	// 	if k != "Name" && k != "Tags" && k != "ImageCode" {
+	// 		fmt.Fprintf(output, "    %s: %v\n", k, v)
+	// 	}
+	// }
 }
 
 func (c *menuCmd) printToppings() {
@@ -176,27 +232,11 @@ func (c *menuCmd) printToppings() {
 	}
 }
 
-func (c *basecmd) findProduct(key string) (map[string]interface{}, error) {
-	if c.menu == nil {
-		if err := db.UpdateTS("menu", c); err != nil {
-			return nil, err
-		}
-	}
-	var product map[string]interface{}
-
-	if prod, ok := c.menu.Products[key]; ok {
-		product = prod.(map[string]interface{})
-	} else if prod, ok := c.menu.Variants[key]; ok {
-		product = prod.(map[string]interface{})
-	} else if prod, ok := c.menu.Preconfigured[key]; ok {
-		product = prod.(map[string]interface{})
-	} else {
-		return nil, fmt.Errorf("could not find %s", key)
-	}
-	return product, nil
-}
-
+// deprecated
 func (c *basecmd) product(code string) (*dawg.Product, error) {
+	_, file, line, _ := runtime.Caller(1)
+	fmt.Fprintf(os.Stderr, "Dev Warning: product is deprecated, called on %s:%d", file, line)
+
 	if c.menu == nil {
 		if err := db.UpdateTS("menu", c); err != nil {
 			return nil, err

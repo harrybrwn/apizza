@@ -19,13 +19,12 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/harrybrwn/apizza/cmd/internal/out"
-
 	"github.com/spf13/cobra"
 
 	"github.com/harrybrwn/apizza/cmd/internal/base"
 	"github.com/harrybrwn/apizza/cmd/internal/data"
 	"github.com/harrybrwn/apizza/cmd/internal/obj"
+	"github.com/harrybrwn/apizza/cmd/internal/out"
 	"github.com/harrybrwn/apizza/dawg"
 )
 
@@ -135,12 +134,15 @@ func (c *addOrderCmd) Run(cmd *cobra.Command, args []string) (err error) {
 
 	if len(c.products) > 0 {
 		for i, p := range c.products {
-			prod, err := c.store().GetProduct(p)
+			prod, err := c.store().GetVariant(p)
 			if err != nil {
 				return err
 			}
 			if i < len(c.toppings) {
-				prod.AddTopping(c.toppings[i], dawg.ToppingFull, 1.0)
+				err = prod.AddTopping(c.toppings[i], dawg.ToppingFull, "1.0")
+				if err != nil {
+					return err
+				}
 			}
 			order.AddProduct(prod)
 		}
