@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"fmt"
 )
 
 // NearestStore gets the dominos location closest to the given address.
@@ -179,4 +180,16 @@ func findNearbyStores(addr Address, service string) (*storeLocs, error) {
 		locs.Stores[i].userAddress, locs.Stores[i].userService = addr, service
 	}
 	return locs, dominosErr(b)
+}
+
+// storeErrWrapper and initStores are first drafts of concurrent store infrastructure
+type storeErrWrapper struct {
+	store *Store
+	e     error
+}
+
+func initStores(stores []*Store) {
+	for _, s := range stores {
+		fmt.Println(s)
+	}
 }

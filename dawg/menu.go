@@ -137,7 +137,7 @@ type Menu struct {
 	Products      map[string]*Product
 	Variants      map[string]*Variant
 	Toppings      map[string]interface{}
-	Preconfigured map[string]interface{} `json:"PreconfiguredProducts"`
+	Preconfigured map[string]*PreConfiguredProduct `json:"PreconfiguredProducts"`
 }
 
 // MenuCategory is a category on the dominos menu.
@@ -176,6 +176,22 @@ func (m *Menu) GetVariant(code string) (*Variant, error) {
 		return vr, nil
 	}
 	return nil, fmt.Errorf("could not find variant '%s'", code)
+}
+
+func (m *Menu) FindItem(code string) (itm Item) {
+	var (
+		ok bool
+		i  interface{}
+	)
+
+	if i, ok = m.Products[code]; ok {
+		return i.(*Product)
+	} else if i, ok = m.Preconfigured[code]; ok {
+		return i.(*PreConfiguredProduct)
+	} else if i, ok = m.Variants[code]; ok {
+		return i.(*Variant)
+	}
+	return nil
 }
 
 func newMenu(id string) (*Menu, error) {

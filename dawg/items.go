@@ -1,6 +1,7 @@
 package dawg
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 )
@@ -26,6 +27,9 @@ type Item interface {
 
 	// get the Code from the object
 	ItemCode() string
+
+	// get the name of an item
+	ItemName() string
 }
 
 // item has the common fields between Product and Varient.
@@ -41,6 +45,10 @@ type item struct {
 // ItemCode is a getter method for the Code field.
 func (im *item) ItemCode() string {
 	return im.Code
+}
+
+func (im *item) ItemName() string {
+	return im.Name
 }
 
 // Product is the structure representing a dominos product. The Product struct
@@ -235,6 +243,11 @@ func (pc *PreConfiguredProduct) ToOrderProduct() *OrderProduct { return nil }
 // Options returns a map of the Variant's options.
 func (pc *PreConfiguredProduct) Options() map[string]interface{} { return nil }
 
+// AddTopping adds a topping to the product.
+func (pc *PreConfiguredProduct) AddTopping(code, cover, amnt string) error {
+	return errors.New("not implitmented")
+}
+
 func splitDefaults(defs string) (keys, vals []string, n int) {
 	if defs == "" {
 		return nil, nil, 0
@@ -287,3 +300,11 @@ func shortest(a, b []string) int {
 	}
 	return len(b)
 }
+
+// interface checks
+var (
+	_ Item = (*Product)(nil)
+	_ Item = (*Variant)(nil)
+	_ Item = (*PreConfiguredProduct)(nil)
+	_ Item = (*OrderProduct)(nil)
+)
