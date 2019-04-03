@@ -6,6 +6,7 @@ TODO
 # Tests
 *.json
 *.test
+test.py
 test
 test-coverage
 coverage.html

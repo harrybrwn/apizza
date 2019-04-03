@@ -126,8 +126,8 @@ func (s *Store) NewOrder() *Order {
 	}
 }
 
-// GetProduct finds the menu item that matchs the given product code.
-func (s *Store) GetProduct(code string) (*OrderProduct, error) {
+// GetProduct finds the menu Product that matchs the given product code.
+func (s *Store) GetProduct(code string) (*Product, error) {
 	// get a menu and find the map that matches the Code
 	menu, err := s.Menu()
 	if err != nil {
@@ -136,15 +136,23 @@ func (s *Store) GetProduct(code string) (*OrderProduct, error) {
 	return menu.GetProduct(code)
 }
 
+// GetVariant will get a fully initialized varient from the menu.
+func (s *Store) GetVariant(code string) (*Variant, error) {
+	menu, err := s.Menu()
+	if err != nil {
+		return nil, err
+	}
+	return menu.GetVariant(code)
+}
+
 // WaitTime returns a pair of integers that are the maximum and
 // minimum estimated wait time for that store.
-func (s *Store) WaitTime() (int, int) {
+func (s *Store) WaitTime() (min int, max int) {
 	m := s.ServiceEstimatedWait
 	return m[s.userService].Min, m[s.userService].Max
 }
 
 type storeLocs struct {
-	Status      int         `json:"Status"`
 	Granularity string      `json:"Granularity"`
 	Address     *StreetAddr `json:"Address"`
 	Stores      []Store     `json:"Stores"`

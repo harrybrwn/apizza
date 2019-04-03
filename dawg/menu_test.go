@@ -1,70 +1,85 @@
 package dawg
 
 import (
-	"fmt"
 	"testing"
 )
 
-func TestMakeProduct(t *testing.T) {
-	id := "4336"
-	service := "Delivery"
-	store, err := NewStore(id, service, nil)
+// Move this to an items_test.go file
+func TestItems(t *testing.T) {
+	store := testingStore()
+	menu, err := store.Menu()
 	if err != nil {
 		t.Error(err)
 	}
-	p, err := store.GetProduct("12SCREEN")
-	if err != nil {
-		t.Error(err)
-		fmt.Println(p)
+
+	testcases := []struct {
+		product, variant, top, cover, coverErr string
+		isSubset, wanterr                      bool
+	}{
+		// {product: "F_PARMT", variant: "B8PCPT", top: "K", isSubset: true, wanterr: false},
+		{
+			product:  "S_MX",
+			variant:  "14TMEATZA",
+			top:      "B",
+			isSubset: true,
+			wanterr:  false,
+			cover:    "2",
+			coverErr: "1.7",
+		},
+		{
+			product:  "S_PISPF",
+			variant:  "P10IRESPF",
+			top:      "B",
+			isSubset: true,
+			wanterr:  false,
+			cover:    "2",
+			coverErr: "-1.7",
+		},
+		{
+			product:  "S_BONELESS",
+			variant:  "W08PBNLW",
+			top:      "",
+			isSubset: true,
+			wanterr:  false,
+			cover:    "2",
+			coverErr: "-1.7",
+		},
 	}
-	t.Run("badToppingCoverage", func(t *testing.T) {
-		defer func() {
-			if r := recover(); r == nil {
-				t.Error("expected panic")
+
+	for _, tc := range testcases {
+		p, err := menu.GetProduct(tc.product)
+		if tc.wanterr && err == nil {
+			t.Error("expected error")
+		} else if err != nil {
+			t.Error(err)
+		}
+		v, err := menu.GetVariant(tc.variant)
+		if tc.wanterr && err == nil {
+			t.Error("expected error")
+		} else if err != nil {
+			t.Error(err)
+		}
+
+		if tc.isSubset {
+			for _, variant := range p.Variants {
+				if variant == tc.variant {
+					goto foundVariant
+				}
 			}
-		}()
-		p.AddTopping("X", "invalid cover", 2.0)
-	})
-	t.Run("badToppingAmount", func(t *testing.T) {
-		defer func() {
-			if r := recover(); r == nil {
-				t.Error("expected panic")
-			}
-		}()
-		p.AddTopping("C", ToppingLeft, 1.6)
-	})
-	p, err = store.GetProduct("MARBRWNE")
-	if err != nil {
-		t.Error(err)
-	}
-	p.AddTopping("C", ToppingLeft, 1.0)
-	p.AddTopping("X", ToppingRight, 1.5)
-	m, err := store.Menu()
-	if err != nil {
-		t.Error(err)
-	}
-	p, err = makeProduct(m.Variants["12THIN"].(map[string]interface{}))
-	if err != nil {
-		t.Error(err)
-		fmt.Println(p)
-	}
-	if p.Price() < 0 {
-		t.Error("error in finding product.Price(): returned -1.0")
-	}
-	if p.Size() < 0 {
-		t.Error("error in finding product.Size(): returned -1")
-	}
-	if !p.Prepared() {
-		t.Error("should have been false. got true")
-	}
-	p = &OrderProduct{}
-	if p.Price() != -1 {
-		t.Error("expected -1")
-	}
-	if p.Size() != -1 {
-		t.Error("expected -1")
-	}
-	if p.Prepared() {
-		t.Error("expected false")
+			t.Errorf("%s should be a variant of %s", tc.variant, tc.product)
+		foundVariant:
+		}
+		if err = p.AddTopping(tc.top, ToppingLeft, tc.cover); err != nil {
+			t.Error(err)
+		}
+		if err = v.AddTopping(tc.top, ToppingFull, tc.cover); err != nil {
+			t.Error(err)
+		}
+		if err = v.AddTopping(tc.top, "1/1", tc.coverErr); err == nil {
+			t.Error("expected error")
+		}
+		if len(v.opts) < 1 {
+			t.Error("should have options in the struct")
+		}
 	}
 }

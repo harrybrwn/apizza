@@ -20,12 +20,9 @@ type Payment struct {
 // It is suggensted that the order object be constructed from the Store.NewOrder
 // method.
 type Order struct {
-	// LanguageCode-Payments are the fields that are sent to dominos.
-
 	// LanguageCode is an ISO international language code.
 	LanguageCode string `json:"LanguageCode"`
 
-	// either
 	ServiceMethod string                 `json:"ServiceMethod"`
 	Products      []*OrderProduct        `json:"Products"`
 	StoreID       string                 `json:"StoreID"`
@@ -62,8 +59,12 @@ func (o *Order) Price() (float64, error) {
 }
 
 // AddProduct adds a product to the Order from a Product Object
-func (o *Order) AddProduct(item *OrderProduct) {
-	o.Products = append(o.Products, item)
+func (o *Order) AddProduct(item Item) error {
+	if item == nil {
+		return errors.New("cannot add a null item")
+	}
+	o.Products = append(o.Products, item.ToOrderProduct())
+	return nil
 }
 
 // RemoveProduct will remove the product with a given code from the order.
@@ -74,7 +75,7 @@ func (o *Order) RemoveProduct(code string) error {
 	)
 
 	for _, p := range o.Products {
-		if p.Code == code {
+		if p.ItemCode() == code {
 			found = true
 			continue
 		}

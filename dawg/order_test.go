@@ -15,8 +15,10 @@ func TestGetOrderPrice(t *testing.T) {
 		StoreID: "4336", Payments: []Payment{Payment{}}, OrderID: "",
 		Products: []*OrderProduct{
 			&OrderProduct{
-				Code: "12SCREEN",
-				Options: map[string]interface{}{
+				item: item{
+					Code: "12SCREEN",
+				},
+				Opts: map[string]interface{}{
 					"C": map[string]string{"1/1": "1"},
 					"P": map[string]string{"1/1": "1.5"},
 				},
@@ -51,15 +53,8 @@ func TestGetOrderPrice(t *testing.T) {
 }
 
 func TestNewOrder(t *testing.T) {
-	s, err := NearestStore(testAddress(), "Carryout")
-	if err != nil {
-		t.Error(err)
-	}
-	if _, err = s.GetProduct("S_PIZZA"); err == nil {
-		t.Error("should have returned an error")
-	}
-	p, err := s.GetProduct("2LDCOKE")
-	if err != nil {
+	s := testingStore()
+	if _, err := s.GetProduct("S_PIZZA"); err != nil {
 		t.Error(err)
 	}
 	o := s.NewOrder()
@@ -70,27 +65,29 @@ func TestNewOrder(t *testing.T) {
 	if o.OrderName != o.Name() || o.OrderName != "test_order" {
 		t.Error("incorrect order name")
 	}
-	o.AddProduct(p)
+	v, err := s.GetVariant("2LDCOKE")
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = o.AddProduct(v)
+	if err != nil {
+		t.Error(err)
+	}
 	if o.Products == nil {
 		t.Error("Products should not be empty")
 	}
-	pizza, err := s.GetProduct("12SCREEN")
-	pizza.AddTopping("X", ToppingFull, 1.5)
-	func() {
-		defer func() {
-			if r := recover(); r == nil {
-				t.Error("adding a bad topping coverage should panic")
-			}
-		}()
-		pizza.AddTopping("P", ToppingLeft, 1.2)
-	}()
+	pizza, err := s.GetVariant("14TMEATZA")
 	if err != nil {
 		t.Error(err)
 	}
 	if pizza == nil {
 		t.Error("product is nil")
 	}
-	o.AddProduct(pizza)
+	pizza.AddTopping("X", ToppingFull, "1.5")
+	err = o.AddProduct(pizza)
+	if err != nil {
+		t.Error(err)
+	}
 	o.AddPayment(Payment{Number: "", Expiration: "", CVV: ""})
 	price, err := o.Price()
 	if err != nil {
@@ -109,11 +106,17 @@ func TestOrder_Err(t *testing.T) {
 		t.Error(err)
 	}
 	o := store.NewOrder()
-	p, err := store.GetProduct("2LDCOKE")
+	v, err := store.GetVariant("2LDCOKE")
 	if err != nil {
 		t.Error(err)
 	}
-	o.AddProduct(p)
+	if v == nil {
+		t.Fatal("got nil variant")
+	}
+	err = o.AddProduct(v)
+	if err != nil {
+		t.Error(err)
+	}
 	price, err := o.Price()
 	if err == nil {
 		t.Error(err)
@@ -124,10 +127,7 @@ func TestOrder_Err(t *testing.T) {
 }
 
 func TestRemoveProduct(t *testing.T) {
-	s, err := NearestStore(testAddress(), "Carryout")
-	if err != nil {
-		t.Error(err)
-	}
+	s := testingStore()
 	order := s.NewOrder()
 	menu, err := s.Menu()
 	if err != nil {
@@ -135,11 +135,11 @@ func TestRemoveProduct(t *testing.T) {
 	}
 	productCodes := []string{"2LDCOKE", "12SCREEN", "PSANSABC", "B2PCLAVA"}
 	for _, code := range productCodes {
-		p, err := menu.GetProduct(code)
+		v, err := menu.GetVariant(code)
 		if err != nil {
 			t.Error(err)
 		}
-		order.AddProduct(p)
+		order.AddProduct(v)
 	}
 	if err = order.RemoveProduct("12SCREEN"); err != nil {
 		t.Error(err)

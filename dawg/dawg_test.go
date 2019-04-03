@@ -3,7 +3,7 @@ package dawg
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
+	"math/rand"
 	"net"
 	"net/http"
 	"testing"
@@ -105,15 +105,15 @@ func TestNetworking_Err(t *testing.T) {
 	cli = original
 }
 
-func _TestDominosErrors(t *testing.T) {
-	fmt.Println("try to find the fields that dominos gives when giving errors")
+func TestDominosErrors(t *testing.T) {
+	// fmt.Println("try to find the fields that dominos gives when giving errors")
 	order := &Order{
 		LanguageCode:  "en",
 		ServiceMethod: "Delivery",
 		Products: []*OrderProduct{
 			&OrderProduct{
-				Code: "12SCREEN",
-				Options: map[string]interface{}{
+				item: item{Code: "12SCREEN"},
+				Opts: map[string]interface{}{
 					"C": map[string]string{"1/1": "1"},
 					"P": map[string]string{"1/1": "1.5"},
 				},
@@ -130,18 +130,16 @@ func _TestDominosErrors(t *testing.T) {
 	}
 	if err := dominosErr(resp); err != nil {
 		t.Error(err)
-		err, _ := err.(*DominosError)
-		for k, v := range err.fullErr {
-			if k != "Order" {
-				fmt.Println(k, v)
-			}
-		}
-		print("\n")
-		for k, v := range err.fullErr["Order"].(map[string]interface{}) {
-			fmt.Println(k, v)
-		}
-	} else {
-		fmt.Printf("we chillin\n%+v\n", order)
+		// err, _ := err.(*DominosError)
+		// for k, v := range err.fullErr {
+		// 	if k != "Order" {
+		// 		fmt.Println(k, v)
+		// 	}
+		// }
+		// print("\n")
+		// for k, v := range err.fullErr["Order"].(map[string]interface{}) {
+		// 	fmt.Println(k, v)
+		// }
 	}
 }
 
@@ -185,4 +183,20 @@ func TestDominosErrorFailure(t *testing.T) {
 	if !dErr.IsFailure() {
 		t.Error("should be a failure")
 	}
+}
+
+func testingStore() *Store {
+	var service string
+
+	if rand.Intn(2) == 1 {
+		service = "Carryout"
+	} else {
+		service = "Delivery"
+	}
+
+	s, err := NearestStore(testAddress(), service)
+	if err != nil {
+		panic(err)
+	}
+	return s
 }

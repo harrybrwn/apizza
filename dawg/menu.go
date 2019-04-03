@@ -3,6 +3,8 @@ package dawg
 import (
 	"encoding/json"
 	"fmt"
+	"os"
+	"runtime"
 	"strconv"
 
 	"github.com/mitchellh/mapstructure"
@@ -22,18 +24,30 @@ const (
 	ToppingRight = "2/2"
 )
 
-// OrderProduct represents a product on the dominos menu.
+var _ Item = (*OrderProduct)(nil)
+
+// OrderProduct represents an item that will be sent to and from dominos within
+// the Order struct.
 type OrderProduct struct {
-	Code    string                 `json:"Code"`
-	Name    string                 `json:"Name"`
-	IsNew   bool                   `json:"isNew"`
-	Qty     int                    `json:"Qty"`
-	Options map[string]interface{} `json:"Options"`
-	Tags    map[string]interface{} `json:"-"`
-	other   map[string]interface{}
+	item
+
+	// Qty is the number of products to be ordered.
+	Qty int `json:"Qty"`
+
+	// ID is the index of the product within an order.
+	ID int `json:"ID"`
+
+	IsNew              bool                   `json:"isNew"`
+	NeedsCustomization bool                   `json:"NeedsCustomization"`
+	Opts               map[string]interface{} `json:"Options"`
+	other              map[string]interface{}
 }
 
 func makeProduct(data map[string]interface{}) (*OrderProduct, error) {
+
+	_, file, line, _ := runtime.Caller(1)
+	fmt.Fprintf(os.Stderr, "Dev Warning: makeProduct is deprecated called on %s:%d", file, line)
+
 	p := &OrderProduct{Qty: 1}
 	var md mapstructure.Metadata
 	config := &mapstructure.DecoderConfig{
@@ -54,33 +68,29 @@ func makeProduct(data map[string]interface{}) (*OrderProduct, error) {
 	return p, err
 }
 
+// ToOrderProduct converts the OrderProdut into an OrderProduct so that it can
+// be sent to dominos in an order.
+func (p *OrderProduct) ToOrderProduct() *OrderProduct {
+	return p
+}
+
+// Options returns a map of the OrderProdut's options.
+func (p *OrderProduct) Options() map[string]interface{} {
+	return p.Opts
+}
+
 // AddTopping adds a topping to the product. The 'code' parameter is a
 // topping code which can be found in the menu object. The 'coverage'
 // parameter is for specifieing which side of the topping should be on for
-// pizza. The 'amount' parameter is 2.0, 1.5, 1.0, or 0.5 and gives the amount
+// pizza. The 'amount' parameter is 2.0, 1.5, 1.0, o.5, or 0 and gives the amount
 // of topping should be given.
-func (p *OrderProduct) AddTopping(code, coverage string, amount float64) {
-	ok := amount == 2.0 || amount == 1.5 || amount == 1.0 || amount == 0.5
-	if !ok {
-		panic("amount must be 2.0, 1.5, 1.0, or 0.5")
+func (p *OrderProduct) AddTopping(code, coverage, amount string) error {
+	top := makeTopping(coverage, amount, nil)
+	if top == nil {
+		return fmt.Errorf("could not make %s topping", code)
 	}
-	var key string
-	switch coverage {
-	case ToppingFull:
-		key = coverage
-	case ToppingLeft:
-		key = coverage
-	case ToppingRight:
-		key = coverage
-	default:
-		panic("topping coverage must be dawg.ToppingFull, dawg.ToppingRight, or dawg.ToppingLeft.")
-	}
-	if p.Options == nil {
-		p.Options = map[string]interface{}{}
-	}
-	p.Options[code] = map[string]interface{}{
-		key: strconv.FormatFloat(amount, 'g', 1, 64),
-	}
+	p.Opts[code] = top
+	return nil
 }
 
 // Size gets the size code of the product. Defaults to -1 if the size
@@ -116,23 +126,23 @@ func (p *OrderProduct) Prepared() bool {
 }
 
 // Menu represents the dominos menu. It is best if this comes from
-// the (*Store).Menu() method.
+// the Store.Menu() method.
 type Menu struct {
-	ID             string
+	ID             string `json:"ID"`
 	Categorization struct {
-		Food          MenuCategory
-		Coupons       MenuCategory
+		Food          MenuCategory `json:"Food"`
+		Coupons       MenuCategory `json:"Coupons"`
 		Preconfigured MenuCategory `json:"PreconfiguredProducts"`
-	}
-	Products      map[string]interface{}
-	Variants      map[string]interface{}
+	} `json:"Categorization"`
+	Products      map[string]*Product
+	Variants      map[string]*Variant
 	Toppings      map[string]interface{}
 	Preconfigured map[string]interface{} `json:"PreconfiguredProducts"`
 }
 
 // MenuCategory is a category on the dominos menu.
 type MenuCategory struct {
-	Categories  []MenuCategory
+	Categories  []MenuCategory `json:"Categories"`
 	Products    []string
 	Name        string
 	Code        string
@@ -151,15 +161,21 @@ func (m MenuCategory) IsEmpty() bool {
 }
 
 // GetProduct find the menu item given a product code.
-func (m *Menu) GetProduct(code string) (p *OrderProduct, err error) {
-	if data, ok := m.Variants[code]; ok {
-		p, err = makeProduct(data.(map[string]interface{}))
-	} else if data, ok := m.Preconfigured[code]; ok {
-		p, err = makeProduct(data.(map[string]interface{}))
-	} else {
-		return nil, fmt.Errorf("could not find %s", code)
+func (m *Menu) GetProduct(code string) (prod *Product, err error) {
+	var ok bool
+	if prod, ok = m.Products[code]; ok {
+		return prod, nil
 	}
-	return p, err
+	return nil, fmt.Errorf("could not find product '%s'", code)
+}
+
+// GetVariant will get a fully initialized varient from the menu.
+func (m *Menu) GetVariant(code string) (*Variant, error) {
+	if vr, ok := m.Variants[code]; ok {
+		vr.product = m.Products[vr.ProductCode]
+		return vr, nil
+	}
+	return nil, fmt.Errorf("could not find variant '%s'", code)
 }
 
 func newMenu(id string) (*Menu, error) {

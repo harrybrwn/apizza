@@ -85,7 +85,7 @@ func ExampleOrder_AddProduct() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	pizza.AddTopping("P", dawg.ToppingFull, 1.5)
+	pizza.AddTopping("P", dawg.ToppingFull, "1.5")
 	order.AddProduct(pizza)
 }
 
@@ -108,7 +108,7 @@ func ExampleProduct_AddTopping() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	pizza.AddTopping("P", dawg.ToppingLeft, 1.0)  // pepperoni on the left
-	pizza.AddTopping("K", dawg.ToppingRight, 2.0) // double bacon on the right
+	pizza.AddTopping("P", dawg.ToppingLeft, "1.0")  // pepperoni on the left
+	pizza.AddTopping("K", dawg.ToppingRight, "2.0") // double bacon on the right
 	order.AddProduct(pizza)
 }
