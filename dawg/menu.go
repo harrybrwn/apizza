@@ -3,11 +3,7 @@ package dawg
 import (
 	"encoding/json"
 	"fmt"
-	"os"
-	"runtime"
-	"strconv"
-
-	"github.com/mitchellh/mapstructure"
+	"strings"
 )
 
 const (
@@ -24,105 +20,11 @@ const (
 	ToppingRight = "2/2"
 )
 
-var _ Item = (*OrderProduct)(nil)
-
-// OrderProduct represents an item that will be sent to and from dominos within
-// the Order struct.
-type OrderProduct struct {
-	item
-
-	// Qty is the number of products to be ordered.
-	Qty int `json:"Qty"`
-
-	// ID is the index of the product within an order.
-	ID int `json:"ID"`
-
-	IsNew              bool                   `json:"isNew"`
-	NeedsCustomization bool                   `json:"NeedsCustomization"`
-	Opts               map[string]interface{} `json:"Options"`
-	other              map[string]interface{}
-}
-
-func makeProduct(data map[string]interface{}) (*OrderProduct, error) {
-
-	_, file, line, _ := runtime.Caller(1)
-	fmt.Fprintf(os.Stderr, "Dev Warning: makeProduct is deprecated called on %s:%d", file, line)
-
-	p := &OrderProduct{Qty: 1}
-	var md mapstructure.Metadata
-	config := &mapstructure.DecoderConfig{
-		Metadata: &md,
-		Result:   p,
-	}
-	decoder, err := mapstructure.NewDecoder(config)
-	if err != nil {
-		return p, err
-	}
-	err = decoder.Decode(data)
-
-	other := map[string]interface{}{}
-	for _, key := range md.Unused {
-		other[key] = data[key]
-	}
-	p.other = other
-	return p, err
-}
-
-// ToOrderProduct converts the OrderProdut into an OrderProduct so that it can
-// be sent to dominos in an order.
-func (p *OrderProduct) ToOrderProduct() *OrderProduct {
-	return p
-}
-
-// Options returns a map of the OrderProdut's options.
-func (p *OrderProduct) Options() map[string]interface{} {
-	return p.Opts
-}
-
-// AddTopping adds a topping to the product. The 'code' parameter is a
-// topping code which can be found in the menu object. The 'coverage'
-// parameter is for specifieing which side of the topping should be on for
-// pizza. The 'amount' parameter is 2.0, 1.5, 1.0, o.5, or 0 and gives the amount
-// of topping should be given.
-func (p *OrderProduct) AddTopping(code, coverage, amount string) error {
-	top := makeTopping(coverage, amount, nil)
-	if top == nil {
-		return fmt.Errorf("could not make %s topping", code)
-	}
-	p.Opts[code] = top
-	return nil
-}
-
-// Size gets the size code of the product. Defaults to -1 if the size
-// cannot be found.
-func (p *OrderProduct) Size() int64 {
-	if v, ok := p.other["SizeCode"]; ok {
-		if rt, err := strconv.ParseInt(v.(string), 10, 64); err == nil {
-			return rt
-		}
-	}
-	return -1
-}
-
-// Price gets the price of the individual product and will return
-// -1.0 if the price is not found.
-func (p *OrderProduct) Price() float64 {
-	if v, ok := p.other["Price"]; ok {
-		if rt, err := strconv.ParseFloat(v.(string), 64); err == nil {
-			return rt
-		}
-	}
-	return -1.0
-}
-
-// Prepared returns a boolean representing whether or not the
-// product is prepared. Default is false.
-func (p *OrderProduct) Prepared() bool {
-	v, ok := p.other["Prepared"]
-	if ok {
-		return v.(bool)
-	}
-	return false
+// ItemContainer defines an interface for objects that get
+// Variants and Products.
+type ItemContainer interface {
+	GetVariant(string) (*Variant, error)
+	GetProduct(string) (*Product, error)
 }
 
 // Menu represents the dominos menu. It is best if this comes from
@@ -172,12 +74,13 @@ func (m *Menu) GetProduct(code string) (prod *Product, err error) {
 // GetVariant will get a fully initialized varient from the menu.
 func (m *Menu) GetVariant(code string) (*Variant, error) {
 	if vr, ok := m.Variants[code]; ok {
-		vr.product = m.Products[vr.ProductCode]
-		return vr, nil
+		return m.initVariant(vr), nil
 	}
 	return nil, fmt.Errorf("could not find variant '%s'", code)
 }
 
+// FindItem looks in all the different menu categories for an item code given
+// as an argument.
 func (m *Menu) FindItem(code string) (itm Item) {
 	var (
 		ok bool
@@ -189,9 +92,56 @@ func (m *Menu) FindItem(code string) (itm Item) {
 	} else if i, ok = m.Preconfigured[code]; ok {
 		return i.(*PreConfiguredProduct)
 	} else if i, ok = m.Variants[code]; ok {
-		return i.(*Variant)
+		return m.initVariant(i.(*Variant))
 	}
 	return nil
+}
+
+// type topping map[string]string
+
+// func (t topping) String() (str string) {
+// 	return fmt.Sprint(t)
+// }
+
+func makeTopping(cover, amount string, optionQtys []string) map[string]string {
+	var key string
+
+	if !strings.HasSuffix(amount, ".0") && !strings.HasSuffix(amount, ".5") {
+		amount += ".0"
+	}
+	if optionQtys != nil {
+		if !validateQtys(amount, optionQtys) {
+			return nil
+		}
+	}
+
+	switch cover {
+	case ToppingFull, ToppingLeft, ToppingRight:
+		key = cover
+	default:
+		return nil
+	}
+
+	return map[string]string{key: amount}
+}
+
+func validateQtys(amount string, qtys []string) bool {
+	for _, qty := range qtys {
+		if len(qty) == 1 {
+			qty += ".0"
+		}
+		if qty == amount {
+			return true
+		}
+	}
+	return false
+}
+
+func (m *Menu) initVariant(v *Variant) *Variant {
+	if parent, ok := m.Products[v.ProductCode]; ok {
+		v.product = parent
+	}
+	return v
 }
 
 func newMenu(id string) (*Menu, error) {

@@ -4,15 +4,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-)
+	"os"
+	"runtime"
+	"strconv"
 
-// Payment just a way to compartmentalize a payment sent to dominos.
-type Payment struct {
-	Number     string `json:"Number"`
-	Expiration string `json:"Expiration"`
-	CardType   string `json:"Type"`
-	CVV        string `json:"SecurityCode"`
-}
+	"github.com/mitchellh/mapstructure"
+)
 
 // The Order struct is the main work horse of the api wrapper. The Order struct
 // is what will end up being sent to dominos as a json object.
@@ -121,6 +118,113 @@ func sendOrder(path string, ordr *Order) (map[string]interface{}, error) {
 		return nil, err
 	}
 	return respData, dominosErr(b)
+}
+
+// OrderProduct represents an item that will be sent to and from dominos within
+// the Order struct.
+type OrderProduct struct {
+	item
+
+	// Qty is the number of products to be ordered.
+	Qty int `json:"Qty"`
+
+	// ID is the index of the product within an order.
+	ID int `json:"ID"`
+
+	IsNew              bool                   `json:"isNew"`
+	NeedsCustomization bool                   `json:"NeedsCustomization"`
+	Opts               map[string]interface{} `json:"Options"`
+	other              map[string]interface{}
+}
+
+func makeProduct(data map[string]interface{}) (*OrderProduct, error) {
+
+	_, file, line, _ := runtime.Caller(1)
+	fmt.Fprintf(os.Stderr, "Dev Warning: makeProduct is deprecated called on %s:%d", file, line)
+
+	p := &OrderProduct{Qty: 1}
+	var md mapstructure.Metadata
+	config := &mapstructure.DecoderConfig{
+		Metadata: &md,
+		Result:   p,
+	}
+	decoder, err := mapstructure.NewDecoder(config)
+	if err != nil {
+		return p, err
+	}
+	err = decoder.Decode(data)
+
+	other := map[string]interface{}{}
+	for _, key := range md.Unused {
+		other[key] = data[key]
+	}
+	p.other = other
+	return p, err
+}
+
+// ToOrderProduct converts the OrderProdut into an OrderProduct so that it can
+// be sent to dominos in an order.
+func (p *OrderProduct) ToOrderProduct() *OrderProduct {
+	return p
+}
+
+// Options returns a map of the OrderProdut's options.
+func (p *OrderProduct) Options() map[string]interface{} {
+	return p.Opts
+}
+
+// AddTopping adds a topping to the product. The 'code' parameter is a
+// topping code which can be found in the menu object. The 'coverage'
+// parameter is for specifieing which side of the topping should be on for
+// pizza. The 'amount' parameter is 2.0, 1.5, 1.0, o.5, or 0 and gives the amount
+// of topping should be given.
+func (p *OrderProduct) AddTopping(code, coverage, amount string) error {
+	top := makeTopping(coverage, amount, nil)
+	if top == nil {
+		return fmt.Errorf("could not make %s topping", code)
+	}
+	p.Opts[code] = top
+	return nil
+}
+
+// Size gets the size code of the product. Defaults to -1 if the size
+// cannot be found.
+func (p *OrderProduct) Size() int64 {
+	if v, ok := p.other["SizeCode"]; ok {
+		if rt, err := strconv.ParseInt(v.(string), 10, 64); err == nil {
+			return rt
+		}
+	}
+	return -1
+}
+
+// Price gets the price of the individual product and will return
+// -1.0 if the price is not found.
+func (p *OrderProduct) Price() float64 {
+	if v, ok := p.other["Price"]; ok {
+		if rt, err := strconv.ParseFloat(v.(string), 64); err == nil {
+			return rt
+		}
+	}
+	return -1.0
+}
+
+// Prepared returns a boolean representing whether or not the
+// product is prepared. Default is false.
+func (p *OrderProduct) Prepared() bool {
+	v, ok := p.other["Prepared"]
+	if ok {
+		return v.(bool)
+	}
+	return false
+}
+
+// Payment just a way to compartmentalize a payment sent to dominos.
+type Payment struct {
+	Number     string `json:"Number"`
+	Expiration string `json:"Expiration"`
+	CardType   string `json:"Type"`
+	CVV        string `json:"SecurityCode"`
 }
 
 // does not take a pointer because ordr.Payments = nil should not be remembered

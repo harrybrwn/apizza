@@ -125,9 +125,9 @@ func (p *Product) AddTopping(code, side, amount string) error {
 // GetVariants will initialize all the Varients the are a subset of the product.
 //
 // The function needs a menu to get the data for each variant code.
-func (p *Product) GetVariants(m *Menu) (varients []*Variant) {
+func (p *Product) GetVariants(container ItemContainer) (varients []*Variant) {
 	for _, code := range p.Variants {
-		v, err := m.GetVariant(code)
+		v, err := container.GetVariant(code)
 		if err != nil {
 			continue
 		}
@@ -221,10 +221,15 @@ func (v *Variant) AddTopping(code, side, amount string) error {
 // GetProduct will return the set of variants (Product) that the variant
 // is a member of.
 func (v *Variant) GetProduct() *Product {
-	if v.product != nil {
-		return v.product
+	if v.product == nil {
+		// p, err := getter.GetProduct(v.ProductCode)
+		// if err != nil {
+		// 	return nil
+		// }
+		// return p
+		return nil
 	}
-	return nil
+	return v.product
 }
 
 // PreConfiguredProduct is pre-configured product.
@@ -258,40 +263,6 @@ func splitDefaults(defs string) (keys, vals []string, n int) {
 		vals = append(vals, keyval[1])
 	}
 	return keys, vals, shortest(keys, vals)
-}
-
-func makeTopping(cover, amount string, optionQtys []string) map[string]string {
-	var key string
-
-	if !strings.HasSuffix(amount, ".0") && !strings.HasSuffix(amount, ".5") {
-		amount += ".0"
-	}
-	if optionQtys != nil {
-		if !validateQtys(amount, optionQtys) {
-			return nil
-		}
-	}
-
-	switch cover {
-	case ToppingFull, ToppingLeft, ToppingRight:
-		key = cover
-	default:
-		return nil
-	}
-
-	return map[string]string{key: amount}
-}
-
-func validateQtys(amount string, qtys []string) bool {
-	for _, qty := range qtys {
-		if len(qty) == 1 {
-			qty += ".0"
-		}
-		if qty == amount {
-			return true
-		}
-	}
-	return false
 }
 
 func shortest(a, b []string) int {

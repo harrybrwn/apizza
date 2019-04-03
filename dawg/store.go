@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
-	"fmt"
 )
 
 // NearestStore gets the dominos location closest to the given address.
@@ -188,8 +187,19 @@ type storeErrWrapper struct {
 	e     error
 }
 
-func initStores(stores []*Store) {
-	for _, s := range stores {
-		fmt.Println(s)
+func initStoreChan(s *Store, c chan *Store) {
+	if err := InitStore(s.ID, s); err != nil {
+		panic(err)
 	}
+	c <- s
+}
+
+func initStores(stores []*Store) chan *Store {
+	c := make(chan *Store)
+	defer close(c)
+
+	for i := range stores {
+		go initStoreChan(stores[i], c) // send the initialized store through the channel
+	}
+	return c
 }
