@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"bytes"
+	"fmt"
 	"testing"
 )
 
@@ -35,8 +36,9 @@ func testFindProduct(t *testing.T) {
 		t.Error(err)
 	}
 	c.all = true
-	c.printMenu("") // yes, this is supposd to be an empty string
-	if len(buf.Bytes()) < 10000 {
+	c.printMenu("") // yes, this is supposd to be an empty string... in this case
+	if len(buf.Bytes()) < 100 {
+		fmt.Println(buf.String())
 		t.Error("the menu seems to be a bit short in length")
 	}
 	buf.Reset()

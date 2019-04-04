@@ -135,8 +135,8 @@ func (c *menuCmd) printCategory(code string, indentLen int) {
 
 	switch product := item.(type) {
 	case *dawg.Product:
-		c.Printf("%s[code:%s] %s\n", strings.Repeat("  ", indentLen),
-			item.ItemCode(), item.ItemName())
+		c.Printf("%s%s [%s]\n", strings.Repeat("  ", indentLen),
+			item.ItemName(), item.ItemCode())
 		for _, variant := range product.Variants {
 			c.Printf("%s%s\n", strings.Repeat("  ", indentLen+1), variant)
 		}
@@ -183,11 +183,6 @@ func iteminfo(prod dawg.Item, w io.Writer) {
 		fmt.Fprintf(o, "  price: %s\n", p.Price)
 		prod := p.GetProduct()
 		if defTops, ok := p.Tags["DefaultToppings"]; ok {
-			// if prod != nil {
-			// 	if prod.DefaultToppings != defTops {
-			// 		fmt.Println("dev error in iteminfo:", "the default toppings in the variant are different from it's parent product.")
-			// 	}
-			// }
 			fmt.Fprintf(o, "  default toppings: %s", defTops)
 		}
 		if prod != nil {
@@ -221,15 +216,33 @@ func iteminfo(prod dawg.Item, w io.Writer) {
 }
 
 func (c *menuCmd) printToppings() {
-	indent := strings.Repeat(" ", 4)
-	for key, val := range c.menu.Toppings {
-		c.Println("  ", key)
-		for k, v := range val.(map[string]interface{}) {
-			spacer := strings.Repeat(" ", 3-strLen(k))
-			c.Println(indent, k, spacer, v.(map[string]interface{})["Name"])
-		}
-		c.Println("")
+	var tops = c.menu.Toppings
+
+	if c.category != "" {
+		category := strings.Title(c.category)
+		printToppingCategory(category, tops[category], c.Output())
+		return
 	}
+
+	if c.showCategories {
+		for cat := range tops {
+			c.Println(strings.ToLower(cat))
+		}
+		return
+	}
+
+	for typ, toppings := range tops {
+		printToppingCategory(typ, toppings, c.Output())
+	}
+}
+
+func printToppingCategory(name string, toppings map[string]dawg.Topping, w io.Writer) {
+	fmt.Fprintln(w, "  ", name)
+	indent := strings.Repeat(" ", 4)
+	for k, v := range toppings {
+		fmt.Fprintln(w, indent, k, strings.Repeat(" ", 3-strLen(k)), v.Name)
+	}
+	fmt.Fprintln(w, "")
 }
 
 // deprecated

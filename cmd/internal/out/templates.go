@@ -25,3 +25,10 @@ var cartOrderTmpl = `  {{ .OrderName }} - {{ range .Products }} {{.Code}}, {{end
 `
 
 var menuCategoryTmpl = ``
+
+var variantTmpl = `{{ .Name }} {{ .Code }}
+	price:   {{ .Price }}
+	product: {{ .ProductCode }}
+`
+
+var shorthandVariantTmpl = `{{ .Name }} {{ .Code }}`

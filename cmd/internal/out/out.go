@@ -1,6 +1,7 @@
 package out
 
 import (
+	"errors"
 	"io"
 	"os"
 
@@ -24,4 +25,16 @@ func PrintOrder(o *dawg.Order, full bool) error {
 		t = cartOrderTmpl
 	}
 	return tmpl(output, t, o)
+}
+
+// PrintVariant will display a dawg.Variant in a pretty way.
+func PrintVariant(v *dawg.Variant, verbose bool) error {
+	var template string
+	if verbose {
+		template = variantTmpl
+	} else {
+		return errors.New("none verbose mode not supported")
+	}
+
+	return tmpl(output, template, v)
 }
