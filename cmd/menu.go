@@ -44,6 +44,21 @@ func (c *menuCmd) Run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
+	var item dawg.Item
+
+	if len(args) == 1 {
+		if c.item == "" {
+			item = c.menu.FindItem(args[0])
+		}
+
+		if item == nil && c.category == "" {
+			c.category = strings.ToLower(args[0])
+		} else {
+			iteminfo(item, c.Output())
+			return nil
+		}
+	}
+
 	if c.item != "" {
 		prod := c.menu.FindItem(c.item)
 		if prod == nil {
@@ -66,7 +81,7 @@ func (b *cliBuilder) newMenuCmd() base.CliCommand {
 	c := &menuCmd{
 		all: false, toppings: false,
 		preconfigured: false, showCategories: false}
-	c.basecmd = b.newCommand("menu", "Get the Dominos menu.", c)
+	c.basecmd = b.newCommand("menu <item>", "Get the Dominos menu.", c)
 
 	c.Flags().StringVarP(&c.item, "item", "i", "", "show info on the menu item given")
 	c.Flags().StringVarP(&c.category, "category", "c", "", "show one category on the menu")
@@ -135,13 +150,29 @@ func (c *menuCmd) printCategory(code string, indentLen int) {
 
 	switch product := item.(type) {
 	case *dawg.Product:
+		if len(product.Variants) == 1 {
+			p, err := c.menu.GetVariant(product.Variants[0])
+			if err != nil {
+				panic(err)
+			}
+			c.Printf("%s%s  %s\n", strings.Repeat("  ", indentLen+1), p.Code, p.Name)
+			break
+		}
 		c.Printf("%s%s [%s]\n", strings.Repeat("  ", indentLen),
 			item.ItemName(), item.ItemCode())
+		n := maxStrLen(product.Variants)
 		for _, variant := range product.Variants {
-			c.Printf("%s%s\n", strings.Repeat("  ", indentLen+1), variant)
+			v, err := c.menu.GetVariant(variant)
+			if err != nil {
+				continue
+			}
+			c.Printf("%s%s %s %s\n",
+				strings.Repeat("  ", indentLen+1), variant,
+				strings.Repeat(" ", n-strLen(variant)), v.Name)
 		}
+
 	case *dawg.PreConfiguredProduct:
-		c.Printf("%s%s - %s\n", strings.Repeat("  ", indentLen),
+		c.Printf("%s%s   %s\n", strings.Repeat("  ", indentLen),
 			item.ItemCode(), item.ItemName())
 	default:
 		panic("dawg.Product and dawg.PreConfiguredProduct are the only catagories to be printed")
@@ -157,7 +188,8 @@ func (c *menuCmd) printMenuItem(product map[string]interface{}, spacer string) {
 	// if product has varients, print them
 	if varients, ok := product["Variants"].([]interface{}); ok {
 		c.Printf("%s  \"%s\" [%s]\n", spacer, product["Name"], product["Code"])
-		max := maxStrLen(varients)
+		// max := maxStrLen(varients)
+		max := 8
 
 		for _, v := range varients {
 			c.Println(spaces(strLen(spacer)+3), "-", v,
@@ -258,10 +290,10 @@ func (c *basecmd) product(code string) (*dawg.Product, error) {
 	return c.menu.GetProduct(code)
 }
 
-func maxStrLen(list []interface{}) int {
+func maxStrLen(list []string) int {
 	max := 0
 	for _, s := range list {
-		length := strLen(s.(string))
+		length := strLen(s)
 		if length > max {
 			max = length
 		}
