@@ -40,6 +40,8 @@ type item struct {
 
 	// Local will tell you if the item was made locally
 	Local bool
+
+	menu *Menu // not readlly sure how i feel about this... smells like OOP
 }
 
 // ItemCode is a getter method for the Code field.
@@ -93,10 +95,11 @@ type Product struct {
 // sent to dominos in an order.
 func (p *Product) ToOrderProduct() *OrderProduct {
 	return &OrderProduct{
-		item: p.item,
-		Opts: p.Options(),
-		Qty:  1,
-		ID:   1,
+		item:  p.item,
+		Opts:  p.Options(),
+		Qty:   1,
+		ID:    1,
+		pType: p.Type,
 	}
 }
 
@@ -175,10 +178,11 @@ type Variant struct {
 // sent to dominos in an order.
 func (v *Variant) ToOrderProduct() *OrderProduct {
 	return &OrderProduct{
-		item: v.item,
-		Opts: v.Options(),
-		Qty:  1,
-		ID:   1,
+		item:  v.item,
+		Opts:  v.Options(),
+		Qty:   1,
+		ID:    1,
+		pType: v.GetProduct().Type,
 	}
 }
 

@@ -135,6 +135,7 @@ type OrderProduct struct {
 	NeedsCustomization bool                   `json:"NeedsCustomization"`
 	Opts               map[string]interface{} `json:"Options"`
 	other              map[string]interface{}
+	pType              string
 }
 
 func makeProduct(data map[string]interface{}) (*OrderProduct, error) {
@@ -175,35 +176,14 @@ func (p *OrderProduct) Options() map[string]interface{} {
 
 // ReadableOptions gives the options that are meant for humas to view.
 func (p *OrderProduct) ReadableOptions() map[string]string {
-	var (
-		out = map[string]string{}
-	)
-	for topping, options := range p.Options() {
-		params, ok := options.(map[string]interface{})
-		if !ok {
-			return nil
-		}
-		var param string
-
-		for k, v := range params {
-			switch k {
-			case ToppingFull:
-				param += "full "
-			case ToppingLeft:
-				param += "left "
-			case ToppingRight:
-				param += "right "
-			}
-			param += v.(string)
-		}
-
-		out[topping] = param
+	if p.menu != nil { // this menu that is passed along with item is temporary
+		return ReadableToppings(p, p.menu)
 	}
-	return out
+	return ReadableOptions(p)
 }
 
 // AddTopping adds a topping to the product. The 'code' parameter is a
-// topping code which can be found in the menu object. The 'coverage'
+// topping code, a list of which can be found in the menu object. The 'coverage'
 // parameter is for specifieing which side of the topping should be on for
 // pizza. The 'amount' parameter is 2.0, 1.5, 1.0, o.5, or 0 and gives the amount
 // of topping should be given.

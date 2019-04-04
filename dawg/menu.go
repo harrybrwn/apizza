@@ -99,26 +99,7 @@ func (m *Menu) FindItem(code string) (itm Item) {
 
 // ViewOptions returns a map that makes it easier for humans to view a topping.
 func (m *Menu) ViewOptions(itm Item) map[string]string {
-	var itmType string
-
-	switch p := itm.(type) {
-	case *Variant:
-		itmType = p.product.Type
-	case *Product:
-		itmType = p.Type
-	default:
-		return nil
-	}
-
-	opts := itm.Options()
-	tops := m.Toppings[itmType]
-
-	view := map[string]string{}
-	for k, v := range opts {
-		fmt.Printf("%+v  %v\n", tops[k], v)
-		view[k] = tops[k].Name
-	}
-	return view
+	return ReadableToppings(itm, m)
 }
 
 // Topping is a simple struct that represents a topping on the menu.
@@ -130,6 +111,61 @@ type Topping struct {
 
 	Description  string
 	Availability []interface{}
+}
+
+// ReadableOptions gives an Item's options in a format meant for humas.
+func ReadableOptions(item Item) map[string]string {
+	var out = map[string]string{}
+
+	for topping, options := range item.Options() {
+		out[topping] = translateOpt(options)
+	}
+	return out
+}
+
+// ReadableToppings is the same as ReadableOptions but it looks in the menu for
+// the names of toppings instead outputting the topping code.
+func ReadableToppings(item Item, m *Menu) map[string]string {
+	var (
+		out        = map[string]string{}
+		toppingSet map[string]Topping
+	)
+
+	switch p := item.(type) {
+	case *Product:
+		toppingSet = m.Toppings[p.Type]
+	case *Variant:
+		toppingSet = m.Toppings[p.GetProduct().Type]
+	case *OrderProduct:
+		toppingSet = m.Toppings[p.pType]
+	default:
+		return ReadableOptions(item)
+	}
+
+	var key string
+	for topping, options := range item.Options() {
+		key = fmt.Sprintf("%s (%s)", toppingSet[topping].Name, topping)
+		out[key] = translateOpt(options)
+	}
+	return out
+}
+
+func translateOpt(opt interface{}) string {
+	var param string
+
+	toppingParams := opt.(map[string]string)
+	for cover, amnt := range toppingParams {
+		switch cover {
+		case ToppingFull:
+			param += "full "
+		case ToppingLeft:
+			param += "left "
+		case ToppingRight:
+			param += "right "
+		}
+		param += amnt
+	}
+	return param
 }
 
 func makeTopping(cover, amount string, optionQtys []string) map[string]string {

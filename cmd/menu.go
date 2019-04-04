@@ -52,7 +52,7 @@ func (c *menuCmd) Run(cmd *cobra.Command, args []string) error {
 		if item == nil && c.category == "" {
 			c.category = strings.ToLower(args[0])
 		} else {
-			iteminfo(item, c.Output())
+			c.iteminfo(item, c.Output())
 			return nil
 		}
 	}
@@ -62,7 +62,7 @@ func (c *menuCmd) Run(cmd *cobra.Command, args []string) error {
 		if prod == nil {
 			return fmt.Errorf("cannot find %s", c.item)
 		}
-		iteminfo(prod, cmd.OutOrStdout())
+		c.iteminfo(prod, cmd.OutOrStdout())
 		return nil
 	}
 
@@ -80,6 +80,7 @@ func (b *cliBuilder) newMenuCmd() base.CliCommand {
 		all: false, toppings: false,
 		preconfigured: false, showCategories: false}
 	c.basecmd = b.newCommand("menu <item>", "Get the Dominos menu.", c)
+	c.Cmd().Long = `The menu command will show the dominos menu `
 
 	c.Flags().StringVarP(&c.item, "item", "i", "", "show info on the menu item given")
 	c.Flags().StringVarP(&c.category, "category", "c", "", "show one category on the menu")
@@ -99,7 +100,7 @@ func (c *menuCmd) printMenu(categoryName string) error {
 		if cat.IsEmpty() {
 			return nil
 		}
-		c.Printf("%s%s\n", strings.Repeat("  ", depth), cat.Name)
+		c.Printf("%s%s\n", spaces(depth*2), cat.Name)
 
 		if cat.HasItems() {
 			for _, p := range cat.Products {
@@ -153,11 +154,12 @@ func (c *menuCmd) printCategory(code string, indentLen int) {
 			if err != nil {
 				panic(err)
 			}
-			c.Printf("%s%s  %s\n", strings.Repeat("  ", indentLen), p.Code, p.Name)
-			break
+
+			c.Printf("%s%s  %s\n", spaces(indentLen*2), p.Code, p.Name)
+			return
 		}
-		c.Printf("%s%s [%s]\n", strings.Repeat("  ", indentLen),
-			item.ItemName(), item.ItemCode())
+
+		c.Printf("%s%s [%s]\n", spaces(indentLen*2), item.ItemName(), item.ItemCode())
 		n := maxStrLen(product.Variants)
 		for _, variant := range product.Variants {
 			v, err := c.menu.GetVariant(variant)
@@ -165,19 +167,19 @@ func (c *menuCmd) printCategory(code string, indentLen int) {
 				continue
 			}
 			c.Printf("%s%s %s %s\n",
-				strings.Repeat("  ", indentLen+1), variant,
-				strings.Repeat(" ", n-strLen(variant)), v.Name)
+				spaces(2*(indentLen+1)), variant,
+				spaces(n-strLen(variant)), v.Name)
 		}
 
 	case *dawg.PreConfiguredProduct:
-		c.Printf("%s%s   %s\n", strings.Repeat("  ", indentLen),
+		c.Printf("%s%s   %s\n", spaces(indentLen*2),
 			item.ItemCode(), item.ItemName())
 	default:
 		panic("dawg.Product and dawg.PreConfiguredProduct are the only catagories to be printed")
 	}
 }
 
-func iteminfo(prod dawg.Item, w io.Writer) {
+func (c *menuCmd) iteminfo(prod dawg.Item, w io.Writer) {
 	o := &bytes.Buffer{}
 
 	fmt.Fprintf(o, "%s ", prod.ItemName())
@@ -186,13 +188,24 @@ func iteminfo(prod dawg.Item, w io.Writer) {
 	case *dawg.Variant:
 		fmt.Fprintf(o, "[%s] - (variant)\n", prod.ItemCode())
 		fmt.Fprintf(o, "  price: %s\n", p.Price)
-		prod := p.GetProduct()
-		if defTops, ok := p.Tags["DefaultToppings"]; ok {
-			fmt.Fprintf(o, "  default toppings: %s\n", defTops)
+
+		tops := dawg.ReadableToppings(p, c.menu)
+		if len(tops) > 0 {
+			max := 0
+			for k := range tops {
+				max = getmax(k, max)
+			}
+			fmt.Fprintln(o, "  toppings:")
+			for tname, param := range tops {
+				fmt.Fprintf(o, "    %s:%s%s\n", tname, spaces(max-len(tname)+1), param)
+			}
 		}
-		if prod != nil {
-			fmt.Fprintf(o, "  parent: %s - %s\n", prod.ItemName(), prod.ItemCode())
+
+		parent := p.GetProduct()
+		if parent == nil {
+			break
 		}
+		fmt.Fprintf(o, "  parent: %s [%s]\n", parent.ItemName(), parent.ItemCode())
 
 	case *dawg.PreConfiguredProduct:
 		fmt.Fprintf(o, "[%s] - (preconfigured product)\n", prod.ItemCode())
@@ -244,13 +257,17 @@ func printToppingCategory(name string, toppings map[string]dawg.Topping, w io.Wr
 func maxStrLen(list []string) int {
 	max := 0
 	for _, s := range list {
-		length := strLen(s)
-		if length > max {
-			max = length
-		}
+		max = getmax(s, max)
 	}
 
 	return max
+}
+
+func getmax(s string, i int) int {
+	if strLen(s) > i {
+		return len(s)
+	}
+	return i
 }
 
 var strLen = utf8.RuneCountInString // this is a function
