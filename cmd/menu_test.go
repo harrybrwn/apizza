@@ -59,7 +59,4 @@ func TestStringStuff(t *testing.T) {
 			t.Error("wrong string len")
 		}
 	}
-	if maxStrLen(strs) != 9 {
-		t.Error("wrong max length")
-	}
 }

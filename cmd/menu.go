@@ -18,8 +18,6 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"os"
-	"runtime"
 	"strings"
 	"unicode/utf8"
 
@@ -155,7 +153,7 @@ func (c *menuCmd) printCategory(code string, indentLen int) {
 			if err != nil {
 				panic(err)
 			}
-			c.Printf("%s%s  %s\n", strings.Repeat("  ", indentLen+1), p.Code, p.Name)
+			c.Printf("%s%s  %s\n", strings.Repeat("  ", indentLen), p.Code, p.Name)
 			break
 		}
 		c.Printf("%s%s [%s]\n", strings.Repeat("  ", indentLen),
@@ -179,34 +177,9 @@ func (c *menuCmd) printCategory(code string, indentLen int) {
 	}
 }
 
-// deprecated and currently unused
-func (c *menuCmd) printMenuItem(product map[string]interface{}, spacer string) {
-
-	_, file, line, _ := runtime.Caller(1)
-	fmt.Fprintf(os.Stderr, "Dev Warning: printMenuItem is deprecated, called on %s:%d", file, line)
-
-	// if product has varients, print them
-	if varients, ok := product["Variants"].([]interface{}); ok {
-		c.Printf("%s  \"%s\" [%s]\n", spacer, product["Name"], product["Code"])
-		// max := maxStrLen(varients)
-		max := 8
-
-		for _, v := range varients {
-			c.Println(spaces(strLen(spacer)+3), "-", v,
-				spaces(max-strLen(v.(string))),
-				c.menu.Variants[v.(string)].Name)
-		}
-	} else {
-		// if product has no varients, it is a preconfigured product
-		c.Printf("%s  \"%s\"\n%s - %s", spacer, product["Name"], spacer+"    ", product["Code"])
-	}
-	c.Println("")
-}
-
 func iteminfo(prod dawg.Item, w io.Writer) {
 	o := &bytes.Buffer{}
 
-	// fmt.Fprintf(o, "%s [%s]\n", prod.ItemName(), prod.ItemCode())
 	fmt.Fprintf(o, "%s ", prod.ItemName())
 
 	switch p := prod.(type) {
@@ -215,10 +188,10 @@ func iteminfo(prod dawg.Item, w io.Writer) {
 		fmt.Fprintf(o, "  price: %s\n", p.Price)
 		prod := p.GetProduct()
 		if defTops, ok := p.Tags["DefaultToppings"]; ok {
-			fmt.Fprintf(o, "  default toppings: %s", defTops)
+			fmt.Fprintf(o, "  default toppings: %s\n", defTops)
 		}
 		if prod != nil {
-			fmt.Fprintf(o, "  parent: %s - %s", prod.ItemName(), prod.ItemCode())
+			fmt.Fprintf(o, "  parent: %s - %s\n", prod.ItemName(), prod.ItemCode())
 		}
 
 	case *dawg.PreConfiguredProduct:
@@ -232,19 +205,10 @@ func iteminfo(prod dawg.Item, w io.Writer) {
 		fmt.Fprintf(o, "  avalable sides: %s\n", p.AvailableSides)
 		fmt.Fprintf(o, "  avalable toppings: %s\n", p.AvailableToppings)
 	}
+
 	if _, err := w.Write(o.Bytes()); err != nil {
 		panic(err)
 	}
-	// old version
-
-	// fmt.Fprintf(output, "%s [%s]\n", prod["Name"], prod["Code"])
-	// fmt.Fprintf(output, "    %s: %v\n", "DefaultToppings", prod["Tags"].(map[string]interface{})["DefaultToppings"])
-
-	// for k, v := range prod {
-	// 	if k != "Name" && k != "Tags" && k != "ImageCode" {
-	// 		fmt.Fprintf(output, "    %s: %v\n", k, v)
-	// 	}
-	// }
 }
 
 func (c *menuCmd) printToppings() {
@@ -275,19 +239,6 @@ func printToppingCategory(name string, toppings map[string]dawg.Topping, w io.Wr
 		fmt.Fprintln(w, indent, k, strings.Repeat(" ", 3-strLen(k)), v.Name)
 	}
 	fmt.Fprintln(w, "")
-}
-
-// deprecated
-func (c *basecmd) product(code string) (*dawg.Product, error) {
-	_, file, line, _ := runtime.Caller(1)
-	fmt.Fprintf(os.Stderr, "Dev Warning: product is deprecated, called on %s:%d", file, line)
-
-	if c.menu == nil {
-		if err := db.UpdateTS("menu", c); err != nil {
-			return nil, err
-		}
-	}
-	return c.menu.GetProduct(code)
 }
 
 func maxStrLen(list []string) int {

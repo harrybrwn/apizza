@@ -173,6 +173,35 @@ func (p *OrderProduct) Options() map[string]interface{} {
 	return p.Opts
 }
 
+// ReadableOptions gives the options that are meant for humas to view.
+func (p *OrderProduct) ReadableOptions() map[string]string {
+	var (
+		out = map[string]string{}
+	)
+	for topping, options := range p.Options() {
+		params, ok := options.(map[string]interface{})
+		if !ok {
+			return nil
+		}
+		var param string
+
+		for k, v := range params {
+			switch k {
+			case ToppingFull:
+				param += "full "
+			case ToppingLeft:
+				param += "left "
+			case ToppingRight:
+				param += "right "
+			}
+			param += v.(string)
+		}
+
+		out[topping] = param
+	}
+	return out
+}
+
 // AddTopping adds a topping to the product. The 'code' parameter is a
 // topping code which can be found in the menu object. The 'coverage'
 // parameter is for specifieing which side of the topping should be on for

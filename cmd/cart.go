@@ -44,6 +44,7 @@ func (c *cartCmd) Run(cmd *cobra.Command, args []string) (err error) {
 		return errors.New("cannot handle multiple orders")
 	}
 	name := args[0]
+
 	if c.delete {
 		if err = db.Delete(data.OrderPrefix + name); err != nil {
 			return err
