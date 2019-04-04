@@ -200,3 +200,11 @@ func testingStore() *Store {
 	}
 	return s
 }
+
+func testingMenu() *Menu {
+	m, err := testingStore().Menu()
+	if err != nil {
+		panic(err)
+	}
+	return m
+}

@@ -38,7 +38,7 @@ type Menu struct {
 	} `json:"Categorization"`
 	Products      map[string]*Product
 	Variants      map[string]*Variant
-	Toppings      map[string]interface{}
+	Toppings      map[string]map[string]Topping
 	Preconfigured map[string]*PreConfiguredProduct `json:"PreconfiguredProducts"`
 }
 
@@ -97,11 +97,40 @@ func (m *Menu) FindItem(code string) (itm Item) {
 	return nil
 }
 
-// type topping map[string]string
+// ViewOptions returns a map that makes it easier for humans to view a topping.
+func (m *Menu) ViewOptions(itm Item) map[string]string {
+	var itmType string
 
-// func (t topping) String() (str string) {
-// 	return fmt.Sprint(t)
-// }
+	switch p := itm.(type) {
+	case *Variant:
+		itmType = p.product.Type
+	case *Product:
+		itmType = p.Type
+	default:
+		return nil
+	}
+
+	opts := itm.Options()
+	tops := m.Toppings[itmType]
+
+	view := map[string]string{}
+	for k, v := range opts {
+		fmt.Printf("%+v  %v\n", tops[k], v)
+		view[k] = tops[k].Name
+	}
+	return view
+}
+
+// Topping is a simple struct that represents a topping on the menu.
+//
+// Note: this struct does not rempresent a topping that is added to an Item
+// and sent to dominos.
+type Topping struct {
+	item
+
+	Description  string
+	Availability []interface{}
+}
 
 func makeTopping(cover, amount string, optionQtys []string) map[string]string {
 	var key string

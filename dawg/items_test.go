@@ -1,6 +1,7 @@
 package dawg
 
 import (
+	"fmt"
 	"testing"
 )
 
@@ -38,4 +39,16 @@ func TestProduct(t *testing.T) {
 			}
 		}
 	}
+}
+
+func TestViewOptions(t *testing.T) {
+	m := testingMenu()
+
+	itm, err := m.GetVariant("P10IRECK")
+	if err != nil {
+		t.Error(err)
+	}
+	opts := m.ViewOptions(itm)
+	fmt.Println(opts)
+	// t.Error(opts)
 }

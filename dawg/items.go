@@ -82,6 +82,10 @@ type Product struct {
 	// comma separated key-value pairs.
 	DefaultSides string
 
+	// ProductType is the type of item (ie. 'Bread', 'Pizza'). Used for getting
+	// toppings, sides, sizes, or flavors.
+	Type string `json:"ProductType"`
+
 	opts map[string]interface{}
 }
 
@@ -222,11 +226,7 @@ func (v *Variant) AddTopping(code, side, amount string) error {
 // is a member of.
 func (v *Variant) GetProduct() *Product {
 	if v.product == nil {
-		// p, err := getter.GetProduct(v.ProductCode)
-		// if err != nil {
-		// 	return nil
-		// }
-		// return p
+
 		return nil
 	}
 	return v.product
