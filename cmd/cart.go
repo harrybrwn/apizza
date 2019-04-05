@@ -52,6 +52,7 @@ func (c *cartCmd) Run(cmd *cobra.Command, args []string) (err error) {
 		c.Printf("%s successfully deleted.\n", name)
 		return nil
 	}
+
 	var order *dawg.Order
 	if order, err = data.GetOrder(name, db); err != nil {
 		return err
@@ -77,6 +78,7 @@ func (c *cartCmd) Run(cmd *cobra.Command, args []string) (err error) {
 		}
 		return data.SaveOrder(order, c.Output(), db)
 	}
+
 	return c.printOrder(name, order)
 }
 

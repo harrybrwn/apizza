@@ -40,6 +40,10 @@ type Menu struct {
 	Variants      map[string]*Variant
 	Toppings      map[string]map[string]Topping
 	Preconfigured map[string]*PreConfiguredProduct `json:"PreconfiguredProducts"`
+	Sides         map[string]map[string]struct {
+		item
+		Description string
+	}
 }
 
 // MenuCategory is a category on the dominos menu.

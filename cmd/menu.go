@@ -30,6 +30,7 @@ import (
 type menuCmd struct {
 	*basecmd
 	all            bool
+	verbose        bool
 	toppings       bool
 	preconfigured  bool
 	showCategories bool
@@ -80,12 +81,18 @@ func (b *cliBuilder) newMenuCmd() base.CliCommand {
 		all: false, toppings: false,
 		preconfigured: false, showCategories: false}
 	c.basecmd = b.newCommand("menu <item>", "Get the Dominos menu.", c)
-	c.Cmd().Long = `The menu command will show the dominos menu `
+	c.Cmd().Long = `The menu command will show the dominos menu.
+
+To show a subdivition of the menu, give an item or
+category to the --category and --item flags or give them
+as an argument to the command itself.`
+
+	c.Flags().BoolVarP(&c.all, "all", "a", c.all, "show the entire menu")
+	c.Flags().BoolVarP(&c.verbose, "verbose", "v", false, "print the menu verbosly")
 
 	c.Flags().StringVarP(&c.item, "item", "i", "", "show info on the menu item given")
 	c.Flags().StringVarP(&c.category, "category", "c", "", "show one category on the menu")
 
-	c.Flags().BoolVarP(&c.all, "all", "a", c.all, "show the entire menu")
 	c.Flags().BoolVarP(&c.toppings, "toppings", "t", c.toppings, "print out the toppings on the menu")
 	c.Flags().BoolVarP(&c.preconfigured, "preconfigured",
 		"p", c.preconfigured, "show the pre-configured products on the dominos menu")
@@ -93,14 +100,21 @@ func (b *cliBuilder) newMenuCmd() base.CliCommand {
 	return c
 }
 
-func (c *menuCmd) printMenu(categoryName string) error {
+func (c *menuCmd) printMenu(name string) error {
 	var printfunc func(dawg.MenuCategory, int) error
 
 	printfunc = func(cat dawg.MenuCategory, depth int) error {
 		if cat.IsEmpty() {
 			return nil
 		}
-		c.Printf("%s%s\n", spaces(depth*2), cat.Name)
+
+		if test {
+			c.Printf("\n%s%s", strings.Repeat("-", 10+depth*2), cat.Name)
+			l := (depth * 2) + len(cat.Name)
+			c.Println(strings.Repeat("-", 50-l))
+		} else {
+			c.Printf("%s%s\n", spaces(depth*2), cat.Name)
+		}
 
 		if cat.HasItems() {
 			for _, p := range cat.Products {
@@ -122,13 +136,13 @@ func (c *menuCmd) printMenu(categoryName string) error {
 		allCategories = append(allCategories, c.menu.Categorization.Preconfigured.Categories...)
 	}
 
-	if len(categoryName) > 0 {
+	if len(name) > 0 {
 		for _, cat := range allCategories {
-			if categoryName == strings.ToLower(cat.Name) || categoryName == strings.ToLower(cat.Code) {
+			if name == strings.ToLower(cat.Name) || name == strings.ToLower(cat.Code) {
 				return printfunc(cat, 0)
 			}
 		}
-		return fmt.Errorf("could not find %s", categoryName)
+		return fmt.Errorf("could not find %s", name)
 	} else if c.showCategories {
 		for _, cat := range allCategories {
 			if cat.Name != "" {
@@ -181,10 +195,11 @@ func (c *menuCmd) printCategory(code string, indentLen int) {
 
 func (c *menuCmd) iteminfo(prod dawg.Item, w io.Writer) {
 	o := &bytes.Buffer{}
-
 	fmt.Fprintf(o, "%s\n", prod.ItemName())
 	fmt.Fprintf(o, "  Code: %s\n", prod.ItemCode())
-	fmt.Fprintf(o, "  Category: %s\n", prod.Category())
+	if c := prod.Category(); c != "" {
+		fmt.Fprintf(o, "  Category: %s\n", c)
+	}
 	if len(prod.Options()) > 0 {
 		fmt.Fprintln(o, "  Toppings:")
 		tops := dawg.ReadableToppings(prod, c.menu)
@@ -203,18 +218,26 @@ func (c *menuCmd) iteminfo(prod dawg.Item, w io.Writer) {
 		fmt.Fprintf(o, "  Parent: %s [%s]\n", parent.ItemName(), parent.ItemCode())
 
 	case *dawg.PreConfiguredProduct:
-		fmt.Fprintf(o, "  Description: '%s'\n", p.Description)
+		// TODO: make a function for the internal/out package that cuts the line
+		//       at a space closest to 80 characters.
+		if len(p.Description) > 80 {
+			fmt.Fprintf(o, "  Description: '%s\n%s%s'\n", p.Description[:80], spaces(15), p.Description[80:])
+		} else {
+			fmt.Fprintf(o, "  Description: '%s'\n", p.Description)
+		}
 		fmt.Fprintf(o, "  Size: %s\n", p.Size)
 
 	case *dawg.Product:
-		fmt.Fprintf(o, "  Description: '%s'\n", p.Description)
+		if len(p.Description) > 80 {
+			fmt.Fprintf(o, "  Description: '%s\n%s%s\n", p.Description[:80], spaces(15), p.Description[80:])
+		} else {
+			fmt.Println(len(p.Description))
+			fmt.Fprintf(o, "  Description: '%s'\n", p.Description)
+		}
 		fmt.Fprintf(o, "  Avalable sides: %s\n", p.AvailableSides)
 		fmt.Fprintf(o, "  Avalable toppings: %s\n", p.AvailableToppings)
 	}
-
-	if _, err := w.Write(o.Bytes()); err != nil {
-		panic(err)
-	}
+	w.Write(o.Bytes())
 }
 
 func (c *menuCmd) printToppings() {

@@ -33,3 +33,8 @@ var variantTmpl = `{{ .Name }} {{ .Code }}
 `
 
 var shorthandVariantTmpl = `{{ .Name }} {{ .Code }}`
+
+var itemTmpl = `{{.ItemName}}
+  Code: {{.ItemCode}}
+  Category: {{.Category}}
+`
