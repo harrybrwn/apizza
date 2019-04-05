@@ -82,8 +82,8 @@ func (b *cliBuilder) newMenuCmd() base.CliCommand {
 	c := &menuCmd{
 		all: false, toppings: false,
 		preconfigured: false, showCategories: false}
-	c.basecmd = b.newCommand("menu <item>", "Get the Dominos menu.", c)
-	c.Cmd().Long = `The menu command will show the dominos menu.
+	c.basecmd = b.newCommand("menu <item>", "View the Dominos menu.", c)
+	c.Cmd().Long = `This command will show the dominos menu.
 
 To show a subdivition of the menu, give an item or
 category to the --category and --item flags or give them
@@ -109,14 +109,8 @@ func (c *menuCmd) printMenu(name string) error {
 		if cat.IsEmpty() {
 			return nil
 		}
-
-		if test {
-			c.Printf("\n%s%s", strings.Repeat("-", 10+depth*2), cat.Name)
-			l := (depth * 2) + len(cat.Name)
-			c.Println(strings.Repeat("-", 50-l))
-		} else {
-			c.Printf("%s%s\n", spaces(depth*2), cat.Name)
-		}
+		c.Printf("\n%s%s%s%s\n", spaces(depth*2), strings.Repeat("-", 8),
+			cat.Name, strings.Repeat("-", 60-len(cat.Name)-(depth*2)))
 
 		if cat.HasItems() {
 			for _, p := range cat.Products {
@@ -197,18 +191,9 @@ func (c *menuCmd) printCategory(code string, indentLen int) {
 
 func (c *menuCmd) iteminfo(prod dawg.Item, w io.Writer) {
 	o := &bytes.Buffer{}
-	fmt.Fprintf(o, "%s\n", prod.ItemName())
-	fmt.Fprintf(o, "  Code: %s\n", prod.ItemCode())
-	if c := prod.Category(); c != "" {
-		fmt.Fprintf(o, "  Category: %s\n", c)
-	}
-	if len(prod.Options()) > 0 {
-		fmt.Fprintln(o, "  Toppings:")
-		tops := dawg.ReadableToppings(prod, c.menu)
-		for tname, param := range tops {
-			fmt.Fprintf(o, "    %s:%s%s\n", tname, " ", param)
-		}
-	}
+	out.SetOutput(o)
+
+	out.ItemInfo(prod, c.menu)
 
 	switch p := prod.(type) {
 	case *dawg.Variant:
@@ -217,7 +202,7 @@ func (c *menuCmd) iteminfo(prod dawg.Item, w io.Writer) {
 		if parent == nil {
 			break
 		}
-		fmt.Fprintf(o, "  Parent: %s [%s]\n", parent.ItemName(), parent.ItemCode())
+		fmt.Fprintf(o, "  Parent Product: '%s' [%s]\n", parent.ItemName(), parent.ItemCode())
 
 	case *dawg.PreConfiguredProduct:
 		fmt.Fprintf(o, "  Description: '%s'\n", out.FormatLineIndent(p.Description, 70, 16))
@@ -225,9 +210,11 @@ func (c *menuCmd) iteminfo(prod dawg.Item, w io.Writer) {
 
 	case *dawg.Product:
 		fmt.Fprintf(o, "  Description: '%s'\n", out.FormatLineIndent(p.Description, 70, 16))
+		fmt.Fprintf(o, "  Variants: %v\n", p.Variants)
 		fmt.Fprintf(o, "  Avalable sides: %s\n", p.AvailableSides)
 		fmt.Fprintf(o, "  Avalable toppings: %s\n", p.AvailableToppings)
 	}
+	out.ResetOutput()
 	w.Write(o.Bytes())
 }
 

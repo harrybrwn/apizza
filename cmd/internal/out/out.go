@@ -2,6 +2,7 @@ package out
 
 import (
 	"errors"
+	"fmt"
 	"io"
 	"os"
 	"strings"
@@ -10,13 +11,21 @@ import (
 	"github.com/harrybrwn/apizza/dawg"
 )
 
-var output io.Writer = os.Stdout
+var (
+	output  io.Writer = os.Stdout
+	_output           = os.Stdout // don't change this
+)
 
 const space = ' '
 
 // SetOutput gives the out package an output variable.
 func SetOutput(w io.Writer) {
 	output = w
+}
+
+// ResetOutput will reset the package output to it's default io.Writer
+func ResetOutput() {
+	output = _output
 }
 
 // FormatLine will take a string and make sure it does not cross a certain lenth
@@ -83,6 +92,22 @@ func PrintOrder(o *dawg.Order, full bool) error {
 		t = cartOrderTmpl
 	}
 	return tmpl(output, t, o)
+}
+
+// ItemInfo prints the common information for an Item
+func ItemInfo(i dawg.Item, menu *dawg.Menu) {
+	fmt.Fprintf(output, "%s\n", i.ItemName())
+	fmt.Fprintf(output, "  Code: %s\n", i.ItemCode())
+	if c := i.Category(); c != "" {
+		fmt.Fprintf(output, "  Category: %s\n", c)
+	}
+	if len(i.Options()) > 0 {
+		fmt.Fprintln(output, "  Toppings:")
+		tops := dawg.ReadableToppings(i, menu)
+		for tname, param := range tops {
+			fmt.Fprintf(output, "    %s:%s%s\n", tname, " ", param)
+		}
+	}
 }
 
 // PrintVariant will display a dawg.Variant in a pretty way.
