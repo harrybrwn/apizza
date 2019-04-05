@@ -83,3 +83,41 @@ func TestItems(t *testing.T) {
 		}
 	}
 }
+
+func TestOPFromItem(t *testing.T) {
+	m := testingMenu()
+	v, err := m.GetVariant("W08PBNLW")
+	if err != nil {
+		t.Error(err)
+	}
+	p, err := m.GetProduct("S_BONELESS")
+	if err != nil {
+		t.Error(err)
+	}
+
+	opv := OPFromItem(v)
+	opp := OPFromItem(p)
+
+	opvOpts := opv.Options()
+	oppOpts := opp.Options()
+
+	for k := range opvOpts {
+		if _, ok := oppOpts[k]; !ok {
+			t.Errorf("order product should have %s", k)
+		}
+	}
+	for k := range v.Options() {
+		if _, ok := opvOpts[k]; !ok {
+			t.Error("options should be the same")
+		}
+	}
+	for k := range p.Options() {
+		if _, ok := oppOpts[k]; !ok {
+			t.Error("options should be the same")
+		}
+	}
+
+	if opv.Type() != opp.Type() {
+		t.Error("the variant and it's parent should have the same product type")
+	}
+}

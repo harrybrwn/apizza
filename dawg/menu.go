@@ -131,16 +131,11 @@ func ReadableToppings(item Item, m *Menu) map[string]string {
 		toppingSet map[string]Topping
 	)
 
-	switch p := item.(type) {
-	case *Product:
-		toppingSet = m.Toppings[p.Type]
-	case *Variant:
-		toppingSet = m.Toppings[p.GetProduct().Type]
-	case *OrderProduct:
-		toppingSet = m.Toppings[p.pType]
-	default:
+	t := item.Type()
+	if t == "" {
 		return ReadableOptions(item)
 	}
+	toppingSet = m.Toppings[t]
 
 	var key string
 	for topping, options := range item.Options() {
@@ -153,7 +148,14 @@ func ReadableToppings(item Item, m *Menu) map[string]string {
 func translateOpt(opt interface{}) string {
 	var param string
 
-	toppingParams := opt.(map[string]string)
+	toppingParams, ok := opt.(map[string]string)
+	if !ok {
+		for k, v := range opt.(map[string]interface{}) {
+			param += k + " "
+			param += v.(string)
+		}
+		return param
+	}
 	for cover, amnt := range toppingParams {
 		switch cover {
 		case ToppingFull:

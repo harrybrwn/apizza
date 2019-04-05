@@ -211,6 +211,17 @@ func (c *menuCmd) iteminfo(prod dawg.Item, w io.Writer) {
 		fmt.Fprintf(o, "[%s] - (preconfigured product)\n", prod.ItemCode())
 		fmt.Fprintf(o, "  description: %s\n", p.Description)
 		fmt.Fprintf(o, "  size:        %s\n", p.Size)
+		if len(p.Opts) > 0 {
+			tops := dawg.ReadableToppings(p, c.menu)
+			max := 0
+			for k := range tops {
+				max = getmax(k, max)
+			}
+			fmt.Fprintln(o, "  toppings:")
+			for tname, param := range tops {
+				fmt.Fprintf(o, "    %s:%s%s\n", tname, spaces(max-len(tname)+1), param)
+			}
+		}
 
 	case *dawg.Product:
 		fmt.Fprintf(o, "[%s] - (product category)\n", prod.ItemCode())

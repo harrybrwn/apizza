@@ -15,10 +15,6 @@ var productOptQtys = map[string][]string{
 
 // Item defines an interface for all objects that are items on the dominos menu.
 type Item interface {
-	// ToOrderProduct converts the Item into an OrderProduct so that it can be
-	// sent to dominos in an order.
-	ToOrderProduct() *OrderProduct
-
 	// Options returns a map of the Item's options.
 	Options() map[string]interface{}
 
@@ -30,6 +26,9 @@ type Item interface {
 
 	// get the name of an item
 	ItemName() string
+
+	// Type returns the product type of the item.
+	Type() string
 }
 
 // item has the common fields between Product and Varient.
@@ -59,6 +58,7 @@ func (im *item) ItemName() string {
 // Product is not a the most basic component of the Dominos menu; this is where
 // the Variant structure comes in. The Product structure can be seen as more of
 // a category that houses a list of Variants.
+// All exported field are initialized from json data.
 type Product struct {
 	item
 
@@ -86,26 +86,19 @@ type Product struct {
 
 	// ProductType is the type of item (ie. 'Bread', 'Pizza'). Used for getting
 	// toppings, sides, sizes, or flavors.
-	Type string `json:"ProductType"`
+	ProductType string
 
 	opts map[string]interface{}
-}
-
-// ToOrderProduct converts the Product into an OrderProduct so that it can be
-// sent to dominos in an order.
-func (p *Product) ToOrderProduct() *OrderProduct {
-	return &OrderProduct{
-		item:  p.item,
-		Opts:  p.Options(),
-		Qty:   1,
-		ID:    1,
-		pType: p.Type,
-	}
 }
 
 // Options returns a map of the Product's options.
 func (p *Product) Options() map[string]interface{} {
 	codes, amounts, n := splitDefaults(p.DefaultToppings)
+
+	if p.opts == nil {
+		p.opts = make(map[string]interface{})
+	}
+
 	for i := 0; i < n; i++ {
 		// if the default topping is not already in the options then add it
 		if _, ok := p.opts[codes[i]]; !ok {
@@ -127,6 +120,11 @@ func (p *Product) AddTopping(code, side, amount string) error {
 	}
 	p.opts[code] = top
 	return nil
+}
+
+// Type returns the product type. see Item
+func (p *Product) Type() string {
+	return p.ProductType
 }
 
 // GetVariants will initialize all the Varients the are a subset of the product.
@@ -174,18 +172,6 @@ type Variant struct {
 	opts    map[string]interface{}
 }
 
-// ToOrderProduct converts the Variant into an OrderProduct so that it can be
-// sent to dominos in an order.
-func (v *Variant) ToOrderProduct() *OrderProduct {
-	return &OrderProduct{
-		item:  v.item,
-		Opts:  v.Options(),
-		Qty:   1,
-		ID:    1,
-		pType: v.GetProduct().Type,
-	}
-}
-
 // Options returns a map of the Variant's options.
 func (v *Variant) Options() map[string]interface{} {
 	if options, ok := v.Tags["DefaultToppings"]; ok {
@@ -226,6 +212,11 @@ func (v *Variant) AddTopping(code, side, amount string) error {
 	return nil
 }
 
+// Type returns the product type. see Item
+func (v *Variant) Type() string {
+	return v.GetProduct().Type()
+}
+
 // GetProduct will return the set of variants (Product) that the variant
 // is a member of.
 func (v *Variant) GetProduct() *Product {
@@ -240,17 +231,29 @@ func (v *Variant) GetProduct() *Product {
 type PreConfiguredProduct struct {
 	item
 
+	// Description of the product
 	Description string `json:"Description"`
-	Opts        string `json:"Options"`
-	Size        string `json:"Size"`
+
+	// Opts are a string of options that come with the preconfigured-product.
+	Opts string `json:"Options"`
+
+	// Size is the size name of the product. It's not a code or anything, its
+	// more for user level stuff.
+	Size string `json:"Size"`
+
+	// ptype string // just in case there is a way to use this
 }
 
-// ToOrderProduct converts the Variant into an OrderProduct so that it can be
-// sent to dominos in an order.
-func (pc *PreConfiguredProduct) ToOrderProduct() *OrderProduct { return nil }
-
 // Options returns a map of the Variant's options.
-func (pc *PreConfiguredProduct) Options() map[string]interface{} { return nil }
+func (pc *PreConfiguredProduct) Options() map[string]interface{} {
+	var opts = map[string]interface{}{}
+
+	codes, amounts, n := splitDefaults(pc.Opts)
+	for i := 0; i < n; i++ {
+		opts[codes[i]] = map[string]string{ToppingFull: amounts[i]}
+	}
+	return opts
+}
 
 // AddTopping adds a topping to the product.
 func (pc *PreConfiguredProduct) AddTopping(code, cover, amnt string) error {
@@ -267,6 +270,11 @@ func splitDefaults(defs string) (keys, vals []string, n int) {
 		vals = append(vals, keyval[1])
 	}
 	return keys, vals, shortest(keys, vals)
+}
+
+// Type returns the product type. see Item
+func (pc *PreConfiguredProduct) Type() string {
+	return ""
 }
 
 func shortest(a, b []string) int {

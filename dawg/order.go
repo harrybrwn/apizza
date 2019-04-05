@@ -60,7 +60,7 @@ func (o *Order) AddProduct(item Item) error {
 	if item == nil {
 		return errors.New("cannot add a null item")
 	}
-	o.Products = append(o.Products, item.ToOrderProduct())
+	o.Products = append(o.Products, OPFromItem(item))
 	return nil
 }
 
@@ -128,7 +128,8 @@ type OrderProduct struct {
 	// Qty is the number of products to be ordered.
 	Qty int `json:"Qty"`
 
-	// ID is the index of the product within an order.
+	// ID is the index of the product within an order. Unless the Product is
+	// being sent back by dominos, then I have no idea what ID means.
 	ID int `json:"ID"`
 
 	IsNew              bool                   `json:"isNew"`
@@ -138,6 +139,20 @@ type OrderProduct struct {
 	pType              string
 }
 
+// OPFromItem will construct an order product from an Item.
+func OPFromItem(itm Item) *OrderProduct {
+	return &OrderProduct{
+		item: item{
+			Code: itm.ItemCode(),
+			Name: itm.ItemName(),
+		},
+		Qty:   1,
+		Opts:  itm.Options(),
+		pType: itm.Type(),
+	}
+}
+
+// decodes an OrderProduct and puts unrecognized fields into the other map.
 func makeProduct(data map[string]interface{}) (*OrderProduct, error) {
 
 	_, file, line, _ := runtime.Caller(1)
@@ -172,6 +187,11 @@ func (p *OrderProduct) ToOrderProduct() *OrderProduct {
 // Options returns a map of the OrderProdut's options.
 func (p *OrderProduct) Options() map[string]interface{} {
 	return p.Opts
+}
+
+// Type returns the product type of the product
+func (p *OrderProduct) Type() string {
+	return p.pType
 }
 
 // ReadableOptions gives the options that are meant for humas to view.
