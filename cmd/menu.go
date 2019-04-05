@@ -21,6 +21,8 @@ import (
 	"strings"
 	"unicode/utf8"
 
+	"github.com/harrybrwn/apizza/cmd/internal/out"
+
 	"github.com/spf13/cobra"
 
 	"github.com/harrybrwn/apizza/cmd/internal/base"
@@ -218,22 +220,11 @@ func (c *menuCmd) iteminfo(prod dawg.Item, w io.Writer) {
 		fmt.Fprintf(o, "  Parent: %s [%s]\n", parent.ItemName(), parent.ItemCode())
 
 	case *dawg.PreConfiguredProduct:
-		// TODO: make a function for the internal/out package that cuts the line
-		//       at a space closest to 80 characters.
-		if len(p.Description) > 80 {
-			fmt.Fprintf(o, "  Description: '%s\n%s%s'\n", p.Description[:80], spaces(15), p.Description[80:])
-		} else {
-			fmt.Fprintf(o, "  Description: '%s'\n", p.Description)
-		}
+		fmt.Fprintf(o, "  Description: '%s'\n", out.FormatLineIndent(p.Description, 70, 16))
 		fmt.Fprintf(o, "  Size: %s\n", p.Size)
 
 	case *dawg.Product:
-		if len(p.Description) > 80 {
-			fmt.Fprintf(o, "  Description: '%s\n%s%s\n", p.Description[:80], spaces(15), p.Description[80:])
-		} else {
-			fmt.Println(len(p.Description))
-			fmt.Fprintf(o, "  Description: '%s'\n", p.Description)
-		}
+		fmt.Fprintf(o, "  Description: '%s'\n", out.FormatLineIndent(p.Description, 70, 16))
 		fmt.Fprintf(o, "  Avalable sides: %s\n", p.AvailableSides)
 		fmt.Fprintf(o, "  Avalable toppings: %s\n", p.AvailableToppings)
 	}

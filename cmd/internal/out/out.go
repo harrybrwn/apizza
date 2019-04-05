@@ -4,15 +4,73 @@ import (
 	"errors"
 	"io"
 	"os"
+	"strings"
+	"unicode/utf8"
 
 	"github.com/harrybrwn/apizza/dawg"
 )
 
 var output io.Writer = os.Stdout
 
+const space = ' '
+
 // SetOutput gives the out package an output variable.
 func SetOutput(w io.Writer) {
 	output = w
+}
+
+// FormatLine will take a string and make sure it does not cross a certain lenth
+// by slicing it at a space closest to the length argument.
+func FormatLine(str string, length int) (lines []string) {
+	strLen := utf8.RuneCountInString(str)
+
+	if strLen <= length {
+		return []string{str}
+	}
+	var head = 0
+
+	for head < strLen {
+		l, end := lineone(str, head, length)
+		lines = append(lines, l)
+		head += end
+	}
+	return lines
+}
+
+// FormatLineIndent cuts a string at the linelen and indents the string that
+// is left over.
+func FormatLineIndent(str string, linelen, tablen int) (formatted string) {
+	lines := FormatLine(str, linelen)
+	var line string
+	for i := range lines {
+		if i != 0 {
+			line = strings.Repeat(" ", tablen) + lines[i]
+		} else {
+			line = lines[i]
+		}
+		if i != len(lines)-1 {
+			line += "\n"
+		}
+
+		formatted += line
+	}
+	return formatted
+}
+
+func lineone(str string, start, length int) (string, int) {
+	str = str[start:]
+	if l := len(str); l < length {
+		return str, l
+	}
+
+	var i int
+	for i = length; i >= 0; i-- {
+		if str[i] == space {
+			i++
+			break
+		}
+	}
+	return str[:i], i
 }
 
 // PrintOrder will print the order given.
