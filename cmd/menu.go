@@ -182,52 +182,34 @@ func (c *menuCmd) printCategory(code string, indentLen int) {
 func (c *menuCmd) iteminfo(prod dawg.Item, w io.Writer) {
 	o := &bytes.Buffer{}
 
-	fmt.Fprintf(o, "%s ", prod.ItemName())
+	fmt.Fprintf(o, "%s\n", prod.ItemName())
+	fmt.Fprintf(o, "  Code: %s\n", prod.ItemCode())
+	fmt.Fprintf(o, "  Category: %s\n", prod.Category())
+	if len(prod.Options()) > 0 {
+		fmt.Fprintln(o, "  Toppings:")
+		tops := dawg.ReadableToppings(prod, c.menu)
+		for tname, param := range tops {
+			fmt.Fprintf(o, "    %s:%s%s\n", tname, " ", param)
+		}
+	}
 
 	switch p := prod.(type) {
 	case *dawg.Variant:
-		fmt.Fprintf(o, "[%s] - (variant)\n", prod.ItemCode())
-		fmt.Fprintf(o, "  price: %s\n", p.Price)
-
-		tops := dawg.ReadableToppings(p, c.menu)
-		if len(tops) > 0 {
-			max := 0
-			for k := range tops {
-				max = getmax(k, max)
-			}
-			fmt.Fprintln(o, "  toppings:")
-			for tname, param := range tops {
-				fmt.Fprintf(o, "    %s:%s%s\n", tname, spaces(max-len(tname)+1), param)
-			}
-		}
-
+		fmt.Fprintf(o, "  Price: %s\n", p.Price)
 		parent := p.GetProduct()
 		if parent == nil {
 			break
 		}
-		fmt.Fprintf(o, "  parent: %s [%s]\n", parent.ItemName(), parent.ItemCode())
+		fmt.Fprintf(o, "  Parent: %s [%s]\n", parent.ItemName(), parent.ItemCode())
 
 	case *dawg.PreConfiguredProduct:
-		fmt.Fprintf(o, "[%s] - (preconfigured product)\n", prod.ItemCode())
-		fmt.Fprintf(o, "  description: %s\n", p.Description)
-		fmt.Fprintf(o, "  size:        %s\n", p.Size)
-		if len(p.Opts) > 0 {
-			tops := dawg.ReadableToppings(p, c.menu)
-			max := 0
-			for k := range tops {
-				max = getmax(k, max)
-			}
-			fmt.Fprintln(o, "  toppings:")
-			for tname, param := range tops {
-				fmt.Fprintf(o, "    %s:%s%s\n", tname, spaces(max-len(tname)+1), param)
-			}
-		}
+		fmt.Fprintf(o, "  Description: '%s'\n", p.Description)
+		fmt.Fprintf(o, "  Size: %s\n", p.Size)
 
 	case *dawg.Product:
-		fmt.Fprintf(o, "[%s] - (product category)\n", prod.ItemCode())
-		fmt.Fprintf(o, "  description: %s\n", p.Description)
-		fmt.Fprintf(o, "  avalable sides: %s\n", p.AvailableSides)
-		fmt.Fprintf(o, "  avalable toppings: %s\n", p.AvailableToppings)
+		fmt.Fprintf(o, "  Description: '%s'\n", p.Description)
+		fmt.Fprintf(o, "  Avalable sides: %s\n", p.AvailableSides)
+		fmt.Fprintf(o, "  Avalable toppings: %s\n", p.AvailableToppings)
 	}
 
 	if _, err := w.Write(o.Bytes()); err != nil {

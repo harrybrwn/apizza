@@ -23,7 +23,7 @@ func NearestStore(addr Address, service string) (*Store, error) {
 
 	for i := range allnearby.Stores {
 		if allnearby.Stores[i].IsOnlineNow {
-			store = &allnearby.Stores[i]
+			store = allnearby.Stores[i]
 			break
 		}
 	}
@@ -33,7 +33,7 @@ func NearestStore(addr Address, service string) (*Store, error) {
 
 // GetAllNearbyStores is a way of getting all the nearby stores
 // except they will by full initialized.
-func GetAllNearbyStores(addr Address, service string) ([]Store, error) {
+func GetAllNearbyStores(addr Address, service string) ([]*Store, error) {
 	all, err := findNearbyStores(addr, service)
 	if err != nil {
 		return nil, err
@@ -128,7 +128,6 @@ func (s *Store) NewOrder() *Order {
 
 // GetProduct finds the menu Product that matchs the given product code.
 func (s *Store) GetProduct(code string) (*Product, error) {
-	// get a menu and find the map that matches the Code
 	menu, err := s.Menu()
 	if err != nil {
 		return nil, err
@@ -155,7 +154,7 @@ func (s *Store) WaitTime() (min int, max int) {
 type storeLocs struct {
 	Granularity string      `json:"Granularity"`
 	Address     *StreetAddr `json:"Address"`
-	Stores      []Store     `json:"Stores"`
+	Stores      []*Store    `json:"Stores"`
 }
 
 func findNearbyStores(addr Address, service string) (*storeLocs, error) {
@@ -196,7 +195,7 @@ func initStoreChan(s *Store, c chan *Store) {
 
 func initStores(stores []*Store) chan *Store {
 	c := make(chan *Store)
-	defer close(c)
+	// defer close(c)
 
 	for i := range stores {
 		go initStoreChan(stores[i], c) // send the initialized store through the channel

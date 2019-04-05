@@ -1,7 +1,6 @@
 package dawg
 
 import (
-	"fmt"
 	"testing"
 )
 
@@ -49,6 +48,11 @@ func TestViewOptions(t *testing.T) {
 		t.Error(err)
 	}
 	opts := m.ViewOptions(itm)
-	fmt.Println(opts)
-	// t.Error(opts)
+	exp := map[string]string{"Cheese (C)": "full 1", "BBQ Sauce (Bq)": "full 1", "Onions (O)": "full 1", "Premium Chicken (Du)": "full 1", "Cheddar Cheese (E)": "full 1", "Shredded Provolone Cheese (Cp)": "full 1"}
+
+	for k := range opts {
+		if opts[k] != exp[k] {
+			t.Error("bad topping format")
+		}
+	}
 }

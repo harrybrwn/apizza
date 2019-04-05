@@ -148,7 +148,7 @@ func OPFromItem(itm Item) *OrderProduct {
 		},
 		Qty:   1,
 		Opts:  itm.Options(),
-		pType: itm.Type(),
+		pType: itm.Category(),
 	}
 }
 
@@ -178,19 +178,13 @@ func makeProduct(data map[string]interface{}) (*OrderProduct, error) {
 	return p, err
 }
 
-// ToOrderProduct converts the OrderProdut into an OrderProduct so that it can
-// be sent to dominos in an order.
-func (p *OrderProduct) ToOrderProduct() *OrderProduct {
-	return p
-}
-
 // Options returns a map of the OrderProdut's options.
 func (p *OrderProduct) Options() map[string]interface{} {
 	return p.Opts
 }
 
-// Type returns the product type of the product
-func (p *OrderProduct) Type() string {
+// Category returns the product category of the product
+func (p *OrderProduct) Category() string {
 	return p.pType
 }
 

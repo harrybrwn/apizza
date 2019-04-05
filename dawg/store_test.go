@@ -152,3 +152,33 @@ func TestInitStore(t *testing.T) {
 		t.Error("expected error")
 	}
 }
+
+// func TestInitStores(t *testing.T) {
+// 	addr := testAddress()
+// 	all, err := findNearbyStores(addr, "Delivery")
+// 	if err != nil {
+// 		t.Error(err)
+// 	}
+// 	var stores []*Store
+// 	c := initStores(all.Stores)
+// 	for store := range c {
+// 		// fmt.Println(store.ID)
+// 		stores = append(stores, store)
+// 	}
+// 	close(c)
+// }
+
+// func BenchmarkInitStores(b *testing.B) {
+// 	addr := testAddress()
+// 	all, err := findNearbyStores(addr, "Delivery")
+// 	if err != nil {
+// 		b.Error(err)
+// 	}
+// 	var stores []*Store
+// 	c := initStores(all.Stores)
+// 	for store := range c {
+// 		fmt.Println(store.ID)
+// 		stores = append(stores, store)
+// 	}
+// 	// b.Error("look")
+// }

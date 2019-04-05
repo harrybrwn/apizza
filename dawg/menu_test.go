@@ -117,7 +117,7 @@ func TestOPFromItem(t *testing.T) {
 		}
 	}
 
-	if opv.Type() != opp.Type() {
+	if opv.Category() != opp.Category() {
 		t.Error("the variant and it's parent should have the same product type")
 	}
 }

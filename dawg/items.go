@@ -27,8 +27,8 @@ type Item interface {
 	// get the name of an item
 	ItemName() string
 
-	// Type returns the product type of the item.
-	Type() string
+	// Category returns the product category of the item.
+	Category() string
 }
 
 // item has the common fields between Product and Varient.
@@ -122,8 +122,8 @@ func (p *Product) AddTopping(code, side, amount string) error {
 	return nil
 }
 
-// Type returns the product type. see Item
-func (p *Product) Type() string {
+// Category returns the product category. see Item
+func (p *Product) Category() string {
 	return p.ProductType
 }
 
@@ -212,9 +212,9 @@ func (v *Variant) AddTopping(code, side, amount string) error {
 	return nil
 }
 
-// Type returns the product type. see Item
-func (v *Variant) Type() string {
-	return v.GetProduct().Type()
+// Category returns the product category. see Item
+func (v *Variant) Category() string {
+	return v.GetProduct().Category()
 }
 
 // GetProduct will return the set of variants (Product) that the variant
@@ -260,6 +260,11 @@ func (pc *PreConfiguredProduct) AddTopping(code, cover, amnt string) error {
 	return errors.New("not implitmented")
 }
 
+// Category returns the product category. see Item
+func (pc *PreConfiguredProduct) Category() string {
+	return ""
+}
+
 func splitDefaults(defs string) (keys, vals []string, n int) {
 	if defs == "" {
 		return nil, nil, 0
@@ -270,11 +275,6 @@ func splitDefaults(defs string) (keys, vals []string, n int) {
 		vals = append(vals, keyval[1])
 	}
 	return keys, vals, shortest(keys, vals)
-}
-
-// Type returns the product type. see Item
-func (pc *PreConfiguredProduct) Type() string {
-	return ""
 }
 
 func shortest(a, b []string) int {

@@ -131,7 +131,7 @@ func ReadableToppings(item Item, m *Menu) map[string]string {
 		toppingSet map[string]Topping
 	)
 
-	t := item.Type()
+	t := item.Category()
 	if t == "" {
 		return ReadableOptions(item)
 	}
