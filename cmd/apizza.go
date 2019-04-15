@@ -32,16 +32,6 @@ type apizzaCmd struct {
 }
 
 func (c *apizzaCmd) Run(cmd *cobra.Command, args []string) (err error) {
-	if test {
-		all, err := db.Map()
-		if err != nil {
-			return err
-		}
-		for k := range all {
-			c.Printf("%v\n", k)
-		}
-		return nil
-	}
 	if c.clearCache {
 		if err := db.Close(); err != nil {
 			return err
@@ -59,7 +49,6 @@ var test = false
 var reset = false
 
 func newApizzaCmd() base.CliCommand {
-	// service := config.GetString("service")
 	c := &apizzaCmd{address: "", service: "", clearCache: false}
 	c.basecmd = newCommand("apizza", "Dominos pizza from the command line.", c)
 

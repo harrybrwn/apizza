@@ -192,7 +192,6 @@ func (c *menuCmd) printCategory(code string, indentLen int) {
 func (c *menuCmd) iteminfo(prod dawg.Item, w io.Writer) {
 	o := &bytes.Buffer{}
 	out.SetOutput(o)
-
 	out.ItemInfo(prod, c.menu)
 
 	switch p := prod.(type) {
@@ -209,10 +208,7 @@ func (c *menuCmd) iteminfo(prod dawg.Item, w io.Writer) {
 		fmt.Fprintf(o, "  Size: %s\n", p.Size)
 
 	case *dawg.Product:
-		fmt.Fprintf(o, "  Description: '%s'\n", out.FormatLineIndent(p.Description, 70, 16))
-		fmt.Fprintf(o, "  Variants: %v\n", p.Variants)
-		fmt.Fprintf(o, "  Avalable sides: %s\n", p.AvailableSides)
-		fmt.Fprintf(o, "  Avalable toppings: %s\n", p.AvailableToppings)
+		out.PrintProduct(p)
 	}
 	out.ResetOutput()
 	w.Write(o.Bytes())

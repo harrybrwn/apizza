@@ -91,6 +91,14 @@ func PrintOrder(o *dawg.Order, full bool) error {
 	} else {
 		t = cartOrderTmpl
 	}
+	// data := struct {
+	// 	*dawg.Order
+	// 	Options map[string]string
+	// }{
+	// 	Order: o,
+	// 	Options:
+	// }
+
 	return tmpl(output, t, o)
 }
 
@@ -120,4 +128,13 @@ func PrintVariant(v *dawg.Variant, verbose bool) error {
 	}
 
 	return tmpl(output, template, v)
+}
+
+// PrintProduct will print a dawg.Product
+func PrintProduct(p *dawg.Product) error {
+	data := struct {
+		*dawg.Product
+		Description string
+	}{Product: p, Description: FormatLineIndent(p.Description, 70, 16)}
+	return tmpl(output, productTmpl, data)
 }

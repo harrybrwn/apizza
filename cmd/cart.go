@@ -30,11 +30,14 @@ import (
 
 type cartCmd struct {
 	*basecmd
-	price      bool
-	delete     bool
-	verbose    bool
-	add        []string
-	removeProd string
+	price   bool
+	delete  bool
+	verbose bool
+
+	product string
+	topping bool
+	add     []string
+	remove  string
 }
 
 func (c *cartCmd) Run(cmd *cobra.Command, args []string) (err error) {
@@ -43,6 +46,11 @@ func (c *cartCmd) Run(cmd *cobra.Command, args []string) (err error) {
 	} else if len(args) > 1 {
 		return errors.New("cannot handle multiple orders")
 	}
+
+	if c.topping && c.product != "nan" {
+		return errors.New("cannot change state of both a product and a topping")
+	}
+
 	name := args[0]
 
 	if c.delete {
@@ -58,9 +66,18 @@ func (c *cartCmd) Run(cmd *cobra.Command, args []string) (err error) {
 		return err
 	}
 
-	if len(c.removeProd) > 0 {
-		if err = order.RemoveProduct(c.removeProd); err != nil {
-			return err
+	if len(c.remove) > 0 {
+		if c.topping {
+			for _, p := range order.Products {
+				if _, ok := p.Options()[c.remove]; ok {
+					delete(p.Opts, c.remove)
+					break
+				}
+			}
+		} else {
+			if err = order.RemoveProduct(c.remove); err != nil {
+				return
+			}
 		}
 		return data.SaveOrder(order, c.Output(), db)
 	}
@@ -69,12 +86,18 @@ func (c *cartCmd) Run(cmd *cobra.Command, args []string) (err error) {
 		if err := db.UpdateTS("menu", c); err != nil {
 			return err
 		}
-		for _, newP := range c.add {
-			p, err := c.menu.GetVariant(newP)
-			if err != nil {
-				return err
+		if c.topping {
+			// for _, top := range c.add {
+			// 	topping := strings.Split(top, ":")
+			// }
+		} else {
+			for _, newP := range c.add {
+				p, err := c.menu.GetVariant(newP)
+				if err != nil {
+					return err
+				}
+				order.AddProduct(p)
 			}
-			order.AddProduct(p)
 		}
 		return data.SaveOrder(order, c.Output(), db)
 	}
@@ -108,10 +131,14 @@ func (b *cliBuilder) newCartCmd() base.CliCommand {
 	c.basecmd.Cmd().Long = `The cart command gets information on all of the user
 created orders.`
 
-	c.Flags().BoolVarP(&c.price, "price", "p", c.price, "show to price of an order")
-	c.Flags().StringSliceVarP(&c.add, "add", "a", c.add, "add any number of products to a specific order")
-	c.Flags().StringVarP(&c.removeProd, "remove-product", "r", c.removeProd, "remove a product from the order")
+	c.Flags().BoolVar(&c.price, "price", c.price, "show to price of an order")
 	c.Flags().BoolVarP(&c.delete, "delete", "d", c.delete, "delete the order from the database")
+
+	c.Flags().StringVarP(&c.product, "product", "p", "nan", "")
+	c.Flags().BoolVarP(&c.topping, "topping", "t", false, "")
+	c.Flags().StringSliceVarP(&c.add, "add", "a", c.add, "add any number of products to a specific order")
+	c.Flags().StringVarP(&c.remove, "remove", "r", c.remove, "remove a product from the order")
+
 	c.Flags().BoolVarP(&c.verbose, "verbose", "v", c.verbose, "print cart verbosly")
 	return c
 }

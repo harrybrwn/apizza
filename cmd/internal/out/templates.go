@@ -15,8 +15,8 @@ var defaultOrderTmpl = `{{ .OrderName }}
   products:{{ range .Products }}
     {{.Name}}
       code:     {{.Code}}
-	  options:  {{ range $k, $v := .ReadableOptions }}
-	  	  {{$k}}: {{$v}}{{else}}None{{end}}
+      options:  {{ range $k, $v := .ReadableOptions }}
+         {{$k}}: {{$v}}{{else}}None{{end}}
       quantity: {{.Qty}}{{end}}
   storeID: {{.StoreID}}
   method:  {{.ServiceMethod}}
@@ -36,5 +36,11 @@ var shorthandVariantTmpl = `{{ .Name }} {{ .Code }}`
 
 var itemTmpl = `{{.ItemName}}
   Code: {{.ItemCode}}
-  Category: {{.Category}}
+{{ if .Category }}  Category: {{.Category}}{{else}}{{end}}
+`
+
+var productTmpl = `    Description: {{.Description}}
+  Variants: {{.Variants}}
+  Avalable sides: {{ if not .AvailableSides }}none{{else}}{{.AvailableSides}}{{end}}
+  Avalable toppings: {{ if not .AvailableToppings }}none{{else}}{{.AvailableToppings}}{{end}}
 `
