@@ -89,30 +89,15 @@ func (c *cartCmd) Run(cmd *cobra.Command, args []string) (err error) {
 		}
 		if c.topping {
 			for _, top := range c.add {
-				var side, amount string
-
-				topping := strings.Split(top, ":")
-				fmt.Println(topping)
-
-				if len(topping) < 1 {
-					return errors.New("incorrect topping format")
+				p := getOrderItem(order, c.product)
+				if p == nil {
+					return fmt.Errorf("cannot find '%s' in the '%s' order", c.product, order.Name())
 				}
 
-				if len(topping) == 1 {
-					side = dawg.ToppingFull
-				} else if len(topping) >= 2 {
-					side = topping[1]
+				err = addTopping(top, p)
+				if err != nil {
+					return err
 				}
-
-				if len(topping) == 3 {
-					amount = topping[2]
-				} else {
-					amount = "1.0"
-				}
-				fmt.Println(topping[0], side, amount)
-				p := c.getProduct(order, c.product)
-				p.AddTopping(topping[0], side, amount)
-				fmt.Println(p.Options())
 			}
 		} else {
 			for _, newP := range c.add {
@@ -149,7 +134,31 @@ func (c *cartCmd) printOrder(name string, o *dawg.Order) (err error) {
 	return err
 }
 
-func (c *cartCmd) getProduct(order *dawg.Order, code string) dawg.Item {
+func addTopping(topStr string, p dawg.Item) error {
+	var side, amount string
+
+	topping := strings.Split(topStr, ":")
+
+	if len(topping) < 1 {
+		return errors.New("incorrect topping format")
+	}
+
+	if len(topping) == 1 {
+		side = dawg.ToppingFull
+	} else if len(topping) >= 2 {
+		side = topping[1]
+	}
+
+	if len(topping) == 3 {
+		amount = topping[2]
+	} else {
+		amount = "1.0"
+	}
+	p.AddTopping(topping[0], side, amount)
+	return nil
+}
+
+func getOrderItem(order *dawg.Order, code string) dawg.Item {
 	for _, itm := range order.Products {
 		if itm.ItemCode() == code {
 			return itm
