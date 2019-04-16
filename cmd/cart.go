@@ -18,6 +18,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/spf13/cobra"
 
@@ -47,9 +48,9 @@ func (c *cartCmd) Run(cmd *cobra.Command, args []string) (err error) {
 		return errors.New("cannot handle multiple orders")
 	}
 
-	if c.topping && c.product != "nan" {
-		return errors.New("cannot change state of both a product and a topping")
-	}
+	// if c.topping && c.product != "nan" {
+	// 	return errors.New("cannot change state of both a product and a topping")
+	// }
 
 	name := args[0]
 
@@ -69,7 +70,7 @@ func (c *cartCmd) Run(cmd *cobra.Command, args []string) (err error) {
 	if len(c.remove) > 0 {
 		if c.topping {
 			for _, p := range order.Products {
-				if _, ok := p.Options()[c.remove]; ok {
+				if _, ok := p.Options()[c.remove]; ok || p.Code == c.product {
 					delete(p.Opts, c.remove)
 					break
 				}
@@ -87,9 +88,32 @@ func (c *cartCmd) Run(cmd *cobra.Command, args []string) (err error) {
 			return err
 		}
 		if c.topping {
-			// for _, top := range c.add {
-			// 	topping := strings.Split(top, ":")
-			// }
+			for _, top := range c.add {
+				var side, amount string
+
+				topping := strings.Split(top, ":")
+				fmt.Println(topping)
+
+				if len(topping) < 1 {
+					return errors.New("incorrect topping format")
+				}
+
+				if len(topping) == 1 {
+					side = dawg.ToppingFull
+				} else if len(topping) >= 2 {
+					side = topping[1]
+				}
+
+				if len(topping) == 3 {
+					amount = topping[2]
+				} else {
+					amount = "1.0"
+				}
+				fmt.Println(topping[0], side, amount)
+				p := c.getProduct(order, c.product)
+				p.AddTopping(topping[0], side, amount)
+				fmt.Println(p.Options())
+			}
 		} else {
 			for _, newP := range c.add {
 				p, err := c.menu.GetVariant(newP)
@@ -125,6 +149,15 @@ func (c *cartCmd) printOrder(name string, o *dawg.Order) (err error) {
 	return err
 }
 
+func (c *cartCmd) getProduct(order *dawg.Order, code string) dawg.Item {
+	for _, itm := range order.Products {
+		if itm.ItemCode() == code {
+			return itm
+		}
+	}
+	return nil
+}
+
 func (b *cliBuilder) newCartCmd() base.CliCommand {
 	c := &cartCmd{price: false, delete: false, verbose: false}
 	c.basecmd = b.newCommand("cart <order name>", "Manage user created orders", c)
@@ -134,8 +167,9 @@ created orders.`
 	c.Flags().BoolVar(&c.price, "price", c.price, "show to price of an order")
 	c.Flags().BoolVarP(&c.delete, "delete", "d", c.delete, "delete the order from the database")
 
-	c.Flags().StringVarP(&c.product, "product", "p", "nan", "")
-	c.Flags().BoolVarP(&c.topping, "topping", "t", false, "")
+	// c.Flags().BoolVarP(&c.product, "product", "p", true, "change the state of --add and --remove to effect products in the order.")
+	c.Flags().StringVarP(&c.product, "product", "p", "", "give the product that will be effected by --add or --remove when --topping is specified.")
+	c.Flags().BoolVarP(&c.topping, "topping", "t", false, "change the state of --add and --remove to effect toppings in a product (see --product)")
 	c.Flags().StringSliceVarP(&c.add, "add", "a", c.add, "add any number of products to a specific order")
 	c.Flags().StringVarP(&c.remove, "remove", "r", c.remove, "remove a product from the order")
 
