@@ -20,6 +20,10 @@ var defaultOrderTmpl = `{{ .OrderName }}
       quantity: {{.Qty}}{{end}}
   storeID: {{.StoreID}}
   method:  {{.ServiceMethod}}
+  address: {{.Addr -}}
+{{ if .Price }}
+  price:   ${{ .Price -}}
+{{else}}{{end}}
 `
 
 var cartOrderTmpl = `  {{ .OrderName }} - {{ range .Products }} {{.Code}}, {{end}}

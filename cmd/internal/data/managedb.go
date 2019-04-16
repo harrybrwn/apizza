@@ -51,7 +51,7 @@ func PrintOrders(db cache.MapDB, w io.Writer, verbose bool) error {
 	fmt.Fprintln(w, "Your Orders:")
 	for i, o := range orders {
 		if verbose {
-			err = out.PrintOrder(uOrders[i], false)
+			err = out.PrintOrder(uOrders[i], false, false)
 			if err != nil {
 				return err
 			}

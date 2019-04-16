@@ -8,6 +8,8 @@ import (
 	"strings"
 	"unicode/utf8"
 
+	"github.com/harrybrwn/apizza/cmd/internal/obj"
+
 	"github.com/harrybrwn/apizza/dawg"
 )
 
@@ -83,23 +85,34 @@ func lineone(str string, start, length int) (string, int) {
 }
 
 // PrintOrder will print the order given.
-func PrintOrder(o *dawg.Order, full bool) error {
-	var t string
+func PrintOrder(o *dawg.Order, full, price bool) (err error) {
+	var (
+		t      string
+		oPrice float64
+	)
 
 	if full {
 		t = defaultOrderTmpl
 	} else {
 		t = cartOrderTmpl
 	}
-	// data := struct {
-	// 	*dawg.Order
-	// 	Options map[string]string
-	// }{
-	// 	Order: o,
-	// 	Options:
-	// }
 
-	return tmpl(output, t, o)
+	if price {
+		if oPrice, err = o.Price(); err != nil {
+			return err
+		}
+	}
+
+	data := struct {
+		*dawg.Order
+		Addr  string
+		Price float64
+	}{
+		Order: o,
+		Addr:  obj.AddressFmtIndent(o.Address, 11),
+		Price: oPrice,
+	}
+	return tmpl(output, t, data)
 }
 
 // ItemInfo prints the common information for an Item

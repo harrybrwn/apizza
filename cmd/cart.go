@@ -24,7 +24,6 @@ import (
 
 	"github.com/harrybrwn/apizza/cmd/internal/base"
 	"github.com/harrybrwn/apizza/cmd/internal/data"
-	"github.com/harrybrwn/apizza/cmd/internal/obj"
 	"github.com/harrybrwn/apizza/cmd/internal/out"
 	"github.com/harrybrwn/apizza/dawg"
 )
@@ -48,9 +47,11 @@ func (c *cartCmd) Run(cmd *cobra.Command, args []string) (err error) {
 		return errors.New("cannot handle multiple orders")
 	}
 
-	// if c.topping && c.product != "nan" {
-	// 	return errors.New("cannot change state of both a product and a topping")
-	// }
+	if c.topping && c.product == "" {
+		return errors.New("must specify an item code with '--product' to edit an order's toppings")
+	} else if !c.topping && c.product != "" {
+		return errors.New("the --product flag is only used along side the --topping flag")
+	}
 
 	name := args[0]
 
@@ -67,6 +68,7 @@ func (c *cartCmd) Run(cmd *cobra.Command, args []string) (err error) {
 		return err
 	}
 
+	// removing products or toppings
 	if len(c.remove) > 0 {
 		if c.topping {
 			for _, p := range order.Products {
@@ -83,6 +85,7 @@ func (c *cartCmd) Run(cmd *cobra.Command, args []string) (err error) {
 		return data.SaveOrder(order, c.Output(), db)
 	}
 
+	// adding products or toppings
 	if len(c.add) > 0 {
 		if err := db.UpdateTS("menu", c); err != nil {
 			return err
@@ -111,27 +114,7 @@ func (c *cartCmd) Run(cmd *cobra.Command, args []string) (err error) {
 		return data.SaveOrder(order, c.Output(), db)
 	}
 
-	return c.printOrder(name, order)
-}
-
-func (c *cartCmd) printOrder(name string, o *dawg.Order) (err error) {
-	buffer := &bytes.Buffer{}
-	out.SetOutput(buffer)
-
-	if err := out.PrintOrder(o, true); err != nil {
-		return err
-	}
-	fmt.Fprintf(buffer, "  address: %s\n", obj.AddressFmtIndent(o.Address, 11))
-
-	if c.price {
-		p, err := o.Price()
-		if err != nil {
-			return err
-		}
-		fmt.Fprintf(buffer, "  price: $%0.2f\n", p)
-	}
-	_, err = c.Output().Write(buffer.Bytes())
-	return err
+	return out.PrintOrder(order, true, c.price)
 }
 
 func addTopping(topStr string, p dawg.Item) error {
