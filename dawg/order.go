@@ -44,7 +44,7 @@ func (o *Order) PlaceOrder() error {
 // Price method returns the total price of an order.
 func (o *Order) Price() (float64, error) {
 	data, err := getOrderPrice(*o)
-	if err != nil {
+	if err != nil || !IsOk(err) {
 		return -1.0, err
 	}
 	data = data["Order"].(map[string]interface{})
@@ -98,6 +98,16 @@ func (o *Order) Name() string {
 // SetName allows users to name a particular order.
 func (o *Order) SetName(name string) {
 	o.OrderName = name
+}
+
+// ValidateOrder sends and order to the validation endpoint to be validated by
+// Dominos' servers.
+func ValidateOrder(order *Order) error {
+	data, err := sendOrder("/power/validate-order", order)
+	if orderID, ok := data["Order"].(map[string]interface{})["OrderID"]; ok {
+		order.OrderID = orderID.(string)
+	}
+	return err
 }
 
 func (o *Order) rawData() []byte {

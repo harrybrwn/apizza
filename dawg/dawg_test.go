@@ -128,7 +128,7 @@ func TestDominosErrors(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	if err := dominosErr(resp); err != nil {
+	if err := dominosErr(resp); err != nil && IsFailure(err) {
 		t.Error(err)
 		// err, _ := err.(*DominosError)
 		// for k, v := range err.fullErr {
@@ -174,13 +174,13 @@ func TestDominosErrorFailure(t *testing.T) {
 		t.Errorf("\nexpected:\n'%s'\ngot:\n'%s'\n", expected, e.Error())
 	}
 	dErr := e.(*DominosError)
-	if dErr.IsOk() {
+	if IsOk(dErr) {
 		t.Error("no... its not ok!")
 	}
-	if dErr.IsWarning() {
+	if IsWarning(dErr) {
 		t.Error("error is not a warning")
 	}
-	if !dErr.IsFailure() {
+	if !IsFailure(dErr) {
 		t.Error("should be a failure")
 	}
 }

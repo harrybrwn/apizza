@@ -195,7 +195,6 @@ func initStoreChan(s *Store, c chan *Store) {
 
 func initStores(stores []*Store) chan *Store {
 	c := make(chan *Store)
-	// defer close(c)
 
 	for i := range stores {
 		go initStoreChan(stores[i], c) // send the initialized store through the channel

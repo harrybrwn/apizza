@@ -35,7 +35,7 @@ func TestGetOrderPrice(t *testing.T) {
 		},
 	}
 	resp, err := getOrderPrice(order)
-	if e, ok := err.(*DominosError); ok && e.IsFailure() {
+	if e, ok := err.(*DominosError); ok && IsFailure(err) {
 		fmt.Printf("%+v\n", resp)
 		t.Error("\n\b", e)
 	}
@@ -90,11 +90,12 @@ func TestNewOrder(t *testing.T) {
 	}
 	o.AddPayment(Payment{Number: "", Expiration: "", CVV: ""})
 	price, err := o.Price()
-	if err != nil {
+	if IsFailure(err) {
 		t.Error(err)
 	}
 	if price == -1.0 {
 		t.Error("Order.Price() failed")
+		fmt.Printf("%#v\n", err)
 	}
 }
 

@@ -52,7 +52,7 @@ func dominosErr(resp []byte) error {
 		return err
 	}
 
-	if e.IsOk() {
+	if IsOk(e) {
 		return nil
 	}
 	return e
@@ -108,20 +108,45 @@ func (err *DominosError) Error() string {
 	return errmsg
 }
 
-// IsWarning returns true when the error sent by dominos is a warning
-func (err *DominosError) IsWarning() bool {
-	return err.Status == WarnigStatus
+// IsFailure will tell you if an error given by a function from the dawg package
+// is an error thrown from dominos' servers.
+func IsFailure(err error) bool {
+	e, ok := isDominosErr(err)
+	if !ok {
+		return false
+	}
+	return e.Status == FailureStatus
 }
 
-// IsFailure returns true if the error that dominos sent back prevents the
-// system from working
-func (err *DominosError) IsFailure() bool {
-	return err.Status == FailureStatus
+// IsWarning will tell you if the error given contains a warning from the
+// dominos server.
+func IsWarning(err error) bool {
+	e, ok := isDominosErr(err)
+	if !ok {
+		return false
+	}
+	return e.Status == WarnigStatus
 }
 
-// IsOk returns true is the error is not a failure else returns false
-func (err *DominosError) IsOk() bool {
-	return err.Status != FailureStatus
+// IsOk will tell you if the error returned does not contain any fatal errors or
+// warnings from Dominos' servers.
+func IsOk(err error) bool {
+	e, ok := isDominosErr(err)
+	if !ok {
+		return false
+	}
+	return e.Status == OkStatus
+}
+
+func isDominosErr(err error) (*DominosError, bool) {
+	if err == nil {
+		return nil, false
+	}
+	e, ok := err.(*DominosError)
+	if !ok {
+		return nil, false
+	}
+	return e, true
 }
 
 func get(path string, params URLParam) ([]byte, error) {
