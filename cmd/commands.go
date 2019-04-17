@@ -22,7 +22,6 @@ import (
 	"time"
 
 	"github.com/harrybrwn/apizza/cmd/internal/base"
-	"github.com/harrybrwn/apizza/cmd/internal/cmds"
 	"github.com/harrybrwn/apizza/cmd/internal/obj"
 	"github.com/harrybrwn/apizza/dawg"
 	"github.com/harrybrwn/apizza/pkg/cache"
@@ -161,8 +160,8 @@ func (b *cliBuilder) exec() error {
 			newConfigGet(),
 		),
 		b.newMenuCmd(),
+		newOrderCmd(),
 	)
-	b.root.AddCobraCmd(cmds.OrderCmd)
 	return b.root.Cmd().Execute()
 }
 
