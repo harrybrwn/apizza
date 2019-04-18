@@ -37,8 +37,7 @@ type Order struct {
 
 // PlaceOrder is the method that sends the final order to dominos
 func (o *Order) PlaceOrder() error {
-	_, err := sendOrder("/power/place-order", o)
-	return err
+	return sendOrder("/power/place-order", o)
 }
 
 // Price method returns the total price of an order.
@@ -103,9 +102,11 @@ func (o *Order) SetName(name string) {
 // ValidateOrder sends and order to the validation endpoint to be validated by
 // Dominos' servers.
 func ValidateOrder(order *Order) error {
-	data, err := sendOrder("/power/validate-order", order)
-	if orderID, ok := data["Order"].(map[string]interface{})["OrderID"]; ok {
-		order.OrderID = orderID.(string)
+	err := sendOrder("/power/validate-order", order)
+
+	if IsWarning(err) && order.OrderID == "" {
+		e := err.(*DominosError)
+		order.OrderID = e.Order.OrderID
 	}
 	return err
 }
@@ -118,7 +119,15 @@ func (o *Order) rawData() []byte {
 	return []byte(fmt.Sprintf(`{"Order":%s}`, data))
 }
 
-func sendOrder(path string, ordr *Order) (map[string]interface{}, error) {
+func sendOrder(path string, ordr *Order) error {
+	b, err := post(path, ordr.rawData())
+	if err != nil {
+		return err
+	}
+	return dominosErr(b)
+}
+
+func orderRequest(path string, ordr *Order) (map[string]interface{}, error) {
 	b, err := post(path, ordr.rawData())
 	if err != nil {
 		return nil, err
@@ -263,5 +272,5 @@ type Payment struct {
 // does not take a pointer because ordr.Payments = nil should not be remembered
 func getOrderPrice(ordr Order) (map[string]interface{}, error) {
 	ordr.Payments = nil
-	return sendOrder("/power/price-order", &ordr)
+	return orderRequest("/power/price-order", &ordr)
 }

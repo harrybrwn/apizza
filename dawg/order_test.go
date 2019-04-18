@@ -95,7 +95,7 @@ func TestNewOrder(t *testing.T) {
 	}
 	if price == -1.0 {
 		t.Error("Order.Price() failed")
-		fmt.Printf("%#v\n", err)
+		// fmt.Printf("%#v\n", err)
 	}
 }
 

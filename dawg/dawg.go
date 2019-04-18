@@ -65,6 +65,7 @@ type DominosError struct {
 	Order       struct {
 		Status      int
 		StatusItems []statusItem
+		OrderID     string
 	}
 	Msg     string
 	fullErr map[string]interface{}
@@ -77,7 +78,7 @@ type statusItem struct {
 	PulseText string
 }
 
-// Init initializes the error from json data.
+// init initializes the error from json data.
 func (err *DominosError) init(jsonData []byte) error {
 	err.fullErr = map[string]interface{}{}
 

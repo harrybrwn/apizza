@@ -15,7 +15,9 @@
 package cmd
 
 import (
+	"fmt"
 	"os"
+	"strings"
 
 	"github.com/spf13/cobra"
 
@@ -74,4 +76,16 @@ func (c *apizzaCmd) preRun(cmd *cobra.Command, args []string) error {
 		}
 	}
 	return nil
+}
+
+func yesOrNo(msg string) bool {
+	var in string
+	fmt.Printf("%s ", msg)
+	fmt.Scan(&in)
+
+	switch strings.ToLower(in) {
+	case "y", "yes", "si":
+		return true
+	}
+	return false
 }

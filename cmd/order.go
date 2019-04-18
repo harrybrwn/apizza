@@ -2,8 +2,10 @@ package cmd
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/harrybrwn/apizza/cmd/internal/base"
+	"github.com/harrybrwn/apizza/dawg"
 
 	"github.com/harrybrwn/apizza/cmd/internal/data"
 	"github.com/spf13/cobra"
@@ -28,7 +30,13 @@ func (c *orderCmd) Run(cmd *cobra.Command, args []string) (err error) {
 		return err
 	}
 
-	c.Printf("ordering '%s'...\n", order.Name())
+	err = dawg.ValidateOrder(order)
+	if dawg.IsFailure(err) {
+		return fmt.Errorf("invalid order:\n%s", err.Error())
+	}
+	if yesOrNo("Would you like to purchas this order? (y/n)") {
+		c.Printf("ordering '%s'...\n", order.Name())
+	}
 	return nil
 }
 

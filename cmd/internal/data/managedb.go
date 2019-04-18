@@ -85,6 +85,10 @@ func SaveOrder(o *dawg.Order, w io.Writer, db cache.Putter) error {
 	if err != nil {
 		return err
 	}
+	err = dawg.ValidateOrder(o)
+	if dawg.IsFailure(err) {
+		return err
+	}
 	err = db.Put(OrderPrefix+o.Name(), raw)
 	if err == nil {
 		fmt.Fprintln(w, "order successfully updated.")
