@@ -23,7 +23,13 @@ func testOrderNew(t *testing.T, buf *bytes.Buffer, cmds ...base.CliCommand) {
   products:
     Medium (12") Hand Tossed MeatZZa
       code:     12SCMEATZA
-      options:  map[]
+      options:
+         B: 1/1 1
+         C: 1/1 1.5
+         H: 1/1 1
+         P: 1/1 1
+         S: 1/1 1
+         X: 1/1 1
       quantity: 1
   storeID: 4336
   method:  Carryout

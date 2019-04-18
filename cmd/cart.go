@@ -41,6 +41,8 @@ type cartCmd struct {
 }
 
 func (c *cartCmd) Run(cmd *cobra.Command, args []string) (err error) {
+	out.SetOutput(cmd.OutOrStdout())
+
 	if len(args) < 1 {
 		return data.PrintOrders(db, c.Output(), c.verbose)
 	} else if len(args) > 1 {
