@@ -2,10 +2,8 @@ package cmd
 
 import (
 	"errors"
-	"fmt"
 
 	"github.com/harrybrwn/apizza/cmd/internal/base"
-	"github.com/harrybrwn/apizza/dawg"
 
 	"github.com/harrybrwn/apizza/cmd/internal/data"
 	"github.com/spf13/cobra"
@@ -24,17 +22,12 @@ func (c *orderCmd) Run(cmd *cobra.Command, args []string) (err error) {
 		return errors.New("cannot handle multiple orders")
 	}
 
-	name := args[0]
-	order, err := data.GetOrder(name, db)
+	order, err := data.GetOrder(args[0], db)
 	if err != nil {
 		return err
 	}
 
-	err = dawg.ValidateOrder(order)
-	if dawg.IsFailure(err) {
-		return fmt.Errorf("invalid order:\n%s", err.Error())
-	}
-	if yesOrNo("Would you like to purchas this order? (y/n)") {
+	if yesOrNo("Would you like to purchase this order? (y/n)") {
 		c.Printf("ordering '%s'...\n", order.Name())
 	}
 	return nil

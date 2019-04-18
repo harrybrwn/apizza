@@ -15,7 +15,6 @@
 package cmd
 
 import (
-	"bytes"
 	"fmt"
 	"io"
 	"strings"
@@ -44,6 +43,8 @@ func (c *menuCmd) Run(cmd *cobra.Command, args []string) error {
 	if err := db.UpdateTS("menu", c); err != nil {
 		return err
 	}
+	out.SetOutput(cmd.OutOrStdout())
+	defer out.ResetOutput()
 
 	var item dawg.Item
 
@@ -55,8 +56,7 @@ func (c *menuCmd) Run(cmd *cobra.Command, args []string) error {
 		if item == nil && c.category == "" {
 			c.category = strings.ToLower(args[0])
 		} else {
-			c.iteminfo(item, c.Output())
-			return nil
+			return out.ItemInfo(item, c.menu)
 		}
 	}
 
@@ -65,8 +65,7 @@ func (c *menuCmd) Run(cmd *cobra.Command, args []string) error {
 		if prod == nil {
 			return fmt.Errorf("cannot find %s", c.item)
 		}
-		c.iteminfo(prod, cmd.OutOrStdout())
-		return nil
+		return out.ItemInfo(prod, c.menu)
 	}
 
 	if c.toppings {
@@ -103,29 +102,7 @@ as an argument to the command itself.`
 }
 
 func (c *menuCmd) printMenu(name string) error {
-	var printfunc func(dawg.MenuCategory, int) error
-
-	printfunc = func(cat dawg.MenuCategory, depth int) error {
-		if cat.IsEmpty() {
-			return nil
-		}
-		c.Printf("\n%s%s%s%s\n", spaces(depth*2), strings.Repeat("-", 8),
-			cat.Name, strings.Repeat("-", 60-len(cat.Name)-(depth*2)))
-
-		if cat.HasItems() {
-			for _, p := range cat.Products {
-				c.printCategory(p, depth+1)
-			}
-		} else {
-			for _, category := range cat.Categories {
-				printfunc(category, depth+1)
-			}
-		}
-		return nil
-	}
-
 	var allCategories = c.menu.Categorization.Food.Categories
-
 	if c.preconfigured {
 		allCategories = c.menu.Categorization.Preconfigured.Categories
 	} else if c.all {
@@ -135,7 +112,7 @@ func (c *menuCmd) printMenu(name string) error {
 	if len(name) > 0 {
 		for _, cat := range allCategories {
 			if name == strings.ToLower(cat.Name) || name == strings.ToLower(cat.Code) {
-				return printfunc(cat, 0)
+				return out.PrintMenu(cat, 0, c.menu)
 			}
 		}
 		return fmt.Errorf("could not find %s", name)
@@ -148,70 +125,10 @@ func (c *menuCmd) printMenu(name string) error {
 		return nil
 	}
 
-	for _, c := range allCategories {
-		printfunc(c, 0)
+	for _, cat := range allCategories {
+		out.PrintMenu(cat, 0, c.menu)
 	}
 	return nil
-}
-
-func (c *menuCmd) printCategory(code string, indentLen int) {
-	item := c.menu.FindItem(code)
-
-	switch product := item.(type) {
-	case *dawg.Product:
-		if len(product.Variants) == 1 {
-			p, err := c.menu.GetVariant(product.Variants[0])
-			if err != nil {
-				panic(err)
-			}
-
-			c.Printf("%s%s  %s\n", spaces(indentLen*2), p.Code, p.Name)
-			return
-		}
-
-		c.Printf("%s%s [%s]\n", spaces(indentLen*2), item.ItemName(), item.ItemCode())
-		n := maxStrLen(product.Variants)
-		for _, variant := range product.Variants {
-			v, err := c.menu.GetVariant(variant)
-			if err != nil {
-				continue
-			}
-			c.Printf("%s%s %s %s\n",
-				spaces(2*(indentLen+1)), variant,
-				spaces(n-strLen(variant)), v.Name)
-		}
-
-	case *dawg.PreConfiguredProduct:
-		c.Printf("%s%s   %s\n", spaces(indentLen*2),
-			item.ItemCode(), item.ItemName())
-	default:
-		panic("dawg.Product and dawg.PreConfiguredProduct are the only catagories to be printed")
-	}
-}
-
-func (c *menuCmd) iteminfo(prod dawg.Item, w io.Writer) {
-	o := &bytes.Buffer{}
-	out.SetOutput(o)
-	out.ItemInfo(prod, c.menu)
-
-	switch p := prod.(type) {
-	case *dawg.Variant:
-		fmt.Fprintf(o, "  Price: %s\n", p.Price)
-		parent := p.GetProduct()
-		if parent == nil {
-			break
-		}
-		fmt.Fprintf(o, "  Parent Product: '%s' [%s]\n", parent.ItemName(), parent.ItemCode())
-
-	case *dawg.PreConfiguredProduct:
-		fmt.Fprintf(o, "  Description: '%s'\n", out.FormatLineIndent(p.Description, 70, 16))
-		fmt.Fprintf(o, "  Size: %s\n", p.Size)
-
-	case *dawg.Product:
-		out.PrintProduct(p)
-	}
-	out.ResetOutput()
-	w.Write(o.Bytes())
 }
 
 func (c *menuCmd) printToppings() {
@@ -242,22 +159,6 @@ func printToppingCategory(name string, toppings map[string]dawg.Topping, w io.Wr
 		fmt.Fprintln(w, indent, k, strings.Repeat(" ", 3-strLen(k)), v.Name)
 	}
 	fmt.Fprintln(w, "")
-}
-
-func maxStrLen(list []string) int {
-	max := 0
-	for _, s := range list {
-		max = getmax(s, max)
-	}
-
-	return max
-}
-
-func getmax(s string, i int) int {
-	if strLen(s) > i {
-		return len(s)
-	}
-	return i
 }
 
 var strLen = utf8.RuneCountInString // this is a function

@@ -2,7 +2,6 @@ package out
 
 import (
 	"errors"
-	"fmt"
 	"io"
 	"os"
 	"strings"
@@ -113,22 +112,6 @@ func PrintOrder(o *dawg.Order, full, price bool) (err error) {
 		Price: oPrice,
 	}
 	return tmpl(output, t, data)
-}
-
-// ItemInfo prints the common information for an Item
-func ItemInfo(i dawg.Item, menu *dawg.Menu) {
-	fmt.Fprintf(output, "%s\n", i.ItemName())
-	fmt.Fprintf(output, "  Code: %s\n", i.ItemCode())
-	if c := i.Category(); c != "" {
-		fmt.Fprintf(output, "  Category: %s\n", c)
-	}
-	if len(i.Options()) > 0 {
-		fmt.Fprintln(output, "  Toppings:")
-		tops := dawg.ReadableToppings(i, menu)
-		for tname, param := range tops {
-			fmt.Fprintf(output, "    %s:%s%s\n", tname, " ", param)
-		}
-	}
 }
 
 // PrintVariant will display a dawg.Variant in a pretty way.
