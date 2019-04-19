@@ -8,6 +8,7 @@ TODO
 *.test
 test.py
 test
+example
 test-coverage
 coverage.html
 *.prof

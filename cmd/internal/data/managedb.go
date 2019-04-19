@@ -80,18 +80,24 @@ func GetOrder(name string, db cache.Getter) (*dawg.Order, error) {
 }
 
 // SaveOrder will save an order to a database.
+//
+// Also sends the order to the validation endpoint after saving it to the
+// cache.Putter.
 func SaveOrder(o *dawg.Order, w io.Writer, db cache.Putter) error {
 	raw, err := json.Marshal(o)
 	if err != nil {
 		return err
 	}
+	err = db.Put(OrderPrefix+o.Name(), raw)
+	if err == nil {
+		fmt.Fprintln(w, "order successfully updated.")
+	} else {
+		return err
+	}
+
 	err = dawg.ValidateOrder(o)
 	if dawg.IsFailure(err) {
 		return err
 	}
-	err = db.Put(OrderPrefix+o.Name(), raw)
-	if err == nil {
-		fmt.Fprintln(w, "order successfully updated.")
-	}
-	return err
+	return nil
 }

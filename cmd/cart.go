@@ -30,6 +30,9 @@ import (
 
 type cartCmd struct {
 	*basecmd
+	updateAddr bool
+	validate   bool
+
 	price   bool
 	delete  bool
 	verbose bool
@@ -68,6 +71,22 @@ func (c *cartCmd) Run(cmd *cobra.Command, args []string) (err error) {
 	var order *dawg.Order
 	if order, err = data.GetOrder(name, db); err != nil {
 		return err
+	}
+
+	if c.validate {
+		return dawg.ValidateOrder(order)
+	}
+
+	if c.updateAddr {
+		order.Address = dawg.StreetAddrFromAddress(&cfg.Address)
+		err = data.SaveOrder(order, c.Output(), db)
+		if dawg.IsFailure(err) {
+			return err
+		}
+		if _, ok := err.(*dawg.DominosError); !ok && err != nil {
+			return err
+		}
+		return nil
 	}
 
 	// removing products or toppings
@@ -157,6 +176,9 @@ func (b *cliBuilder) newCartCmd() base.CliCommand {
 	c.basecmd = b.newCommand("cart <order name>", "Manage user created orders", c)
 	c.basecmd.Cmd().Long = `The cart command gets information on all of the user
 created orders.`
+
+	c.Flags().BoolVar(&c.updateAddr, "update-address", c.updateAddr, "update the address of an order in accordance with the address in the config file.")
+	c.Flags().BoolVar(&c.validate, "validate", c.validate, "send an order to the dominos order-validation endpoint.")
 
 	c.Flags().BoolVar(&c.price, "price", c.price, "show to price of an order")
 	c.Flags().BoolVarP(&c.delete, "delete", "d", c.delete, "delete the order from the database")
