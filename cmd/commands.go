@@ -153,6 +153,7 @@ func newBuilder() *cliBuilder {
 func (b *cliBuilder) exec() error {
 	b.root.Addcmd(
 		b.newCartCmd().Addcmd(
+			newEditCmd(),
 			b.newAddOrderCmd(),
 		),
 		newConfigCmd().Addcmd(
