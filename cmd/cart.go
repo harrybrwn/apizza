@@ -221,9 +221,9 @@ func (c *editCmd) Run(cmd *cobra.Command, args []string) error {
 	return data.SaveOrder(order, c.Output(), db)
 }
 
-func newEditCmd() base.CliCommand {
+func (b *cliBuilder) newEditCmd() base.CliCommand {
 	c := &editCmd{}
-	c.basecmd = newCommand("edit", "edit and order", c)
+	c.basecmd = b.newCommand("edit", "edit and order", c)
 
 	c.Flags().StringSliceVarP(&c.add, "add", "a", c.add, "add any number of products to a specific order")
 

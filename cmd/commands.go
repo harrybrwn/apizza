@@ -150,10 +150,16 @@ func newBuilder() *cliBuilder {
 	}
 }
 
+// builds the command tree...
+//
+// Some of the newCommand functions are members of
+// the cliBuilder because they need to access the cliBuilder's address field by
+// useing the cliBuilder's 'newCommand' function instead of the basic newCommand
+// function.
 func (b *cliBuilder) exec() error {
 	b.root.Addcmd(
 		b.newCartCmd().Addcmd(
-			newEditCmd(),
+			b.newEditCmd(),
 			b.newAddOrderCmd(),
 		),
 		newConfigCmd().Addcmd(
