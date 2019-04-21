@@ -29,7 +29,7 @@ func (a *Address) StateCode() string {
 	} else if len(a.State) == 0 {
 		return ""
 	}
-	panic(fmt.Sprintf("bad statecode %s", a.State))
+	return ""
 }
 
 // City returns the city
@@ -45,7 +45,7 @@ func (a *Address) Zip() string {
 	if len(a.Zipcode) == 5 {
 		return a.Zipcode
 	}
-	panic(fmt.Sprintf("bad zipcode %s", a.Zipcode))
+	return ""
 }
 
 // AddressFmt returns a formatted address string from and Address interface.
