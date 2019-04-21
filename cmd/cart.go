@@ -30,6 +30,7 @@ import (
 
 type cartCmd struct {
 	*basecmd
+
 	updateAddr bool
 	validate   bool
 
@@ -37,26 +38,23 @@ type cartCmd struct {
 	delete  bool
 	verbose bool
 
-	product string
-	topping bool
-	add     []string
-	remove  string
+	// product string
+	// topping bool
+	// add     []string
+	// remove  string
 }
 
 func (c *cartCmd) Run(cmd *cobra.Command, args []string) (err error) {
 	out.SetOutput(cmd.OutOrStdout())
-
 	if len(args) < 1 {
 		return data.PrintOrders(db, c.Output(), c.verbose)
-	} else if len(args) > 1 {
-		return errors.New("cannot handle multiple orders")
 	}
 
-	if c.topping && c.product == "" {
-		return errors.New("must specify an item code with '--product' to edit an order's toppings")
-	} else if !c.topping && c.product != "" {
-		return errors.New("the --product flag is only used along side the --topping flag")
-	}
+	// if c.topping && c.product == "" {
+	// 	return errors.New("must specify an item code with '--product' to edit an order's toppings")
+	// } else if !c.topping && c.product != "" {
+	// 	return errors.New("the --product flag is only used along side the --topping flag")
+	// }
 
 	name := args[0]
 
@@ -87,52 +85,6 @@ func (c *cartCmd) Run(cmd *cobra.Command, args []string) (err error) {
 			return err
 		}
 		return nil
-	}
-
-	// removing products or toppings
-	if len(c.remove) > 0 {
-		if c.topping {
-			for _, p := range order.Products {
-				if _, ok := p.Options()[c.remove]; ok || p.Code == c.product {
-					delete(p.Opts, c.remove)
-					break
-				}
-			}
-		} else {
-			if err = order.RemoveProduct(c.remove); err != nil {
-				return
-			}
-		}
-		return data.SaveOrder(order, c.Output(), db)
-	}
-
-	// adding products or toppings
-	if len(c.add) > 0 {
-		if err := db.UpdateTS("menu", c); err != nil {
-			return err
-		}
-		if c.topping {
-			for _, top := range c.add {
-				p := getOrderItem(order, c.product)
-				if p == nil {
-					return fmt.Errorf("cannot find '%s' in the '%s' order", c.product, order.Name())
-				}
-
-				err = addTopping(top, p)
-				if err != nil {
-					return err
-				}
-			}
-		} else {
-			for _, newP := range c.add {
-				p, err := c.menu.GetVariant(newP)
-				if err != nil {
-					return err
-				}
-				order.AddProduct(p)
-			}
-		}
-		return data.SaveOrder(order, c.Output(), db)
 	}
 
 	return out.PrintOrder(order, true, c.price)
@@ -177,24 +129,116 @@ func (b *cliBuilder) newCartCmd() base.CliCommand {
 	c.basecmd.Cmd().Long = `The cart command gets information on all of the user
 created orders.`
 
+	c.Cmd().PersistentPreRunE = c.persistentPreRunE
+	c.Cmd().PreRunE = c.preRun
+
 	c.Flags().BoolVar(&c.updateAddr, "update-address", c.updateAddr, "update the address of an order in accordance with the address in the config file.")
 	c.Flags().BoolVar(&c.validate, "validate", c.validate, "send an order to the dominos order-validation endpoint.")
 
 	c.Flags().BoolVar(&c.price, "price", c.price, "show to price of an order")
 	c.Flags().BoolVarP(&c.delete, "delete", "d", c.delete, "delete the order from the database")
 
-	// c.Flags().BoolVarP(&c.product, "product", "p", true, "change the state of --add and --remove to effect products in the order.")
-	c.Flags().StringVarP(&c.product, "product", "p", "", "give the product that will be effected by --add or --remove when --topping is specified.")
-	c.Flags().BoolVarP(&c.topping, "topping", "t", false, "change the state of --add and --remove to effect toppings in a product (see --product)")
-	c.Flags().StringSliceVarP(&c.add, "add", "a", c.add, "add any number of products to a specific order")
-	c.Flags().StringVarP(&c.remove, "remove", "r", c.remove, "remove a product from the order")
+	// c.Flags().StringVarP(&c.product, "product", "p", "", "give the product that will be effected by --add or --remove when --topping is specified.")
+	// c.Flags().BoolVarP(&c.topping, "topping", "t", false, "change the state of --add and --remove to effect toppings in a product (see --product)")
+	// c.Flags().StringSliceVarP(&c.add, "add", "a", c.add, "add any number of products to a specific order")
+	// c.Flags().StringVarP(&c.remove, "remove", "r", c.remove, "remove a product from the order")
 
 	c.Flags().BoolVarP(&c.verbose, "verbose", "v", c.verbose, "print cart verbosly")
 	return c
 }
 
+func (c *cartCmd) persistentPreRunE(cmd *cobra.Command, args []string) error {
+	if len(args) > 1 {
+		return errors.New("cannot handle multiple orders")
+	}
+	return nil
+}
+
+func (c *cartCmd) preRun(cmd *cobra.Command, args []string) error {
+	return nil
+}
+
+type editCmd struct {
+	*basecmd
+	add     []string
+	remove  string
+	topping bool
+	product string
+}
+
+func (c *editCmd) Run(cmd *cobra.Command, args []string) error {
+	if len(args) < 1 {
+		return data.PrintOrders(db, c.Output(), false)
+	}
+
+	if c.topping && c.product == "" {
+		return errors.New("must specify an item code with '--product' to edit an order's toppings")
+	} else if !c.topping && c.product != "" {
+		c.topping = true
+		// return errors.New("the --product flag is only used along side the --topping flag")
+	}
+
+	order, err := data.GetOrder(args[0], db)
+	if err != nil {
+		return err
+	}
+
+	if len(c.remove) > 0 {
+		if c.topping {
+			for _, p := range order.Products {
+				if _, ok := p.Options()[c.remove]; ok || p.Code == c.product {
+					delete(p.Opts, c.remove)
+					break
+				}
+			}
+		} else {
+			if err = order.RemoveProduct(c.remove); err != nil {
+				return err
+			}
+		}
+	} else if len(c.add) > 0 {
+		if err := db.UpdateTS("menu", c); err != nil {
+			return err
+		}
+		if c.topping {
+			for _, top := range c.add {
+				p := getOrderItem(order, c.product)
+				if p == nil {
+					return fmt.Errorf("cannot find '%s' in the '%s' order", c.product, order.Name())
+				}
+
+				err = addTopping(top, p)
+				if err != nil {
+					return err
+				}
+			}
+		} else {
+			for _, newP := range c.add {
+				p, err := c.menu.GetVariant(newP)
+				if err != nil {
+					return err
+				}
+				order.AddProduct(p)
+			}
+		}
+	}
+	return data.SaveOrder(order, c.Output(), db)
+}
+
+func (b *cliBuilder) newEditCmd() base.CliCommand {
+	c := &editCmd{}
+	c.basecmd = b.newCommand("edit <order name>", "edit and order", c)
+
+	c.Flags().StringSliceVarP(&c.add, "add", "a", c.add, "add any number of products to a specific order")
+	c.Flags().StringVarP(&c.product, "product", "p", "", "give the product that will be effected by --add or --remove when --topping is specified.")
+	c.Flags().BoolVarP(&c.topping, "topping", "t", false, "change the state of --add and --remove to effect toppings in a product (see --product)")
+	c.Flags().StringVarP(&c.remove, "remove", "r", c.remove, "remove a product from the order")
+	return c
+}
+
 type addOrderCmd struct {
 	*basecmd
+
 	name     string
 	products []string
 	toppings []string

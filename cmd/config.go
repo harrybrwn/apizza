@@ -109,7 +109,7 @@ func (c *configSetCmd) Run(cmd *cobra.Command, args []string) error {
 	for _, arg := range args {
 		keys := strings.Split(arg, "=")
 		if len(keys) < 2 || keys[0] == "" || keys[1] == "" {
-			return errors.New(`use '<key>=<value>' format (no spaces)`)
+			return errors.New(`use '<key>=<value>' format (no spaces), use <key>='-' to set as empty`)
 		}
 
 		if keys[1] == "-" {
