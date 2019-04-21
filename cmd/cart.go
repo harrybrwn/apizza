@@ -174,16 +174,13 @@ func (c *editCmd) Run(cmd *cobra.Command, args []string) error {
 	if c.topping && c.product == "" {
 		return errors.New("must specify an item code with '--product' to edit an order's toppings")
 	} else if !c.topping && c.product != "" {
-		return errors.New("the --product flag is only used along side the --topping flag")
+		c.topping = true
+		// return errors.New("the --product flag is only used along side the --topping flag")
 	}
 
 	order, err := data.GetOrder(args[0], db)
 	if err != nil {
 		return err
-	}
-
-	if c.product != "" {
-		c.topping = true
 	}
 
 	if len(c.remove) > 0 {
