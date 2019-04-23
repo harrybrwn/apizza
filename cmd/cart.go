@@ -38,10 +38,10 @@ type cartCmd struct {
 	delete  bool
 	verbose bool
 
-	// product string
-	// topping bool
-	// add     []string
-	// remove  string
+	topping bool
+	add     []string
+	remove  string
+	product string
 }
 
 func (c *cartCmd) Run(cmd *cobra.Command, args []string) (err error) {
@@ -50,11 +50,11 @@ func (c *cartCmd) Run(cmd *cobra.Command, args []string) (err error) {
 		return data.PrintOrders(db, c.Output(), c.verbose)
 	}
 
-	// if c.topping && c.product == "" {
-	// 	return errors.New("must specify an item code with '--product' to edit an order's toppings")
-	// } else if !c.topping && c.product != "" {
-	// 	return errors.New("the --product flag is only used along side the --topping flag")
-	// }
+	if c.topping && c.product == "" {
+		return errors.New("must specify an item code with '--product' to edit an order's toppings")
+	} else if !c.topping && c.product != "" {
+		c.topping = true
+	}
 
 	name := args[0]
 
@@ -85,6 +85,50 @@ func (c *cartCmd) Run(cmd *cobra.Command, args []string) (err error) {
 			return err
 		}
 		return nil
+	}
+
+	if len(c.remove) > 0 {
+		if c.topping {
+			for _, p := range order.Products {
+				if _, ok := p.Options()[c.remove]; ok || p.Code == c.product {
+					delete(p.Opts, c.remove)
+					break
+				}
+			}
+		} else {
+			if err = order.RemoveProduct(c.remove); err != nil {
+				return err
+			}
+		}
+		return data.SaveOrder(order, c.Output(), db)
+	}
+
+	if len(c.add) > 0 {
+		if err := db.UpdateTS("menu", c); err != nil {
+			return err
+		}
+		if c.topping {
+			for _, top := range c.add {
+				p := getOrderItem(order, c.product)
+				if p == nil {
+					return fmt.Errorf("cannot find '%s' in the '%s' order", c.product, order.Name())
+				}
+
+				err = addTopping(top, p)
+				if err != nil {
+					return err
+				}
+			}
+		} else {
+			for _, newP := range c.add {
+				p, err := c.menu.GetVariant(newP)
+				if err != nil {
+					return err
+				}
+				order.AddProduct(p)
+			}
+		}
+		return data.SaveOrder(order, c.Output(), db)
 	}
 
 	return out.PrintOrder(order, true, c.price)
@@ -138,10 +182,10 @@ created orders.`
 	c.Flags().BoolVar(&c.price, "price", c.price, "show to price of an order")
 	c.Flags().BoolVarP(&c.delete, "delete", "d", c.delete, "delete the order from the database")
 
-	// c.Flags().StringVarP(&c.product, "product", "p", "", "give the product that will be effected by --add or --remove when --topping is specified.")
 	// c.Flags().BoolVarP(&c.topping, "topping", "t", false, "change the state of --add and --remove to effect toppings in a product (see --product)")
-	// c.Flags().StringSliceVarP(&c.add, "add", "a", c.add, "add any number of products to a specific order")
-	// c.Flags().StringVarP(&c.remove, "remove", "r", c.remove, "remove a product from the order")
+	c.Flags().StringSliceVarP(&c.add, "add", "a", c.add, "add any number of products to a specific order")
+	c.Flags().StringVarP(&c.remove, "remove", "r", c.remove, "remove a product from the order")
+	c.Flags().StringVarP(&c.product, "product", "p", "", "give the product that will be effected by --add or --remove when --topping is specified.")
 
 	c.Flags().BoolVarP(&c.verbose, "verbose", "v", c.verbose, "print cart verbosly")
 	return c
@@ -158,83 +202,82 @@ func (c *cartCmd) preRun(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-type editCmd struct {
-	*basecmd
-	add     []string
-	remove  string
-	topping bool
-	product string
-}
+// type editCmd struct {
+// 	*basecmd
+// 	add     []string
+// 	remove  string
+// 	topping bool
+// 	product string
+// }
 
-func (c *editCmd) Run(cmd *cobra.Command, args []string) error {
-	if len(args) < 1 {
-		return data.PrintOrders(db, c.Output(), false)
-	}
+// func (c *editCmd) Run(cmd *cobra.Command, args []string) error {
+// if len(args) < 1 {
+// 	return data.PrintOrders(db, c.Output(), false)
+// }
 
-	if c.topping && c.product == "" {
-		return errors.New("must specify an item code with '--product' to edit an order's toppings")
-	} else if !c.topping && c.product != "" {
-		c.topping = true
-		// return errors.New("the --product flag is only used along side the --topping flag")
-	}
+// if c.topping && c.product == "" {
+// 	return errors.New("must specify an item code with '--product' to edit an order's toppings")
+// } else if !c.topping && c.product != "" {
+// 	c.topping = true
+// }
 
-	order, err := data.GetOrder(args[0], db)
-	if err != nil {
-		return err
-	}
+// order, err := data.GetOrder(args[0], db)
+// if err != nil {
+// 	return err
+// }
 
-	if len(c.remove) > 0 {
-		if c.topping {
-			for _, p := range order.Products {
-				if _, ok := p.Options()[c.remove]; ok || p.Code == c.product {
-					delete(p.Opts, c.remove)
-					break
-				}
-			}
-		} else {
-			if err = order.RemoveProduct(c.remove); err != nil {
-				return err
-			}
-		}
-	} else if len(c.add) > 0 {
-		if err := db.UpdateTS("menu", c); err != nil {
-			return err
-		}
-		if c.topping {
-			for _, top := range c.add {
-				p := getOrderItem(order, c.product)
-				if p == nil {
-					return fmt.Errorf("cannot find '%s' in the '%s' order", c.product, order.Name())
-				}
+// 	if len(c.remove) > 0 {
+// 		if c.topping {
+// 			for _, p := range order.Products {
+// 				if _, ok := p.Options()[c.remove]; ok || p.Code == c.product {
+// 					delete(p.Opts, c.remove)
+// 					break
+// 				}
+// 			}
+// 		} else {
+// 			if err = order.RemoveProduct(c.remove); err != nil {
+// 				return err
+// 			}
+// 		}
+// 	} else if len(c.add) > 0 {
+// 		if err := db.UpdateTS("menu", c); err != nil {
+// 			return err
+// 		}
+// 		if c.topping {
+// 			for _, top := range c.add {
+// 				p := getOrderItem(order, c.product)
+// 				if p == nil {
+// 					return fmt.Errorf("cannot find '%s' in the '%s' order", c.product, order.Name())
+// 				}
 
-				err = addTopping(top, p)
-				if err != nil {
-					return err
-				}
-			}
-		} else {
-			for _, newP := range c.add {
-				p, err := c.menu.GetVariant(newP)
-				if err != nil {
-					return err
-				}
-				order.AddProduct(p)
-			}
-		}
-	}
-	return data.SaveOrder(order, c.Output(), db)
-}
+// 				err = addTopping(top, p)
+// 				if err != nil {
+// 					return err
+// 				}
+// 			}
+// 		} else {
+// 			for _, newP := range c.add {
+// 				p, err := c.menu.GetVariant(newP)
+// 				if err != nil {
+// 					return err
+// 				}
+// 				order.AddProduct(p)
+// 			}
+// 		}
+// 	}
+// 	return data.SaveOrder(order, c.Output(), db)
+// }
 
-func (b *cliBuilder) newEditCmd() base.CliCommand {
-	c := &editCmd{}
-	c.basecmd = b.newCommand("edit <order name>", "edit and order", c)
+// func (b *cliBuilder) newEditCmd() base.CliCommand {
+// 	c := &editCmd{}
+// 	c.basecmd = b.newCommand("edit <order name>", "edit and order", c)
 
-	c.Flags().StringSliceVarP(&c.add, "add", "a", c.add, "add any number of products to a specific order")
-	c.Flags().StringVarP(&c.product, "product", "p", "", "give the product that will be effected by --add or --remove when --topping is specified.")
-	c.Flags().BoolVarP(&c.topping, "topping", "t", false, "change the state of --add and --remove to effect toppings in a product (see --product)")
-	c.Flags().StringVarP(&c.remove, "remove", "r", c.remove, "remove a product from the order")
-	return c
-}
+// 	c.Flags().StringSliceVarP(&c.add, "add", "a", c.add, "add any number of products to a specific order")
+// 	c.Flags().StringVarP(&c.product, "product", "p", "", "give the product that will be effected by --add or --remove when --topping is specified.")
+// 	c.Flags().BoolVarP(&c.topping, "topping", "t", false, "change the state of --add and --remove to effect toppings in a product (see --product)")
+// 	c.Flags().StringVarP(&c.remove, "remove", "r", c.remove, "remove an item from the order")
+// 	return c
+// }
 
 type addOrderCmd struct {
 	*basecmd
