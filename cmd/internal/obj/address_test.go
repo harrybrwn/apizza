@@ -36,32 +36,4 @@ Washington DC, 20500`,
 			t.Errorf("unexpected output...\ngot:\n%s\nwanted:\n%s\n", formatted[i], exp)
 		}
 	}
-	t.Run("bad_zip_spaces", func(t *testing.T) {
-		a.Zipcode = "        "
-		defer func() {
-			if r := recover(); r == nil {
-				t.Error("expected a panic")
-			}
-		}()
-		_ = a.String()
-	})
-	t.Run("bad_zip_spaces", func(t *testing.T) {
-		a.Zipcode = "123456"
-		defer func() {
-			if r := recover(); r == nil {
-				t.Error("expected a panic")
-			}
-		}()
-		_ = a.String()
-	})
-	t.Run("bad_zip_spaces", func(t *testing.T) {
-		a.Zipcode = "12345"
-		a.State = "ABC"
-		defer func() {
-			if r := recover(); r == nil {
-				t.Error("expected a panic")
-			}
-		}()
-		_ = a.String()
-	})
 }

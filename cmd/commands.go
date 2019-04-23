@@ -57,7 +57,7 @@ func Execute() {
 	}()
 
 	if err = builder.exec(); err != nil {
-		handle(err, "Error", 0)
+		handle(err, "Error", 1)
 	}
 }
 
@@ -159,7 +159,6 @@ func newBuilder() *cliBuilder {
 func (b *cliBuilder) exec() error {
 	b.root.Addcmd(
 		b.newCartCmd().Addcmd(
-			b.newEditCmd(),
 			b.newAddOrderCmd(),
 		),
 		newConfigCmd().Addcmd(

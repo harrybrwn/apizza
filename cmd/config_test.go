@@ -111,7 +111,7 @@ func testConfigSet(t *testing.T) {
 	}
 	if err := c.Run(c.Cmd(), []string{"badformat"}); err == nil {
 		t.Error(err)
-	} else if err.Error() != "use '<key>=<value>' format (no spaces)" {
+	} else if err.Error() != "use '<key>=<value>' format (no spaces), use <key>='-' to set as empty" {
 		t.Error("wrong error message, got:", err.Error())
 	}
 }
