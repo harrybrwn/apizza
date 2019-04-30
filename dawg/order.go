@@ -4,11 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"os"
-	"runtime"
 	"strconv"
-
-	"github.com/mitchellh/mapstructure"
 )
 
 // The Order struct is the main work horse of the api wrapper. The Order struct
@@ -43,7 +39,7 @@ func (o *Order) PlaceOrder() error {
 // Price method returns the total price of an order.
 func (o *Order) Price() (float64, error) {
 	data, err := getOrderPrice(*o)
-	if err != nil || !IsOk(err) {
+	if IsFailure(err) {
 		return -1.0, err
 	}
 	data = data["Order"].(map[string]interface{})
@@ -169,32 +165,6 @@ func OPFromItem(itm Item) *OrderProduct {
 		Opts:  itm.Options(),
 		pType: itm.Category(),
 	}
-}
-
-// decodes an OrderProduct and puts unrecognized fields into the other map.
-func makeProduct(data map[string]interface{}) (*OrderProduct, error) {
-
-	_, file, line, _ := runtime.Caller(1)
-	fmt.Fprintf(os.Stderr, "Dev Warning: makeProduct is deprecated called on %s:%d", file, line)
-
-	p := &OrderProduct{Qty: 1}
-	var md mapstructure.Metadata
-	config := &mapstructure.DecoderConfig{
-		Metadata: &md,
-		Result:   p,
-	}
-	decoder, err := mapstructure.NewDecoder(config)
-	if err != nil {
-		return p, err
-	}
-	err = decoder.Decode(data)
-
-	other := map[string]interface{}{}
-	for _, key := range md.Unused {
-		other[key] = data[key]
-	}
-	p.other = other
-	return p, err
 }
 
 // Options returns a map of the OrderProdut's options.

@@ -88,14 +88,15 @@ func TestNewOrder(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	o.AddPayment(Payment{Number: "", Expiration: "", CVV: ""})
 	price, err := o.Price()
 	if IsFailure(err) {
 		t.Error(err)
 	}
 	if price == -1.0 {
 		t.Error("Order.Price() failed")
-		// fmt.Printf("%#v\n", err)
+	}
+	if err != nil {
+		t.Error(err)
 	}
 }
 
