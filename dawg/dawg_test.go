@@ -130,16 +130,6 @@ func TestDominosErrors(t *testing.T) {
 	}
 	if err := dominosErr(resp); err != nil && IsFailure(err) {
 		t.Error(err)
-		// err, _ := err.(*DominosError)
-		// for k, v := range err.fullErr {
-		// 	if k != "Order" {
-		// 		fmt.Println(k, v)
-		// 	}
-		// }
-		// print("\n")
-		// for k, v := range err.fullErr["Order"].(map[string]interface{}) {
-		// 	fmt.Println(k, v)
-		// }
 	}
 }
 
