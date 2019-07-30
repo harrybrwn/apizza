@@ -19,3 +19,6 @@ coverage.html
 *.exe
 *.png
 /script/
+
+# Bin
+/release/

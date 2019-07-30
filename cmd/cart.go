@@ -182,7 +182,6 @@ created orders.`
 	c.Flags().BoolVar(&c.price, "price", c.price, "show to price of an order")
 	c.Flags().BoolVarP(&c.delete, "delete", "d", c.delete, "delete the order from the database")
 
-	// c.Flags().BoolVarP(&c.topping, "topping", "t", false, "change the state of --add and --remove to effect toppings in a product (see --product)")
 	c.Flags().StringSliceVarP(&c.add, "add", "a", c.add, "add any number of products to a specific order")
 	c.Flags().StringVarP(&c.remove, "remove", "r", c.remove, "remove a product from the order")
 	c.Flags().StringVarP(&c.product, "product", "p", "", "give the product that will be effected by --add or --remove when --topping is specified.")
