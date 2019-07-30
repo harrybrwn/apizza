@@ -272,7 +272,8 @@ func (c *orderCmd) Run(cmd *cobra.Command, args []string) (err error) {
 	}
 
 	if yesOrNo("Would you like to purchase this order? (y/n)") {
-		c.Printf("ordering '%s'...\n", order.Name())
+		c.Printf("sending order '%s'...\n", order.Name())
+		order.PlaceOrder()
 	}
 	return nil
 }

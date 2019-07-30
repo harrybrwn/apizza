@@ -31,9 +31,7 @@ func SetConfig(foldername string, c Config) error {
 	}
 
 	if !cfg.exists() {
-		if err := os.Mkdir(cfg.dir, 0700); err != nil {
-			return err
-		}
+		os.Mkdir(cfg.dir, 0700)
 		fmt.Printf("setting up config file at %s\n", cfg.file)
 		cfg.setup()
 	}
