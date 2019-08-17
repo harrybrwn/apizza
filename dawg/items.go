@@ -240,8 +240,6 @@ type PreConfiguredProduct struct {
 	// Size is the size name of the product. It's not a code or anything, its
 	// more for user level stuff.
 	Size string `json:"Size"`
-
-	// ptype string // just in case there is a way to use this
 }
 
 // Options returns a map of the Variant's options.
@@ -257,12 +255,12 @@ func (pc *PreConfiguredProduct) Options() map[string]interface{} {
 
 // AddTopping adds a topping to the product.
 func (pc *PreConfiguredProduct) AddTopping(code, cover, amnt string) error {
-	return errors.New("not implitmented")
+	return errors.New("not implimented")
 }
 
 // Category returns the product category. see Item
 func (pc *PreConfiguredProduct) Category() string {
-	return ""
+	panic("Category not implimented")
 }
 
 func splitDefaults(defs string) (keys, vals []string, n int) {
