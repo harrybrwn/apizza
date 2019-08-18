@@ -52,9 +52,18 @@ apizza config set name=Bob email=bob@example.com service=Carryout
 
 
 ### Cart
-To save a new order, use `apizza cart add` along with at least the `--name` flag or an argument representing an order name. The name flag is the name that the app will use when referring to that order. The `--products` flag takes at least one string but accepts a list of comma separated product codes that can be found in the menu command.
+To save a new order, use `apizza cart new` along with at least the `--name` flag or an argument representing an order name. The name flag is the name that the app will use when referring to that order. The `--products` flag (part of the 'cart new' command) is a way to add product when creating a new order, it accepts a list of comma separated product codes that can be found in the menu command.
 
 Viewing all of the saved orders is as simple as `apizza cart`.
+
+The two flags `--add` and `--remove` are intended for editing an order. They will not work if no order name is given as a command. To add a product from an order, simply give `apizza cart <order> --add=<product>` and to remove a product give `--remove=<product>`.
+
+Editing a product's toppings a little more complicated. The `--product` flag is the key to editing toppings. To edit a topping, give the product that the topping belogns to to the `--product` flag and give the actual topping name to either `--remove` or `--add`.
+
+Example:<br>
+`apizza cart myorder --product=16SCREEN --add=P`
+this command will add peperoni to the pizza named 16SCREEN.
+
 
 
 ### Menu
