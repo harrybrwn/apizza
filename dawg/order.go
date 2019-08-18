@@ -7,6 +7,14 @@ import (
 	"strconv"
 )
 
+// Payment just a way to compartmentalize a payment sent to dominos.
+type Payment struct {
+	Number     string `json:"Number"`
+	Expiration string `json:"Expiration"`
+	CardType   string `json:"Type"`
+	CVV        string `json:"SecurityCode"`
+}
+
 // The Order struct is the main work horse of the api wrapper. The Order struct
 // is what will end up being sent to dominos as a json object.
 //
@@ -230,14 +238,6 @@ func (p *OrderProduct) Prepared() bool {
 		return v.(bool)
 	}
 	return false
-}
-
-// Payment just a way to compartmentalize a payment sent to dominos.
-type Payment struct {
-	Number     string `json:"Number"`
-	Expiration string `json:"Expiration"`
-	CardType   string `json:"Type"`
-	CVV        string `json:"SecurityCode"`
 }
 
 // does not take a pointer because ordr.Payments = nil should not be remembered

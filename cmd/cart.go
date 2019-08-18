@@ -299,13 +299,11 @@ func (c *orderCmd) Run(cmd *cobra.Command, args []string) (err error) {
 
 	if yesOrNo("Would you like to purchase this order? (y/n)") {
 		c.Printf("sending order '%s'...\n", order.Name())
-
 		// data, err := json.Marshal(order)
 		// if err != nil {
 		// 	return nil
 		// }
 		// fmt.Println(string(data))
-
 		if err := order.PlaceOrder(); err != nil {
 			return err
 		}
@@ -321,6 +319,13 @@ func (c *orderCmd) Run(cmd *cobra.Command, args []string) (err error) {
 func newOrderCmd() base.CliCommand {
 	c := &orderCmd{verbose: false}
 	c.basecmd = newCommand("order", "Send an order from the cart to dominos.", c)
+	c.basecmd.Cmd().Long = `The order command is the final destination for an order. This is where
+the order will be populated with payment information and sent off to dominos.
+
+The --cvv flag must be specified, and the config file will never store the
+cvv. In addition to keeping the cvv safe, payment information will never be
+stored the program cache with orders.
+`
 
 	c.Flags().BoolVarP(&c.verbose, "verbose", "v", c.verbose, "output the order command verbosly")
 	c.Flags().BoolVarP(&c.track, "track", "t", c.track, "enable tracking for the purchased order")

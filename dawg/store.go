@@ -31,9 +31,9 @@ func NearestStore(addr Address, service string) (*Store, error) {
 	return store, InitStore(store.ID, store)
 }
 
-// GetAllNearbyStores is a way of getting all the nearby stores
+// GetNearbyStores is a way of getting all the nearby stores
 // except they will by full initialized.
-func GetAllNearbyStores(addr Address, service string) ([]*Store, error) {
+func GetNearbyStores(addr Address, service string) ([]*Store, error) {
 	all, err := findNearbyStores(addr, service)
 	if err != nil {
 		return nil, err
