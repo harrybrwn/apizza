@@ -72,6 +72,7 @@ func (c *cartCmd) Run(cmd *cobra.Command, args []string) (err error) {
 	}
 
 	if c.validate {
+		fmt.Printf("validating order '%s'...\n", order.Name())
 		return dawg.ValidateOrder(order)
 	}
 
@@ -184,7 +185,7 @@ created orders.`
 
 	c.Flags().StringSliceVarP(&c.add, "add", "a", c.add, "add any number of products to a specific order")
 	c.Flags().StringVarP(&c.remove, "remove", "r", c.remove, "remove a product from the order")
-	c.Flags().StringVarP(&c.product, "product", "p", "", "give the product that will be effected by --add or --remove when --topping is specified.")
+	c.Flags().StringVarP(&c.product, "product", "p", "", "give the product that will be effected by --add or --remove")
 
 	c.Flags().BoolVarP(&c.verbose, "verbose", "v", c.verbose, "print cart verbosly")
 	return c
@@ -201,6 +202,7 @@ func (c *cartCmd) preRun(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
+// `cart new` command
 type addOrderCmd struct {
 	*basecmd
 
@@ -243,7 +245,7 @@ func (c *addOrderCmd) Run(cmd *cobra.Command, args []string) (err error) {
 
 func (b *cliBuilder) newAddOrderCmd() base.CliCommand {
 	c := &addOrderCmd{name: "", products: []string{}}
-	c.basecmd = b.newCommand("add <new order name>",
+	c.basecmd = b.newCommand("new <new order name>",
 		"Create a new order that will be stored in the cart.", c)
 
 	c.Flags().StringVarP(&c.name, "name", "n", c.name, "set the name of a new order")
@@ -256,6 +258,10 @@ type orderCmd struct {
 	*basecmd
 	verbose bool
 	track   bool
+
+	cvv        string
+	number     string
+	expiration string
 }
 
 func (c *orderCmd) Run(cmd *cobra.Command, args []string) (err error) {
@@ -265,14 +271,49 @@ func (c *orderCmd) Run(cmd *cobra.Command, args []string) (err error) {
 		return errors.New("cannot handle multiple orders")
 	}
 
+	if len(c.cvv) == 0 {
+		return errors.New("must have cvv number. (see --cvv)")
+	}
+
 	order, err := data.GetOrder(args[0], db)
 	if err != nil {
 		return err
 	}
 
+	payment := dawg.Payment{CVV: c.cvv}
+	if len(c.number) != 0 {
+		payment.Number = c.number
+	} else {
+		payment.Number = cfg.Card.Number
+	}
+	if len(c.expiration) != 0 {
+		payment.Expiration = c.expiration
+	} else {
+		payment.Expiration = cfg.Card.Expiration
+	}
+
+	names := strings.Split(cfg.Name, " ")
+	order.FirstName = names[0]
+	order.LastName = names[len(names)-1]
+	order.Email = cfg.Email
+
 	if yesOrNo("Would you like to purchase this order? (y/n)") {
 		c.Printf("sending order '%s'...\n", order.Name())
-		order.PlaceOrder()
+
+		// data, err := json.Marshal(order)
+		// if err != nil {
+		// 	return nil
+		// }
+		// fmt.Println(string(data))
+
+		if err := order.PlaceOrder(); err != nil {
+			return err
+		}
+		if c.verbose {
+			c.Printf("sent '%s' by %s to %s %s\n",
+				order.Name(), order.ServiceMethod,
+				order.Address.LineOne(), order.Address.City())
+		}
 	}
 	return nil
 }
@@ -283,5 +324,9 @@ func newOrderCmd() base.CliCommand {
 
 	c.Flags().BoolVarP(&c.verbose, "verbose", "v", c.verbose, "output the order command verbosly")
 	c.Flags().BoolVarP(&c.track, "track", "t", c.track, "enable tracking for the purchased order")
+
+	c.Flags().StringVar(&c.cvv, "cvv", "", "the card's cvv number (must give this to order)")
+	c.Flags().StringVar(&c.number, "number", "", "the card number used for orderings")
+	c.Flags().StringVar(&c.expiration, "expiration", "", "the card's expiration date")
 	return c
 }
