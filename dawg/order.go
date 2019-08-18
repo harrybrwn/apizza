@@ -24,6 +24,7 @@ type Order struct {
 	MetaData      map[string]interface{} `json:"metaData"` // only for orders sent back
 	FirstName     string                 `json:"FirstName"`
 	LastName      string                 `json:"LastName"`
+	Email         string                 `json:"Email"`
 	Payments      []Payment              `json:"Payments"`
 
 	// OrderName is not a field that is sent to dominos
