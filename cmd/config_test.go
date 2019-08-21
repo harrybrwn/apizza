@@ -54,7 +54,6 @@ address:
 card: 
   number: ""
   expiration: ""
-  cvv: ""
 service: "Carryout"
 `
 	tests.Compare(t, string(buf.Bytes()), expected)

@@ -106,7 +106,7 @@ func TestGetAllNearbyStores(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	stores, err := GetAllNearbyStores(testAddress(), "Delivery")
+	stores, err := GetNearbyStores(testAddress(), "Delivery")
 	if err != nil {
 		t.Error(err)
 	}
@@ -115,7 +115,7 @@ func TestGetAllNearbyStores(t *testing.T) {
 			t.Error("ids are not the same", stores[i].ID, validationStores.Stores[i].ID)
 		}
 	}
-	_, err = GetAllNearbyStores(&StreetAddr{}, "Delivery")
+	_, err = GetNearbyStores(&StreetAddr{}, "Delivery")
 	if err == nil {
 		t.Error("expected error")
 	}

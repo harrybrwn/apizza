@@ -51,7 +51,10 @@ func (o *Order) Price() (float64, error) {
 	if IsFailure(err) {
 		return -1.0, err
 	}
-	data = data["Order"].(map[string]interface{})
+	data, ok := data["Order"].(map[string]interface{})
+	if !ok {
+		return -1.0, errors.New("Price not found")
+	}
 	price, ok := data["Amounts"].(map[string]interface{})["Customer"]
 	if !ok {
 		return -1.0, errors.New("Price not found")
@@ -108,7 +111,6 @@ func (o *Order) SetName(name string) {
 // Dominos' servers.
 func ValidateOrder(order *Order) error {
 	err := sendOrder("/power/validate-order", order)
-
 	if IsWarning(err) && order.OrderID == "" {
 		e := err.(*DominosError)
 		order.OrderID = e.Order.OrderID
