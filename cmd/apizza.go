@@ -31,6 +31,8 @@ type apizzaCmd struct {
 	storeID    string
 	clearCache bool
 	resetMenu  bool
+
+	storeLocation bool
 }
 
 func (c *apizzaCmd) Run(cmd *cobra.Command, args []string) (err error) {
@@ -41,7 +43,14 @@ func (c *apizzaCmd) Run(cmd *cobra.Command, args []string) (err error) {
 		c.Printf("removing %s\n", db.Path())
 		return os.Remove(db.Path())
 	}
-	if c.resetMenu {
+	if c.storeLocation {
+		c.Println(c.store().Address)
+		c.Printf("\n")
+		c.Println("Store id:", c.store().ID)
+		c.Printf("Coordinates: %s, %s\n",
+			c.store().StoreCoords["StoreLatitude"],
+			c.store().StoreCoords["StoreLongitude"],
+		)
 		return nil
 	}
 	return cmd.Usage()
@@ -66,6 +75,8 @@ func newApizzaCmd() base.CliCommand {
 	c.Cmd().PersistentFlags().BoolVar(&reset, "reset", false, "reset the program (for development)")
 	c.Cmd().PersistentFlags().MarkHidden("test")
 	c.Cmd().PersistentFlags().MarkHidden("reset")
+
+	c.Flags().BoolVarP(&c.storeLocation, "store-location", "L", false, "show the location of the nearest store")
 	return c
 }
 

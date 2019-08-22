@@ -67,7 +67,9 @@ var _ base.CliCommand = (*basecmd)(nil)
 
 type basecmd struct {
 	*base.Command
-	menu    *dawg.Menu
+	menu *dawg.Menu
+
+	// don't access this field directly, use store() to get the store
 	dstore  *dawg.Store
 	tsDecay time.Duration
 	addr    *obj.Address
@@ -76,11 +78,13 @@ type basecmd struct {
 func (c *basecmd) store() *dawg.Store {
 	if c.dstore == nil {
 		var err error
-		if c.dstore, err = dawg.NearestStore(c.addr, config.GetString("service")); err != nil {
-			handle(err, "Internal Error", 1) // will exit
-			return nil
+		var address = c.addr
+		if address == nil {
+			address = &cfg.Address
 		}
-		return c.dstore
+		if c.dstore, err = dawg.NearestStore(address, config.GetString("service")); err != nil {
+			handle(err, "Internal Error", 1) // will exit
+		}
 	}
 	return c.dstore
 }

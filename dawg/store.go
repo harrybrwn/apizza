@@ -92,6 +92,7 @@ type Store struct {
 	CreditCardTypes      []string          `json:"AcceptableCreditCards"`
 	MinDistance          float64           `json:"MinDistance"`
 	MaxDistance          float64           `json:"MaxDistance"`
+	Address              string            `json:"AddressDescription"`
 	PostalCode           string            `json:"PostalCode"`
 	City                 string            `json:"City"`
 	StoreCoords          map[string]string `json:"StoreCoordinates"`

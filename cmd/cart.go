@@ -297,6 +297,8 @@ func (c *orderCmd) Run(cmd *cobra.Command, args []string) (err error) {
 	order.LastName = names[len(names)-1]
 	order.Email = cfg.Email
 
+	c.Printf("Using dominos at %s\n\n", strings.Replace(c.store().Address, "\n", " ", -1))
+
 	if yesOrNo("Would you like to purchase this order? (y/n)") {
 		c.Printf("sending order '%s'...\n", order.Name())
 		// data, err := json.Marshal(order)
@@ -304,13 +306,17 @@ func (c *orderCmd) Run(cmd *cobra.Command, args []string) (err error) {
 		// 	return nil
 		// }
 		// fmt.Println(string(data))
+
 		if err := order.PlaceOrder(); err != nil {
 			return err
 		}
 		if c.verbose {
-			c.Printf("sent '%s' by %s to %s %s\n",
-				order.Name(), order.ServiceMethod,
-				order.Address.LineOne(), order.Address.City())
+			if order.ServiceMethod == "Delivery" {
+				c.Printf("sent by %s to %s %s\n", order.ServiceMethod,
+					order.Address.LineOne(), order.Address.City())
+			} else {
+				c.Printf("sent order for %s\n", order.ServiceMethod)
+			}
 		}
 	}
 	return nil
