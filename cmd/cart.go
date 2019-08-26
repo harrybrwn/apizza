@@ -16,6 +16,7 @@ package cmd
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
@@ -301,11 +302,14 @@ func (c *orderCmd) Run(cmd *cobra.Command, args []string) (err error) {
 
 	if yesOrNo("Would you like to purchase this order? (y/n)") {
 		c.Printf("sending order '%s'...\n", order.Name())
-		// data, err := json.Marshal(order)
-		// if err != nil {
-		// 	return nil
-		// }
-		// fmt.Println(string(data))
+
+		if test {
+			data, err := json.Marshal(order)
+			if err != nil {
+				return nil
+			}
+			fmt.Println(string(data))
+		}
 
 		if err := order.PlaceOrder(); err != nil {
 			return err

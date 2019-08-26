@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"bytes"
+	"strings"
 	"testing"
 
 	"github.com/harrybrwn/apizza/cmd/internal/base"
@@ -103,5 +104,41 @@ func testOrderRunDelete(cart *cartCmd, buf *bytes.Buffer, t *testing.T) {
 	buf.Reset()
 	if err := cart.Run(cart.Cmd(), []string{"not_a_real_order"}); err == nil {
 		t.Error("expected error")
+	}
+}
+
+func testAddToppings(cart *cartCmd, buf *bytes.Buffer, t *testing.T) {
+	cart.add = []string{"10SCREEN"}
+	if err := cart.Run(cart.Cmd(), []string{"testorder"}); err != nil {
+		t.Error(err)
+	}
+	cart.add = nil
+
+	cart.product = "10SCREEN"
+	cart.add = []string{"P", "K"}
+	cart.topping = false
+	if err := cart.Run(cart.Cmd(), []string{"testorder"}); err != nil {
+		t.Error(err)
+	}
+
+	cart.product = ""
+	cart.add = []string{}
+	cart.topping = false
+	buf.Reset()
+	if err := cart.Run(cart.Cmd(), []string{"testorder"}); err != nil {
+		t.Error(err)
+	}
+
+	expected := `Small (10") Hand Tossed Pizza
+      code:     10SCREEN
+      options:  
+         C: 1/1 1
+         K: 1/1 1.0
+         P: 1/1 1.0
+         X: 1/1 1
+      quantity: 1`
+
+	if !strings.Contains(buf.String(), expected) {
+		t.Error("bad output")
 	}
 }

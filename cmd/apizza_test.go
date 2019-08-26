@@ -23,6 +23,7 @@ func TestRunner(t *testing.T) {
 		base.WithCmds(testOrderNewErr, b.newAddOrderCmd()),
 		base.WithCmds(testOrderRunAdd, b.newCartCmd()),
 		withCartCmd(b, testOrderPriceOutput),
+		withCartCmd(b, testAddToppings),
 		withCartCmd(b, testOrderRunDelete),
 		testFindProduct,
 		withApizzaCmd(testApizzaCmdRun, newApizzaCmd()),
