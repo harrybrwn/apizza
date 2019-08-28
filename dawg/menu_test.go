@@ -95,8 +95,8 @@ func TestOPFromItem(t *testing.T) {
 		t.Error(err)
 	}
 
-	opv := OPFromItem(v)
-	opp := OPFromItem(p)
+	opv := OrderProductFromItem(v)
+	opp := OrderProductFromItem(p)
 
 	opvOpts := opv.Options()
 	oppOpts := opp.Options()

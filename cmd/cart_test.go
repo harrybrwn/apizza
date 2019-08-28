@@ -78,9 +78,11 @@ func testOrderRunAdd(t *testing.T, buf *bytes.Buffer, cmds ...base.CliCommand) {
 
 func testOrderPriceOutput(cart *cartCmd, buf *bytes.Buffer, t *testing.T) {
 	cart.price = true
+	cart.updateAddr = true
 	if err := cart.Run(cart.Cmd(), []string{"testorder"}); err != nil {
 		t.Error(err)
 	}
+	cart.updateAddr = false
 	// expected := "testorder\n  products:\n    Medium (12\") Hand Tossed MeatZZa\n      code:     12SCMEATZA\n      options:  map[]\n      quantity: 1\n    8-Piece Boneless Chicken\n      code:     W08PBNLW\n      options:  map[]\n      quantity: 1\n    8-piece Plain Wings\n      code:     W08PPLNW\n      options:  map[]\n      quantity: 1\n  storeID: 4336\n  method:  Carryout\n  address: 1600 Pennsylvania Ave NW\n           Washington DC, 20500\n  price: $34.07\n"
 	// tests.Compare(t, buf.String(), expected)
 	if err := cart.Run(cart.Cmd(), []string{"to-many", "args"}); err == nil {
@@ -104,6 +106,12 @@ func testOrderRunDelete(cart *cartCmd, buf *bytes.Buffer, t *testing.T) {
 	buf.Reset()
 	if err := cart.Run(cart.Cmd(), []string{"not_a_real_order"}); err == nil {
 		t.Error("expected error")
+	}
+
+	cart.topping = false
+	cart.validate = true
+	if err := cart.Run(cart.Cmd(), []string{}); err != nil {
+		t.Error(err)
 	}
 }
 
@@ -139,6 +147,16 @@ func testAddToppings(cart *cartCmd, buf *bytes.Buffer, t *testing.T) {
       quantity: 1`
 
 	if !strings.Contains(buf.String(), expected) {
+		t.Error("bad output")
+	}
+	buf.Reset()
+
+	cart.topping = false
+	cart.remove = "10SCREEN"
+	if err := cart.Run(cart.Cmd(), []string{"testorder"}); err != nil {
+		t.Error(err)
+	}
+	if strings.Contains(buf.String(), expected) {
 		t.Error("bad output")
 	}
 }

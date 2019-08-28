@@ -260,7 +260,7 @@ func (pc *PreConfiguredProduct) AddTopping(code, cover, amnt string) error {
 
 // Category returns the product category. see Item
 func (pc *PreConfiguredProduct) Category() string {
-	panic("Category not implimented")
+	return "n/a"
 }
 
 func splitDefaults(defs string) (keys, vals []string, n int) {

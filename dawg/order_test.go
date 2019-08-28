@@ -34,6 +34,10 @@ func TestGetOrderPrice(t *testing.T) {
 			AddrType:   "House",
 		},
 	}
+	if err := ValidateOrder(&order); IsFailure(err) {
+		t.Error(err)
+	}
+	ValidateOrder(&order)
 	resp, err := getOrderPrice(order)
 	if e, ok := err.(*DominosError); ok && IsFailure(err) {
 		fmt.Printf("%+v\n", resp)
@@ -156,5 +160,26 @@ func TestRemoveProduct(t *testing.T) {
 	}
 	if err = order.RemoveProduct("nothere"); err == nil {
 		t.Error("expected error")
+	}
+}
+
+func TestOrderProduct(t *testing.T) {
+	s := testingStore()
+	menu, err := s.Menu()
+	if err != nil {
+		t.Error(err)
+	}
+	item := menu.FindItem("14SCEXTRAV")
+
+	op := OrderProductFromItem(item)
+	if err := op.AddTopping("X", "1/1", "1"); err != nil {
+		t.Error(err)
+	}
+
+	if op.Price() != -1 {
+		t.Error("bad price")
+	}
+	if op.Size() != -1 {
+		t.Error("bad size")
 	}
 }

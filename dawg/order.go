@@ -67,7 +67,7 @@ func (o *Order) AddProduct(item Item) error {
 	if item == nil {
 		return errors.New("cannot add a null item")
 	}
-	o.Products = append(o.Products, OPFromItem(item))
+	o.Products = append(o.Products, OrderProductFromItem(item))
 	return nil
 }
 
@@ -165,8 +165,8 @@ type OrderProduct struct {
 	pType              string
 }
 
-// OPFromItem will construct an order product from an Item.
-func OPFromItem(itm Item) *OrderProduct {
+// OrderProductFromItem will construct an order product from an Item.
+func OrderProductFromItem(itm Item) *OrderProduct {
 	return &OrderProduct{
 		item: item{
 			Code: itm.ItemCode(),
