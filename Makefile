@@ -2,7 +2,7 @@ COVER_FILE=test-coverage
 COVER=go tool cover
 PKG=github.com/harrybrwn/apizza
 
-all: test install clean
+all: install
 
 install:
 	go install $(PKG)

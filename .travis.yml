@@ -1,4 +1,16 @@
 language: go
 
-before_install:
-  - go get -u $(go list -f '{{ join .Imports "\n" }}' github.com/harrybrwn/apizza/... | grep '^github.com/.*' | grep 'apizza' -v)
+stages:
+  - diff
+  - test
+
+go:
+  - 1.10
+  - 1.11
+  - 1.12
+  - 1.13
+
+
+notifications:
+  email:
+    - harrybrown98@gmail.com
