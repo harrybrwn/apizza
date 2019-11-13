@@ -5,8 +5,11 @@ stages:
   - test
 
 go:
-  - 1.12.7
+  - 1.12
   - 1.13
+
+env:
+  - GO111MODULE=on
 
 before_script:
   - go mod tidy

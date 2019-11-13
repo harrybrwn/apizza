@@ -1,19 +1,12 @@
 package dawg
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"strconv"
 )
-
-// Payment just a way to compartmentalize a payment sent to dominos.
-type Payment struct {
-	Number     string `json:"Number"`
-	Expiration string `json:"Expiration"`
-	CardType   string `json:"Type"`
-	CVV        string `json:"SecurityCode"`
-}
 
 // The Order struct is the main work horse of the api wrapper. The Order struct
 // is what will end up being sent to dominos as a json object.
@@ -35,7 +28,8 @@ type Order struct {
 	Email         string                 `json:"Email"`
 	Payments      []Payment              `json:"Payments"`
 
-	// OrderName is not a field that is sent to dominos
+	// OrderName is not a field that is sent to dominos, but is just a way for
+	// users to name a specific order.
 	OrderName string `json:"-"`
 	price     float64
 }
@@ -118,12 +112,26 @@ func ValidateOrder(order *Order) error {
 	return err
 }
 
+// returns nil on failure.
 func (o *Order) rawData() []byte {
-	data, err := json.Marshal(o)
+	raw := new(bytes.Buffer)
+
+	_, err := raw.WriteString("{\"Order\":")
 	if err != nil {
 		return nil
 	}
-	return []byte(fmt.Sprintf(`{"Order":%s}`, data))
+
+	err = json.NewEncoder(raw).Encode(o)
+	if err != nil {
+		return nil
+	}
+
+	_, err = raw.WriteString("}")
+	if err != nil {
+		return nil
+	}
+
+	return raw.Bytes()
 }
 
 func sendOrder(path string, ordr *Order) error {
