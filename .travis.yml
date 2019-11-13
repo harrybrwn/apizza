@@ -10,6 +10,8 @@ go:
   - 1.12
   - 1.13
 
+script:
+  - go test ./...
 
 notifications:
   email:
