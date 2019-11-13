@@ -140,7 +140,7 @@ func testAddToppings(cart *cartCmd, buf *bytes.Buffer, t *testing.T) {
 
 	expected := `Small (10") Hand Tossed Pizza
       code:     10SCREEN
-      options:  
+      options:
          C: 1/1 1
          K: 1/1 1.0
          P: 1/1 1.0
@@ -165,16 +165,19 @@ func testAddToppings(cart *cartCmd, buf *bytes.Buffer, t *testing.T) {
 	if err := cart.Run(cart.Cmd(), []string{"testorder"}); err != nil {
 		t.Error(err)
 	}
-	expected = `Small (10") Hand Tossed Pizza
+	expected = `    Small (10") Hand Tossed Pizza
       code:     10SCREEN
-      options:  
+      options:
+         C: 1/1 1
          K: 1/1 1.0
          P: 1/1 1.0
          X: 1/1 1
-	  quantity: 1`
+      quantity: 1`
 	if !strings.Contains(buf.String(), expected) {
-		// fmt.Println(expected)
+		fmt.Println("got:")
 		fmt.Println(buf.String())
+		fmt.Println("expected:")
+		fmt.Print(expected)
 		t.Error("bad output")
 	}
 	buf.Reset()

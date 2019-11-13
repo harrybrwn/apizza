@@ -15,7 +15,7 @@ var defaultOrderTmpl = `{{ .OrderName }}
   products:{{ range .Products }}
     {{.Name}}
       code:     {{.Code}}
-      options:  {{ range $k, $v := .ReadableOptions }}
+      options:{{ range $k, $v := .ReadableOptions }}
          {{$k}}: {{$v}}{{else}}None{{end}}
       quantity: {{.Qty}}{{end}}
   storeID: {{.StoreID}}
