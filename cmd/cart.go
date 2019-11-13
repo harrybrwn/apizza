@@ -41,7 +41,7 @@ type cartCmd struct {
 
 	topping bool
 	add     []string
-	remove  string
+	remove  string // yes, you can only remove one thing at a time
 	product string
 }
 
@@ -297,6 +297,7 @@ func (c *orderCmd) Run(cmd *cobra.Command, args []string) (err error) {
 	order.FirstName = names[0]
 	order.LastName = names[len(names)-1]
 	order.Email = cfg.Email
+	order.AddPayment(payment)
 
 	c.Printf("Using dominos at %s\n\n", strings.Replace(c.store().Address, "\n", " ", -1))
 
@@ -321,6 +322,7 @@ func (c *orderCmd) Run(cmd *cobra.Command, args []string) (err error) {
 			} else {
 				c.Printf("sent order for %s\n", order.ServiceMethod)
 			}
+			c.Printf("%+v\n", order)
 		}
 	}
 	return nil

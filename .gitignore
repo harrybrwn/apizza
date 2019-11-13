@@ -12,6 +12,7 @@ example
 test-coverage
 coverage.html
 *.prof
+/data/
 
 # Other
 .vscode

@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"bytes"
+	"fmt"
 	"strings"
 	"testing"
 
@@ -147,6 +148,33 @@ func testAddToppings(cart *cartCmd, buf *bytes.Buffer, t *testing.T) {
       quantity: 1`
 
 	if !strings.Contains(buf.String(), expected) {
+		t.Error("bad output")
+	}
+	buf.Reset()
+
+	cart.topping = false
+	cart.product = "10SCREEN"
+	cart.remove = "C"
+	if err := cart.Run(cart.Cmd(), []string{"testorder"}); err != nil {
+		t.Error(err)
+	}
+	buf.Reset()
+	cart.topping = false
+	cart.product = ""
+	cart.remove = ""
+	if err := cart.Run(cart.Cmd(), []string{"testorder"}); err != nil {
+		t.Error(err)
+	}
+	expected = `Small (10") Hand Tossed Pizza
+      code:     10SCREEN
+      options:  
+         K: 1/1 1.0
+         P: 1/1 1.0
+         X: 1/1 1
+	  quantity: 1`
+	if !strings.Contains(buf.String(), expected) {
+		// fmt.Println(expected)
+		fmt.Println(buf.String())
 		t.Error("bad output")
 	}
 	buf.Reset()
