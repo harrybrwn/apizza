@@ -45,13 +45,22 @@ var _ Address = (*StreetAddr)(nil)
 
 // StreetAddr represents a street address
 type StreetAddr struct {
-	Street     string `json:"Street"`
-	StreetNum  string `json:"StreetNumber"`
-	CityName   string `json:"City"`
-	State      string `json:"Region"`
-	Zipcode    string `json:"PostalCode"`
-	AddrType   string `json:"Type"`
+	// Street should be the street number followed by the street name.
+	Street string `json:"Street"`
+
+	// StreetNum is just the street number.
+	StreetNum string `json:"StreetNumber"`
+
+	// StreetName is just the street name.
 	StreetName string `json:"StreetName"`
+
+	CityName string `json:"City"`
+	State    string `json:"Region"`
+	Zipcode  string `json:"PostalCode"`
+
+	// This is a dominos specific field, and should one of the following...
+	// "House", "Apartment", "Buisness", "Campus/Base", "Hotel", or "Other"
+	AddrType string `json:"Type"`
 }
 
 // StreetAddrFromAddress returns a StreetAddr pointer from an Address interface.

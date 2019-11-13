@@ -5,12 +5,12 @@ stages:
   - test
 
 go:
+  - 1.12.7
   - 1.13
 
 before_script:
-  - go build
+  - go mod tidy
   - go install
-  - go clean -testcache
 
 script:
   - go test ./...

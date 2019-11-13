@@ -113,8 +113,11 @@ func IsWarning(err error) bool {
 }
 
 // IsOk will tell you if the error returned does not contain any fatal errors or
-// warnings from Dominos' servers.
+// warnings from Dominos' servers. Will return true if the error is nil.
 func IsOk(err error) bool {
+	if err == nil {
+		return true
+	}
 	e, ok := isDominosErr(err)
 	if !ok {
 		return false

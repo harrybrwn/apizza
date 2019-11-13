@@ -127,6 +127,21 @@ func (s *Store) NewOrder() *Order {
 	}
 }
 
+// MakeOrder will make an order from a first and last name and an emil.
+func (s *Store) MakeOrder(firstname, lastname, email string) *Order {
+	return &Order{
+		FirstName:     firstname,
+		LastName:      lastname,
+		Email:         email,
+		LanguageCode:  DefaultLang,
+		ServiceMethod: s.userService,
+		StoreID:       s.ID,
+		Products:      []*OrderProduct{},
+		Address:       StreetAddrFromAddress(s.userAddress),
+		Payments:      []Payment{},
+	}
+}
+
 // GetProduct finds the menu Product that matchs the given product code.
 func (s *Store) GetProduct(code string) (*Product, error) {
 	menu, err := s.Menu()
@@ -162,6 +177,8 @@ func findNearbyStores(addr Address, service string) (*storeLocs, error) {
 	if !(service == "Delivery" || service == "Carryout") {
 		panic("service must be either 'Delivery' or 'Carryout'")
 	}
+	// TODO: on the dominos website, the c param can sometimes be just the zip code
+	// and it still works.
 	b, err := get("/power/store-locator", &Params{
 		"s":    addr.LineOne(),
 		"c":    format("%s, %s %s", addr.City(), addr.StateCode(), addr.Zip()),
