@@ -8,9 +8,15 @@ import (
 
 func TestGetOrderPrice(t *testing.T) {
 	o := Order{}
-	if _, err := getOrderPrice(o); err == nil {
+	_, err := getOrderPrice(o)
+	if err == nil {
 		t.Error("Should have returned an error")
 	}
+	if !IsFailure(err) {
+		t.Error("this error should only be a failure")
+		t.Error(err.Error())
+	}
+
 	order := Order{
 		LanguageCode: DefaultLang, ServiceMethod: "Delivery",
 		StoreID: "4336", Payments: []*orderPayment{&orderPayment{}}, OrderID: "",
@@ -38,14 +44,13 @@ func TestGetOrderPrice(t *testing.T) {
 	if err := ValidateOrder(&order); IsFailure(err) {
 		t.Error(err)
 	}
-	ValidateOrder(&order)
 	resp, err := getOrderPrice(order)
 	if e, ok := err.(*DominosError); ok && IsFailure(err) {
 		fmt.Printf("%+v\n", resp)
 		t.Error("\n\b", e)
 	}
-	if order.Payments == nil {
-		t.Error("order.Payments should not be nil after getOrderPrice")
+	if len(order.Payments) == 0 {
+		t.Fatal("order.Payments should be empty because tests were about to place an order")
 	}
 	if err = order.PlaceOrder(); err == nil {
 		t.Error("expected error")
@@ -54,6 +59,11 @@ func TestGetOrderPrice(t *testing.T) {
 	_, err = getOrderPrice(order)
 	if err == nil {
 		t.Error("Should have raised an error", "\n\b", err)
+	}
+
+	err = order.prepare()
+	if !IsFailure(err) {
+		t.Error("Should have returned a dominos failure", err)
 	}
 }
 
@@ -102,6 +112,44 @@ func TestNewOrder(t *testing.T) {
 	}
 	if err != nil {
 		t.Error(err)
+	}
+}
+
+func TestPrepareOrder(t *testing.T) {
+	st := testingStore()
+	o := st.MakeOrder("Bob", "Smith", "bobsmith@aol.com")
+	if o.FirstName != "Bob" {
+		t.Error("wrong first name")
+	}
+	if o.LastName != "Smith" {
+		t.Error("bad last name")
+	}
+	if o.Email != "bobsmith@aol.com" {
+		t.Error("bad email")
+	}
+	if o.price > 0.0 {
+		t.Error("order should not be initialized with a price above zero")
+	}
+	if len(o.OrderID) != 0 {
+		t.Error("a new order should be initialized with an order id by default")
+	}
+
+	menu, err := st.Menu()
+	if err != nil {
+		t.Error(err)
+	}
+	if err = o.AddProduct(menu.FindItem("10SCREEN")); err != nil {
+		t.Error(err)
+	}
+
+	if err = o.prepare(); err != nil {
+		t.Error("Should not have returned error:\n", err)
+	}
+	if o.price <= 0.0 {
+		t.Error("cached price should not be zero or less")
+	}
+	if len(o.OrderID) == 0 {
+		t.Error("prepare should give the order an OrderID")
 	}
 }
 
@@ -218,17 +266,12 @@ func TestCard(t *testing.T) {
 		t.Error("expected an nil value here")
 	}
 
-	m, y = parseDate("hello")
-	if m >= 0 || y >= 0 {
-		t.Error("expected negative values")
-	}
-	m, y = parseDate("no/30")
-	if m >= 0 || y >= 0 {
-		t.Error("expected negative values")
-	}
-	m, y = parseDate("2/no")
-	if m >= 0 || y >= 0 {
-		t.Error("expected negative values")
+	ttDates := []string{"hello", "no/30", "2/no"}
+	for _, tc := range ttDates {
+		m, y = parseDate(tc)
+		if m >= 0 || y >= 0 {
+			t.Error("expected negative values")
+		}
 	}
 
 	p, ok := NewCard("0000000000000000", "9/08", 123).(*Payment)

@@ -1,6 +1,7 @@
 package dawg
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 
@@ -8,8 +9,8 @@ import (
 )
 
 const (
-	// WarnigStatus is the status code dominos serves use for a warning
-	WarnigStatus = 1
+	// WarningStatus is the status code dominos serves use for a warning
+	WarningStatus = 1
 
 	// FailureStatus  is the status code dominos serves use for a failure
 	FailureStatus = -1
@@ -24,7 +25,7 @@ var (
 
 	errCodes = map[int]string{
 		FailureStatus: "Failure -1",
-		WarnigStatus:  "Warning 1",
+		WarningStatus: "Warning 1",
 		OkStatus:      "Ok 0",
 	}
 )
@@ -72,24 +73,39 @@ func (err *DominosError) init(jsonData []byte) error {
 }
 
 func (err *DominosError) Error() string {
-	var errmsg string
+	var (
+		buf      = new(bytes.Buffer)
+		item     statusItem
+		haspulse bool
+	)
 
-	for _, item := range err.StatusItems {
-		errmsg += fmt.Sprintf("Dominos %s:\n", item.Code)
+	for _, item = range err.StatusItems {
+		fmt.Fprintf(buf, "Dominos %s (%d)\n", item.Code, err.Status)
 	}
-	for _, item := range err.Order.StatusItems {
+	for _, item = range err.Order.StatusItems {
+		haspulse = item.PulseText != ""
+		fmt.Fprint(buf, "    ")
+		if !haspulse {
+			switch err.Order.Status {
+			case WarningStatus:
+				fmt.Fprintf(buf, "Warning ")
+			case FailureStatus:
+				fmt.Fprintf(buf, "Failure ")
+			}
+		}
+
 		if item.Code != "" {
-			errmsg += fmt.Sprintf("    Code: '%s'", item.Code)
+			fmt.Fprintf(buf, "Code: '%s'", item.Code)
 		}
 		if item.Message != "" {
-			errmsg += fmt.Sprintf(":\n        %s\n", item.Message)
-		} else if item.PulseText != "" {
-			errmsg += fmt.Sprintf("    PulseCode %d:\n        %s", item.PulseCode, item.PulseText)
+			fmt.Fprintf(buf, ":\n        %s\n", item.Message)
+		} else if haspulse {
+			fmt.Fprintf(buf, "    PulseCode %d: %s", item.PulseCode, item.PulseText)
 		} else {
-			errmsg += "\n"
+			fmt.Fprint(buf, "\n")
 		}
 	}
-	return errmsg
+	return buf.String()
 }
 
 // IsFailure will tell you if an error given by a function from the dawg package
@@ -109,7 +125,7 @@ func IsWarning(err error) bool {
 	if !ok {
 		return false
 	}
-	return e.Status == WarnigStatus
+	return e.Status == WarningStatus
 }
 
 // IsOk will tell you if the error returned does not contain any fatal errors or

@@ -154,14 +154,16 @@ func TestDominosErrorFailure(t *testing.T) {
 	if e == nil {
 		t.Error("dominos error should not be nil")
 	}
-	expected := `Dominos Failure:
-    Code: 'Failure':
+	expected := `Dominos Failure (-1)
+    Failure Code: 'Failure':
         test order msg
-    Code: 'SomeOtherCode'
-    PulseCode 1:
-        this isn't the real error format`
+    Failure Code: 'SomeOtherCode'
+        PulseCode 1: this isn't the real error format`
 	if e.Error() != expected {
 		t.Errorf("\nexpected:\n'%s'\ngot:\n'%s'\n", expected, e.Error())
+	}
+	if len(e.Error()) < 5 {
+		t.Error("the error message here seems too small:\n", e.Error())
 	}
 	dErr := e.(*DominosError)
 	if IsOk(dErr) {

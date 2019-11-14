@@ -128,6 +128,7 @@ func (o *Order) prepare() error {
 // Dominos' servers.
 func ValidateOrder(order *Order) error {
 	err := sendOrder("/power/validate-order", order)
+	// TODO: make it possible to recognize the warning as an 'AutoAddedOrderId' warning.
 	if IsWarning(err) {
 		e := err.(*DominosError)
 		order.OrderID = e.Order.OrderID
