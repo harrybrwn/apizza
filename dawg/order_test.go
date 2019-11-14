@@ -212,4 +212,57 @@ func TestCard(t *testing.T) {
 	if y != 2010 {
 		t.Error("parseDate failed to parse year")
 	}
+
+	c = NewCard("", "", 0)
+	if c != nil {
+		t.Error("expected an nil value here")
+	}
+
+	m, y = parseDate("hello")
+	if m >= 0 || y >= 0 {
+		t.Error("expected negative values")
+	}
+	m, y = parseDate("no/30")
+	if m >= 0 || y >= 0 {
+		t.Error("expected negative values")
+	}
+	m, y = parseDate("2/no")
+	if m >= 0 || y >= 0 {
+		t.Error("expected negative values")
+	}
+
+	p, ok := NewCard("0000000000000000", "9/08", 123).(*Payment)
+	if ok {
+		tm = p.ExpiresOn()
+		if tm.Year() != 2008 {
+			t.Error("bad year:", tm.Year())
+		}
+		if tm.Month() != time.September {
+			t.Error("bad month")
+		}
+	} else {
+		t.Error("the default Card changed, go fix the tests")
+	}
+	p = ToPayment(NewCard("0000000000000000", "1/08", 123))
+	if ok {
+		p.Expiration = "08"
+		tm = p.ExpiresOn()
+		if tm != badExpiration {
+			t.Error("a bad expiration date should have given the badExpiration variable")
+		}
+	} else {
+		t.Error("the default Card changed, go fix the tests")
+	}
+
+	c = NewCard("0000000000000000", "08/08", 123)
+	op := makeOrderPaymentFromCard(c)
+	if op.Number != c.Num() {
+		t.Error("bad number")
+	}
+	if op.Expiration != formatDate(c.ExpiresOn()) {
+		t.Error("bad expiration")
+	}
+	if op.SecurityCode != c.Code() {
+		t.Error("bad cvv")
+	}
 }
