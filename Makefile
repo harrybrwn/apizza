@@ -4,7 +4,7 @@ COVER=go tool cover
 all: install
 
 install:
-	go install
+	go install github.com/harrybrwn/apizza
 
 release:
 	bash scripts/release.sh
