@@ -123,7 +123,7 @@ func (s *Store) NewOrder() *Order {
 		StoreID:       s.ID,
 		Products:      []*OrderProduct{},
 		Address:       StreetAddrFromAddress(s.userAddress),
-		Payments:      []Payment{},
+		Payments:      []*orderPayment{},
 	}
 }
 
@@ -138,7 +138,7 @@ func (s *Store) MakeOrder(firstname, lastname, email string) *Order {
 		StoreID:       s.ID,
 		Products:      []*OrderProduct{},
 		Address:       StreetAddrFromAddress(s.userAddress),
-		Payments:      []Payment{},
+		Payments:      []*orderPayment{},
 	}
 }
 
