@@ -36,24 +36,20 @@ type Order struct {
 
 // PlaceOrder is the method that sends the final order to dominos
 func (o *Order) PlaceOrder() error {
+	if err := o.prepare(); err != nil {
+		return err
+	}
 	return sendOrder("/power/place-order", o)
 }
 
 // Price method returns the total price of an order.
 func (o *Order) Price() (float64, error) {
-	data, err := getOrderPrice(*o)
-	if IsFailure(err) {
-		return -1.0, err
+	if o.price == 0.0 {
+		if err := o.prepare(); err != nil {
+			return -1.0, err
+		}
 	}
-	data, ok := data["Order"].(map[string]interface{})
-	if !ok {
-		return -1.0, errors.New("Price not found")
-	}
-	price, ok := data["Amounts"].(map[string]interface{})["Customer"]
-	if !ok {
-		return -1.0, errors.New("Price not found")
-	}
-	return price.(float64), nil
+	return o.price, nil
 }
 
 // AddProduct adds a product to the Order from a Product Object
@@ -87,6 +83,8 @@ func (o *Order) RemoveProduct(code string) error {
 }
 
 // AddPayment adds a payment object to an order
+//
+// Depricated. use AddCard
 func (o *Order) AddPayment(payment Payment) {
 	o.Payments = append(o.Payments, makeOrderPaymentFromCard(&payment))
 }
@@ -106,11 +104,31 @@ func (o *Order) SetName(name string) {
 	o.OrderName = name
 }
 
+// only returns dominos failures or non-dominos errors.
+func (o *Order) prepare() error {
+	odata, err := getPricingData(*o)
+	if !IsOk(err) && !IsWarning(err) {
+		return err
+	}
+	o.OrderID = odata.Order.OrderID
+
+	p, ok := odata.Order.Amounts["Customer"]
+	if ok {
+		o.price = p
+	}
+
+	n := len(o.Payments)
+	for i := 0; i < n; i++ {
+		o.Payments[i].Amount = p
+	}
+	return nil
+}
+
 // ValidateOrder sends and order to the validation endpoint to be validated by
 // Dominos' servers.
 func ValidateOrder(order *Order) error {
 	err := sendOrder("/power/validate-order", order)
-	if IsWarning(err) && order.OrderID == "" {
+	if IsWarning(err) {
 		e := err.(*DominosError)
 		order.OrderID = e.Order.OrderID
 	}
@@ -168,6 +186,37 @@ func orderRequest(path string, ordr *Order) (map[string]interface{}, error) {
 		return nil, err
 	}
 	return respData, dominosErr(b)
+}
+
+// does not take a pointer because ordr.Payments = nil should not be remembered
+func getOrderPrice(ordr Order) (map[string]interface{}, error) {
+	ordr.Payments = []*orderPayment{}
+	return orderRequest("/power/price-order", &ordr)
+}
+
+func getPricingData(ordr Order) (*priceingData, error) {
+	ordr.Payments = []*orderPayment{}
+	b, err := post("/power/price-order", ordr.rawData())
+	if err != nil {
+		return nil, err
+	}
+	resp := &priceingData{}
+	if err := json.Unmarshal(b, resp); err != nil {
+		return nil, err
+	}
+	return resp, dominosErr(b)
+}
+
+type priceingData struct {
+	Status     int
+	StatusItem []statusItem
+	Order      struct {
+		Status           int
+		StatusItem       []statusItem
+		Amounts          map[string]float64
+		OrderID          string
+		AmountsBreakdown map[string]interface{}
+	}
 }
 
 // OrderProduct represents an item that will be sent to and from dominos within
@@ -264,10 +313,4 @@ func (p *OrderProduct) Prepared() bool {
 		return v.(bool)
 	}
 	return false
-}
-
-// does not take a pointer because ordr.Payments = nil should not be remembered
-func getOrderPrice(ordr Order) (map[string]interface{}, error) {
-	ordr.Payments = nil
-	return orderRequest("/power/price-order", &ordr)
 }
