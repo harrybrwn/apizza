@@ -73,6 +73,16 @@ func StreetAddrFromAddress(addr Address) *StreetAddr {
 		streetName = strings.Join(parts[1:], " ")
 	}
 
+	if res, ok := addr.(*StreetAddr); ok {
+		if len(res.StreetNum) == 0 {
+			res.StreetNum = streetNum
+		}
+		if len(res.StreetName) == 0 {
+			res.StreetName = streetName
+		}
+		return res
+	}
+
 	return &StreetAddr{
 		Street:     addr.LineOne(),
 		StreetNum:  streetNum,

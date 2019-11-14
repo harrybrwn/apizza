@@ -112,6 +112,17 @@ func ValidateOrder(order *Order) error {
 	return err
 }
 
+// OrderToJSON converts an Order to the json string.
+func OrderToJSON(o *Order) string {
+	data := o.rawData()
+	s := new(bytes.Buffer)
+	err := json.Indent(s, data, "", "    ")
+	if err != nil {
+		return "{\"error\":\"bad json indentation\"}"
+	}
+	return s.String()
+}
+
 // returns nil on failure.
 func (o *Order) rawData() []byte {
 	raw := new(bytes.Buffer)

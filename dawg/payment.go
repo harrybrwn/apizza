@@ -79,7 +79,7 @@ func (p *Payment) ExpiresOn() time.Time {
 		return badExpiration
 	}
 
-	return time.Date(int(y), time.Month(m), 0, 0, 0, 0, 0, nil)
+	return time.Date(int(y), time.Month(m), 0, 0, 0, 0, 0, time.UTC)
 }
 
 // Code returns the CVV.
@@ -100,12 +100,11 @@ func makeOrderPaymentFromCard(c Card) *orderPayment {
 }
 
 func formatDate(t time.Time) string {
-	y, mon, _ := t.Date()
-	year := fmt.Sprintf("%d", y)
+	year := fmt.Sprintf("%d", t.Year())
 	if len(year) >= 4 {
 		year = year[len(year)-2:]
 	}
-	return fmt.Sprintf("%02d%s", mon, year)
+	return fmt.Sprintf("%02d%s", t.Month(), year)
 }
 
 // this is the struct that will actually be turning into json an will
