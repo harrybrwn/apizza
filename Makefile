@@ -6,6 +6,9 @@ all: install
 install:
 	go install
 
+release:
+	bash scripts/release.sh
+
 test: setup $(COVER_FILE)
 	go test -cover ./... -coverprofile=$(COVER_FILE)
 	$(COVER) -func=$(COVER_FILE)
@@ -17,6 +20,7 @@ setup:
 	touch $(COVER_FILE)
 
 clean:
-	rm $(COVER_FILE)
+	$(RM) $(COVER_FILE)
+	$(RM) -r release
 
-.PHONY: install test setup clean html
+.PHONY: install test setup clean html release
