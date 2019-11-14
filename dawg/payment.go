@@ -63,23 +63,8 @@ var badExpiration = time.Date(0, 0, 0, 0, 0, 0, 0, time.UTC)
 
 // ExpiresOn returns the expriation date as a time.Time.
 func (p *Payment) ExpiresOn() time.Time {
-	parts := strings.Split(p.Expiration, "/")
-	if len(parts) != 2 {
-		return badExpiration
-	}
-	m, err := strconv.ParseInt(parts[0], 10, 32)
-	if err != nil {
-		return badExpiration
-	}
-	if len(parts[1]) < 4 {
-		parts[1] = "20" + parts[1] // the first two digits will be truncated anyways
-	}
-	y, err := strconv.ParseInt(parts[1], 10, 32)
-	if err != nil {
-		return badExpiration
-	}
-
-	return time.Date(int(y), time.Month(m), 0, 0, 0, 0, 0, time.UTC)
+	m, y := parseDate(p.Expiration)
+	return time.Date(int(y), time.Month(m), 1, 0, 0, 0, 0, time.Local)
 }
 
 // Code returns the CVV.
@@ -91,8 +76,7 @@ var _ Card = (*Payment)(nil)
 
 func makeOrderPaymentFromCard(c Card) *orderPayment {
 	return &orderPayment{
-		Number: c.Num(),
-		// Expiration:   fmt.Sprintf("%02d%s", mon, expyear),
+		Number:       c.Num(),
 		Expiration:   formatDate(c.ExpiresOn()),
 		SecurityCode: c.Code(),
 		Type:         "CreditCard",
@@ -105,6 +89,26 @@ func formatDate(t time.Time) string {
 		year = year[len(year)-2:]
 	}
 	return fmt.Sprintf("%02d%s", t.Month(), year)
+}
+
+func parseDate(d string) (month int, year int) {
+	parts := strings.Split(d, "/")
+	if len(parts) != 2 {
+		return -1, -1
+	}
+
+	m, err := strconv.ParseInt(parts[0], 10, 32)
+	if err != nil {
+		return -1, -1
+	}
+	if len(parts[1]) < 4 {
+		parts[1] = "20" + parts[1] // the first two digits will be truncated anyways
+	}
+	y, err := strconv.ParseInt(parts[1], 10, 32)
+	if err != nil {
+		return -1, -1
+	}
+	return int(m), int(y)
 }
 
 // this is the struct that will actually be turning into json an will

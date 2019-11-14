@@ -3,6 +3,7 @@ package dawg
 import (
 	"fmt"
 	"testing"
+	"time"
 )
 
 func TestGetOrderPrice(t *testing.T) {
@@ -181,5 +182,34 @@ func TestOrderProduct(t *testing.T) {
 	}
 	if op.Size() != -1 {
 		t.Error("bad size")
+	}
+}
+
+func TestCard(t *testing.T) {
+	c := NewCard("1234123412341234", "01/10", 111)
+	if c.Num() != "1234123412341234" {
+		t.Error("go wrong card number")
+	}
+
+	tm := c.ExpiresOn()
+	if tm.Month() != time.January {
+		t.Error("wrong expiration month:", tm.Month())
+	}
+	if tm.Year() != 2010 {
+		t.Error("bad expiration year:", tm.Year())
+	}
+	if c.Code() != "111" {
+		t.Error("bad cvv")
+	}
+	if formatDate(tm) != "0110" {
+		t.Error("bad date format:", formatDate(tm))
+	}
+
+	m, y := parseDate("01/10")
+	if m != 1 {
+		t.Error("parseDate failed to parse month")
+	}
+	if y != 2010 {
+		t.Error("parseDate failed to parse year")
 	}
 }
