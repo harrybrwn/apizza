@@ -32,6 +32,7 @@ type Order struct {
 	// users to name a specific order.
 	OrderName string `json:"-"`
 	price     float64
+	cli       *client
 }
 
 // PlaceOrder is the method that sends the final order to dominos
@@ -149,39 +150,36 @@ func ValidateOrder(order *Order) error {
 
 // OrderToJSON converts an Order to the json string.
 func OrderToJSON(o *Order) string {
-	data := o.rawData()
 	s := new(bytes.Buffer)
-	err := json.Indent(s, data, "", "    ")
+	err := json.Indent(s, o.raw().Bytes(), "", "    ")
 	if err != nil {
 		return "{\"error\":\"bad json indentation\"}"
 	}
 	return s.String()
 }
 
-// returns nil on failure.
-func (o *Order) rawData() []byte {
-	raw := new(bytes.Buffer)
-
-	_, err := raw.WriteString("{\"Order\":")
+func (o *Order) raw() *bytes.Buffer {
+	buf := new(bytes.Buffer)
+	_, err := buf.WriteString("{\"Order\":")
 	if err != nil {
 		return nil
 	}
 
-	err = json.NewEncoder(raw).Encode(o)
+	err = json.NewEncoder(buf).Encode(o)
 	if err != nil {
 		return nil
 	}
 
-	_, err = raw.WriteString("}")
+	_, err = buf.WriteString("}")
 	if err != nil {
 		return nil
 	}
 
-	return raw.Bytes()
+	return buf
 }
 
 func sendOrder(path string, ordr *Order) error {
-	b, err := post(path, ordr.rawData())
+	b, err := ordr.cli.post(path, nil, ordr.raw())
 	if err != nil {
 		return err
 	}
@@ -189,7 +187,7 @@ func sendOrder(path string, ordr *Order) error {
 }
 
 func orderRequest(path string, ordr *Order) (map[string]interface{}, error) {
-	b, err := post(path, ordr.rawData())
+	b, err := ordr.cli.post(path, nil, ordr.raw())
 	if err != nil {
 		return nil, err
 	}
@@ -208,7 +206,7 @@ func getOrderPrice(ordr Order) (map[string]interface{}, error) {
 
 func getPricingData(ordr Order) (*priceingData, error) {
 	ordr.Payments = []*orderPayment{}
-	b, err := post("/power/price-order", ordr.rawData())
+	b, err := ordr.cli.post("/power/price-order", nil, ordr.raw())
 	if err != nil {
 		return nil, err
 	}

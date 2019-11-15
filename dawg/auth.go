@@ -3,6 +3,7 @@ package dawg
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -16,7 +17,7 @@ type auth struct {
 	username string
 	password string
 	token    *token
-	cli      *http.Client
+	cli      *client
 }
 
 func newauth(username, password string) (*auth, error) {
@@ -28,28 +29,36 @@ func newauth(username, password string) (*auth, error) {
 		token:    tok,
 		username: username,
 		password: password,
-		cli: &http.Client{
-			Transport: tok,
-			Timeout:   30 * time.Second,
-			CheckRedirect: func(r *http.Request, via []*http.Request) error {
-				return http.ErrUseLastResponse
+		cli: &client{
+			host: orderHost,
+			Client: &http.Client{
+				Transport: tok,
+				Timeout:   30 * time.Second,
+				CheckRedirect: func(r *http.Request, via []*http.Request) error {
+					return http.ErrUseLastResponse
+				},
 			},
 		},
 	}
 	return a, nil
 }
 
-func emptyauth() *auth {
+func emptyauth(host string) *auth {
 	return &auth{
 		token: nil,
-		cli: &http.Client{
-			Timeout: 30 * time.Second,
-			CheckRedirect: func(r *http.Request, via []*http.Request) error {
-				return http.ErrUseLastResponse
+		cli: &client{
+			Client: &http.Client{
+				Timeout: 30 * time.Second,
+				CheckRedirect: func(r *http.Request, via []*http.Request) error {
+					return http.ErrUseLastResponse
+				},
 			},
+			host: host,
 		},
 	}
 }
+
+const tokenHost = "api.dominos.com"
 
 type token struct {
 	AccessToken  string `json:"access_token"`
@@ -127,7 +136,7 @@ func (a *auth) login() (*UserProfile, error) {
 	if err = res.Body.Close(); err != nil {
 		return nil, err
 	}
-
+	// TODO: add an error check for the status field in the UserProfile.
 	profile.auth = a
 	return profile, nil
 }
@@ -156,6 +165,10 @@ func (c *client) do(req *http.Request) ([]byte, error) {
 
 	if resp.StatusCode != http.StatusOK {
 		return buf.Bytes(), fmt.Errorf("bad response code: %d", resp.StatusCode)
+	}
+
+	if bytes.HasPrefix(buf.Bytes(), []byte("<!DOCTYPE html>")) {
+		return nil, errors.New("got html response")
 	}
 	return buf.Bytes(), nil
 }
@@ -186,7 +199,7 @@ func (c *client) post(path string, params URLParam, r io.Reader) ([]byte, error)
 	if !ok && r != nil {
 		rc = ioutil.NopCloser(r)
 	}
-	return send(&http.Request{
+	return c.do(&http.Request{
 		Method: "POST",
 		Host:   c.host,
 		Proto:  "HTTP/1.1",

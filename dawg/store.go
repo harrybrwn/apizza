@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"fmt"
+	"net/http"
 )
 
 // NearestStore gets the dominos location closest to the given address.
@@ -12,34 +14,20 @@ import (
 // store itself. The service should be either "Carryout" or "Delivery", this will
 // deturmine wether the final order will be for pickup or delivery.
 func NearestStore(addr Address, service string) (*Store, error) {
-	if addr == nil {
-		return nil, errors.New("empty address")
-	}
-	allnearby, err := findNearbyStores(addr, service)
-	if err != nil {
-		return nil, err
-	}
-	var store *Store
-
-	for i := range allnearby.Stores {
-		if allnearby.Stores[i].IsOnlineNow {
-			store = allnearby.Stores[i]
-			break
-		}
-	}
-	store.userAddress, store.userService = addr, service
-	return store, InitStore(store.ID, store)
+	return getNearestStore(orderClient, addr, service)
 }
 
 // GetNearbyStores is a way of getting all the nearby stores
 // except they will by full initialized.
 func GetNearbyStores(addr Address, service string) ([]*Store, error) {
-	all, err := findNearbyStores(addr, service)
+	all, err := findNearbyStores(orderClient, addr, service)
 	if err != nil {
 		return nil, err
 	}
-	for i := range all.Stores {
-		if err = InitStore(all.Stores[i].ID, &all.Stores[i]); err != nil {
+	for i, store := range all.Stores {
+		store.userAddress = addr
+		store.userService = service
+		if err = initStore(orderClient, all.Stores[i].ID, all.Stores[i]); err != nil {
 			return nil, err
 		}
 	}
@@ -55,7 +43,7 @@ func GetNearbyStores(addr Address, service string) ([]*Store, error) {
 // The addr argument should be the address to deliver to not the address of the
 // store itself.
 func NewStore(id string, service string, addr Address) (*Store, error) {
-	store := &Store{userService: service, userAddress: addr}
+	store := &Store{userService: service, userAddress: addr, cli: orderClient}
 	return store, InitStore(id, store)
 }
 
@@ -66,18 +54,33 @@ func NewStore(id string, service string, addr Address) (*Store, error) {
 // Use type '*map[string]interface{}' in the object argument for all the
 // store data
 func InitStore(id string, obj interface{}) error {
-	path := format("/power/store/%s/profile", id)
-	b, err := get(path, nil)
+	path := fmt.Sprintf("/power/store/%s/profile", id)
+	b, err := orderClient.get(path, nil)
+	if err != nil {
+		return err
+	}
+	if err = dominosErr(b); err != nil {
+		return err
+	}
+	return json.Unmarshal(b, obj)
+}
+
+var orderClient = &client{Client: http.DefaultClient, host: orderHost}
+
+func initStore(cli *client, id string, store *Store) error {
+	path := fmt.Sprintf("/power/store/%s/profile", id)
+	b, err := cli.get(path, nil)
 	if err != nil {
 		return err
 	}
 	if bytes.HasPrefix(b, []byte("<!DOCTYPE html>")) {
 		return errors.New("invalid 'id' argument")
 	}
-	if err := dominosErr(b); err != nil {
+	if err = dominosErr(b); err != nil {
 		return err
 	}
-	return json.Unmarshal(b, obj)
+	store.cli = cli
+	return json.Unmarshal(b, store)
 }
 
 // The Store object represents a physical dominos location.
@@ -104,7 +107,9 @@ type Store struct {
 	MinDeliveryOrderAmnt float64                        `json:"MinimumDeliveryOrderAmount"`
 	userAddress          Address
 	userService          string
-	menu                 *Menu
+
+	menu *Menu
+	cli  *client
 }
 
 // Menu returns the menu for a store object
@@ -112,7 +117,7 @@ func (s *Store) Menu() (*Menu, error) {
 	if s.menu != nil && s.menu.ID == s.ID {
 		return s.menu, nil
 	}
-	return newMenu(s.ID)
+	return newMenu(s.cli, s.ID)
 }
 
 // NewOrder is a convenience function for creating an order from some of the store variables.
@@ -124,6 +129,7 @@ func (s *Store) NewOrder() *Order {
 		Products:      []*OrderProduct{},
 		Address:       StreetAddrFromAddress(s.userAddress),
 		Payments:      []*orderPayment{},
+		cli:           orderClient,
 	}
 }
 
@@ -139,6 +145,7 @@ func (s *Store) MakeOrder(firstname, lastname, email string) *Order {
 		Products:      []*OrderProduct{},
 		Address:       StreetAddrFromAddress(s.userAddress),
 		Payments:      []*orderPayment{},
+		cli:           orderClient,
 	}
 }
 
@@ -173,13 +180,33 @@ type storeLocs struct {
 	Stores      []*Store    `json:"Stores"`
 }
 
-func findNearbyStores(addr Address, service string) (*storeLocs, error) {
+func getNearestStore(c *client, addr Address, service string) (*Store, error) {
+	if addr == nil {
+		return nil, errors.New("no address")
+	}
+	locs, err := findNearbyStores(c, addr, service)
+	if err != nil {
+		return nil, err
+	}
+
+	var store = locs.Stores[0]
+	for i := range locs.Stores {
+		if locs.Stores[i].IsOnlineNow {
+			store = locs.Stores[i]
+			break
+		}
+	}
+	store.userAddress, store.userService = addr, service
+	return store, initStore(c, store.ID, store)
+}
+
+func findNearbyStores(c *client, addr Address, service string) (*storeLocs, error) {
 	if !(service == "Delivery" || service == "Carryout") {
 		panic("service must be either 'Delivery' or 'Carryout'")
 	}
 	// TODO: on the dominos website, the c param can sometimes be just the zip code
 	// and it still works.
-	b, err := get("/power/store-locator", &Params{
+	b, err := c.get("/power/store-locator", &Params{
 		"s":    addr.LineOne(),
 		"c":    format("%s, %s %s", addr.City(), addr.StateCode(), addr.Zip()),
 		"type": service,
@@ -191,9 +218,6 @@ func findNearbyStores(addr Address, service string) (*storeLocs, error) {
 	err = json.Unmarshal(b, locs)
 	if err != nil {
 		return nil, err
-	}
-	for i := range locs.Stores {
-		locs.Stores[i].userAddress, locs.Stores[i].userService = addr, service
 	}
 	return locs, dominosErr(b)
 }

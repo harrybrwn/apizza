@@ -45,6 +45,8 @@ type Menu struct {
 		item
 		Description string
 	}
+
+	cli *client
 }
 
 // MenuCategory is a category on the dominos menu.
@@ -244,13 +246,13 @@ func (m *Menu) initVariant(v *Variant) *Variant {
 	return v
 }
 
-func newMenu(id string) (*Menu, error) {
+func newMenu(c *client, id string) (*Menu, error) {
 	path := format("/power/store/%s/menu", id)
-	b, err := get(path, Params{"lang": DefaultLang, "structured": "true"})
+	b, err := c.get(path, Params{"lang": DefaultLang, "structured": "true"})
 	if err != nil {
 		return nil, err
 	}
-	menu := &Menu{ID: id}
+	menu := &Menu{ID: id, cli: c}
 	if err = json.Unmarshal(b, menu); err != nil {
 		return nil, err
 	}

@@ -38,8 +38,25 @@ func (u *UserProfile) StoresNearMe() ([]*Store, error) {
 }
 
 // NearestStore will find the the store that is closest to the user's default address.
-func (u *UserProfile) NearestStore() (*Store, error) {
-	return nil, errors.New("not implimented")
+func (u *UserProfile) NearestStore(service string) (*Store, error) {
+	c := &client{host: orderHost, Client: u.auth.cli.Client}
+	return getNearestStore(c, u.DefaultAddress(), service)
+}
+
+// DefaultAddress will return the address that Dominos has marked as the default.
+// If dominos has not marked any of them as the default, the
+// the first one will be returned and nil if there are no addresses.
+func (u *UserProfile) DefaultAddress() *UserAddress {
+	if len(u.Addresses) < 1 {
+		return nil
+	}
+
+	for _, a := range u.Addresses {
+		if a.IsDefault {
+			return &a
+		}
+	}
+	return &u.Addresses[0]
 }
 
 // UserAddress is an address that is saved by dominos and returned when
