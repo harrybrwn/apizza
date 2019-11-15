@@ -124,24 +124,16 @@ func TestOPFromItem(t *testing.T) {
 
 func TestFindItem(t *testing.T) {
 	m := testingMenu()
-	itm := m.FindItem("W08PBNLW")
-	if itm == nil {
-		t.Error("item is nil")
-	}
-	itm = m.FindItem("S_BONELESS")
-	if itm == nil {
-		t.Error("item is nil")
-	}
-	itm = m.FindItem("F_PARMT")
-	if itm == nil {
-		t.Error("item is nil")
-	}
-	itm = m.FindItem("P_14SCREEN")
-	if itm == nil {
-		t.Error("item is nil")
+
+	tt := []string{"W08PBNLW", "S_BONELESS", "F_PARMT", "P_14SCREEN"}
+	for _, tc := range tt {
+		itm := m.FindItem(tc)
+		if itm == nil {
+			t.Error("item is nil")
+		}
 	}
 
-	itm = m.FindItem("badCode")
+	itm := m.FindItem("badCode")
 	if itm != nil {
 		t.Error("item should be nil")
 	}

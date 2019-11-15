@@ -3,6 +3,7 @@ package dawg
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"strings"
 )
 
@@ -61,6 +62,11 @@ func (m MenuCategory) HasItems() bool {
 	return len(m.Products) > 0 && len(m.Categories) == 0
 }
 
+// HasCategories tells caller if the MenuCategory has sub-categories.
+func (m MenuCategory) HasCategories() bool {
+	return len(m.Categories) > 0
+}
+
 // IsEmpty returns true when the category has nothing in it.
 func (m MenuCategory) IsEmpty() bool {
 	return len(m.Products) == 0 && len(m.Categories) == 0
@@ -86,10 +92,8 @@ func (m *Menu) GetVariant(code string) (*Variant, error) {
 // FindItem looks in all the different menu categories for an item code given
 // as an argument.
 func (m *Menu) FindItem(code string) (itm Item) {
-	var (
-		ok bool
-		i  interface{}
-	)
+	var ok bool
+	var i interface{}
 
 	if i, ok = m.Products[code]; ok {
 		return i.(*Product)
@@ -99,6 +103,31 @@ func (m *Menu) FindItem(code string) (itm Item) {
 		return m.initVariant(i.(*Variant))
 	}
 	return nil
+}
+
+// Print will write the menu to an io.Writer.
+func (m *Menu) Print(w io.Writer) {
+	writeMenuCategory(w, m.Categorization.Food, 0)
+	writeMenuCategory(w, m.Categorization.Preconfigured, 0)
+	writeMenuCategory(w, m.Categorization.Coupons, 0)
+}
+
+func writeMenuCategory(w io.Writer, mc MenuCategory, depth int) {
+	if mc.IsEmpty() {
+		return
+	}
+	fmt.Fprint(w, strings.Repeat(" ", depth*2), mc.Name, " ", mc.Code)
+	fmt.Fprintln(w)
+
+	if mc.HasItems() {
+		for _, p := range mc.Products {
+			fmt.Fprintln(w, strings.Repeat(" ", (depth*3)-1), p)
+		}
+	} else {
+		for _, submc := range mc.Categories {
+			writeMenuCategory(w, submc, depth+1)
+		}
+	}
 }
 
 // ViewOptions returns a map that makes it easier for humans to view a topping.

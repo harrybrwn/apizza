@@ -55,9 +55,20 @@ func (o *Order) Price() (float64, error) {
 // AddProduct adds a product to the Order from a Product Object
 func (o *Order) AddProduct(item Item) error {
 	if item == nil {
-		return errors.New("cannot add a null item")
+		return errors.New("cannot add a nil item")
 	}
 	o.Products = append(o.Products, OrderProductFromItem(item))
+	return nil
+}
+
+// AddProductQty adds a product to the Order with a quantity of n.
+func (o *Order) AddProductQty(item Item, n int) error {
+	if item == nil {
+		return errors.New("cannot add a nil item")
+	}
+	p := OrderProductFromItem(item)
+	p.Qty = n
+	o.Products = append(o.Products, p)
 	return nil
 }
 
@@ -107,7 +118,7 @@ func (o *Order) SetName(name string) {
 // only returns dominos failures or non-dominos errors.
 func (o *Order) prepare() error {
 	odata, err := getPricingData(*o)
-	if !IsOk(err) && !IsWarning(err) {
+	if err != nil && !IsWarning(err) {
 		return err
 	}
 	o.OrderID = odata.Order.OrderID
@@ -115,11 +126,11 @@ func (o *Order) prepare() error {
 	p, ok := odata.Order.Amounts["Customer"]
 	if ok {
 		o.price = p
-	}
 
-	n := len(o.Payments)
-	for i := 0; i < n; i++ {
-		o.Payments[i].Amount = p
+		n := len(o.Payments)
+		for i := 0; i < n; i++ {
+			o.Payments[i].Amount = p
+		}
 	}
 	return nil
 }
@@ -209,13 +220,10 @@ func getPricingData(ordr Order) (*priceingData, error) {
 }
 
 type priceingData struct {
-	Status     int
-	StatusItem []statusItem
-	Order      struct {
-		Status           int
-		StatusItem       []statusItem
-		Amounts          map[string]float64
+	Order struct {
 		OrderID          string
+		PulseOrderGUID   string `json:"PulseOrderGuid"`
+		Amounts          map[string]float64
 		AmountsBreakdown map[string]interface{}
 	}
 }
