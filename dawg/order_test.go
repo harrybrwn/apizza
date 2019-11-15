@@ -8,6 +8,9 @@ import (
 
 func TestGetOrderPrice(t *testing.T) {
 	o := Order{}
+	if o.cli == nil {
+		o.cli = orderClient
+	}
 	_, err := getOrderPrice(o)
 	if err == nil {
 		t.Error("Should have returned an error")
@@ -18,6 +21,7 @@ func TestGetOrderPrice(t *testing.T) {
 	}
 
 	order := Order{
+		cli:          orderClient,
 		LanguageCode: DefaultLang, ServiceMethod: "Delivery",
 		StoreID: "4336", Payments: []*orderPayment{&orderPayment{}}, OrderID: "",
 		Products: []*OrderProduct{

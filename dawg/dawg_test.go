@@ -1,6 +1,7 @@
 package dawg
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"math/rand"
@@ -57,52 +58,52 @@ func TestAddressTable(t *testing.T) {
 }
 
 func TestNetworking_Err(t *testing.T) {
-	_, err := get("/", nil)
+	_, err := orderClient.get("/", nil)
 	if err == nil {
 		t.Error("expected error")
 	}
-	_, err = get("/invalid path", nil)
+	_, err = orderClient.get("/invalid path", nil)
 	if err == nil {
 		t.Error("expected error")
 	}
-	b, err := post("/invalid path", make([]byte, 1))
+	b, err := orderClient.post("/invalid path", nil, bytes.NewReader(make([]byte, 1)))
 	if len(b) != 0 {
 		t.Error("exepcted zero length response")
 	}
 	if err == nil {
 		t.Error("expected error")
 	}
-	_, err = post("invalid path", nil)
+	_, err = orderClient.post("invalid path", nil, bytes.NewReader(nil))
 	if err == nil {
 		t.Error("expected error")
 	}
-	_, err = post("/power/price-order", []byte{})
+	_, err = orderClient.post("/power/price-order", nil, bytes.NewReader([]byte{}))
 	if err == nil {
 		t.Error("expected error")
 	}
-	original := cli
-	cli = &http.Client{
-		Transport: &http.Transport{
-			DialTLS: func(string, string) (net.Conn, error) {
-				return nil, errors.New("stop")
+	cli := &client{
+		Client: &http.Client{
+			Transport: &http.Transport{
+				DialTLS: func(string, string) (net.Conn, error) {
+					return nil, errors.New("stop")
+				},
 			},
 		},
 	}
-	resp, err := get("/power/store/4336/profile", nil)
+	resp, err := cli.get("/power/store/4336/profile", nil)
 	if err == nil {
 		t.Error("expected error")
 	}
 	if resp != nil {
 		t.Error("should not have gotten any responce data")
 	}
-	b, err = post("/invalid path", make([]byte, 1))
+	b, err = cli.post("/invalid path", nil, bytes.NewReader(make([]byte, 1)))
 	if err == nil {
 		t.Error("expected error")
 	}
 	if b != nil {
 		t.Error("exepcted zero length response")
 	}
-	cli = original
 }
 
 func TestDominosErrors(t *testing.T) {
@@ -124,7 +125,7 @@ func TestDominosErrors(t *testing.T) {
 		OrderID: "",
 		Address: testAddress(),
 	}
-	resp, err := post("/power/price-order", order.rawData())
+	resp, err := orderClient.post("/power/price-order", nil, order.raw())
 	if err != nil {
 		t.Error(err)
 	}

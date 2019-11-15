@@ -17,7 +17,7 @@ func testAddress() *StreetAddr {
 
 func TestFindNearbyStores(t *testing.T) {
 	for _, service := range []string{"Delivery", "Carryout"} {
-		_, err := findNearbyStores(testAddress(), service)
+		_, err := findNearbyStores(orderClient, testAddress(), service)
 		if err != nil {
 			t.Error("\n TestNearbyStore:", err, "\n")
 		}
@@ -33,9 +33,9 @@ func TestFindNearbyStores_Err(t *testing.T) {
 				t.Errorf("caught wrong panic msg: %v\n", r)
 			}
 		}()
-		_, _ = findNearbyStores(testAddress(), "invalid service")
+		_, _ = findNearbyStores(orderClient, testAddress(), "invalid service")
 	}()
-	_, err := findNearbyStores(&StreetAddr{}, "Delivery")
+	_, err := findNearbyStores(orderClient, &StreetAddr{}, "Delivery")
 	if err == nil {
 		t.Error("should return error")
 	}
@@ -74,10 +74,13 @@ func TestNearestStore(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
+	if s.cli == nil {
+		t.Error("NearestStore should not return a store with a nil client")
+	}
 	if s.userService != service {
 		t.Error("userService was changed in NearestStore")
 	}
-	nearbyStores, err := findNearbyStores(addr, service)
+	nearbyStores, err := findNearbyStores(orderClient, addr, service)
 	if err != nil {
 		t.Error(err)
 	}
@@ -85,11 +88,13 @@ func TestNearestStore(t *testing.T) {
 		t.Error("NearestStore and findNearbyStores found different stores for the same address")
 	}
 	for _, s := range nearbyStores.Stores {
-		if s.userAddress != addr {
-			t.Error("should have same address")
+		if s.userAddress != nil {
+			t.Error("userAddress should not have been initialized")
+			continue
 		}
-		if s.userService != service {
-			t.Error("should have same service")
+		if s.userService != "" {
+			t.Error("the userService should not have been initialized")
+			continue
 		}
 	}
 }
@@ -102,7 +107,7 @@ func TestNearestStore_Err(t *testing.T) {
 }
 
 func TestGetAllNearbyStores(t *testing.T) {
-	validationStores, err := findNearbyStores(testAddress(), "Delivery")
+	validationStores, err := findNearbyStores(orderClient, testAddress(), "Delivery")
 	if err != nil {
 		t.Error(err)
 	}
@@ -113,6 +118,9 @@ func TestGetAllNearbyStores(t *testing.T) {
 	for i, s := range stores {
 		if s.ID != validationStores.Stores[i].ID {
 			t.Error("ids are not the same", stores[i].ID, validationStores.Stores[i].ID)
+		}
+		if s.cli == nil {
+			t.Error("should not have nil client when returned from GetNearbyStores")
 		}
 	}
 	_, err = GetNearbyStores(&StreetAddr{}, "Delivery")
@@ -150,6 +158,19 @@ func TestInitStore(t *testing.T) {
 	}
 	if err = InitStore("1234", &sMap); err == nil {
 		t.Error("expected error")
+	}
+}
+
+func TestGetNearestStore(t *testing.T) {
+	a := testAddress()
+	for _, service := range []string{"Delivery", "Carryout"} {
+		s, err := getNearestStore(orderClient, a, service)
+		if err != nil {
+			t.Error(err)
+		}
+		if s == nil {
+			t.Error("store is nil")
+		}
 	}
 }
 
