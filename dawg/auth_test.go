@@ -103,14 +103,16 @@ func TestAuth(t *testing.T) {
 	user.Addresses[0].StreetNumber = ""
 	user.Addresses[0].StreetName = ""
 	user.AddAddress(user.Addresses[0])
-	if user.Addresses[0].StreetName != user.Addresses[1].StreetName {
+	a1 := user.Addresses[0]
+	a2 := user.Addresses[1]
+	if a1.StreetName != a2.StreetName {
 		t.Error("did not copy address name correctly")
 	}
-	if user.Addresses[0].StreetNumber != user.Addresses[1].StreetNumber {
+	if a1.StreetNumber != a2.StreetNumber {
 		t.Error("did not copy address number correctly")
 	}
-	user.Addresses[0].Street = ""
-	if user.Addresses[0].LineOne() != user.Addresses[1].LineOne() {
+	a1.Street = ""
+	if user.Addresses[0].LineOne() != a2.LineOne() {
 		t.Error("line one for UserAddress is broken")
 	}
 
@@ -146,6 +148,21 @@ func TestAuth(t *testing.T) {
 	}
 	if len(b) == 0 {
 		t.Error("zero length response")
+	}
+	menu, err := store.Menu()
+	if err != nil {
+		t.Error(err)
+	}
+	if menu == nil {
+		t.Error("got nil menu")
+	}
+	o := store.NewOrder()
+	if o == nil {
+		t.Error("nil order")
+	}
+	_, err = o.Price()
+	if err != nil {
+		t.Error(err)
 	}
 }
 

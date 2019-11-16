@@ -26,7 +26,8 @@ type UserProfile struct {
 	Addresses  []*UserAddress
 	// Status     int
 
-	auth *auth
+	auth  *auth
+	store *Store
 }
 
 // AddAddress will add an address to the dominos account.
