@@ -98,7 +98,7 @@ func TestNewOrder(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	err = o.AddProduct(v)
+	err = o.AddProductQty(v, 2)
 	if err != nil {
 		t.Error(err)
 	}
@@ -165,6 +165,15 @@ func TestPrepareOrder(t *testing.T) {
 	if len(o.OrderID) == 0 {
 		t.Error("prepare should give the order an OrderID")
 	}
+	length := len(o.Payments)
+	o.AddPayment(Payment{})
+	if len(o.Payments) != length+1 {
+		t.Error("failed to add a payment")
+	}
+	o.AddCard(&Payment{})
+	if len(o.Payments) != length+2 {
+		t.Error("failed to add a card")
+	}
 }
 
 func TestOrder_Err(t *testing.T) {
@@ -192,6 +201,14 @@ func TestOrder_Err(t *testing.T) {
 	}
 	if price != -1.0 {
 		t.Error("expected bad price")
+	}
+	err = o.AddProduct(nil)
+	if err == nil {
+		t.Error("should have returned an error")
+	}
+	err = o.AddProductQty(nil, 50)
+	if err == nil {
+		t.Error("expected an error")
 	}
 }
 
@@ -244,6 +261,13 @@ func TestOrderProduct(t *testing.T) {
 	}
 	if op.Size() != -1 {
 		t.Error("bad size")
+	}
+	m := op.ReadableOptions()
+	if len(m) <= 0 {
+		t.Error("should have readable options")
+	}
+	if op.Prepared() {
+		t.Error("not even sure")
 	}
 }
 

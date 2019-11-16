@@ -32,30 +32,17 @@ func newauth(username, password string) (*auth, error) {
 		cli: &client{
 			host: orderHost,
 			Client: &http.Client{
-				Transport: tok,
-				Timeout:   30 * time.Second,
-				CheckRedirect: func(r *http.Request, via []*http.Request) error {
-					return http.ErrUseLastResponse
-				},
+				Transport:     tok,
+				Timeout:       30 * time.Second,
+				CheckRedirect: noRedirects,
 			},
 		},
 	}
 	return a, nil
 }
 
-func emptyauth(host string) *auth {
-	return &auth{
-		token: nil,
-		cli: &client{
-			Client: &http.Client{
-				Timeout: 30 * time.Second,
-				CheckRedirect: func(r *http.Request, via []*http.Request) error {
-					return http.ErrUseLastResponse
-				},
-			},
-			host: host,
-		},
-	}
+var noRedirects = func(r *http.Request, via []*http.Request) error {
+	return http.ErrUseLastResponse
 }
 
 const tokenHost = "api.dominos.com"
@@ -81,11 +68,29 @@ func (t *token) RoundTrip(req *http.Request) (*http.Response, error) {
 	return t.transport.RoundTrip(req)
 }
 
+var scopes = []string{
+	"customer:card:read",
+	"customer:profile:read:extended",
+	"customer:orderHistory:read",
+	"customer:card:update",
+	"customer:profile:read:basic",
+	"customer:loyalty:read",
+	"customer:orderHistory:update",
+	"customer:card:create",
+	"customer:loyaltyHistory:read",
+	"order:place:cardOnFile",
+	"customer:card:delete",
+	"customer:orderHistory:create",
+	"customer:profile:update",
+	"easyOrder:optInOut",
+	"easyOrder:read",
+}
+
 func gettoken(username, password string) (*token, error) {
 	data := url.Values{
 		"grant_type": {"password"},
 		"client_id":  {"nolo-rm"}, // nolo-rm if you want a refresh token, or just nolo for temporary token
-		"scope":      {"customer:card:read customer:profile:read:extended customer:orderHistory:read customer:card:update customer:profile:read:basic customer:loyalty:read customer:orderHistory:update customer:card:create customer:loyaltyHistory:read order:place:cardOnFile customer:card:delete customer:orderHistory:create customer:profile:update easyOrder:optInOut easyOrder:read"},
+		"scope":      {strings.Join(scopes, " ")},
 		"username":   {username},
 		"password":   {password},
 	}
@@ -137,16 +142,19 @@ func (a *auth) login() (*UserProfile, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer res.Body.Close()
+
 	profile := new(UserProfile)
-	if err = json.NewDecoder(res.Body).Decode(profile); err != nil {
-		return nil, err
-	}
-	if err = res.Body.Close(); err != nil {
-		return nil, err
-	}
-	// TODO: add an error check for the status field in the UserProfile.
 	profile.auth = a
-	return profile, nil
+
+	b, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return nil, err
+	}
+	if err = dominosErr(b); err != nil {
+		return nil, err
+	}
+	return profile, json.Unmarshal(b, profile)
 }
 
 type client struct {

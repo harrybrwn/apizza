@@ -209,6 +209,15 @@ func TestDominosErrorFailure(t *testing.T) {
 	if !IsFailure(dErr) {
 		t.Error("should be a failure")
 	}
+	if IsWarning(nil) {
+		t.Error("nil should not be interpreted as an error")
+	}
+	if !IsOk(nil) {
+		t.Error("IsOk(nil) should be true because a nil error is ok")
+	}
+	if IsFailure(nil) {
+		t.Error("nil is not a failure")
+	}
 }
 
 func testingStore() *Store {

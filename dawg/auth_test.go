@@ -88,6 +88,9 @@ func TestAuth(t *testing.T) {
 	if auth.cli == nil {
 		t.Fatal("needs to have client")
 	}
+	if len(auth.token.AccessToken) == 0 {
+		t.Error("no access token")
+	}
 
 	user, err := auth.login()
 	if err != nil {
@@ -97,6 +100,20 @@ func TestAuth(t *testing.T) {
 		t.Fatal("got nil user-profile")
 	}
 	user.AddAddress(testAddress())
+	user.Addresses[0].StreetNumber = ""
+	user.Addresses[0].StreetName = ""
+	user.AddAddress(user.Addresses[0])
+	if user.Addresses[0].StreetName != user.Addresses[1].StreetName {
+		t.Error("did not copy address name correctly")
+	}
+	if user.Addresses[0].StreetNumber != user.Addresses[1].StreetNumber {
+		t.Error("did not copy address number correctly")
+	}
+	user.Addresses[0].Street = ""
+	if user.Addresses[0].LineOne() != user.Addresses[1].LineOne() {
+		t.Error("line one for UserAddress is broken")
+	}
+
 	store, err := user.NearestStore("Delivery")
 	if err != nil {
 		t.Error(err)
@@ -129,6 +146,29 @@ func TestAuth(t *testing.T) {
 	}
 	if len(b) == 0 {
 		t.Error("zero length response")
+	}
+}
+
+func TestBadAuth(t *testing.T) {
+	a, err := newauth("not a", "valid password")
+	if err == nil {
+		t.Error("expected an error")
+	}
+	if a != nil {
+		t.Error("expected a nil auth")
+	}
+	a = &auth{
+		username: "not a",
+		password: "valid password",
+		token:    &token{}, // assume we alread have a token
+		cli:      orderClient,
+	}
+	user, err := a.login()
+	if err == nil {
+		t.Error("expected an error")
+	}
+	if user != nil {
+		t.Errorf("expected a nil user: %+v", user)
 	}
 }
 

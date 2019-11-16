@@ -1,6 +1,7 @@
 package dawg
 
 import (
+	"bytes"
 	"testing"
 )
 
@@ -136,5 +137,15 @@ func TestFindItem(t *testing.T) {
 	itm := m.FindItem("badCode")
 	if itm != nil {
 		t.Error("item should be nil")
+	}
+}
+
+func TestPrintMenu(t *testing.T) {
+	m := testingMenu()
+	buf := new(bytes.Buffer)
+
+	m.Print(buf)
+	if buf.Len() == 0 {
+		t.Error("should not have a zero length printout")
 	}
 }

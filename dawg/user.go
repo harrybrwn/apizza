@@ -24,7 +24,7 @@ type UserProfile struct {
 	CustomerID string
 	Phone      string
 	Addresses  []*UserAddress
-	Status     int
+	// Status     int
 
 	auth *auth
 }

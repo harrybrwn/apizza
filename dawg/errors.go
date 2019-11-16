@@ -142,9 +142,6 @@ func IsOk(err error) bool {
 }
 
 func isDominosErr(err error) (*DominosError, bool) {
-	if err == nil {
-		return nil, false
-	}
 	e, ok := err.(*DominosError)
 	if !ok {
 		return nil, false

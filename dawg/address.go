@@ -118,7 +118,3 @@ func (s *StreetAddr) StateCode() string {
 func (s *StreetAddr) City() string {
 	return s.CityName
 }
-
-func tojson(a Address) []byte {
-	return nil
-}

@@ -64,11 +64,6 @@ func (m MenuCategory) HasItems() bool {
 	return len(m.Products) > 0 && len(m.Categories) == 0
 }
 
-// HasCategories tells caller if the MenuCategory has sub-categories.
-func (m MenuCategory) HasCategories() bool {
-	return len(m.Categories) > 0
-}
-
 // IsEmpty returns true when the category has nothing in it.
 func (m MenuCategory) IsEmpty() bool {
 	return len(m.Products) == 0 && len(m.Categories) == 0
