@@ -16,7 +16,7 @@ func TestTempFile(t *testing.T) {
 			t.Error("empty file name")
 		}
 		if filepath.Dir(fname) != os.TempDir() {
-			t.Error("wrong temp directory")
+			t.Errorf("wrong temp directory; got %s, want %s", filepath.Dir(fname), os.TempDir())
 		}
 		_, err := os.Open(fname)
 		if os.IsExist(err) {

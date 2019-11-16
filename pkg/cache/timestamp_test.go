@@ -22,7 +22,7 @@ func TestTimeStamp(t *testing.T) {
 	time.Sleep(time.Second / 4)
 	tdiff := time.Since(stamp)
 	if time.Millisecond*240 > tdiff || tdiff > time.Millisecond*260 {
-		t.Error("time stamp is not in the right range")
+		t.Error("time stamp is not in the right range (240ms to 260ms); got", tdiff)
 	}
 	time.Sleep(time.Second / 4)
 	stamp2, err := db.TimeStamp("test")
