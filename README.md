@@ -1,3 +1,4 @@
+![apizza logo](/docs/logo.png)
 # apizza
 
 [![Build Status](https://travis-ci.com/harrybrwn/apizza.svg?branch=master)](https://travis-ci.com/harrybrwn/apizza)
@@ -111,3 +112,5 @@ func main() {
 	}
 }
 ```
+
+Logo was made with [logomakr](https://logomakr.com/).

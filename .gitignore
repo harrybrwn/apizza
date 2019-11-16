@@ -19,7 +19,6 @@ coverage.html
 .vscode
 *.out
 *.exe
-*.png
 /script/
 
 # Bin
