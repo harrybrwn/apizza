@@ -15,6 +15,16 @@ func TestGetOrderPrice(t *testing.T) {
 	if err == nil {
 		t.Error("Should have returned an error")
 	}
+	data, err := getPricingData(o)
+	if err == nil {
+		t.Error("should have returned an error")
+	}
+	if data == nil {
+		t.Error("should not have returned a nil value")
+	}
+	if len(data.Order.OrderID) == 0 {
+		t.Error("should alway return an order-id")
+	}
 	if !IsFailure(err) {
 		t.Error("this error should only be a failure")
 		t.Error(err.Error())

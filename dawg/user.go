@@ -3,6 +3,8 @@ package dawg
 import (
 	"errors"
 	"fmt"
+	"strconv"
+	"strings"
 )
 
 // SignIn will create a new UserProfile and sign in the account.
@@ -21,15 +23,15 @@ type UserProfile struct {
 	Email      string
 	CustomerID string
 	Phone      string
-	Addresses  []UserAddress
+	Addresses  []*UserAddress
 	Status     int
 
 	auth *auth
 }
 
 // AddAddress will add an address to the dominos account.
-func (u *UserProfile) AddAddress(a Address) error {
-	return errors.New("not implimented")
+func (u *UserProfile) AddAddress(a Address) {
+	u.Addresses = append(u.Addresses, UserAddressFromAddress(a))
 }
 
 // StoresNearMe will find the stores closest to the user's default address.
@@ -53,10 +55,10 @@ func (u *UserProfile) DefaultAddress() *UserAddress {
 
 	for _, a := range u.Addresses {
 		if a.IsDefault {
-			return &a
+			return a
 		}
 	}
-	return &u.Addresses[0]
+	return u.Addresses[0]
 }
 
 // UserAddress is an address that is saved by dominos and returned when
@@ -91,6 +93,38 @@ type UserAddress struct {
 	CampusID             string
 }
 
+var _ Address = (*UserAddress)(nil)
+
+// UserAddressFromAddress converts an address to a UserAddress.
+func UserAddressFromAddress(a Address) *UserAddress {
+	var streetNum, streetName string
+	parts := strings.Split(a.LineOne(), " ")
+
+	if _, err := strconv.Atoi(parts[0]); err == nil {
+		streetNum = parts[0]
+	}
+	streetName = strings.Join(parts[1:], " ")
+
+	if addr, ok := a.(*UserAddress); ok {
+		if len(addr.StreetNumber) == 0 {
+			addr.StreetNumber = streetNum
+		}
+		if len(addr.StreetName) == 0 {
+			addr.StreetName = streetName
+		}
+		return addr
+	}
+
+	return &UserAddress{
+		Street:       a.LineOne(),
+		StreetNumber: streetNum,
+		StreetName:   streetName,
+		CityName:     a.City(),
+		PostalCode:   a.Zip(),
+		Region:       a.StateCode(),
+	}
+}
+
 // LineOne returns the first line of the address.
 func (ua *UserAddress) LineOne() string {
 	if len(ua.Street) != 0 {
@@ -113,5 +147,3 @@ func (ua *UserAddress) StateCode() string {
 func (ua *UserAddress) Zip() string {
 	return ua.PostalCode
 }
-
-var _ Address = (*UserAddress)(nil)

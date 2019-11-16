@@ -6,10 +6,11 @@ TODO
 # Tests
 *.json
 *.test
-test.py
+*.py
 test
 example
 test-coverage
+test-cover
 coverage.html
 *.prof
 /data/

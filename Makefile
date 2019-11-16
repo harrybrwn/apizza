@@ -1,4 +1,4 @@
-COVER_FILE=test-coverage
+COVER_FILE=test-cover
 COVER=go tool cover
 
 all: install

@@ -18,7 +18,40 @@ func TestFormat(t *testing.T) {
 	}
 }
 
-func TestAddressTable(t *testing.T) {
+func TestOrderAddressConvertion(t *testing.T) {
+	exp := &StreetAddr{StreetNum: "1600", StreetName: "Pennsylvania Ave.",
+		Street: "1600 Pennsylvania Ave.", CityName: "Washington",
+		State: "DC", Zipcode: "20500", AddrType: "House"}
+
+	addr := &UserAddress{
+		Street:     "1600 Pennsylvania Ave.",
+		CityName:   "Washington",
+		PostalCode: "20500",
+		Region:     "DC",
+	}
+
+	res := StreetAddrFromAddress(addr)
+	if res.City() != exp.City() {
+		t.Error("wrong city")
+	}
+	if res.LineOne() != exp.LineOne() {
+		t.Error("wrong lineone")
+	}
+	if res.StateCode() != exp.StateCode() {
+		t.Error("wrong state code")
+	}
+	if res.Zip() != exp.Zip() {
+		t.Error("wrong zip code")
+	}
+	if res.StreetNum != exp.StreetNum {
+		t.Error("wrong street number")
+	}
+	if res.StreetName != exp.StreetName {
+		t.Error("wrong street name")
+	}
+}
+
+func TestParseAddressTable(t *testing.T) {
 	var cases = []struct {
 		raw      string
 		expected StreetAddr

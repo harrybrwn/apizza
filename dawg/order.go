@@ -200,6 +200,7 @@ func orderRequest(path string, ordr *Order) (map[string]interface{}, error) {
 
 // does not take a pointer because ordr.Payments = nil should not be remembered
 func getOrderPrice(ordr Order) (map[string]interface{}, error) {
+	fmt.Println("deprecated... use getPricingData")
 	ordr.Payments = []*orderPayment{}
 	return orderRequest("/power/price-order", &ordr)
 }

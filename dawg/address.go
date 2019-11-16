@@ -70,8 +70,8 @@ func StreetAddrFromAddress(addr Address) *StreetAddr {
 
 	if _, err := strconv.Atoi(parts[0]); err == nil {
 		streetNum = parts[0]
-		streetName = strings.Join(parts[1:], " ")
 	}
+	streetName = strings.Join(parts[1:], " ")
 
 	if res, ok := addr.(*StreetAddr); ok {
 		if len(res.StreetNum) == 0 {

@@ -97,6 +97,7 @@ func gettoken(username, password string) (*token, error) {
 		return nil, err
 	}
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8")
+
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return nil, err
@@ -240,9 +241,8 @@ func (e *tokenError) Error() string {
 
 func newTokenErr(b []byte) error {
 	e := &tokenError{}
-	if err := json.Unmarshal(b, e); err != nil {
-		return err
-	}
+	// if there is no error the the json parsing will fail
+	json.Unmarshal(b, e)
 	if len(e.Err) > 0 {
 		return e
 	}
