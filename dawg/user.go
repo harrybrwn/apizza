@@ -49,7 +49,7 @@ func (u *UserProfile) NearestStore(service string) (*Store, error) {
 // If dominos has not marked any of them as the default, the
 // the first one will be returned and nil if there are no addresses.
 func (u *UserProfile) DefaultAddress() *UserAddress {
-	if len(u.Addresses) < 1 {
+	if len(u.Addresses) == 0 || u.Addresses == nil {
 		return nil
 	}
 

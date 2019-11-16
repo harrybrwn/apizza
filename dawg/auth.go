@@ -96,11 +96,18 @@ func gettoken(username, password string) (*token, error) {
 	if err != nil {
 		return nil, err
 	}
-	req.Header.Add("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8")
+	req.Header.Add(
+		"Content-Type",
+		"application/x-www-form-urlencoded; charset=UTF-8")
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return nil, err
+	}
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf(
+			"dawg.gettoken: bad status code %d",
+			resp.StatusCode)
 	}
 
 	tok := &token{transport: http.DefaultTransport}
@@ -156,6 +163,9 @@ func (c *client) do(req *http.Request) ([]byte, error) {
 	resp, err := c.Do(req)
 	if err != nil {
 		return nil, err
+	}
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("dawg.client.do: bad status code %d", resp.StatusCode)
 	}
 	if _, err = buf.ReadFrom(resp.Body); err != nil {
 		return nil, err
@@ -217,11 +227,8 @@ func (c *client) post(path string, params URLParam, r io.Reader) ([]byte, error)
 
 func unmarshalToken(r io.ReadCloser, t *token) error {
 	buf := new(bytes.Buffer)
-
+	defer r.Close()
 	if _, err := buf.ReadFrom(r); err != nil {
-		return err
-	}
-	if err := r.Close(); err != nil {
 		return err
 	}
 	if err := json.NewDecoder(buf).Decode(t); err != nil {

@@ -14,6 +14,7 @@ func TestBadCreds(t *testing.T) {
 	tok, err := gettoken("no", "and no")
 	if err == nil {
 		t.Error("expected an error")
+		fmt.Println(err)
 	}
 	if tok != nil {
 		t.Error("expected nil token")
@@ -29,7 +30,7 @@ func TestBadCreds(t *testing.T) {
 
 	tok, err = gettoken("5uup;hrg];ht8bijer$u9tot", "hurieahgr9[0249eingurivja")
 	if err == nil {
-		t.Error("wow i accidentlly cracked someone's password")
+		t.Error("wow i accidentlly cracked someone's password:", tok)
 	}
 }
 
@@ -45,7 +46,7 @@ func TestToken(t *testing.T) {
 		t.Error(err)
 	}
 	if tok == nil {
-		t.Error("nil token")
+		t.Fatal("nil token")
 	}
 	if len(tok.AccessToken) == 0 {
 		t.Error("didnt get a auth token")
@@ -73,10 +74,10 @@ func TestAuth(t *testing.T) {
 		t.Error(err)
 	}
 	if auth == nil {
-		t.Error("got nil auth")
+		t.Fatal("got nil auth")
 	}
 	if auth.token == nil {
-		t.Error("needs token")
+		t.Fatal("needs token")
 	}
 	if len(auth.username) == 0 {
 		t.Error("didnt save username")
@@ -85,7 +86,7 @@ func TestAuth(t *testing.T) {
 		t.Error("didnt save password")
 	}
 	if auth.cli == nil {
-		t.Error("needs to have client")
+		t.Fatal("needs to have client")
 	}
 
 	user, err := auth.login()
@@ -93,18 +94,15 @@ func TestAuth(t *testing.T) {
 		t.Error(err)
 	}
 	if user == nil {
-		t.Error("got nil user-profile")
+		t.Fatal("got nil user-profile")
 	}
-	if len(user.Addresses) == 0 {
-		user.Addresses = make([]*UserAddress, 2)
-	}
-	user.Addresses[0] = UserAddressFromAddress(testAddress())
+	user.AddAddress(testAddress())
 	store, err := user.NearestStore("Delivery")
 	if err != nil {
 		t.Error(err)
 	}
 	if store.cli == nil {
-		t.Error("store did not get a client")
+		t.Fatal("store did not get a client")
 	}
 	if store.cli.host != "order.dominos.com" {
 		t.Error("store client has the wrong host")
@@ -131,5 +129,21 @@ func TestAuth(t *testing.T) {
 	}
 	if len(b) == 0 {
 		t.Error("zero length response")
+	}
+}
+
+func TestSignIn(t *testing.T) {
+	username := os.Getenv("DOMINOS_TEST_NAME")
+	password := os.Getenv("DOMINOS_TEST_PASS")
+	if username == "" || password == "" {
+		t.Skip()
+	}
+
+	user, err := SignIn(username, password)
+	if err != nil {
+		t.Error(err)
+	}
+	if user == nil {
+		t.Fatal("got nil user from SignIn")
 	}
 }
