@@ -5,18 +5,21 @@ go:
   - 1.13
 
 env:
-  - GO111MODULE=on
-
+  global:
+    - GO111MODULE=on
+    secure: ijQSjWOGEqMfiKER4Nn9IQExprVMSQQfeG4kynBVXSQdr/aj/4vDiC81UV9CBE9ZJQcu3lYNF6NIsbhjoESJEepvJ3XZZdeizCb/AbPG6y24SPR+SowWOb+z7EJgPEJBE/YWpVtSa4Dm+VmAbmQkCW6M+GYAQAEZ6IzVIBMS0l8zPvoBoNZQQGGRPUUr8rNpbMXuy3wzgJtopBEq4su0PxtptoZX6UgCv72Vt9i1aoC+wLzJ8UWb+EQgrGheBbrsQYP5uClrdLkBkIYuSayBZjMHKATCZEFPD8wE3dvXB9CzO8R1eVmRfRvFwrHGZPY+P6IRCiT6+SFhm5nXW06XPZPUm5bC1e391BD8CdNUYjpg4ARv9UEBOQwlDB3JTIOZhur8q3WeaM8QF4T73F1dTa2nwrLQdFL8xGGRjCke4QQW1EvudufwC3Yo7Zy8F1eLsQgITZWb7Q8DPT78/4tZnsjDxgr3t5a8PE3nOnYB6Rb9JHtqtm8aJYpfpnQIKWof77Isrhe0nFXJkGeMRK6OdW9JruDJ7uqJ12GrqSbZO2FNWZBxTz4GqX86Ri5+LJN98qGny+Xz21iaZM0g5mwtfL2RnSP8vN2RiqCH9jkteRdKH3prSZjHDtEkRiR3Dg+4cC7EP89I31Etd+lAnhAnyAE/a5fwmgcjg62+1uwX/60=
 os:
   - linux
   - osx
   - windows
-
 before_script:
   - go install
 
 script:
   - go test ./...
+
+after_success:
+  - bash <(curl -s https://codecov.io/bash)
 
 notifications:
   email:
