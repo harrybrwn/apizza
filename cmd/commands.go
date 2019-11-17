@@ -26,6 +26,7 @@ import (
 	"github.com/harrybrwn/apizza/dawg"
 	"github.com/harrybrwn/apizza/pkg/cache"
 	"github.com/harrybrwn/apizza/pkg/config"
+	"github.com/harrybrwn/apizza/pkg/errs"
 )
 
 var db *cache.DataBase
@@ -48,10 +49,8 @@ func Execute() {
 	}
 
 	defer func() {
-		if err = db.Close(); err != nil {
-			handle(err, "Internal Error", 1)
-		}
-		if err = config.Save(); err != nil {
+		err = errs.Pair(db.Close(), config.Save())
+		if err != nil {
 			handle(err, "Internal Error", 1)
 		}
 	}()
@@ -67,12 +66,13 @@ var _ base.CliCommand = (*basecmd)(nil)
 
 type basecmd struct {
 	*base.Command
+	cache.Updater
+
 	menu *dawg.Menu
 
 	// don't access this field directly, use store() to get the store
-	dstore  *dawg.Store
-	tsDecay time.Duration
-	addr    *obj.Address
+	dstore *dawg.Store
+	addr   *obj.Address
 }
 
 func (c *basecmd) store() *dawg.Store {
@@ -89,16 +89,12 @@ func (c *basecmd) store() *dawg.Store {
 	return c.dstore
 }
 
-func (c *basecmd) cacheNewMenu() (err error) {
-	c.menu, err = c.store().Menu()
-	if err != nil {
-		return err
-	}
-	raw, err := json.Marshal(c.menu)
-	if err != nil {
-		return err
-	}
-	return db.Put("menu", raw)
+func (c *basecmd) cacheNewMenu() error {
+	var e1, e2 error
+	var raw []byte
+	c.menu, e1 = c.store().Menu()
+	raw, e2 = json.Marshal(c.menu)
+	return errs.Append(e1, e2, db.Put("menu", raw))
 }
 
 func (c *basecmd) getCachedMenu() error {
@@ -108,10 +104,8 @@ func (c *basecmd) getCachedMenu() error {
 		if raw == nil {
 			return c.cacheNewMenu()
 		}
+		err = errs.Pair(err, json.Unmarshal(raw, c.menu))
 		if err != nil {
-			return err
-		}
-		if err = json.Unmarshal(raw, c.menu); err != nil {
 			return err
 		}
 		if c.menu.ID != c.store().ID {
@@ -121,31 +115,14 @@ func (c *basecmd) getCachedMenu() error {
 	return nil
 }
 
-var _ cache.Updater = (*basecmd)(nil)
-
-// OnUpdate will run when the data base finds that it needs to
-// update a timestamp.
-func (c *basecmd) OnUpdate() error {
-	return c.cacheNewMenu()
-}
-
-// NotUpdate will run if the database does not need to update the
-// data attached to a timestamp.
-func (c *basecmd) NotUpdate() error {
-	return c.getCachedMenu()
-}
-
-// Decay will tell the database if it should be updating the data
-// at a timestamp or not.
-func (c *basecmd) Decay() time.Duration {
-	return c.tsDecay
-}
-
-func newCommand(use, short string, c base.Runner) *basecmd {
-	return &basecmd{
-		Command: base.NewCommand(use, short, c.Run),
-		tsDecay: 12 * time.Hour,
-	}
+func newCommand(use, short string, r base.Runner) *basecmd {
+	bc := &basecmd{Command: base.NewCommand(use, short, r.Run)}
+	bc.Updater = cache.NewUpdater(
+		12*time.Hour,
+		bc.cacheNewMenu,
+		bc.getCachedMenu,
+	)
+	return bc
 }
 
 type cliBuilder struct {

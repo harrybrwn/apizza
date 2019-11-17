@@ -22,6 +22,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/harrybrwn/apizza/cmd/internal/base"
+	"github.com/harrybrwn/apizza/pkg/errs"
 )
 
 type apizzaCmd struct {
@@ -37,11 +38,9 @@ type apizzaCmd struct {
 
 func (c *apizzaCmd) Run(cmd *cobra.Command, args []string) (err error) {
 	if c.clearCache {
-		if err := db.Close(); err != nil {
-			return err
-		}
+		err = db.Close()
 		c.Printf("removing %s\n", db.Path())
-		return os.Remove(db.Path())
+		return errs.Pair(err, os.Remove(db.Path()))
 	}
 	if c.storeLocation {
 		c.Println(c.store().Address)
@@ -80,13 +79,11 @@ func newApizzaCmd() base.CliCommand {
 	return c
 }
 
-func (c *apizzaCmd) preRun(cmd *cobra.Command, args []string) error {
+func (c *apizzaCmd) preRun(cmd *cobra.Command, args []string) (err error) {
 	if c.resetMenu {
-		if err := db.Delete("menu"); err != nil {
-			return err
-		}
+		err = db.Delete("menu")
 	}
-	return nil
+	return
 }
 
 func yesOrNo(msg string) bool {

@@ -3,12 +3,14 @@ package out
 import (
 	"io"
 	"text/template"
+
+	"github.com/harrybrwn/apizza/pkg/errs"
 )
 
-func tmpl(w io.Writer, tmplt string, a interface{}) error {
+func tmpl(w io.Writer, tmplt string, a interface{}) (err error) {
 	t := template.New("apizza")
-	template.Must(t.Parse(tmplt))
-	return t.Execute(w, a)
+	t, err = t.Parse(tmplt)
+	return errs.Pair(err, t.Execute(w, a))
 }
 
 var defaultOrderTmpl = `{{ .OrderName }}

@@ -9,6 +9,7 @@ import (
 	"github.com/harrybrwn/apizza/cmd/internal/out"
 	"github.com/harrybrwn/apizza/dawg"
 	"github.com/harrybrwn/apizza/pkg/cache"
+	"github.com/harrybrwn/apizza/pkg/errs"
 )
 
 // OrderPrefix is the prefix added to user orders when stored in a database.
@@ -65,18 +66,12 @@ func PrintOrders(db cache.MapDB, w io.Writer, verbose bool) error {
 // GetOrder will get an order from a database.
 func GetOrder(name string, db cache.Getter) (*dawg.Order, error) {
 	raw, err := db.Get(OrderPrefix + name)
-	if err != nil {
-		return nil, err
-	}
 	if raw == nil {
 		return nil, fmt.Errorf("cannot find order %s", name)
 	}
 	order := &dawg.Order{}
-	if err = json.Unmarshal(raw, order); err != nil {
-		return nil, err
-	}
 	order.SetName(name)
-	return order, nil
+	return order, errs.Pair(err, json.Unmarshal(raw, order))
 }
 
 // SaveOrder will save an order to a database.

@@ -8,6 +8,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/harrybrwn/apizza/cmd/internal/obj"
+	"github.com/harrybrwn/apizza/pkg/errs"
 
 	"github.com/harrybrwn/apizza/dawg"
 )
@@ -95,13 +96,9 @@ func PrintOrder(o *dawg.Order, full, price bool) (err error) {
 	} else {
 		t = cartOrderTmpl
 	}
-
 	if price {
-		if oPrice, err = o.Price(); err != nil {
-			return err
-		}
+		oPrice, err = o.Price()
 	}
-
 	data := struct {
 		*dawg.Order
 		Addr  string
@@ -111,7 +108,7 @@ func PrintOrder(o *dawg.Order, full, price bool) (err error) {
 		Addr:  obj.AddressFmtIndent(o.Address, 11),
 		Price: oPrice,
 	}
-	return tmpl(output, t, data)
+	return errs.Pair(err, tmpl(output, t, data))
 }
 
 // PrintVariant will display a dawg.Variant in a pretty way.
