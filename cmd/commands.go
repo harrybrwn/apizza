@@ -123,14 +123,20 @@ func (c *basecmd) getCachedMenu() error {
 
 var _ cache.Updater = (*basecmd)(nil)
 
+// OnUpdate will run when the data base finds that it needs to
+// update a timestamp.
 func (c *basecmd) OnUpdate() error {
 	return c.cacheNewMenu()
 }
 
+// NotUpdate will run if the database does not need to update the
+// data attached to a timestamp.
 func (c *basecmd) NotUpdate() error {
 	return c.getCachedMenu()
 }
 
+// Decay will tell the database if it should be updating the data
+// at a timestamp or not.
 func (c *basecmd) Decay() time.Duration {
 	return c.tsDecay
 }
@@ -162,8 +168,8 @@ func newBuilder() *cliBuilder {
 // function.
 func (b *cliBuilder) exec() error {
 	b.root.Addcmd(
-		b.newCartCmd().Addcmd(
-			b.newAddOrderCmd(),
+		newCartCmd(b).Addcmd(
+			newAddOrderCmd(b),
 		),
 		newConfigCmd().Addcmd(
 			newConfigSet(),
@@ -171,6 +177,7 @@ func (b *cliBuilder) exec() error {
 		),
 		b.newMenuCmd(),
 		newOrderCmd(),
+		newHelloCmd(nil),
 	)
 	return b.root.Cmd().Execute()
 }

@@ -169,7 +169,7 @@ func getOrderItem(order *dawg.Order, code string) dawg.Item {
 	return nil
 }
 
-func (b *cliBuilder) newCartCmd() base.CliCommand {
+func newCartCmd(b *cliBuilder) base.CliCommand {
 	c := &cartCmd{price: false, delete: false, verbose: false}
 	c.basecmd = b.newCommand("cart <order name>", "Manage user created orders", c)
 	c.basecmd.Cmd().Long = `The cart command gets information on all of the user
@@ -244,7 +244,7 @@ func (c *addOrderCmd) Run(cmd *cobra.Command, args []string) (err error) {
 	return data.SaveOrder(order, &bytes.Buffer{}, db)
 }
 
-func (b *cliBuilder) newAddOrderCmd() base.CliCommand {
+func newAddOrderCmd(b *cliBuilder) base.CliCommand {
 	c := &addOrderCmd{name: "", products: []string{}}
 	c.basecmd = b.newCommand("new <new order name>",
 		"Create a new order that will be stored in the cart.", c)

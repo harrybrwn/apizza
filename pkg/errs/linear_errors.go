@@ -72,6 +72,7 @@ func (le *linearError) add(e error) *linearError {
 	return le
 }
 
+// Error for a linearError will print out all of its errors as a list.
 func (le *linearError) Error() string {
 	var (
 		buf  = new(bytes.Buffer)

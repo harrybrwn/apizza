@@ -69,6 +69,9 @@ func (c *Command) AddCobraCmd(cmd *cobra.Command) {
 
 // Run runs the command.
 func (c *Command) Run(cmd *cobra.Command, args []string) error {
+	if c.cmd.RunE != nil {
+		return c.cmd.RunE(cmd, args)
+	}
 	return c.cmd.Usage()
 }
 

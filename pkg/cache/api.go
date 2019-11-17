@@ -16,6 +16,11 @@ type Putter interface {
 	Put(string, []byte) error
 }
 
+// Deleter is an interface that defines objectes that delete.
+type Deleter interface {
+	Delete(string) error
+}
+
 // Storage is a combination of Putter and Getter.
 type Storage interface {
 	Getter
