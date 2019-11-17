@@ -21,7 +21,7 @@ func testOrderNew(t *testing.T, buf *bytes.Buffer, cmds ...base.CliCommand) {
 	if err := cart.Run(cart.Cmd(), []string{"testorder"}); err != nil {
 		t.Error(err)
 	}
-	_ = `testorder
+	expected := `testorder
   products:
     Medium (12") Hand Tossed MeatZZa
       code:     12SCMEATZA
@@ -38,7 +38,7 @@ func testOrderNew(t *testing.T, buf *bytes.Buffer, cmds ...base.CliCommand) {
   address: 1600 Pennsylvania Ave NW
   	       Washington DC, 20500
 `
-	// tests.Compare(t, buf.String(), strings.Replace(expected, "\t", "  ", -1))
+	tests.Compare(t, buf.String(), strings.Replace(expected, "\t", "  ", -1))
 }
 
 func testAddOrder(t *testing.T, buf *bytes.Buffer, cmds ...base.CliCommand) {
