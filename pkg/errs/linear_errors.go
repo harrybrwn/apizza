@@ -1,27 +1,34 @@
 package errs
 
-import "bytes"
-
-import "fmt"
+import (
+	"bytes"
+	"fmt"
+)
 
 // Append errors together.
-func Append(err error, erlist ...error) error {
-	if erlist == nil {
+func Append(err error, errlist ...error) error {
+	if errlist == nil {
 		return err
-	} else if res, ok := err.(*linearError); ok {
-		return res.append(erlist)
 	}
 
-	n := len(erlist)
-	res := newline(err, n+1)
-	k := 1
-	for i := 0; i < n; i++ {
-		if e, ok := erlist[i].(*linearError); ok {
-			res.append(e.errList) // flatten any other linear errors found
-		} else if e := erlist[i]; e != nil {
-			res.errList[k] = e
-			k++
+	var (
+		check bool
+		res   *linearError
+	)
+
+	if res, check = err.(*linearError); !check {
+		res = &linearError{}
+		res.errList = append(res.errList, err)
+	}
+	check = true
+	for _, e := range errlist {
+		if e != nil {
+			res.errList = append(res.errList, e)
+			check = false
 		}
+	}
+	if check {
+		return nil
 	}
 	return res
 }
@@ -35,18 +42,6 @@ func Pair(first, second error) error {
 			return second
 		}
 		return first
-	}
-
-	e1, e1ok := first.(*linearError)
-	e2, e2ok := second.(*linearError)
-	if e1ok && !e2ok {
-		return e1.add(second)
-	}
-	if !e1ok && e2ok {
-		return e2.add(first)
-	}
-	if e1ok && e2ok {
-		return e1.append(e2.errList)
 	}
 	return &linearError{[]error{first, second}}
 }
@@ -78,25 +73,27 @@ func (le *linearError) add(e error) *linearError {
 }
 
 func (le *linearError) Error() string {
-	buf := new(bytes.Buffer)
+	var (
+		buf  = new(bytes.Buffer)
+		list = []error{}
+	)
+
+	le.flatten(&list)
 	buf.WriteString("Errors:\n")
-	le.write(buf, 1)
+	for i, e := range list {
+		fmt.Fprintf(buf, "  %d. ", i+1)
+		buf.WriteString(e.Error())
+		buf.WriteByte('\n')
+	}
 	return buf.String()
 }
 
-func (le *linearError) write(buf *bytes.Buffer, start int) int {
-	var (
-		i int
-		e error
-	)
-	for i, e = range le.errList {
-		if line, ok := e.(*linearError); ok {
-			start += line.write(buf, i)
-		} else {
-			fmt.Fprintf(buf, "  %d. ", i+start)
-			buf.WriteString(e.Error())
-			buf.WriteByte('\n')
+func (le *linearError) flatten(arr *[]error) {
+	for _, e := range le.errList {
+		if list, ok := e.(*linearError); ok {
+			list.flatten(arr)
+		} else if e != nil {
+			*arr = append(*arr, e)
 		}
 	}
-	return i + start
 }
