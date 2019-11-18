@@ -173,7 +173,7 @@ func visitAll(val reflect.Value, depth int, fmtr Formatter) string {
 // DefaultFormatter is the default formatter object.
 var DefaultFormatter = Formatter{
 	KeyValFormat: func(k, v string) string { return fmt.Sprintf("%s: %s\n", k, v) },
-	StructFormat: func(k, v string) string { return fmt.Sprintf("%s: \n%s", k, v) },
+	StructFormat: func(k, v string) string { return fmt.Sprintf("%s:\n%s", k, v) },
 	ValueHandler: func(v reflect.Value, i int) string {
 		field := v.Field(i)
 		var val string

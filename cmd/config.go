@@ -100,7 +100,7 @@ ex. 'apizza config get name' or 'apizza config set name=<your name>'`
 	c.Flags().BoolVarP(&c.file, "file", "f", c.file, "show the path to the config.json file")
 	c.Flags().BoolVarP(&c.dir, "dir", "d", c.dir, "show the apizza config directory path")
 	c.Flags().BoolVar(&c.getall, "get-all", c.getall, "show all the contents of the config file")
-	c.Flags().BoolVarP(&c.edit, "edit", "e", false, "edit the config file")
+	c.Flags().BoolVarP(&c.edit, "edit", "e", false, "open the conifg file with the text editor set by $EDITOR")
 	return c
 }
 
@@ -136,27 +136,22 @@ func newConfigSet() base.CliCommand {
 	return c
 }
 
-type configGetCmd struct {
-	*basecmd
-}
-
-func (c *configGetCmd) Run(cmd *cobra.Command, args []string) error {
-	if len(args) < 1 {
-		return errors.New("no variable given")
-	}
-
-	for _, arg := range args {
-		v := config.Get(arg)
-		if v == nil {
-			return fmt.Errorf("cannot find %s", arg)
-		}
-		c.Println(v)
-	}
-	return nil
-}
-
 func newConfigGet() base.CliCommand {
-	c := &configGetCmd{}
-	c.basecmd = newCommand("get", "print the specified config variable to screen", c)
-	return c
+	return base.NewCommand(
+		"get", "print the specified config variable to screen",
+		func(cmd *cobra.Command, args []string) error {
+			if len(args) < 1 {
+				return errors.New("no variable given")
+			}
+
+			for _, arg := range args {
+				v := config.Get(arg)
+				if v == nil {
+					return fmt.Errorf("cannot find %s", arg)
+				}
+				cmd.Println(v)
+			}
+			return nil
+		},
+	)
 }

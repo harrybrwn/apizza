@@ -46,12 +46,12 @@ func testConfigCmd(t *testing.T) {
 	}
 	expected := `name: "joe"
 email: "nojoe@mail.com"
-address: 
+address:
   street: "1600 Pennsylvania Ave NW"
   cityname: "Washington DC"
   state: ""
   zipcode: "20500"
-card: 
+card:
   number: ""
   expiration: ""
 service: "Carryout"
@@ -72,7 +72,7 @@ service: "Carryout"
 }
 
 func testConfigGet(t *testing.T) {
-	c := newConfigGet().(*configGetCmd)
+	c := newConfigGet() //.(*configGetCmd)
 	buf := &bytes.Buffer{}
 	c.SetOutput(buf)
 	if err := c.Run(c.Cmd(), []string{"email", "name"}); err != nil {
