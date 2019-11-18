@@ -34,10 +34,17 @@ func TestBadCreds(t *testing.T) {
 	}
 }
 
+func gettestcreds() (string, string, bool) {
+	u, p := os.Getenv("DOMINOS_TEST_USER"), os.Getenv("DOMINOS_TEST_PASS")
+	if len(u) == 0 || len(p) == 0 {
+		return u, p, false
+	}
+	return u, p, true
+}
+
 func TestToken(t *testing.T) {
-	username := os.Getenv("DOMINOS_TEST_NAME")
-	password := os.Getenv("DOMINOS_TEST_PASS")
-	if username == "" || password == "" {
+	username, password, ok := gettestcreds()
+	if !ok {
 		t.Skip()
 	}
 
@@ -63,9 +70,8 @@ func TestToken(t *testing.T) {
 }
 
 func TestAuth(t *testing.T) {
-	username := os.Getenv("DOMINOS_TEST_NAME")
-	password := os.Getenv("DOMINOS_TEST_PASS")
-	if username == "" || password == "" {
+	username, password, ok := gettestcreds()
+	if !ok {
 		t.Skip()
 	}
 
@@ -190,9 +196,8 @@ func TestBadAuth(t *testing.T) {
 }
 
 func TestSignIn(t *testing.T) {
-	username := os.Getenv("DOMINOS_TEST_NAME")
-	password := os.Getenv("DOMINOS_TEST_PASS")
-	if username == "" || password == "" {
+	username, password, ok := gettestcreds()
+	if !ok {
 		t.Skip()
 	}
 

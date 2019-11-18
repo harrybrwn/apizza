@@ -41,6 +41,8 @@ func InitOrder(o *Order) {
 	o.cli = orderClient
 }
 
+// Init will make sure that an order is initialized correctly. An order
+// that is not initialized correctly cannot send itslef to dominos.
 func (o *Order) Init() {
 	o.cli = orderClient
 }
