@@ -74,7 +74,11 @@ func Execute() {
 	}
 }
 
-func handle(e error, msg string, code int) { fmt.Fprintf(os.Stderr, "%s: %s\n", msg, e); os.Exit(code) }
+func handle(e error, msg string, code int) {
+	log.Printf("(Failure) %s: %s\n", msg, e)
+	fmt.Fprintf(os.Stderr, "%s: %s\n", msg, e)
+	os.Exit(code)
+}
 
 var _ base.CliCommand = (*basecmd)(nil)
 
@@ -92,6 +96,7 @@ func (c *basecmd) cacheNewMenu() error {
 	var e1, e2 error
 	var raw []byte
 	c.menu, e1 = c.store().Menu()
+	log.Println("caching another menu")
 	raw, e2 = json.Marshal(c.menu)
 	return errs.Append(e1, e2, db.Put("menu", raw))
 }
@@ -226,7 +231,7 @@ func (s *storegetter) store() *dawg.Store {
 		var address = s.getaddr()
 		s.dstore, err = dawg.NearestStore(address, s.getmethod())
 		if err != nil {
-			handle(err, "Internal Error", 1) // will exit
+			handle(err, "Store Find Error", 1) // will exit
 		}
 	}
 	return s.dstore

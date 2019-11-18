@@ -19,6 +19,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -294,7 +295,7 @@ func (c *orderCmd) Run(cmd *cobra.Command, args []string) (err error) {
 
 	names := strings.Split(cfg.Name, " ")
 	order.FirstName = names[0]
-	order.LastName = names[len(names)-1]
+	order.LastName = strings.Join(names[1:], " ")
 	order.Email = cfg.Email
 	order.AddPayment(payment)
 
@@ -303,17 +304,17 @@ func (c *orderCmd) Run(cmd *cobra.Command, args []string) (err error) {
 	if yesOrNo("Would you like to purchase this order? (y/n)") {
 		c.Printf("sending order '%s'...\n", order.Name())
 
-		if test {
-			data, err := json.Marshal(order)
-			if err != nil {
-				return nil
-			}
-			fmt.Println(string(data))
+		data, err := json.MarshalIndent(order, "", "    ")
+		if err != nil {
+			log.Println("json error:", err)
 		}
-
+		log.Println("sending order", string(data))
+		log.Println("placing order")
 		if err := order.PlaceOrder(); err != nil {
 			return err
 		}
+		log.Printf("sent to %s %s\n", order.Address.LineOne(), order.Address.City())
+
 		if c.verbose {
 			if order.ServiceMethod == "Delivery" {
 				c.Printf("sent by %s to %s %s\n", order.ServiceMethod,
