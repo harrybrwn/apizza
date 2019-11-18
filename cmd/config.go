@@ -18,7 +18,6 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"os/exec"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -67,21 +66,10 @@ type configCmd struct {
 
 func (c *configCmd) Run(cmd *cobra.Command, args []string) error {
 	if c.edit {
-		editor := os.Getenv("EDITOR")
-
-		var file string
 		if len(args) == 1 {
-			file = args[0]
-		} else {
-			file = config.File()
+			return config.EditFile(args[0])
 		}
-
-		edit := exec.Command(editor, file)
-		edit.Stdout = os.Stdout
-		edit.Stdin = os.Stdin
-		edit.Stderr = os.Stderr
-		config.FileHasChanged()
-		return edit.Run()
+		return config.Edit()
 	}
 	if c.file {
 		c.Println(config.File())

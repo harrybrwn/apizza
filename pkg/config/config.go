@@ -14,6 +14,9 @@ import (
 
 var (
 	cfg configfile
+
+	// DefaultEditor is the default editor used to edit config files
+	DefaultEditor = "vim"
 )
 
 // SetConfig sets the config file and also runs through the configuration
