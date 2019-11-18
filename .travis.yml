@@ -1,5 +1,6 @@
 language: go
 go:
+- 1.11
 - 1.12
 - 1.13
 env:
@@ -13,8 +14,9 @@ os:
 - windows
 before_script:
 - go install
+- [[ "$TRAVIS_GO_VERSION" = "1.11" ]] && make install-deps
 script:
-- go test ./...
+- make test
 after_success:
 - bash <(curl -s https://codecov.io/bash)
 notifications:
