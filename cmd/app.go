@@ -59,7 +59,6 @@ func newapp(db *cache.DataBase, conf *Config, logs io.Writer) *App {
 	}
 
 	app.CliCommand = base.NewCommand("apizza", "Dominos pizza from the command line.", app.Run)
-	app.SetOutput(os.Stdout)
 	app.storefinder = newStoreGetter(
 		func() string {
 			if len(app.service) == 0 {
@@ -74,6 +73,7 @@ func newapp(db *cache.DataBase, conf *Config, logs io.Writer) *App {
 			return app.addr
 		},
 	)
+	app.SetOutput(os.Stdout)
 
 	app.builder = &cliBuilder{
 		db:   db,

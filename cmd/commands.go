@@ -20,12 +20,14 @@ import (
 	"io"
 	"log"
 	"os"
+	"path/filepath"
 	"time"
+
+	"gopkg.in/natefinch/lumberjack.v2"
 
 	"github.com/harrybrwn/apizza/cmd/internal/base"
 	"github.com/harrybrwn/apizza/cmd/internal/data"
 	"github.com/harrybrwn/apizza/cmd/internal/obj"
-	"github.com/harrybrwn/apizza/cmd/internal/out"
 	"github.com/harrybrwn/apizza/dawg"
 	"github.com/harrybrwn/apizza/pkg/cache"
 	"github.com/harrybrwn/apizza/pkg/config"
@@ -51,12 +53,17 @@ func Execute() {
 		handle(err, "Internal Error", 1)
 	}
 
-	logs, logErr = out.LogFile()
-	log.SetOutput(logs)
+	log.SetOutput(&lumberjack.Logger{
+		Filename:   filepath.Join(config.Folder(), "logs", "dev.log"),
+		MaxSize:    25,  // megabytes
+		MaxBackups: 10,  // number of spare files
+		MaxAge:     365, //days
+		Compress:   false,
+	})
 	app := newapp(db, cfg, logs)
 
 	defer func() {
-		err = errs.Append(db.Close(), config.Save(), logs.Close())
+		err = errs.Append(db.Close(), config.Save()) //, logs.Close())
 		if err != nil {
 			handle(err, "Internal Error", 1)
 		}
