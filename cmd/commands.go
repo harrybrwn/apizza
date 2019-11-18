@@ -129,12 +129,38 @@ func newCommand(use, short string, r base.Runner) *basecmd {
 type cliBuilder struct {
 	root base.CliCommand
 	addr *obj.Address
+	db   *cache.DataBase
+}
+
+func (b *cliBuilder) Build(use, short string, r base.Runner) *base.Command {
+	return base.NewCommand(use, short, r.Run)
+}
+
+func (b *cliBuilder) DB() *cache.DataBase {
+	return b.db
+}
+
+func (b *cliBuilder) Output() io.Writer {
+	return b.root.Output()
+}
+
+func (b *cliBuilder) Config() config.Config {
+	return config.Object()
 }
 
 func newBuilder() *cliBuilder {
 	return &cliBuilder{
 		root: newApizzaCmd(),
 		addr: &cfg.Address,
+	}
+}
+
+// NewBuilder creates a cliBuilder that has a database.
+func newCliBuilder(root base.CliCommand, database *cache.DataBase, out io.Writer) *cliBuilder {
+	return &cliBuilder{
+		root: root,
+		addr: &cfg.Address,
+		db:   database,
 	}
 }
 
@@ -155,7 +181,7 @@ func (b *cliBuilder) exec() error {
 		),
 		b.newMenuCmd(),
 		newOrderCmd(),
-		newHelloCmd(nil),
+		newDumpCmd(newCliBuilder(b.root, db, b.root.Output())),
 	)
 	return b.root.Cmd().Execute()
 }

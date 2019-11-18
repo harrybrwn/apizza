@@ -23,3 +23,4 @@ coverage.html
 
 # Bin
 /release/
+cmd/test.go

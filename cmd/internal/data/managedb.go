@@ -64,12 +64,13 @@ func PrintOrders(db cache.MapDB, w io.Writer, verbose bool) error {
 }
 
 // GetOrder will get an order from a database.
-func GetOrder(name string, db cache.Getter, order *dawg.Order) (*dawg.Order, error) {
+func GetOrder(name string, db cache.Getter) (*dawg.Order, error) {
 	raw, err := db.Get(OrderPrefix + name)
 	if raw == nil {
 		return nil, fmt.Errorf("cannot find order %s", name)
 	}
 	order := &dawg.Order{}
+	order.Init()
 	order.SetName(name)
 	return order, errs.Pair(err, json.Unmarshal(raw, order))
 }

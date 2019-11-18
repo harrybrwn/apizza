@@ -10,10 +10,10 @@ import (
 
 // Builder defines an interface for an object that builds commands.
 type Builder interface {
-	Config() config.Config
+	Build(use, short string, r Runner) *Command
 	DB() *cache.DataBase
 	Output() io.Writer
-	Build(use, short string, r Runner) *Command
+	Config() config.Config
 }
 
 // BasicBuilder is a build that has no database, no config, no special output,

@@ -67,8 +67,8 @@ func (c *cartCmd) Run(cmd *cobra.Command, args []string) (err error) {
 		return nil
 	}
 
-	order := c.store().NewOrder()
-	if _, err = data.GetOrder(name, db, order); err != nil {
+	var order *dawg.Order
+	if order, err = data.GetOrder(name, db); err != nil {
 		return err
 	}
 
@@ -275,7 +275,6 @@ func (c *orderCmd) Run(cmd *cobra.Command, args []string) (err error) {
 	if len(c.cvv) == 0 {
 		return errors.New("must have cvv number. (see --cvv)")
 	}
-
 	order, err := data.GetOrder(args[0], db)
 	if err != nil {
 		return err
