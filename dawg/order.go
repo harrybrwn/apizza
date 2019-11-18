@@ -35,6 +35,16 @@ type Order struct {
 	cli       *client
 }
 
+// InitOrder will make sure that an order is initialized correctly. An order
+// that is not initialized correctly cannot send itslef to dominos.
+func InitOrder(o *Order) {
+	o.cli = orderClient
+}
+
+func (o *Order) Init() {
+	o.cli = orderClient
+}
+
 // PlaceOrder is the method that sends the final order to dominos
 func (o *Order) PlaceOrder() error {
 	if err := o.prepare(); err != nil {
@@ -210,6 +220,10 @@ func getOrderPrice(ordr Order) (map[string]interface{}, error) {
 
 func getPricingData(ordr Order) (*priceingData, error) {
 	ordr.Payments = []*orderPayment{}
+	if ordr.cli == nil {
+		return nil, errors.New("this order has no client, initialize it correctly")
+	}
+
 	b, err := ordr.cli.post("/power/price-order", nil, ordr.raw())
 	if err != nil {
 		return nil, err
