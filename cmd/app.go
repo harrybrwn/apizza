@@ -89,6 +89,7 @@ func (a *App) Config() config.Config {
 }
 
 func (a *App) exec() error {
+	a.initflags()
 	a.Addcmd(
 		newCartCmd(a.builder).Addcmd(
 			newAddOrderCmd(a.builder),
@@ -127,6 +128,8 @@ func (a *App) Run(cmd *cobra.Command, args []string) (err error) {
 }
 
 func (a *App) initflags() {
+	a.Cmd().PersistentPreRunE = a.resetmenu
+
 	a.Flags().BoolVar(&a.clearCache, "clear-cache", false, "delete the database")
 	a.Cmd().PersistentFlags().BoolVar(&a.resetMenu, "delete-menu", false, "delete the menu stored in cache")
 
@@ -139,4 +142,14 @@ func (a *App) initflags() {
 	a.Cmd().PersistentFlags().MarkHidden("reset")
 
 	a.Flags().BoolVarP(&a.storeLocation, "store-location", "L", false, "show the location of the nearest store")
+}
+
+func (a *App) resetmenu(*cobra.Command, []string) (err error) {
+	if a.resetMenu {
+		err = a.DB().Delete("menu")
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }

@@ -15,7 +15,7 @@ func testMenuRun(t *testing.T) {
 	if err := c.Run(c.Cmd(), []string{}); err == nil {
 		t.Error("should raise error")
 	}
-	c.dstore = nil
+	c.storefinder.(*storegetter).dstore = nil
 	c.item = "10SCREEN"
 	if err := c.Run(c.Cmd(), []string{}); err != nil {
 		t.Error(err)

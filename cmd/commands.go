@@ -68,27 +68,11 @@ var _ base.CliCommand = (*basecmd)(nil)
 type basecmd struct {
 	*base.Command
 	cache.Updater
-
+	storefinder
 	menu *dawg.Menu
 
-	// don't access this field directly, use store() to get the store
-	dstore *dawg.Store
-	addr   *obj.Address
-	db     *cache.DataBase
-}
-
-func (c *basecmd) store() *dawg.Store {
-	if c.dstore == nil {
-		var err error
-		var address = c.addr
-		if address == nil {
-			address = &cfg.Address
-		}
-		if c.dstore, err = dawg.NearestStore(address, config.GetString("service")); err != nil {
-			handle(err, "Internal Error", 1) // will exit
-		}
-	}
-	return c.dstore
+	addr *obj.Address
+	db   *cache.DataBase
 }
 
 func (c *basecmd) cacheNewMenu() error {
@@ -119,6 +103,12 @@ func (c *basecmd) getCachedMenu() error {
 
 func (c *basecmd) init() *basecmd {
 	c.Updater = cache.NewUpdater(menuUpdateTime, c.cacheNewMenu, c.getCachedMenu)
+	c.storefinder = newStoreGetter(serviceGetter, func() dawg.Address {
+		if c.addr == nil {
+			return &cfg.Address
+		}
+		return c.addr
+	})
 	return c
 }
 
@@ -197,10 +187,16 @@ type storefinder interface {
 	store() *dawg.Store
 }
 
+// storegetter is meant to be a mixin for any struct that needs to be able to
+// get a store.
 type storegetter struct {
 	getaddr   func() dawg.Address
 	getmethod func() string
 	dstore    *dawg.Store
+}
+
+var serviceGetter = func() string {
+	return config.GetString("service")
 }
 
 func newStoreGetter(service func() string, addr func() dawg.Address) storefinder {
