@@ -1,24 +1,24 @@
 language: go
 go:
-- 1.11
-- 1.12
-- 1.13
+  - 1.11
+  - 1.12
+  - 1.13
 env:
   global:
-  - GO111MODULE=on
-  - secure: B6r+giTmW1nVBPhyBJHxOaQqEE4qi0sKnINeHBGWhgWEnoNro/6z0C94kIv9Ped5E8QVPQN454It5+fMT8YQdRJHs02kZp40TeX5vCv7GTaa1B8gfZA5JpKNgniuqtaAzFMQga7sPDG0I24ZHJ0rx54sKrQjh5GPSpzHAW1vXLnmr0NFHwtFyu0Qu2e6FujeERBfjZdnLz8AyRwSAd281GubAtnkRq6A7un3zuZ9tYhdZyb4e8drTXrqjv+/JVD/Ris2zeBkjEk0bizSoyZaRgGnnnDhxpo4O1ef8rQd78i5f0/UeVSaC4dtptGKixbVrulhUJucxVqrSE2RGkmyMWJ2yIRc2edPgs/vW6/4lI98zWN30gHHchOESopJcZiIk2aiGDJt78H2P88YPtZcIaL2oTkZAnEW3XK6f7vpSZc35XdFEY1DBoFsVXMuhUEG0vsPYd3j9/mqgvMcIsza8TRY2+IeSBMrkZdmZG++6zW1KjdWuM5GgQ1eFD22vc4ttdUKWM55kca4JhgnIpLU9xGufy6Z6o6Q1jXEsGFL2XfHusFEav+qTcEIHJ7GaH8lVvOb7x98jopAdahyfiPsyc3IxQGJ2DcH7etGCQHgExjGKEOXLT4OEGREZHflo6zkXD0nUKWhovlmem/uFlMfxhHuIq2WzSivj+lV8Lq17+4=
-  - secure: RVs6cztyL2jgHR6Nxv9yB8cZmS4UcGjAm50UrOpnxnLpc9/0e6osZYphr3jDRmxKVhrud60WVX9PtSR3jjuiIH4tHfc3Gyj0+NXT7Tcws9d8YQQy0Sq0QZtFshpciX91fwltIkJxehOm47mrtWhofPf8ib+dMchIqBpKWP6UrFC6OqiYpJj+sABDOfSILr8rNCPazI1VdPPCXo8H88QosMaZPxxLwiPvC4BRCzkg0lKgJKYyaP66/wXopD10xE/WjNeFDsUE4KewzU8LF7rqEmetWyP4imE4YQr0whippHzTCvkl8pnr6frYB7a9X5z3iwI8bU1NHFtQ9Jnmqc6VMgMBUVLNLdoPH82tNMmQoodoo2HZW8vE6H3gCR6pIKjahY2ZjPsqkRh+NSlnjzlmArpUncoR4P6x9KDyiPa25LzgF0I7Dw9U6jsnHh/Qv3kEW/22Vu46yfW5zBx6+FiqRuZktT7Bjqw3yg9F7BtlRae7whPaluOJDdT73i99VprUho6N6UpymBYYsawk2PgbpqOO8o+O6zUhRCyRKv4swj1VEeLjl9+kJk2o+RIkn6NtAnnnP/XBFjTJNE4qBqBPoOzuk1TxY+37NmVf0kNluoLYwKkQgdB8hMQ8ArYs3ta/UBBs/T8eqLoNh5LZ9CZ15nDiLNdYE4Jqkmax/WEylq8=
+    - GO111MODULE=on
+    - secure: B6r+giTmW1nVBPhyBJHxOaQqEE4qi0sKnINeHBGWhgWEnoNro/6z0C94kIv9Ped5E8QVPQN454It5+fMT8YQdRJHs02kZp40TeX5vCv7GTaa1B8gfZA5JpKNgniuqtaAzFMQga7sPDG0I24ZHJ0rx54sKrQjh5GPSpzHAW1vXLnmr0NFHwtFyu0Qu2e6FujeERBfjZdnLz8AyRwSAd281GubAtnkRq6A7un3zuZ9tYhdZyb4e8drTXrqjv+/JVD/Ris2zeBkjEk0bizSoyZaRgGnnnDhxpo4O1ef8rQd78i5f0/UeVSaC4dtptGKixbVrulhUJucxVqrSE2RGkmyMWJ2yIRc2edPgs/vW6/4lI98zWN30gHHchOESopJcZiIk2aiGDJt78H2P88YPtZcIaL2oTkZAnEW3XK6f7vpSZc35XdFEY1DBoFsVXMuhUEG0vsPYd3j9/mqgvMcIsza8TRY2+IeSBMrkZdmZG++6zW1KjdWuM5GgQ1eFD22vc4ttdUKWM55kca4JhgnIpLU9xGufy6Z6o6Q1jXEsGFL2XfHusFEav+qTcEIHJ7GaH8lVvOb7x98jopAdahyfiPsyc3IxQGJ2DcH7etGCQHgExjGKEOXLT4OEGREZHflo6zkXD0nUKWhovlmem/uFlMfxhHuIq2WzSivj+lV8Lq17+4=
+    - secure: RVs6cztyL2jgHR6Nxv9yB8cZmS4UcGjAm50UrOpnxnLpc9/0e6osZYphr3jDRmxKVhrud60WVX9PtSR3jjuiIH4tHfc3Gyj0+NXT7Tcws9d8YQQy0Sq0QZtFshpciX91fwltIkJxehOm47mrtWhofPf8ib+dMchIqBpKWP6UrFC6OqiYpJj+sABDOfSILr8rNCPazI1VdPPCXo8H88QosMaZPxxLwiPvC4BRCzkg0lKgJKYyaP66/wXopD10xE/WjNeFDsUE4KewzU8LF7rqEmetWyP4imE4YQr0whippHzTCvkl8pnr6frYB7a9X5z3iwI8bU1NHFtQ9Jnmqc6VMgMBUVLNLdoPH82tNMmQoodoo2HZW8vE6H3gCR6pIKjahY2ZjPsqkRh+NSlnjzlmArpUncoR4P6x9KDyiPa25LzgF0I7Dw9U6jsnHh/Qv3kEW/22Vu46yfW5zBx6+FiqRuZktT7Bjqw3yg9F7BtlRae7whPaluOJDdT73i99VprUho6N6UpymBYYsawk2PgbpqOO8o+O6zUhRCyRKv4swj1VEeLjl9+kJk2o+RIkn6NtAnnnP/XBFjTJNE4qBqBPoOzuk1TxY+37NmVf0kNluoLYwKkQgdB8hMQ8ArYs3ta/UBBs/T8eqLoNh5LZ9CZ15nDiLNdYE4Jqkmax/WEylq8=
 os:
-- linux
-- osx
-- windows
+  - linux
+  - osx
+  - windows
 before_script:
-- go install
-- [[ "$TRAVIS_GO_VERSION" = "1.11" ]] && make install-deps
+  - go install
+  - [[ "$TRAVIS_GO_VERSION" = "1.11" ]] && make install-deps
 script:
-- make test
+  - make test
 after_success:
-- bash <(curl -s https://codecov.io/bash)
+  - bash <(curl -s https://codecov.io/bash)
 notifications:
   email:
-  - harrybrown98@gmail.com
+    - harrybrown98@gmail.com
