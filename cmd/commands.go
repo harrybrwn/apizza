@@ -73,6 +73,7 @@ type basecmd struct {
 	// don't access this field directly, use store() to get the store
 	dstore *dawg.Store
 	addr   *obj.Address
+	db     *cache.DataBase
 }
 
 func (c *basecmd) store() *dawg.Store {
@@ -115,14 +116,14 @@ func (c *basecmd) getCachedMenu() error {
 	return nil
 }
 
+func (c *basecmd) init() *basecmd {
+	c.Updater = cache.NewUpdater(menuUpdateTime, c.cacheNewMenu, c.getCachedMenu)
+	return c
+}
+
 func newCommand(use, short string, r base.Runner) *basecmd {
 	bc := &basecmd{Command: base.NewCommand(use, short, r.Run)}
-	bc.Updater = cache.NewUpdater(
-		12*time.Hour,
-		bc.cacheNewMenu,
-		bc.getCachedMenu,
-	)
-	return bc
+	return bc.init()
 }
 
 type cliBuilder struct {
