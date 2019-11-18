@@ -51,12 +51,19 @@ func SetNonFileConfig(c Config) error {
 }
 
 type configfile struct {
-	conf Config
-	file string
-	dir  string
+	conf    Config
+	file    string
+	dir     string
+	changed bool
 }
 
 func (c *configfile) save() error {
+	if c.changed {
+		// if the file has been changed, writing the struct will override those
+		// changes with the data stored in memory.
+		return nil
+	}
+
 	raw, err := json.MarshalIndent(c.conf, "", "    ")
 	if err != nil {
 		return err
@@ -128,6 +135,13 @@ func Folder() string {
 // File returns the config file
 func File() string {
 	return cfg.file
+}
+
+// FileHasChanged tells the config struct if the actuall file has been changed
+// while the program has run and will not write the contents of the config struct
+// that is in memory.
+func FileHasChanged() {
+	cfg.changed = true
 }
 
 // Save saves the config file

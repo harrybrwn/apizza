@@ -4,6 +4,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"os/exec"
 	"path/filepath"
 
 	"github.com/harrybrwn/apizza/cmd/internal/base"
@@ -30,18 +31,17 @@ type App struct {
 	// temporary compatability stuff
 	builder *cliBuilder
 
-	// util flags
-	logfile string
-
 	// root command flags
 	address    string
 	service    string
 	storeID    string
 	clearCache bool
 	resetMenu  bool
+	openlogs   bool
 
 	// persistant flags
 	storeLocation bool
+	logfile       string
 }
 
 func newapp(db *cache.DataBase, conf *Config, logs io.Writer) *App {
@@ -124,6 +124,13 @@ var _ base.Builder = (*App)(nil)
 
 // Run the app.
 func (a *App) Run(cmd *cobra.Command, args []string) (err error) {
+	if a.openlogs {
+		editor := os.Getenv("EDITOR")
+		c := exec.Command(editor, filepath.Join(config.Folder(), "logs", "dev.log"))
+		c.Stdin = os.Stdin
+		c.Stdout = os.Stdout
+		return c.Run()
+	}
 	if a.clearCache {
 		err = a.db.Close()
 		a.Printf("removing %s\n", a.db.Path())
@@ -147,6 +154,7 @@ func (a *App) initflags() {
 	a.Cmd().PostRunE = a.postrun
 	a.Cmd().PersistentFlags().StringVar(&a.logfile, "log", "", "set a log file")
 
+	a.Flags().BoolVar(&a.openlogs, "open-logs", false, "open the log file")
 	a.Flags().BoolVar(&a.clearCache, "clear-cache", false, "delete the database")
 	a.Cmd().PersistentFlags().BoolVar(&a.resetMenu, "delete-menu", false, "delete the menu stored in cache")
 

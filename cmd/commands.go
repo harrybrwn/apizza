@@ -53,6 +53,8 @@ func Execute() {
 		handle(err, "Internal Error", 1)
 	}
 
+	app := newapp(db, cfg, logs)
+
 	log.SetOutput(&lumberjack.Logger{
 		Filename:   filepath.Join(config.Folder(), "logs", "dev.log"),
 		MaxSize:    25,  // megabytes
@@ -60,7 +62,6 @@ func Execute() {
 		MaxAge:     365, //days
 		Compress:   false,
 	})
-	app := newapp(db, cfg, logs)
 
 	defer func() {
 		err = errs.Append(db.Close(), config.Save()) //, logs.Close())
