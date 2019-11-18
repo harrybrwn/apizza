@@ -191,7 +191,6 @@ func (b *cliBuilder) exec() error {
 		),
 		b.newMenuCmd(),
 		newOrderCmd(),
-		newDumpCmd(newCliBuilder(b.root, db, b.root.Output())),
 	)
 	return b.root.Cmd().Execute()
 }
