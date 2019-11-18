@@ -67,8 +67,8 @@ func (c *cartCmd) Run(cmd *cobra.Command, args []string) (err error) {
 		return nil
 	}
 
-	var order *dawg.Order
-	if order, err = data.GetOrder(name, db); err != nil {
+	order := c.store().NewOrder()
+	if _, err = data.GetOrder(name, db, order); err != nil {
 		return err
 	}
 
