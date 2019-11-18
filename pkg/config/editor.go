@@ -18,7 +18,7 @@ func EditFile(name string) error {
 }
 
 func edit(f string) error {
-	editor := os.Getenv("Editor")
+	editor := os.Getenv("EDITOR")
 	if editor == "" {
 		editor = DefaultEditor
 	}
