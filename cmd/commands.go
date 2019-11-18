@@ -17,6 +17,7 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"time"
@@ -29,7 +30,10 @@ import (
 	"github.com/harrybrwn/apizza/pkg/errs"
 )
 
-var db *cache.DataBase
+var (
+	db             *cache.DataBase
+	menuUpdateTime = 12 * time.Hour
+)
 
 // Execute runs the root command
 func Execute() {
@@ -38,15 +42,12 @@ func Execute() {
 		handle(err, "Internal Error", 1)
 	}
 
-	builder := &cliBuilder{
-		root: newApizzaCmd(),
-		addr: &cfg.Address,
-	}
-
 	dbPath := filepath.Join(config.Folder(), "cache", "apizza.db")
 	if db, err = cache.GetDB(dbPath); err != nil {
 		handle(err, "Internal Error", 1)
 	}
+
+	app := newapp(db, cfg, os.Stdout)
 
 	defer func() {
 		err = errs.Pair(db.Close(), config.Save())
@@ -55,7 +56,7 @@ func Execute() {
 		}
 	}()
 
-	if err = builder.exec(); err != nil {
+	if err = app.exec(); err != nil {
 		handle(err, "Error", 1)
 	}
 }
