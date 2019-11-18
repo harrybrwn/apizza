@@ -115,7 +115,6 @@ func (a *App) exec() error {
 		),
 		a.builder.newMenuCmd(),
 		newOrderCmd(),
-		newDumpCmd(a),
 	)
 	return a.Cmd().Execute()
 }

@@ -15,16 +15,16 @@ import (
 
 func TestRunner(t *testing.T) {
 	r := tests.NewRunner(t, setupTests, teardownTests)
-	b := newBuilder()
+	app := newapp(db, cfg, nil)
 	r.AddTest(
 		dummyCheck,
-		base.WithCmds(testOrderNew, newCartCmd(b), newAddOrderCmd(b)),
-		base.WithCmds(testAddOrder, newCartCmd(b), newAddOrderCmd(b)),
-		base.WithCmds(testOrderNewErr, newAddOrderCmd(b)),
-		base.WithCmds(testOrderRunAdd, newCartCmd(b)),
-		withCartCmd(b, testOrderPriceOutput),
-		withCartCmd(b, testAddToppings),
-		withCartCmd(b, testOrderRunDelete),
+		base.WithCmds(testOrderNew, newCartCmd(app.builder), newAddOrderCmd(app.builder)),
+		base.WithCmds(testAddOrder, newCartCmd(app.builder), newAddOrderCmd(app.builder)),
+		base.WithCmds(testOrderNewErr, newAddOrderCmd(app.builder)),
+		base.WithCmds(testOrderRunAdd, newCartCmd(app.builder)),
+		withCartCmd(app.builder, testOrderPriceOutput),
+		withCartCmd(app.builder, testAddToppings),
+		withCartCmd(app.builder, testOrderRunDelete),
 		testFindProduct,
 		withApizzaCmd(testApizzaCmdRun, newApizzaCmd()),
 		withDummyDB(withApizzaCmd(testApizzaResetflag, newApizzaCmd())),
