@@ -4,16 +4,24 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"path/filepath"
 	"strings"
 
 	"github.com/harrybrwn/apizza/cmd/internal/out"
 	"github.com/harrybrwn/apizza/dawg"
 	"github.com/harrybrwn/apizza/pkg/cache"
+	"github.com/harrybrwn/apizza/pkg/config"
 	"github.com/harrybrwn/apizza/pkg/errs"
 )
 
 // OrderPrefix is the prefix added to user orders when stored in a database.
 const OrderPrefix = "user_order_"
+
+// NewDatabase make the default database.
+func NewDatabase() (*cache.DataBase, error) {
+	dbPath := filepath.Join(config.Folder(), "cache", "apizza.db")
+	return cache.GetDB(dbPath)
+}
 
 // PrintOrders will print all the names of the saved user orders
 func PrintOrders(db cache.MapDB, w io.Writer, verbose bool) error {

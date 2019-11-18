@@ -2,10 +2,13 @@ package cmd
 
 import (
 	"io"
+	"log"
 	"os"
+	"path/filepath"
 
 	"github.com/harrybrwn/apizza/cmd/internal/base"
 	"github.com/harrybrwn/apizza/cmd/internal/obj"
+	"github.com/harrybrwn/apizza/cmd/internal/out"
 	"github.com/harrybrwn/apizza/dawg"
 	"github.com/harrybrwn/apizza/pkg/cache"
 	"github.com/harrybrwn/apizza/pkg/config"
@@ -21,9 +24,14 @@ type App struct {
 	db   *cache.DataBase
 	conf *Config
 	addr *obj.Address
+	logf *os.File
+	log  *log.Logger
 
 	// temporary compatability stuff
 	builder *cliBuilder
+
+	// util flags
+	logfile string
 
 	// root command flags
 	address    string
@@ -32,15 +40,17 @@ type App struct {
 	clearCache bool
 	resetMenu  bool
 
+	// persistant flags
 	storeLocation bool
 }
 
-func newapp(db *cache.DataBase, conf *Config, out io.Writer) *App {
+func newapp(db *cache.DataBase, conf *Config, logs io.Writer) *App {
 	app := &App{
 		CliCommand: nil,
 		db:         db,
 		conf:       conf,
 		addr:       &conf.Address,
+		log:        log.New(logs, "", 0),
 
 		// default flag values...
 		address:    "",
@@ -49,7 +59,7 @@ func newapp(db *cache.DataBase, conf *Config, out io.Writer) *App {
 	}
 
 	app.CliCommand = base.NewCommand("apizza", "Dominos pizza from the command line.", app.Run)
-	app.SetOutput(out)
+	app.SetOutput(os.Stdout)
 	app.storefinder = newStoreGetter(
 		func() string {
 			if len(app.service) == 0 {
@@ -86,6 +96,11 @@ func (a *App) Build(use, short string, r base.Runner) *base.Command {
 // Config returns the config struct.
 func (a *App) Config() config.Config {
 	return a.conf
+}
+
+// Log to the logging file
+func (a *App) Log(v ...interface{}) {
+	a.log.Print(v...)
 }
 
 func (a *App) exec() error {
@@ -128,7 +143,9 @@ func (a *App) Run(cmd *cobra.Command, args []string) (err error) {
 }
 
 func (a *App) initflags() {
-	a.Cmd().PersistentPreRunE = a.resetmenu
+	a.Cmd().PersistentPreRunE = a.prerun
+	a.Cmd().PostRunE = a.postrun
+	a.Cmd().PersistentFlags().StringVar(&a.logfile, "log", "", "set a log file")
 
 	a.Flags().BoolVar(&a.clearCache, "clear-cache", false, "delete the database")
 	a.Cmd().PersistentFlags().BoolVar(&a.resetMenu, "delete-menu", false, "delete the menu stored in cache")
@@ -144,12 +161,31 @@ func (a *App) initflags() {
 	a.Flags().BoolVarP(&a.storeLocation, "store-location", "L", false, "show the location of the nearest store")
 }
 
-func (a *App) resetmenu(*cobra.Command, []string) (err error) {
+func (a *App) prerun(*cobra.Command, []string) (err error) {
 	if a.resetMenu {
 		err = a.DB().Delete("menu")
-		if err != nil {
-			return err
-		}
+	}
+	var (
+		e    error
+		file string
+	)
+
+	if a.logfile != "" {
+		file = a.logfile
+		a.logf, e = os.Create(logfile(file))
+		a.log = log.New(a.logf, "", 0)
+		log.SetOutput(a.logf)
+	}
+	return errs.Pair(err, e)
+}
+
+func (a *App) postrun(*cobra.Command, []string) (err error) {
+	if a.logf != nil {
+		return a.logf.Close()
 	}
 	return nil
+}
+
+func logfile(name string) string {
+	return filepath.Join(config.Folder(), out.Logdir, name)
 }

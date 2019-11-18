@@ -18,12 +18,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"os"
-	"path/filepath"
 	"time"
 
 	"github.com/harrybrwn/apizza/cmd/internal/base"
+	"github.com/harrybrwn/apizza/cmd/internal/data"
 	"github.com/harrybrwn/apizza/cmd/internal/obj"
+	"github.com/harrybrwn/apizza/cmd/internal/out"
 	"github.com/harrybrwn/apizza/dawg"
 	"github.com/harrybrwn/apizza/pkg/cache"
 	"github.com/harrybrwn/apizza/pkg/config"
@@ -37,26 +39,30 @@ var (
 
 // Execute runs the root command
 func Execute() {
-	var err error
+	var (
+		err, logErr error
+		logs        *os.File
+	)
 	if err = config.SetConfig(".apizza", cfg); err != nil {
 		handle(err, "Internal Error", 1)
 	}
 
-	dbPath := filepath.Join(config.Folder(), "cache", "apizza.db")
-	if db, err = cache.GetDB(dbPath); err != nil {
+	if db, err = data.NewDatabase(); err != nil {
 		handle(err, "Internal Error", 1)
 	}
 
-	app := newapp(db, cfg, os.Stdout)
+	logs, logErr = out.LogFile()
+	log.SetOutput(logs)
+	app := newapp(db, cfg, logs)
 
 	defer func() {
-		err = errs.Pair(db.Close(), config.Save())
+		err = errs.Append(db.Close(), config.Save(), logs.Close())
 		if err != nil {
 			handle(err, "Internal Error", 1)
 		}
 	}()
 
-	if err = app.exec(); err != nil {
+	if err = errs.Pair(logErr, app.exec()); err != nil {
 		handle(err, "Error", 1)
 	}
 }
