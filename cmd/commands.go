@@ -191,3 +191,39 @@ func (b *cliBuilder) newCommand(use, short string, c base.Runner) *basecmd {
 	base.addr = b.addr
 	return base
 }
+
+type storefinder interface {
+	store() *dawg.Store
+}
+
+type storegetter struct {
+	getaddr   func() dawg.Address
+	getmethod func() string
+	dstore    *dawg.Store
+}
+
+func newStoreGetter(service func() string, addr func() dawg.Address) storefinder {
+	return &storegetter{
+		getmethod: service,
+		getaddr:   addr,
+		dstore:    nil,
+	}
+}
+
+func (s *storegetter) store() *dawg.Store {
+	if s.dstore == nil {
+		var err error
+		var address = s.getaddr()
+		s.dstore, err = dawg.NearestStore(address, s.getmethod())
+		if err != nil {
+			handle(err, "Internal Error", 1) // will exit
+		}
+	}
+	return s.dstore
+}
+
+type menuupdater interface {
+}
+
+type menuUpdater struct {
+}
