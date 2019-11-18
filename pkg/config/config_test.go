@@ -194,7 +194,7 @@ func TestFieldName(t *testing.T) {
 
 func TestPrintAll(t *testing.T) {
 	var c Config = &testCnfg{}
-	expected := "test: \"\"\nmsg: \"\"\nnumber: 0\nnumber2: 0\nnullval: null\nmore: \n  one: \"\"\n  two: \"\"\n"
+	expected := "test: \"\"\nmsg: \"\"\nnumber: 0\nnumber2: 0\nnullval: null\nmore:\n  one: \"\"\n  two: \"\"\n"
 
 	tests.CompareOutput(t, expected, func() {
 		if err := PrintAll(c); err != nil {
