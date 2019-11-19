@@ -5,6 +5,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/harrybrwn/apizza/pkg/errs"
 	"github.com/harrybrwn/apizza/pkg/tests"
 	"github.com/spf13/cobra"
 )
@@ -46,6 +47,17 @@ func TestNewCommand(t *testing.T) {
 			t.Error(err)
 		}
 	})
+}
+
+func TestRunFunction(t *testing.T) {
+	f := RunFunction(func(cmd *cobra.Command, args []string) error {
+		return errs.New("this is a run func")
+	})
+	// rf = RunFunction(rf)
+	err := f.Run(nil, nil)
+	if err.Error() != "this is a run func" {
+		t.Error("RunFunction gave wrong output")
+	}
 }
 
 func testCmd(t *testing.T, buf *bytes.Buffer, cmds ...CliCommand) {

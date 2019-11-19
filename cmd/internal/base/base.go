@@ -30,7 +30,7 @@ type Runner interface {
 }
 
 // NewCommand returns a new base command.
-func NewCommand(use, short string, f runFunction) *Command {
+func NewCommand(use, short string, f RunFunction) *Command {
 	return &Command{
 		cmd: &cobra.Command{
 			Use:           use,
@@ -119,4 +119,10 @@ func WithCmds(
 	}
 }
 
-type runFunction func(*cobra.Command, []string) error
+// RunFunction is a function that is used to run a cli command.
+type RunFunction func(*cobra.Command, []string) error
+
+// Run runs the runner.
+func (rf RunFunction) Run(cmd *cobra.Command, args []string) error {
+	return rf(cmd, args)
+}
