@@ -224,4 +224,27 @@ func TestClientStuff(t *testing.T) {
 	if err == nil {
 		t.Error("order Client should not allow redirects")
 	}
+	tok, err := gettoken("bad", "creds")
+	if err == nil {
+		t.Error("should return error")
+	}
+
+	req := newAuthRequest(oauthURL, url.Values{})
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		t.Error(err)
+	}
+	tok = &token{}
+	err = unmarshalToken(resp.Body, tok)
+	if err == nil {
+		t.Error("expected error")
+	}
+	if e, ok := err.(*tokenError); !ok {
+		t.Error("expected a *tokenError as the error")
+	} else if e.Error() != fmt.Sprintf("%s: %s", e.Err, e.ErrorDesc) {
+		t.Error("wrong error message")
+	}
+	if IsOk(err) {
+		t.Error("this shouldnt happen")
+	}
 }

@@ -111,19 +111,7 @@ func gettoken(username, password string) (*token, error) {
 		"username":   {username},
 		"password":   {password},
 	}
-	req := &http.Request{
-		Method:     "POST",
-		Proto:      "HTTP/1.1",
-		ProtoMajor: 1,
-		ProtoMinor: 1,
-		Host:       oauthURL.Host,
-		Header: http.Header{
-			"Content-Type": {
-				"application/x-www-form-urlencoded; charset=UTF-8"},
-		},
-		URL:  oauthURL,
-		Body: ioutil.NopCloser(strings.NewReader(data.Encode())),
-	}
+	req := newAuthRequest(oauthURL, data)
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return nil, err
@@ -143,19 +131,7 @@ func (a *auth) login() (*UserProfile, error) {
 		"u":               {a.username},
 		"p":               {a.password},
 	}
-	req := &http.Request{
-		Method:     "POST",
-		Proto:      "HTTP/1.1",
-		ProtoMajor: 1,
-		ProtoMinor: 1,
-		Host:       loginURL.Host,
-		Header: http.Header{
-			"Content-Type": {
-				"application/x-www-form-urlencoded; charset=UTF-8"},
-		},
-		URL:  loginURL,
-		Body: ioutil.NopCloser(strings.NewReader(data.Encode())),
-	}
+	req := newAuthRequest(loginURL, data)
 	res, err := a.cli.Do(req)
 	if err != nil {
 		return nil, err
@@ -173,6 +149,24 @@ func (a *auth) login() (*UserProfile, error) {
 		return nil, err
 	}
 	return profile, json.Unmarshal(b, profile)
+}
+
+func newAuthRequest(u *url.URL, vals url.Values) *http.Request {
+	return &http.Request{
+		Method:     "POST",
+		Proto:      "HTTP/1.1",
+		ProtoMajor: 1,
+		ProtoMinor: 1,
+		Host:       u.Host,
+		Header: http.Header{
+			"Content-Type": {
+				"application/x-www-form-urlencoded; charset=UTF-8"},
+			"User-Agent": {
+				"Apizza Dominos API Wrapper for Go " + time.Now().UTC().String()},
+		},
+		URL:  u,
+		Body: ioutil.NopCloser(strings.NewReader(vals.Encode())),
+	}
 }
 
 type client struct {
@@ -252,7 +246,7 @@ func unmarshalToken(r io.ReadCloser, t *token) error {
 	defer r.Close()
 
 	_, e1 := buf.ReadFrom(r)
-	err := errpair(e1, json.NewDecoder(buf).Decode(t))
+	err := errpair(e1, json.Unmarshal(buf.Bytes(), t))
 	if err != nil {
 		return err
 	}
