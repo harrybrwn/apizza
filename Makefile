@@ -10,16 +10,8 @@ release:
 	bash scripts/release.sh
 
 test: setup $(COVER_FILE)
-	go test -cover ./... -coverprofile=$(COVER_FILE)
+	go test -cover ./... -coverprofile=$(COVER_FILE) -covermode=atomic
 	$(COVER) -func=$(COVER_FILE)
-
-install-deps:
-	go list -f '{{ join .Imports "\n" }}' ./... | \
-		grep -P '^(github.com|gopkg.in)/.*' | \
-		grep -v "`go list`" | \
-		awk '{print}' ORS=' ' | \
-		go get -u
-
 
 html: test
 	$(COVER) -html=$(COVER_FILE)
@@ -28,7 +20,7 @@ setup:
 	touch $(COVER_FILE)
 
 clean:
-	$(RM) $(COVER_FILE)
+	$(RM) $(COVER_FILE) coverage.txt
 	$(RM) -r release
 
 .PHONY: install test setup clean html release
