@@ -39,10 +39,12 @@ func (u *UserProfile) AddAddress(a Address) {
 	u.Addresses = append(u.Addresses, UserAddressFromAddress(a))
 }
 
+var errNoServiceMethod = errors.New("no service method given")
+
 // StoresNearMe will find the stores closest to the user's default address.
 func (u *UserProfile) StoresNearMe() ([]*Store, error) {
 	if u.ServiceMethod == "" {
-		return nil, errors.New("UserProfile has no Service Method, please set it")
+		return nil, errNoServiceMethod
 	}
 
 	address := u.DefaultAddress()

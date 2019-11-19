@@ -172,7 +172,7 @@ func TestAuth(t *testing.T) {
 	}
 }
 
-func TestBadAuth(t *testing.T) {
+func TestAuth_Err(t *testing.T) {
 	a, err := newauth("not a", "valid password")
 	if err == nil {
 		t.Error("expected an error")
@@ -210,7 +210,7 @@ func TestSignIn(t *testing.T) {
 	}
 }
 
-func TestClientStuff(t *testing.T) {
+func TestAuthClient(t *testing.T) {
 	username, password, ok := gettestcreds()
 	if !ok {
 		t.Skip()

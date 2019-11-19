@@ -16,7 +16,7 @@ func testAddress() *StreetAddr {
 }
 
 func TestFindNearbyStores(t *testing.T) {
-	for _, service := range []string{"Delivery", "Carryout"} {
+	for _, service := range []string{Delivery, Carryout} {
 		_, err := findNearbyStores(orderClient, testAddress(), service)
 		if err != nil {
 			t.Error("\n TestNearbyStore:", err, "\n")
@@ -25,28 +25,25 @@ func TestFindNearbyStores(t *testing.T) {
 }
 
 func TestFindNearbyStores_Err(t *testing.T) {
-	func() {
-		defer func() {
-			if r := recover(); r == nil {
-				t.Error("Should panic")
-			} else if r != "service must be either 'Delivery' or 'Carryout'" {
-				t.Errorf("caught wrong panic msg: %v\n", r)
-			}
-		}()
-		_, _ = findNearbyStores(orderClient, testAddress(), "invalid service")
-	}()
-	_, err := findNearbyStores(orderClient, &StreetAddr{}, "Delivery")
+	_, err := findNearbyStores(orderClient, testAddress(), "invalid service")
+	if err == nil {
+		t.Error("expected an error")
+	}
+	if err != errBadService {
+		t.Error("findNearbyStores gave the wrong error for an invalid service")
+	}
+	_, err = findNearbyStores(orderClient, &StreetAddr{}, Delivery)
 	if err == nil {
 		t.Error("should return error")
 	}
-	if _, err := NearestStore(nil, "Delivery"); err == nil {
+	if _, err := NearestStore(nil, Delivery); err == nil {
 		t.Error("expected error")
 	}
 }
 
 func TestNewStore(t *testing.T) {
 	id := "4339"
-	service := "Carryout"
+	service := Carryout
 	s, err := NewStore(id, service, nil)
 	if err != nil {
 		t.Error(err)
@@ -69,7 +66,7 @@ func TestNewStore(t *testing.T) {
 
 func TestNearestStore(t *testing.T) {
 	addr := testAddress()
-	service := "Delivery"
+	service := Delivery
 	s, err := NearestStore(addr, service)
 	if err != nil {
 		t.Error(err)
@@ -124,7 +121,7 @@ func TestNearestStore(t *testing.T) {
 }
 
 func TestNearestStore_Err(t *testing.T) {
-	_, err := NearestStore(&StreetAddr{}, "Delivery")
+	_, err := NearestStore(&StreetAddr{}, Delivery)
 	if err == nil {
 		t.Error("expected error")
 	}
@@ -198,7 +195,7 @@ func Test_initStoreErr(t *testing.T) {
 
 func TestGetNearestStore(t *testing.T) {
 	a := testAddress()
-	for _, service := range []string{"Delivery", "Carryout"} {
+	for _, service := range []string{Delivery, Carryout} {
 		s, err := getNearestStore(orderClient, a, service)
 		if err != nil {
 			t.Error(err)
