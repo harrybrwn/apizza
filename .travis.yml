@@ -13,8 +13,7 @@ os:
   - osx
   - windows
 before_script:
-  - go install
-  - [[ "$TRAVIS_GO_VERSION" = "1.11" ]] && make install-deps
+  - sh scripts/build.sh
 script:
   - make test
 after_success:
