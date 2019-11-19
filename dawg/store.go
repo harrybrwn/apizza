@@ -1,7 +1,6 @@
 package dawg
 
 import (
-	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -59,10 +58,7 @@ func InitStore(id string, obj interface{}) error {
 	if err != nil {
 		return err
 	}
-	if err = dominosErr(b); err != nil {
-		return err
-	}
-	return json.Unmarshal(b, obj)
+	return errpair(json.Unmarshal(b, obj), dominosErr(b))
 }
 
 var orderClient = &client{Client: http.DefaultClient, host: orderHost}
@@ -73,14 +69,8 @@ func initStore(cli *client, id string, store *Store) error {
 	if err != nil {
 		return err
 	}
-	if bytes.HasPrefix(b, []byte("<!DOCTYPE html>")) {
-		return errors.New("invalid 'id' argument")
-	}
-	if err = dominosErr(b); err != nil {
-		return err
-	}
 	store.cli = cli
-	return json.Unmarshal(b, store)
+	return errpair(json.Unmarshal(b, store), dominosErr(b))
 }
 
 // The Store object represents a physical dominos location.
@@ -114,10 +104,12 @@ type Store struct {
 
 // Menu returns the menu for a store object
 func (s *Store) Menu() (*Menu, error) {
+	var err error
 	if s.menu != nil && s.menu.ID == s.ID {
 		return s.menu, nil
 	}
-	return newMenu(s.cli, s.ID)
+	s.menu, err = newMenu(s.cli, s.ID)
+	return s.menu, err
 }
 
 // NewOrder is a convenience function for creating an order from some of the store variables.
@@ -220,26 +212,4 @@ func findNearbyStores(c *client, addr Address, service string) (*storeLocs, erro
 		return nil, err
 	}
 	return locs, dominosErr(b)
-}
-
-// storeErrWrapper and initStores are first drafts of concurrent store infrastructure
-type storeErrWrapper struct {
-	store *Store
-	e     error
-}
-
-func initStoreChan(s *Store, c chan *Store) {
-	if err := InitStore(s.ID, s); err != nil {
-		panic(err)
-	}
-	c <- s
-}
-
-func initStores(stores []*Store) chan *Store {
-	c := make(chan *Store)
-
-	for i := range stores {
-		go initStoreChan(stores[i], c) // send the initialized store through the channel
-	}
-	return c
 }

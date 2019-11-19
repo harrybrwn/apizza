@@ -97,6 +97,30 @@ func TestNearestStore(t *testing.T) {
 			continue
 		}
 	}
+	m, err1 := s.Menu()
+	m2, err2 := s.Menu()
+	err = errpair(err1, err2)
+	if err != nil {
+		t.Error(err)
+	}
+	if m != m2 {
+		t.Errorf("should be the same for two calls to Store.Menu: %p %p", m, m2)
+	}
+	id := s.ID
+	s.ID = ""
+	_, err = s.Menu()
+	if err == nil {
+		t.Error("expected an error for a store with no id")
+	}
+	_, err = s.GetProduct("14SCREEN")
+	if err == nil {
+		t.Error("expected error from a store with no id")
+	}
+	_, err = s.GetVariant("14SCREEN")
+	if err == nil {
+		t.Error("expected error from a store with no id")
+	}
+	s.ID = id
 }
 
 func TestNearestStore_Err(t *testing.T) {
@@ -161,6 +185,17 @@ func TestInitStore(t *testing.T) {
 	}
 }
 
+func Test_initStoreErr(t *testing.T) {
+	ids := []string{"", "0000", "999999999999", "-7765"}
+	for _, id := range ids {
+		s := new(Store)
+		err := initStore(orderClient, id, s)
+		if err == nil {
+			t.Error("expected error from a ridiculous store id")
+		}
+	}
+}
+
 func TestGetNearestStore(t *testing.T) {
 	a := testAddress()
 	for _, service := range []string{"Delivery", "Carryout"} {
@@ -173,33 +208,3 @@ func TestGetNearestStore(t *testing.T) {
 		}
 	}
 }
-
-// func TestInitStores(t *testing.T) {
-// 	addr := testAddress()
-// 	all, err := findNearbyStores(addr, "Delivery")
-// 	if err != nil {
-// 		t.Error(err)
-// 	}
-// 	var stores []*Store
-// 	c := initStores(all.Stores)
-// 	for store := range c {
-// 		// fmt.Println(store.ID)
-// 		stores = append(stores, store)
-// 	}
-// 	close(c)
-// }
-
-// func BenchmarkInitStores(b *testing.B) {
-// 	addr := testAddress()
-// 	all, err := findNearbyStores(addr, "Delivery")
-// 	if err != nil {
-// 		b.Error(err)
-// 	}
-// 	var stores []*Store
-// 	c := initStores(all.Stores)
-// 	for store := range c {
-// 		fmt.Println(store.ID)
-// 		stores = append(stores, store)
-// 	}
-// 	// b.Error("look")
-// }
