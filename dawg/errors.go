@@ -168,3 +168,7 @@ type errorpair struct {
 func (e *errorpair) Error() string {
 	return fmt.Sprintf("error 1. %s\nerror 2. %s", e.e1.Error(), e.e2.Error())
 }
+
+func eatint(n int, e error) error {
+	return e
+}

@@ -175,16 +175,13 @@ func OrderToJSON(o *Order) string {
 
 func (o *Order) raw() *bytes.Buffer {
 	buf := new(bytes.Buffer)
-	_, err := buf.WriteString("{\"Order\":")
+	err := errpair( // args are executed in order
+		eatint(buf.WriteString("{\"Order\":")),
+		json.NewEncoder(buf).Encode(o),
+	)
 	if err != nil {
 		return nil
 	}
-
-	err = json.NewEncoder(buf).Encode(o)
-	if err != nil {
-		return nil
-	}
-
 	_, err = buf.WriteString("}")
 	if err != nil {
 		return nil

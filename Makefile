@@ -13,8 +13,11 @@ test: setup $(COVER_FILE)
 	go test -cover ./... -coverprofile=$(COVER_FILE) -covermode=atomic
 	$(COVER) -func=$(COVER_FILE)
 
-html: test
-	$(COVER) -html=$(COVER_FILE)
+coverage.txt:
+	bash scripts/test.sh
+
+html: coverage.txt
+	$(COVER) -html=$<
 
 setup:
 	touch $(COVER_FILE)
