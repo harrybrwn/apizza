@@ -148,3 +148,23 @@ func isDominosErr(err error) (*DominosError, bool) {
 	}
 	return e, true
 }
+
+// because i want my errs.Pair function but i dont want to add it as a
+// dependancy to the dawg package in case i ever want to separate them.
+func errpair(first, second error) error {
+	if first == nil || second == nil {
+		if first != nil { // should check the first error first
+			return first
+		}
+		return second
+	}
+	return &errorpair{first, second}
+}
+
+type errorpair struct {
+	e1, e2 error
+}
+
+func (e *errorpair) Error() string {
+	return fmt.Sprintf("error 1. %s\nerror 2. %s", e.e1.Error(), e.e2.Error())
+}

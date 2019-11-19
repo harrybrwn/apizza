@@ -220,6 +220,26 @@ func TestDominosErrorFailure(t *testing.T) {
 	}
 }
 
+func TestErrPair(t *testing.T) {
+	tt := []struct {
+		err error
+		exp string
+	}{
+		{errpair(errors.New("one"), errors.New("two")), "error 1. one\nerror 2. two"},
+		{errpair(errors.New("one"), nil), "one"},
+		{errpair(nil, errors.New("two")), "two"},
+	}
+	for i, tc := range tt {
+		if tc.err.Error() != tc.exp {
+			t.Errorf("test case %d for errpair gave wrong result", i)
+		}
+	}
+	err := errpair(nil, nil)
+	if err != nil {
+		t.Error("a pair of nil errors should result in one nil error")
+	}
+}
+
 func testingStore() *Store {
 	var service string
 
