@@ -50,28 +50,6 @@ type linearError struct {
 	errList []error
 }
 
-func newline(e error, n int) *linearError {
-	err := &linearError{errList: make([]error, n)}
-	if e != nil {
-		err.errList[0] = e
-	}
-	return err
-}
-
-func (le *linearError) append(ers []error) *linearError {
-	for _, e := range ers {
-		if e != nil {
-			le.errList = append(le.errList, e)
-		}
-	}
-	return le
-}
-
-func (le *linearError) add(e error) *linearError {
-	le.errList = append(le.errList, e)
-	return le
-}
-
 // Error for a linearError will print out all of its errors as a list.
 func (le *linearError) Error() string {
 	var (
