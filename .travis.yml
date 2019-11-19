@@ -1,8 +1,10 @@
 language: go
+
 go:
   - 1.11
   - 1.12
   - 1.13
+
 env:
   global:
     - GO111MODULE=on
@@ -12,12 +14,16 @@ os:
   - linux
   - osx
   - windows
+
 before_script:
-  - sh scripts/build.sh
+  - bash scripts/build.sh
+
 script:
   - make test
+
 after_success:
   - bash <(curl -s https://codecov.io/bash)
+
 notifications:
   email:
     - harrybrown98@gmail.com
