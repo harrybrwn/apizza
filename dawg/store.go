@@ -7,6 +7,18 @@ import (
 	"net/http"
 )
 
+const (
+	// Delivery is a dominos service method that will result
+	// in a pizza delivery.
+	Delivery = "Delivery"
+
+	// Carryout is a dominos service method that
+	// will require users to go and pickup their pizza.
+	Carryout = "Carryout"
+)
+
+var errBadService = errors.New("service must be either 'Delivery' or 'Carryout'")
+
 // NearestStore gets the dominos location closest to the given address.
 //
 // The addr argument should be the address to deliver to not the address of the
@@ -193,8 +205,9 @@ func getNearestStore(c *client, addr Address, service string) (*Store, error) {
 }
 
 func findNearbyStores(c *client, addr Address, service string) (*storeLocs, error) {
-	if !(service == "Delivery" || service == "Carryout") {
-		panic("service must be either 'Delivery' or 'Carryout'")
+	if !(service == Delivery || service == Carryout) {
+		// panic("service must be either 'Delivery' or 'Carryout'")
+		return nil, errBadService
 	}
 	// TODO: on the dominos website, the c param can sometimes be just the zip code
 	// and it still works.

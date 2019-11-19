@@ -24,7 +24,9 @@ type UserProfile struct {
 	CustomerID string
 	Phone      string
 	Addresses  []*UserAddress
-	// Status     int
+
+	// ServiceMethod should be "Delivery" or "Carryout"
+	ServiceMethod string `json:"-"`
 
 	auth  *auth
 	store *Store
@@ -32,18 +34,46 @@ type UserProfile struct {
 
 // AddAddress will add an address to the dominos account.
 func (u *UserProfile) AddAddress(a Address) {
+	// TODO: concider sending a request to dominos to update the user with this address.
+	// this can be done in a separate go-routine
 	u.Addresses = append(u.Addresses, UserAddressFromAddress(a))
 }
 
 // StoresNearMe will find the stores closest to the user's default address.
 func (u *UserProfile) StoresNearMe() ([]*Store, error) {
-	return nil, errors.New("not implimented")
+	if u.ServiceMethod == "" {
+		return nil, errors.New("UserProfile has no Service Method, please set it")
+	}
+
+	address := u.DefaultAddress()
+	all, err := findNearbyStores(u.auth.cli, address, u.ServiceMethod)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, store := range all.Stores {
+		store.userAddress = address
+		store.userService = u.ServiceMethod
+		if err = initStore(u.auth.cli, store.ID, store); err != nil {
+			return nil, err
+		}
+	}
+	return all.Stores, nil
 }
 
 // NearestStore will find the the store that is closest to the user's default address.
 func (u *UserProfile) NearestStore(service string) (*Store, error) {
+	var err error
+	if u.store != nil {
+		return u.store, nil
+	}
+
+	// pass the authorized user's client along to
+	//  the store wich will use the user's credentitals
+	// on each request.
 	c := &client{host: orderHost, Client: u.auth.cli.Client}
-	return getNearestStore(c, u.DefaultAddress(), service)
+	u.store, err = getNearestStore(c, u.DefaultAddress(), service)
+	return u.store, err
 }
 
 // DefaultAddress will return the address that Dominos has marked as the default.
@@ -62,9 +92,20 @@ func (u *UserProfile) DefaultAddress() *UserAddress {
 	return u.Addresses[0]
 }
 
+// SetServiceMethod will set the user's default service method,
+// should be "Delivery" or "Carryout"
+func (u *UserProfile) SetServiceMethod(service string) error {
+	if !(service == Delivery || service == Carryout) {
+		return errBadService
+	}
+	u.ServiceMethod = service
+	return nil
+}
+
 // UserAddress is an address that is saved by dominos and returned when
 // a user signs in.
 type UserAddress struct {
+	// TODO: find out which of these fields are not needed
 	AddressType          string
 	StreetNumber         string
 	StreetRange          string
