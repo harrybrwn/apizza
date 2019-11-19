@@ -3,6 +3,7 @@
 [![Build Status](https://travis-ci.com/harrybrwn/apizza.svg?branch=master)](https://travis-ci.com/harrybrwn/apizza)
 [![GoDoc](https://godoc.org/github.com/github.com/harrybrwn/apizza/dawg?status.svg)](https://godoc.org/github.com/harrybrwn/apizza/dawg)
 [![Go Report Card](https://goreportcard.com/badge/github.com/harrybrwn/apizza)](https://goreportcard.com/report/github.com/harrybrwn/apizza)
+[![codecov](https://codecov.io/gh/harrybrwn/apizza/branch/master/graph/badge.svg)](https://codecov.io/gh/harrybrwn/apizza)
 
 Dominos pizza from the command line.
 
