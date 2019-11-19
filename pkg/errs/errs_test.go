@@ -171,3 +171,11 @@ func TestBadAppendandPair(t *testing.T) {
 		t.Errorf("wrong output; got: %s\nwant: %s", e.Error(), exp)
 	}
 }
+
+func TestEating(t *testing.T) {
+	f := func() (int, error) { return 3, New("eats") }
+	e := EatInt(f())
+	if e.Error() != "eats" {
+		t.Error("EatInt spat out the wrong error")
+	}
+}

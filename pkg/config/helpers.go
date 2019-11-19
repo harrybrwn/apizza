@@ -38,6 +38,10 @@ func GetField(config Config, key string) interface{} {
 		return val.String()
 	case reflect.Int:
 		return val.Int()
+	case reflect.Float64:
+		return val.Float()
+	case reflect.Float32:
+		return val.Float()
 	case reflect.Struct:
 		return val
 	default:
@@ -72,6 +76,12 @@ func SetField(config Config, key string, val interface{}) error {
 	case int, int64, int32:
 		if field.Kind() == reflect.Int {
 			field.SetInt(val.(int64))
+		} else {
+			return fmt.Errorf("config.Set: wrong type")
+		}
+	case float32, float64:
+		if field.Kind() == reflect.Float32 || field.Kind() == reflect.Float64 {
+			field.SetFloat(val.(float64))
 		} else {
 			return fmt.Errorf("config.Set: wrong type")
 		}

@@ -116,8 +116,8 @@ func GetString(key string) string {
 }
 
 // GetInt returns the config key value as an integer.
-func GetInt(key string) int {
-	return GetField(cfg.conf, key).(int)
+func GetInt(key string) int64 {
+	return GetField(cfg.conf, key).(int64)
 }
 
 // GetFloat returns the config key value as a float.

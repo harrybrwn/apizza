@@ -34,6 +34,7 @@ type testCnfg struct {
 		One string `config:"one"`
 		Two string `config:"two"`
 	} `config:"more"`
+	Pie float64 `config:"pi" default:"3.14159"`
 }
 
 func (c *testCnfg) Get(key string) interface{}            { return nil }
@@ -96,6 +97,18 @@ func TestConfigGetandSet(t *testing.T) {
 	if err == nil {
 		t.Error("expected error")
 	}
+	err = SetField(c, "pi", 6.9)
+	if err != nil {
+		t.Error(err)
+	}
+	err = SetField(c, "pi", "what")
+	if err == nil {
+		t.Error("expected error")
+	}
+	err = SetField(c, "msg", 9.5)
+	if err == nil {
+		t.Error("expected error")
+	}
 }
 
 func TestSetConfig(t *testing.T) {
@@ -154,7 +167,8 @@ func TestEmptyConfig(t *testing.T) {
     "More": {
 		"One": "",
 		"Two": ""
-    }
+	},
+	"Pie": 3.14159
 }`
 	expected = strings.Replace(expected, "\t", "    ", -1)
 	raw := emptyJSONConfig(elem.Type(), 0)
@@ -192,9 +206,38 @@ func TestFieldName(t *testing.T) {
 	}
 }
 
+func TestGeters(t *testing.T) {
+	var c Config = new(testCnfg)
+	if err := SetNonFileConfig(c); err != nil {
+		t.Error(err)
+	}
+
+	if GetString("msg") != "this should have been deleted, please remove it" {
+		t.Error("bad result; GetString")
+	}
+	if GetString("test") != "this is a test config file" {
+		t.Error("bad result; GetString")
+	}
+	if GetInt("number") != 50 {
+		t.Error("bad result; GetInt")
+	}
+	if GetFloat("pi") != 3.14159 {
+		t.Error("bad result; GetFloat")
+	}
+	if Object().(*testCnfg).Pie != GetFloat("pi") {
+		t.Error("no")
+	}
+	if err := Set("pi", 3.14159*2); err != nil {
+		t.Error(err)
+	}
+	if GetFloat("pi") != 3.14159*2 {
+		t.Error("wrong result; GetFloat after Set")
+	}
+}
+
 func TestPrintAll(t *testing.T) {
 	var c Config = &testCnfg{}
-	expected := "test: \"\"\nmsg: \"\"\nnumber: 0\nnumber2: 0\nnullval: null\nmore:\n  one: \"\"\n  two: \"\"\n"
+	expected := "test: \"\"\nmsg: \"\"\nnumber: 0\nnumber2: 0\nnullval: null\nmore:\n  one: \"\"\n  two: \"\"\npi: 0\n"
 
 	tests.CompareOutput(t, expected, func() {
 		if err := PrintAll(c); err != nil {
@@ -204,6 +247,37 @@ func TestPrintAll(t *testing.T) {
 
 	tests.CompareOutput(t, expected, func() {
 		if err := FprintAll(os.Stdout, c); err != nil {
+			t.Error(err)
+		}
+	})
+}
+
+func TestEditor(t *testing.T) {
+	cfg = configfile{file: tests.TempFile()}
+	if err := os.Setenv("EDITOR", "cat"); err != nil {
+		t.Error(err)
+	}
+	data := "testing my editor func"
+	err := ioutil.WriteFile(cfg.file, []byte(data), 0777)
+	if err != nil {
+		t.Error(err)
+	}
+
+	tests.CompareOutput(t, data, func() {
+		if err := Edit(); err != nil {
+			t.Error(err)
+		}
+	})
+
+	data = "written to temp file for tests"
+	f := tests.TempFile()
+	err = ioutil.WriteFile(f, []byte(data), 0777)
+	if err != nil {
+		t.Error(err)
+	}
+
+	tests.CompareOutput(t, data, func() {
+		if err := EditFile(f); err != nil {
 			t.Error(err)
 		}
 	})
