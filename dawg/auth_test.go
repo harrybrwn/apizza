@@ -209,3 +209,19 @@ func TestSignIn(t *testing.T) {
 		t.Fatal("got nil user from SignIn")
 	}
 }
+
+func TestClientStuff(t *testing.T) {
+	username, password, ok := gettestcreds()
+	if !ok {
+		t.Skip()
+	}
+	auth, err := newauth(username, password)
+	if err != nil {
+		t.Error(err)
+	}
+
+	err = auth.cli.CheckRedirect(nil, nil)
+	if err == nil {
+		t.Error("order Client should not allow redirects")
+	}
+}

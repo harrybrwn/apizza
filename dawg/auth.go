@@ -20,6 +20,23 @@ type auth struct {
 	cli      *client
 }
 
+const (
+	oauthEndpoint = "https://api.dominos.com/as/token.oauth2"
+	loginEndpoint = "https://order.dominos.com/power/login"
+)
+
+var oauthURL = &url.URL{
+	Scheme: "https",
+	Host:   "api.dominos.com",
+	Path:   "/as/token.oauth2",
+}
+
+var loginURL = &url.URL{
+	Scheme: "https",
+	Host:   orderHost,
+	Path:   "/power/login",
+}
+
 func newauth(username, password string) (*auth, error) {
 	tok, err := gettoken(username, password)
 	if err != nil {
@@ -94,17 +111,19 @@ func gettoken(username, password string) (*token, error) {
 		"username":   {username},
 		"password":   {password},
 	}
-	req, err := http.NewRequest(
-		"POST", "https://api.dominos.com/as/token.oauth2",
-		strings.NewReader(data.Encode()),
-	)
-	if err != nil {
-		return nil, err
+	req := &http.Request{
+		Method:     "POST",
+		Proto:      "HTTP/1.1",
+		ProtoMajor: 1,
+		ProtoMinor: 1,
+		Host:       oauthURL.Host,
+		Header: http.Header{
+			"Content-Type": {
+				"application/x-www-form-urlencoded; charset=UTF-8"},
+		},
+		URL:  oauthURL,
+		Body: ioutil.NopCloser(strings.NewReader(data.Encode())),
 	}
-	req.Header.Add(
-		"Content-Type",
-		"application/x-www-form-urlencoded; charset=UTF-8")
-
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return nil, err
@@ -124,15 +143,19 @@ func (a *auth) login() (*UserProfile, error) {
 		"u":               {a.username},
 		"p":               {a.password},
 	}
-	req, err := http.NewRequest(
-		"POST", "https://order.dominos.com/power/login",
-		strings.NewReader(data.Encode()),
-	)
-	if err != nil {
-		return nil, err
+	req := &http.Request{
+		Method:     "POST",
+		Proto:      "HTTP/1.1",
+		ProtoMajor: 1,
+		ProtoMinor: 1,
+		Host:       loginURL.Host,
+		Header: http.Header{
+			"Content-Type": {
+				"application/x-www-form-urlencoded; charset=UTF-8"},
+		},
+		URL:  loginURL,
+		Body: ioutil.NopCloser(strings.NewReader(data.Encode())),
 	}
-	req.Header.Add("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8")
-
 	res, err := a.cli.Do(req)
 	if err != nil {
 		return nil, err
