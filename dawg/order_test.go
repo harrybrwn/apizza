@@ -212,6 +212,21 @@ func TestOrder_Err(t *testing.T) {
 	if err == nil {
 		t.Error("expected an error")
 	}
+	o = new(Order)
+	InitOrder(o)
+	err = o.PlaceOrder()
+	if err == nil {
+		t.Error("expected error")
+	}
+	itm, err := store.GetVariant("12SCREEN")
+	if err != nil {
+		t.Error(err)
+	}
+	op := OrderProductFromItem(itm)
+	err = op.AddTopping("test", "test", "test")
+	if err == nil {
+		t.Error("expected error")
+	}
 }
 
 func TestRemoveProduct(t *testing.T) {
@@ -258,18 +273,15 @@ func TestOrderProduct(t *testing.T) {
 		t.Error(err)
 	}
 
-	if op.Price() != -1 {
-		t.Error("bad price")
-	}
-	if op.Size() != -1 {
-		t.Error("bad size")
-	}
 	m := op.ReadableOptions()
 	if len(m) <= 0 {
 		t.Error("should have readable options")
 	}
-	if op.Prepared() {
-		t.Error("not even sure")
+
+	op.menu = menu
+	m = op.ReadableOptions()
+	if len(m) <= 0 {
+		t.Error("should have readable options")
 	}
 }
 
@@ -384,7 +396,7 @@ func TestOrderCalls(t *testing.T) {
 	}
 
 	o = new(Order)
-	o.Init()
+	InitOrder(o)
 	err = sendOrder("", o)
 	if err == nil {
 		t.Error("expcted error")

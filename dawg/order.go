@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"strconv"
 )
 
 // The Order struct is the main work horse of the api wrapper. The Order struct
@@ -151,9 +150,6 @@ func (o *Order) prepare() error {
 // ValidateOrder sends and order to the validation endpoint to be validated by
 // Dominos' servers.
 func ValidateOrder(order *Order) error {
-	if order.cli == nil {
-		order.cli = orderClient
-	}
 	err := sendOrder("/power/validate-order", order)
 	// TODO: make it possible to recognize the warning as an 'AutoAddedOrderId' warning.
 	if IsWarning(err) {
@@ -200,11 +196,9 @@ func sendOrder(path string, ordr *Order) error {
 
 func orderRequest(path string, ordr *Order) (map[string]interface{}, error) {
 	b, err := ordr.cli.post(path, nil, ordr.raw())
-	if err != nil {
-		return nil, err
-	}
 	respData := map[string]interface{}{}
-	if err := json.Unmarshal(b, &respData); err != nil {
+
+	if err := errpair(err, json.Unmarshal(b, &respData)); err != nil {
 		return nil, err
 	}
 	return respData, dominosErr(b)
@@ -219,16 +213,9 @@ func getOrderPrice(ordr Order) (map[string]interface{}, error) {
 
 func getPricingData(ordr Order) (*priceingData, error) {
 	ordr.Payments = []*orderPayment{}
-	if ordr.cli == nil {
-		return nil, errors.New("this order has no client, initialize it correctly")
-	}
-
 	b, err := ordr.cli.post("/power/price-order", nil, ordr.raw())
-	if err != nil {
-		return nil, err
-	}
 	resp := &priceingData{}
-	if err := json.Unmarshal(b, resp); err != nil {
+	if err := errpair(err, json.Unmarshal(b, resp)); err != nil {
 		return nil, err
 	}
 	return resp, dominosErr(b)
@@ -305,36 +292,4 @@ func (p *OrderProduct) AddTopping(code, coverage, amount string) error {
 	}
 	p.Opts[code] = top
 	return nil
-}
-
-// Size gets the size code of the product. Defaults to -1 if the size
-// cannot be found.
-func (p *OrderProduct) Size() int64 {
-	if v, ok := p.other["SizeCode"]; ok {
-		if rt, err := strconv.ParseInt(v.(string), 10, 64); err == nil {
-			return rt
-		}
-	}
-	return -1
-}
-
-// Price gets the price of the individual product and will return
-// -1.0 if the price is not found.
-func (p *OrderProduct) Price() float64 {
-	if v, ok := p.other["Price"]; ok {
-		if rt, err := strconv.ParseFloat(v.(string), 64); err == nil {
-			return rt
-		}
-	}
-	return -1.0
-}
-
-// Prepared returns a boolean representing whether or not the
-// product is prepared. Default is false.
-func (p *OrderProduct) Prepared() bool {
-	v, ok := p.other["Prepared"]
-	if ok {
-		return v.(bool)
-	}
-	return false
 }
