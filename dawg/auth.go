@@ -111,15 +111,10 @@ func gettoken(username, password string) (*token, error) {
 	}
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf(
-			"dawg.gettoken: bad status code %d",
-			resp.StatusCode)
+			"dawg.gettoken: bad status code %d", resp.StatusCode)
 	}
-
 	tok := &token{transport: http.DefaultTransport}
-	if err = unmarshalToken(resp.Body, tok); err != nil {
-		return nil, err
-	}
-	return tok, nil
+	return tok, errpair(unmarshalToken(resp.Body, tok), resp.Body.Close())
 }
 
 func (a *auth) login() (*UserProfile, error) {
@@ -178,10 +173,6 @@ func (c *client) do(req *http.Request) ([]byte, error) {
 	if _, err = buf.ReadFrom(resp.Body); err != nil {
 		return nil, err
 	}
-	if err = resp.Body.Close(); err != nil {
-		return nil, err
-	}
-
 	if resp.StatusCode != http.StatusOK {
 		return buf.Bytes(), fmt.Errorf("bad response code: %d", resp.StatusCode)
 	}
@@ -189,7 +180,7 @@ func (c *client) do(req *http.Request) ([]byte, error) {
 	if bytes.HasPrefix(buf.Bytes(), []byte("<!DOCTYPE html>")) {
 		return nil, errors.New("got html response")
 	}
-	return buf.Bytes(), nil
+	return buf.Bytes(), resp.Body.Close()
 }
 
 func (c *client) get(path string, params URLParam) ([]byte, error) {
@@ -236,10 +227,10 @@ func (c *client) post(path string, params URLParam, r io.Reader) ([]byte, error)
 func unmarshalToken(r io.ReadCloser, t *token) error {
 	buf := new(bytes.Buffer)
 	defer r.Close()
-	if _, err := buf.ReadFrom(r); err != nil {
-		return err
-	}
-	if err := json.NewDecoder(buf).Decode(t); err != nil {
+
+	_, e1 := buf.ReadFrom(r)
+	err := errpair(e1, json.NewDecoder(buf).Decode(t))
+	if err != nil {
 		return err
 	}
 	return newTokenErr(buf.Bytes())

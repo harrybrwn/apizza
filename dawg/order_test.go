@@ -1,7 +1,9 @@
 package dawg
 
 import (
+	"encoding/json"
 	"fmt"
+	"strings"
 	"testing"
 	"time"
 )
@@ -345,5 +347,46 @@ func TestCard(t *testing.T) {
 	}
 	if op.SecurityCode != c.Code() {
 		t.Error("bad cvv")
+	}
+}
+
+func TestOrderToJSON(t *testing.T) {
+	o := new(Order)
+	s := OrderToJSON(o)
+	if len(s) == 0 {
+		t.Error("OrderToJSON should return something")
+	}
+
+	data, err := json.Marshal(o)
+	if err != nil {
+		t.Error(err)
+	}
+	plain := string(data)
+	if len(s) <= len(plain) {
+		t.Error("OrderToJSON should return an indented order")
+	}
+
+	s = o.raw().String()
+	if !strings.HasPrefix(s, "{\"Order\":") {
+		t.Error("Order.raw should be prefixed by '{\"Order\":'")
+	}
+	if !strings.HasSuffix(s, "}") {
+		t.Error("Order.raw should end with '}'")
+	}
+}
+
+func TestOrderCalls(t *testing.T) {
+	o := new(Order)
+	o.Init()
+	err := sendOrder("/power/validate-order", o)
+	if !IsFailure(err) || err == nil {
+		t.Error("expcted error")
+	}
+
+	o = new(Order)
+	o.Init()
+	err = sendOrder("", o)
+	if err == nil {
+		t.Error("expcted error")
 	}
 }
