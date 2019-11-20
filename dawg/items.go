@@ -221,10 +221,22 @@ func (v *Variant) Category() string {
 // is a member of.
 func (v *Variant) GetProduct() *Product {
 	if v.product == nil {
-
 		return nil
 	}
 	return v.product
+}
+
+// FindProduct will initialize the Varient with it's parent product and
+// return that products. Returns nil if product is not found.
+func (v *Variant) FindProduct(m *Menu) *Product {
+	if v.product != nil {
+		return v.product
+	}
+	if parent, ok := m.Products[v.ProductCode]; ok {
+		v.product = parent
+		return parent
+	}
+	return nil
 }
 
 // PreConfiguredProduct is pre-configured product.
@@ -272,10 +284,10 @@ func splitDefaults(defs string) (keys, vals []string, n int) {
 		keys = append(keys, keyval[0])
 		vals = append(vals, keyval[1])
 	}
-	return keys, vals, shortest(keys, vals)
+	return keys, vals, longerlength(keys, vals)
 }
 
-func shortest(a, b []string) int {
+func longerlength(a, b []string) int {
 	if len(a) > len(b) {
 		return len(a)
 	}

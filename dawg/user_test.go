@@ -16,6 +16,9 @@ func TestUser(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
+	if user == nil {
+		t.Fatal("user should not be nil")
+	}
 	if err = user.SetServiceMethod("not correct"); err == nil {
 		t.Error("expected error for an invalid service method")
 	}

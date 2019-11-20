@@ -200,7 +200,7 @@ func translateOpt(opt interface{}) string {
 func makeTopping(cover, amount string, optionQtys []string) map[string]string {
 	var key string
 
-	if !strings.HasSuffix(amount, ".0") && !strings.HasSuffix(amount, ".5") {
+	if !(strings.HasSuffix(amount, ".0") || strings.HasSuffix(amount, ".5")) {
 		amount += ".0"
 	}
 	if optionQtys != nil {
