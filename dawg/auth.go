@@ -50,7 +50,7 @@ func newauth(username, password string) (*auth, error) {
 			host: orderHost,
 			Client: &http.Client{
 				Transport:     tok,
-				Timeout:       30 * time.Second,
+				Timeout:       60 * time.Second,
 				CheckRedirect: noRedirects,
 			},
 		},

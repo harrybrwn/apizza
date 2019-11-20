@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"sync"
+	"time"
 )
 
 const (
@@ -78,7 +79,13 @@ func InitStore(id string, obj interface{}) error {
 	return errpair(json.Unmarshal(b, obj), dominosErr(b))
 }
 
-var orderClient = &client{Client: http.DefaultClient, host: orderHost}
+var orderClient = &client{
+	host: orderHost,
+	Client: &http.Client{
+		Timeout:       60 * time.Second,
+		CheckRedirect: noRedirects,
+	},
+}
 
 func initStore(cli *client, id string, store *Store) error {
 	path := fmt.Sprintf("/power/store/%s/profile", id)
