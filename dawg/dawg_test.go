@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"math/rand"
 	"net"
 	"net/http"
@@ -137,6 +138,27 @@ func TestNetworking_Err(t *testing.T) {
 	if b != nil {
 		t.Error("exepcted zero length response")
 	}
+	req, err := http.NewRequest("GET", "https://www.google.com/", nil)
+	if err != nil {
+		t.Error(err)
+	}
+	resp, err = orderClient.do(req)
+	if err == nil {
+		t.Error("expected an error because we found an html page")
+		fmt.Println(string(resp))
+	} else if err.Error() != "got html response" {
+		t.Error("got an unexpected error:", err.Error())
+	}
+
+	req, err = http.NewRequest("GET", "https://hjfkghfdjkhgfjkdhgjkdghfdjk.com", nil)
+	if err != nil {
+		t.Error(err)
+	}
+	resp, err = orderClient.do(req)
+	if err == nil {
+		t.Error("expected an error")
+	}
+	// t.Error(err.Error())
 }
 
 func TestDominosErrors(t *testing.T) {

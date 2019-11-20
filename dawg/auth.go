@@ -112,7 +112,7 @@ func gettoken(username, password string) (*token, error) {
 		"password":   {password},
 	}
 	req := newAuthRequest(oauthURL, data)
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := orderClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -127,7 +127,7 @@ func gettoken(username, password string) (*token, error) {
 func (a *auth) login() (*UserProfile, error) {
 	data := url.Values{
 		"loyaltyIsActive": {"true"},
-		"rememberMe":      {"false"},
+		"rememberMe":      {"true"},
 		"u":               {a.username},
 		"p":               {a.password},
 	}
@@ -142,10 +142,7 @@ func (a *auth) login() (*UserProfile, error) {
 	profile.auth = a
 
 	b, err := ioutil.ReadAll(res.Body)
-	if err != nil {
-		return nil, err
-	}
-	if err = dominosErr(b); err != nil {
+	if err = errpair(err, dominosErr(b)); err != nil {
 		return nil, err
 	}
 	return profile, json.Unmarshal(b, profile)
@@ -184,20 +181,16 @@ func (c *client) do(req *http.Request) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer resp.Body.Close()
+
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("dawg.client.do: bad status code %d", resp.StatusCode)
 	}
-	if _, err = buf.ReadFrom(resp.Body); err != nil {
-		return nil, err
+	_, err = buf.ReadFrom(resp.Body)
+	if bytes.HasPrefix(bytes.ToLower(buf.Bytes()[:15]), []byte("<!doctype html>")) {
+		return nil, errpair(err, errors.New("got html response"))
 	}
-	if resp.StatusCode != http.StatusOK {
-		return buf.Bytes(), fmt.Errorf("bad response code: %d", resp.StatusCode)
-	}
-
-	if bytes.HasPrefix(buf.Bytes(), []byte("<!DOCTYPE html>")) {
-		return nil, errors.New("got html response")
-	}
-	return buf.Bytes(), resp.Body.Close()
+	return buf.Bytes(), err
 }
 
 func (c *client) get(path string, params URLParam) ([]byte, error) {

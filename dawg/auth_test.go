@@ -8,6 +8,7 @@ import (
 	"os"
 	"strings"
 	"testing"
+	"time"
 )
 
 func TestBadCreds(t *testing.T) {
@@ -184,14 +185,29 @@ func TestAuth_Err(t *testing.T) {
 		username: "not a",
 		password: "valid password",
 		token:    &token{}, // assume we alread have a token
-		cli:      orderClient,
+		cli: &client{
+			host: "order.dominos.com",
+			Client: &http.Client{
+				Timeout:       60 * time.Second,
+				CheckRedirect: noRedirects,
+			},
+		},
 	}
+
 	user, err := a.login()
 	if err == nil {
 		t.Error("expected an error")
 	}
 	if user != nil {
 		t.Errorf("expected a nil user: %+v", user)
+	}
+	a.cli.host = "invalid_host.com"
+	user, err = a.login()
+	if err == nil {
+		t.Error("expedted an error")
+	}
+	if user != nil {
+		t.Error("user should still be nil")
 	}
 }
 
@@ -220,9 +236,16 @@ func TestAuthClient(t *testing.T) {
 		t.Error(err)
 	}
 
+	if auth.cli == nil {
+		t.Error("client should not be nil")
+	}
 	err = auth.cli.CheckRedirect(nil, nil)
 	if err == nil {
 		t.Error("order Client should not allow redirects")
+	}
+	err = auth.cli.CheckRedirect(&http.Request{}, []*http.Request{})
+	if err == nil {
+		t.Error("expected error")
 	}
 	tok, err := gettoken("bad", "creds")
 	if err == nil {
