@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"sync"
 )
 
 const (
@@ -45,6 +46,49 @@ func GetNearbyStores(addr Address, service string) ([]*Store, error) {
 	return all.Stores, nil
 }
 
+// GetNearbyStoresAsync will retrive a list of nearby stores asyncronously, meaning that
+// the first item on the list is not the closest.
+func GetNearbyStoresAsync(addr Address, service string) ([]*Store, error) {
+	all, err := findNearbyStores(orderClient, addr, service)
+	if err != nil {
+		return nil, err
+	}
+
+	var (
+		stores  []*Store // return value
+		store   *Store
+		pair    maybeStore
+		builder = storebuilder{
+			WaitGroup: sync.WaitGroup{},
+			stores:    make(chan maybeStore),
+		}
+	)
+
+	go func() {
+		builder.Wait()
+		close(builder.stores)
+	}()
+
+	for _, store = range all.Stores {
+		builder.Add(1)
+		go builder.initStore(orderClient, store.ID)
+	}
+
+	for pair = range builder.stores {
+		if pair.err != nil {
+			return nil, pair.err
+		}
+		store = pair.store
+		store.userAddress = addr
+		store.userService = service
+		store.cli = orderClient
+
+		stores = append(stores, store)
+	}
+
+	return stores, nil
+}
+
 // NewStore returns the default Store object given a store id.
 //
 // The service and address arguments are for store functions that require those
@@ -83,6 +127,34 @@ func initStore(cli *client, id string, store *Store) error {
 	}
 	store.cli = cli
 	return errpair(json.Unmarshal(b, store), dominosErr(b))
+}
+
+type storebuilder struct {
+	sync.WaitGroup
+	stores chan maybeStore
+}
+
+type maybeStore struct {
+	store *Store
+	err   error
+}
+
+func (sb *storebuilder) initStore(cli *client, id string) {
+	defer sb.Done()
+	path := fmt.Sprintf("/power/store/%s/profile", id)
+	store := &Store{}
+
+	b, err := cli.get(path, nil)
+	if err != nil {
+		sb.stores <- maybeStore{store: nil, err: err}
+	}
+
+	err = errpair(json.Unmarshal(b, store), dominosErr(b))
+	if err != nil {
+		sb.stores <- maybeStore{store: nil, err: err}
+	}
+
+	sb.stores <- maybeStore{store: store, err: nil}
 }
 
 // The Store object represents a physical dominos location.

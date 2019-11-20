@@ -118,6 +118,39 @@ func TestNearestStore(t *testing.T) {
 		t.Error("expected error from a store with no id")
 	}
 	s.ID = id
+
+	funcs := []func(addr Address, service string) ([]*Store, error){
+		GetNearbyStores, GetNearbyStoresAsync,
+	}
+	for _, fn := range funcs {
+		stores, err := fn(addr, service)
+		if err != nil {
+			t.Error(err)
+		}
+		for _, s := range stores {
+			if s == nil {
+				t.Error("should not have nil store")
+			}
+			if s.userAddress == nil {
+				t.Fatal("nil store.userAddress")
+			}
+			if s.userService != service {
+				t.Error("wrong service method")
+			}
+			if s.userAddress.City() != addr.City() {
+				t.Error("wrong city")
+			}
+			if s.userAddress.LineOne() != addr.LineOne() {
+				t.Error("wrong line one")
+			}
+			if s.userAddress.StateCode() != addr.StateCode() {
+				t.Error("wrong state code")
+			}
+			if s.userAddress.Zip() != addr.Zip() {
+				t.Error("wrong zip co de")
+			}
+		}
+	}
 }
 
 func TestNearestStore_Err(t *testing.T) {
