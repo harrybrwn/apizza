@@ -162,9 +162,6 @@ func ReadableToppings(item Item, m *Menu) map[string]string {
 	)
 
 	t := item.Category()
-	if t == "" {
-		return ReadableOptions(item)
-	}
 	toppingSet = m.Toppings[t]
 
 	var key string
@@ -180,12 +177,11 @@ func translateOpt(opt interface{}) string {
 
 	toppingParams, ok := opt.(map[string]string)
 	if !ok {
-		panic("cannot translate this option")
-		// for k, v := range opt.(map[string]interface{}) {
-		// 	param += k + " "
-		// 	param += v.(string)
-		// }
-		// return param
+		for k, v := range opt.(map[string]interface{}) {
+			param += k + " "
+			param += v.(string)
+		}
+		return param
 	}
 	for cover, amnt := range toppingParams {
 		switch cover {

@@ -149,6 +149,27 @@ func TestFindItem(t *testing.T) {
 	}
 }
 
+func TestTranslateOpt(t *testing.T) {
+	opts := map[string]interface{}{
+		"what": "no",
+	}
+	if translateOpt(opts) != "what no" {
+		t.Error("wrong output")
+	}
+	opt := map[string]string{
+		ToppingRight: "9.0",
+	}
+	if translateOpt(opt) != "right 9.0" {
+		t.Error("wrong option translation")
+	}
+	opt = map[string]string{
+		ToppingLeft: "5.5",
+	}
+	if translateOpt(opt) != "left 5.5" {
+		t.Error("wrong")
+	}
+}
+
 func TestPrintMenu(t *testing.T) {
 	m := testingMenu()
 	buf := new(bytes.Buffer)
