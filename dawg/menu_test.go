@@ -144,7 +144,7 @@ func TestFindItem(t *testing.T) {
 		t.Error("expected error")
 	}
 	_, err = m.GetVariant("nothere")
-	if err != nil {
+	if err == nil {
 		t.Error("expected error")
 	}
 }
