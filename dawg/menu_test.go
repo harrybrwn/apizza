@@ -138,6 +138,15 @@ func TestFindItem(t *testing.T) {
 	if itm != nil {
 		t.Error("item should be nil")
 	}
+
+	_, err := m.GetProduct("nothere")
+	if err == nil {
+		t.Error("expected error")
+	}
+	_, err = m.GetVariant("nothere")
+	if err != nil {
+		t.Error("expected error")
+	}
 }
 
 func TestPrintMenu(t *testing.T) {

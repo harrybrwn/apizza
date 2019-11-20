@@ -180,11 +180,12 @@ func translateOpt(opt interface{}) string {
 
 	toppingParams, ok := opt.(map[string]string)
 	if !ok {
-		for k, v := range opt.(map[string]interface{}) {
-			param += k + " "
-			param += v.(string)
-		}
-		return param
+		panic("cannot translate this option")
+		// for k, v := range opt.(map[string]interface{}) {
+		// 	param += k + " "
+		// 	param += v.(string)
+		// }
+		// return param
 	}
 	for cover, amnt := range toppingParams {
 		switch cover {
@@ -248,8 +249,5 @@ func newMenu(c *client, id string) (*Menu, error) {
 		return nil, err
 	}
 	menu := &Menu{ID: id, cli: c}
-	if err = json.Unmarshal(b, menu); err != nil {
-		return nil, err
-	}
-	return menu, dominosErr(b)
+	return menu, errpair(json.Unmarshal(b, menu), dominosErr(b))
 }

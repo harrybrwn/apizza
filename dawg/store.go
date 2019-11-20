@@ -18,8 +18,6 @@ const (
 	Carryout = "Carryout"
 )
 
-var errBadService = errors.New("service must be either 'Delivery' or 'Carryout'")
-
 // NearestStore gets the dominos location closest to the given address.
 //
 // The addr argument should be the address to deliver to not the address of the
@@ -49,44 +47,7 @@ func GetNearbyStores(addr Address, service string) ([]*Store, error) {
 // GetNearbyStoresAsync will retrive a list of nearby stores asyncronously, meaning that
 // the first item on the list is not the closest.
 func GetNearbyStoresAsync(addr Address, service string) ([]*Store, error) {
-	all, err := findNearbyStores(orderClient, addr, service)
-	if err != nil {
-		return nil, err
-	}
-
-	var (
-		stores  []*Store // return value
-		store   *Store
-		pair    maybeStore
-		builder = storebuilder{
-			WaitGroup: sync.WaitGroup{},
-			stores:    make(chan maybeStore),
-		}
-	)
-
-	go func() {
-		builder.Wait()
-		close(builder.stores)
-	}()
-
-	for _, store = range all.Stores {
-		builder.Add(1)
-		go builder.initStore(orderClient, store.ID)
-	}
-
-	for pair = range builder.stores {
-		if pair.err != nil {
-			return nil, pair.err
-		}
-		store = pair.store
-		store.userAddress = addr
-		store.userService = service
-		store.cli = orderClient
-
-		stores = append(stores, store)
-	}
-
-	return stores, nil
+	return asyncNearbyStores(orderClient, addr, service)
 }
 
 // NewStore returns the default Store object given a store id.
@@ -276,6 +237,8 @@ func getNearestStore(c *client, addr Address, service string) (*Store, error) {
 	return store, initStore(c, store.ID, store)
 }
 
+var errBadService = errors.New("service must be either 'Delivery' or 'Carryout'")
+
 func findNearbyStores(c *client, addr Address, service string) (*storeLocs, error) {
 	if !(service == Delivery || service == Carryout) {
 		// panic("service must be either 'Delivery' or 'Carryout'")
@@ -297,4 +260,45 @@ func findNearbyStores(c *client, addr Address, service string) (*storeLocs, erro
 		return nil, err
 	}
 	return locs, dominosErr(b)
+}
+
+func asyncNearbyStores(cli *client, addr Address, service string) ([]*Store, error) {
+	all, err := findNearbyStores(cli, addr, service)
+	if err != nil {
+		return nil, err
+	}
+
+	var (
+		stores  []*Store // return value
+		store   *Store
+		pair    maybeStore
+		builder = storebuilder{
+			WaitGroup: sync.WaitGroup{},
+			stores:    make(chan maybeStore),
+		}
+	)
+
+	go func() {
+		builder.Wait()
+		close(builder.stores)
+	}()
+
+	for _, store = range all.Stores {
+		builder.Add(1)
+		go builder.initStore(cli, store.ID)
+	}
+
+	for pair = range builder.stores {
+		if pair.err != nil {
+			return nil, pair.err
+		}
+		store = pair.store
+		store.userAddress = addr
+		store.userService = service
+		store.cli = cli
+
+		stores = append(stores, store)
+	}
+
+	return stores, nil
 }
