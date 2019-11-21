@@ -126,11 +126,4 @@ func TestComparisons(t *testing.T) {
 		CompareOutput(t, tc, func() { fmt.Print(tc) })
 		CompareV(&testing.T{}, "going_to"+tc+"failcompairison", tc)
 	}
-
-	t.Run("should fail", func(t *testing.T) {
-		CompareOutput(t, "hello", func() { fmt.Println("what") })
-		if t.Failed() {
-			t.Skip() // expected failure
-		}
-	})
 }
