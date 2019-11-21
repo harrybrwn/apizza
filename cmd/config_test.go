@@ -93,7 +93,7 @@ func testConfigGet(t *testing.T) {
 }
 
 func testConfigSet(t *testing.T) {
-	c := newConfigSet().(*configSetCmd)
+	c := newConfigSet() //.(*configSetCmd)
 	if err := c.Run(c.Cmd(), []string{"name=someNameOtherThanJoe"}); err != nil {
 		t.Error(err)
 	}

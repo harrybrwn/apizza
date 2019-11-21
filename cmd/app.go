@@ -153,19 +153,24 @@ func (a *App) initflags() {
 	a.Cmd().PostRunE = a.postrun
 	a.Cmd().PersistentFlags().StringVar(&a.logfile, "log", "", "set a log file")
 
-	a.Flags().BoolVar(&a.openlogs, "open-logs", false, "open the log file")
 	a.Flags().BoolVar(&a.clearCache, "clear-cache", false, "delete the database")
 	a.Cmd().PersistentFlags().BoolVar(&a.resetMenu, "delete-menu", false, "delete the menu stored in cache")
 
 	a.Cmd().PersistentFlags().StringVar(&a.address, "address", a.address, "use a specific address")
 	a.Cmd().PersistentFlags().StringVar(&a.service, "service", a.service, "select a Dominos service, either 'Delivery' or 'Carryout'")
+	a.Flags().BoolVarP(&a.storeLocation, "store-location", "L", false, "show the location of the nearest store")
 
+	a.initDevFlags()
+}
+
+func (a *App) initDevFlags() {
 	a.Cmd().PersistentFlags().BoolVar(&test, "test", false, "testing flag (for development)")
 	a.Cmd().PersistentFlags().BoolVar(&reset, "reset", false, "reset the program (for development)")
 	a.Cmd().PersistentFlags().MarkHidden("test")
 	a.Cmd().PersistentFlags().MarkHidden("reset")
 
-	a.Flags().BoolVarP(&a.storeLocation, "store-location", "L", false, "show the location of the nearest store")
+	a.Flags().BoolVar(&a.openlogs, "open-logs", false, "open the log file")
+	a.Flags().MarkHidden("open-logs")
 }
 
 func (a *App) prerun(*cobra.Command, []string) (err error) {

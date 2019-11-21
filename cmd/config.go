@@ -62,6 +62,9 @@ type configCmd struct {
 	dir    bool
 	getall bool
 	edit   bool
+
+	card string
+	exp  string
 }
 
 func (c *configCmd) Run(cmd *cobra.Command, args []string) error {
@@ -101,39 +104,37 @@ ex. 'apizza config get name' or 'apizza config set name=<your name>'`
 	c.Flags().BoolVarP(&c.dir, "dir", "d", c.dir, "show the apizza config directory path")
 	c.Flags().BoolVar(&c.getall, "get-all", c.getall, "show all the contents of the config file")
 	c.Flags().BoolVarP(&c.edit, "edit", "e", false, "open the conifg file with the text editor set by $EDITOR")
+
+	c.Flags().StringVar(&c.card, "card", "", "store encrypted credit card number in the database")
+	c.Flags().StringVar(&c.exp, "expiration", "", "store the encrypted expiration data of your credit card")
 	return c
-}
-
-type configSetCmd struct {
-	*basecmd
-}
-
-func (c *configSetCmd) Run(cmd *cobra.Command, args []string) error {
-	if len(args) < 1 {
-		return errors.New("no variable given")
-	}
-
-	for _, arg := range args {
-		keys := strings.Split(arg, "=")
-		if len(keys) < 2 || keys[0] == "" || keys[1] == "" {
-			return errors.New(`use '<key>=<value>' format (no spaces), use <key>='-' to set as empty`)
-		}
-
-		if keys[1] == "-" {
-			keys[1] = ""
-		}
-		err := config.Set(keys[0], keys[1])
-		if err != nil {
-			return err
-		}
-	}
-	return nil
 }
 
 func newConfigSet() base.CliCommand {
-	c := &configSetCmd{}
-	c.basecmd = newCommand("set", "change variables in the config file", c)
-	return c
+	return base.NewCommand(
+		"set", "change variables in the config file",
+		func(cmd *cobra.Command, args []string) error {
+			if len(args) < 1 {
+				return errors.New("no variable given")
+			}
+
+			for _, arg := range args {
+				keys := strings.Split(arg, "=")
+				if len(keys) < 2 || keys[0] == "" || keys[1] == "" {
+					return errors.New(`use '<key>=<value>' format (no spaces), use <key>='-' to set as empty`)
+				}
+
+				if keys[1] == "-" {
+					keys[1] = ""
+				}
+				err := config.Set(keys[0], keys[1])
+				if err != nil {
+					return err
+				}
+			}
+			return nil
+		},
+	)
 }
 
 func newConfigGet() base.CliCommand {
