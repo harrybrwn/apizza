@@ -24,3 +24,5 @@ coverage.html
 *.out
 *.exe
 /script/
+scripts/history.sh
+*.mp4

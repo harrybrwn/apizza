@@ -87,25 +87,26 @@ type storebuilder struct {
 
 type maybeStore struct {
 	store *Store
+	index int
 	err   error
 }
 
-func (sb *storebuilder) initStore(cli *client, id string) {
+func (sb *storebuilder) initStore(cli *client, id string, index int) {
 	defer sb.Done()
 	path := fmt.Sprintf("/power/store/%s/profile", id)
 	store := &Store{}
 
 	b, err := cli.get(path, nil)
 	if err != nil {
-		sb.stores <- maybeStore{store: nil, err: err}
+		sb.stores <- maybeStore{store: nil, err: err, index: -1}
 	}
 
 	err = errpair(json.Unmarshal(b, store), dominosErr(b))
 	if err != nil {
-		sb.stores <- maybeStore{store: nil, err: err}
+		sb.stores <- maybeStore{store: nil, err: err, index: -1}
 	}
 
-	sb.stores <- maybeStore{store: store, err: nil}
+	sb.stores <- maybeStore{store: store, err: nil, index: index}
 }
 
 // The Store object represents a physical dominos location.
@@ -260,10 +261,9 @@ func asyncNearbyStores(cli *client, addr Address, service string) ([]*Store, err
 
 	var (
 		nstores = len(all.Stores)
-		ix      = make(map[string]int) // store the indexes my store id
+		stores  = make([]*Store, nstores) // return value
 
-		stores = make([]*Store, nstores) // return value
-
+		i       int
 		store   *Store
 		pair    maybeStore
 		builder = storebuilder{
@@ -271,20 +271,16 @@ func asyncNearbyStores(cli *client, addr Address, service string) ([]*Store, err
 			stores:    make(chan maybeStore),
 		}
 	)
-
-	for i := 0; i < nstores; i++ {
-		ix[all.Stores[i].ID] = i
-	}
+	builder.Add(nstores)
 
 	go func() {
-		builder.Wait()
-		close(builder.stores)
-	}()
+		defer close(builder.stores)
+		for i, store = range all.Stores {
+			go builder.initStore(cli, store.ID, i)
+		}
 
-	for _, store = range all.Stores {
-		builder.Add(1)
-		go builder.initStore(cli, store.ID)
-	}
+		builder.Wait()
+	}()
 
 	for pair = range builder.stores {
 		if pair.err != nil {
@@ -295,7 +291,7 @@ func asyncNearbyStores(cli *client, addr Address, service string) ([]*Store, err
 		store.userService = service
 		store.cli = cli
 
-		stores[ix[store.ID]] = store
+		stores[pair.index] = store
 	}
 
 	return stores, nil
