@@ -34,6 +34,7 @@ type testCnfg struct {
 		One string `config:"one"`
 		Two string `config:"two"`
 	} `config:"more"`
+	F   float64 `config:"f"`
 	Pie float64 `config:"pi" default:"3.14159"`
 }
 
@@ -168,6 +169,7 @@ func TestEmptyConfig(t *testing.T) {
 		"One": "",
 		"Two": ""
 	},
+	"F": 0.0,
 	"Pie": 3.14159
 }`
 	expected = strings.Replace(expected, "\t", "    ", -1)
@@ -237,7 +239,7 @@ func TestGeters(t *testing.T) {
 
 func TestPrintAll(t *testing.T) {
 	var c Config = &testCnfg{}
-	expected := "test: \"\"\nmsg: \"\"\nnumber: 0\nnumber2: 0\nnullval: null\nmore:\n  one: \"\"\n  two: \"\"\npi: 0\n"
+	expected := "test: \"\"\nmsg: \"\"\nnumber: 0\nnumber2: 0\nnullval: null\nmore:\n  one: \"\"\n  two: \"\"\nf: 0\npi: 0\n"
 
 	tests.CompareOutput(t, expected, func() {
 		if err := PrintAll(c); err != nil {
@@ -281,4 +283,14 @@ func TestEditor(t *testing.T) {
 			t.Error(err)
 		}
 	})
+
+	FileHasChanged()
+
+	if cfg.changed == false {
+		t.Error("FileHasChanged should make this true")
+	}
+	if cfg.save() != nil {
+		t.Error("should have returned nil")
+	}
+
 }

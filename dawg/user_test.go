@@ -6,7 +6,43 @@ import (
 	"time"
 )
 
-func TestUser(t *testing.T) {
+func TestUserNearestStore(t *testing.T) {
+	uname, pass, ok := gettestcreds()
+	if !ok {
+		t.Skip()
+	}
+	user, err := SignIn(uname, pass)
+	if err != nil {
+		t.Error(err)
+	}
+	if user.store != nil {
+		t.Error("we should wait for the user to initialize this")
+	}
+	user.Addresses = []*UserAddress{}
+	if user.DefaultAddress() != nil {
+		t.Error("we just set this to an empty array, why is it not so")
+	}
+	user.AddAddress(testAddress())
+	if user.DefaultAddress() == nil {
+		t.Error("ok, we just added an address, why am i not getting one")
+	}
+	_, err = user.NearestStore(Delivery)
+	if err != nil {
+		t.Error(err)
+	}
+	if user.store == nil {
+		t.Error("ok, now this variable should be stored")
+	}
+	s, err := user.NearestStore(Delivery)
+	if err != nil {
+		t.Error(err)
+	}
+	if s != user.store {
+		t.Error("user.NearestStore should return the cached store on the second call")
+	}
+}
+
+func TestUserStoresNearMe(t *testing.T) {
 	uname, pass, ok := gettestcreds()
 	if !ok {
 		t.Skip()

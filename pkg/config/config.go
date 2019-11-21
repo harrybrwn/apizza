@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"reflect"
 
+	"github.com/harrybrwn/apizza/pkg/errs"
 	homedir "github.com/mitchellh/go-homedir"
 )
 
@@ -68,18 +69,12 @@ func (c *configfile) save() error {
 	}
 
 	raw, err := json.MarshalIndent(c.conf, "", "    ")
-	if err != nil {
-		return err
-	}
-	return ioutil.WriteFile(c.file, raw, 0644)
+	return errs.Pair(err, ioutil.WriteFile(c.file, raw, 0644))
 }
 
 func (c *configfile) reset() error {
 	err := os.Remove(c.file)
-	if err != nil {
-		return err
-	}
-	return setup(c.file, c.conf)
+	return errs.Pair(err, setup(c.file, c.conf))
 }
 
 func (c *configfile) setup() error {
