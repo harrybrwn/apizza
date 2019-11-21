@@ -28,9 +28,9 @@ func TestRunner(t *testing.T) {
 		withCartCmd(app.builder, testOrderRunDelete),
 		testFindProduct,
 		withAppCmd(testAppRootCmdRun, app),
-		withDummyDB(withApizzaCmd(testApizzaResetflag, newApizzaCmd())),
-		testMenuRun, testConfigStruct, testConfigCmd,
-		testConfigGet, testConfigSet, withDummyDB(testExec),
+		testMenuRun,
+		testConfigCmd,
+		testConfigGet, testConfigSet,
 	)
 	r.Run()
 }
@@ -102,33 +102,6 @@ func TestAppStoreFinder(t *testing.T) {
 	}
 }
 
-func testApizzaResetflag(t *testing.T, buf *bytes.Buffer, c *apizzaCmd) {
-	c.Cmd().ParseFlags([]string{"--clear-cache"})
-	c.clearCache = true
-	test = false
-	if err := c.Run(c.Cmd(), []string{}); err != nil {
-		t.Error(err)
-	}
-	if _, err := os.Stat(db.Path()); os.IsExist(err) {
-		t.Error("database should not exitst")
-	} else if !os.IsNotExist(err) {
-		t.Error("database should not exitst")
-	}
-	tests.Compare(t, buf.String(), fmt.Sprintf("removing %s\n", db.Path()))
-}
-
-// testExec must be run last.
-func testExec(t *testing.T) {
-	b := newBuilder()
-	buf := &bytes.Buffer{}
-	b.root.Cmd().SetOutput(buf)
-	if err := b.exec(); err != nil {
-		t.Error(err)
-	}
-	// Execute()
-	// tests.Compare(t, buf.String(), b.root.Cmd().UsageString())
-}
-
 func dummyCheck(t *testing.T) {
 	data, err := db.Get("test")
 	if err != nil {
@@ -163,17 +136,7 @@ func setupTests() {
 	err = db.Put("test", []byte("this is some test data"))
 	check(err, "database put")
 	config.SetNonFileConfig(cfg) // don't want it to over ride the file on disk
-	raw := []byte(`
-{
-	"name":"joe","email":"nojoe@mail.com",
-	"address":{
-		"street":"1600 Pennsylvania Ave NW",
-		"cityName":"Washington DC",
-		"state":"","zipcode":"20500"
-	},
-	"card":{"number":"","expiration":"","cvv":""},
-	"service":"Carryout"}`)
-	check(json.Unmarshal(raw, cfg), "json")
+	check(json.Unmarshal([]byte(testconfigjson), cfg), "json")
 }
 
 func teardownTests() {

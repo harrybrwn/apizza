@@ -29,7 +29,8 @@ import (
 var cfg = &base.Config{}
 
 type configCmd struct {
-	*basecmd
+	// *basecmd
+	base.CliCommand
 	file   bool
 	dir    bool
 	getall bool
@@ -63,9 +64,9 @@ func (c *configCmd) Run(cmd *cobra.Command, args []string) error {
 	return cmd.Usage()
 }
 
-func newConfigCmd() base.CliCommand {
+func newConfigCmd(b base.Builder) base.CliCommand {
 	c := &configCmd{file: false, dir: false}
-	c.basecmd = newCommand("config", "Configure apizza", c)
+	c.CliCommand = b.Build("config", "Configure apizza", c)
 	c.Cmd().Long = `The 'config' command is used for accessing the .apizza config file
 in your home directory. Feel free to edit the .apizza json file
 by hand or use the 'config' command.

@@ -108,7 +108,7 @@ func (a *App) exec() error {
 		newCartCmd(a.builder).Addcmd(
 			newAddOrderCmd(a.builder),
 		),
-		newConfigCmd().Addcmd(
+		newConfigCmd(a).Addcmd(
 			newConfigSet(),
 			newConfigGet(),
 		),

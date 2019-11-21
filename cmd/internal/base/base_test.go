@@ -2,9 +2,11 @@ package base
 
 import (
 	"bytes"
+	"encoding/json"
 	"os"
 	"testing"
 
+	"github.com/harrybrwn/apizza/cmd/internal/cmdtest"
 	"github.com/harrybrwn/apizza/pkg/errs"
 	"github.com/harrybrwn/apizza/pkg/tests"
 	"github.com/spf13/cobra"
@@ -69,4 +71,39 @@ func testCmd(t *testing.T, buf *bytes.Buffer, cmds ...CliCommand) {
 		t.Error(err)
 	}
 	tests.Compare(t, buf.String(), "commandtest output\n")
+}
+
+var testconfigjson = `
+{
+	"name":"joe","email":"nojoe@mail.com",
+	"address":{
+		"street":"1600 Pennsylvania Ave NW",
+		"cityName":"Washington DC",
+		"state":"","zipcode":"20500"
+	},
+	"card":{"number":"","expiration":"","cvv":""},
+	"service":"Carryout"
+}`
+
+func TestConfigStruct(t *testing.T) {
+	r := cmdtest.NewRecorder()
+	defer r.CleanUp()
+	r.ConfigSetup()
+	err := json.Unmarshal([]byte(testconfigjson), r.Config())
+	if err != nil {
+		t.Error(err)
+	}
+
+	if r.Config().Get("name").(string) != "joe" {
+		t.Error("wrong value")
+	}
+	if err := r.Config().Set("name", "not joe"); err != nil {
+		t.Error(err)
+	}
+	if r.Config().Get("Name").(string) != "not joe" {
+		t.Error("wrong value")
+	}
+	if err := r.Config().Set("name", "joe"); err != nil {
+		t.Error(err)
+	}
 }

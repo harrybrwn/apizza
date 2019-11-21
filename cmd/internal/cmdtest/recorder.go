@@ -10,6 +10,7 @@ import (
 	"github.com/harrybrwn/apizza/cmd/internal/base"
 	"github.com/harrybrwn/apizza/dawg"
 	"github.com/harrybrwn/apizza/pkg/cache"
+	"github.com/harrybrwn/apizza/pkg/config"
 	"github.com/harrybrwn/apizza/pkg/errs"
 	"github.com/harrybrwn/apizza/pkg/tests"
 )
@@ -81,6 +82,12 @@ func must(db *cache.DataBase, e error) *cache.DataBase {
 		panic(e)
 	}
 	return db
+}
+
+// ConfigSetup will set the internal recorder config to be main struct used
+// in the config package.
+func (r *Recorder) ConfigSetup() {
+	config.SetNonFileConfig(r.Conf)
 }
 
 // Clear will clear all data stored by the recorder. This includes reseting

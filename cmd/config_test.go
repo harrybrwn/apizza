@@ -2,28 +2,63 @@ package cmd
 
 import (
 	"bytes"
+	"encoding/json"
 	"testing"
 
+	"github.com/harrybrwn/apizza/cmd/internal/cmdtest"
+	"github.com/harrybrwn/apizza/pkg/config"
 	"github.com/harrybrwn/apizza/pkg/tests"
 )
 
-func testConfigStruct(t *testing.T) {
-	if cfg.Get("name").(string) != "joe" {
+var testconfigjson = `
+{
+	"name":"joe","email":"nojoe@mail.com",
+	"address":{
+		"street":"1600 Pennsylvania Ave NW",
+		"cityName":"Washington DC",
+		"state":"","zipcode":"20500"
+	},
+	"card":{"number":"","expiration":"","cvv":""},
+	"service":"Carryout"
+}`
+
+var testConfigOutput = `name: "joe"
+email: "nojoe@mail.com"
+address:
+  street: "1600 Pennsylvania Ave NW"
+  cityname: "Washington DC"
+  state: ""
+  zipcode: "20500"
+card:
+  number: ""
+  expiration: ""
+service: "Carryout"
+`
+
+func TestConfigStruct(t *testing.T) {
+	r := cmdtest.NewRecorder()
+	defer r.CleanUp()
+	r.ConfigSetup()
+	check(json.Unmarshal([]byte(testconfigjson), r.Config()), "json")
+
+	if r.Config().Get("name").(string) != "joe" {
 		t.Error("wrong value")
 	}
-	if err := cfg.Set("name", "not joe"); err != nil {
+	if err := r.Config().Set("name", "not joe"); err != nil {
 		t.Error(err)
 	}
-	if cfg.Get("Name").(string) != "not joe" {
+	if r.Config().Get("Name").(string) != "not joe" {
 		t.Error("wrong value")
 	}
-	if err := cfg.Set("name", "joe"); err != nil {
+	if err := r.Config().Set("name", "joe"); err != nil {
 		t.Error(err)
 	}
+	config.SetNonFileConfig(cfg) // reset the global config for compatability
 }
 
 func testConfigCmd(t *testing.T) {
-	c := newConfigCmd().(*configCmd)
+	r := cmdtest.NewRecorder()
+	c := newConfigCmd(r).(*configCmd)
 	buf := &bytes.Buffer{}
 	c.SetOutput(buf)
 	c.file = true
@@ -44,19 +79,7 @@ func testConfigCmd(t *testing.T) {
 	if err := c.Run(c.Cmd(), []string{}); err != nil {
 		t.Error(err)
 	}
-	expected := `name: "joe"
-email: "nojoe@mail.com"
-address:
-  street: "1600 Pennsylvania Ave NW"
-  cityname: "Washington DC"
-  state: ""
-  zipcode: "20500"
-card:
-  number: ""
-  expiration: ""
-service: "Carryout"
-`
-	tests.Compare(t, string(buf.Bytes()), expected)
+	tests.Compare(t, string(buf.Bytes()), testConfigOutput)
 	c.getall = false
 	buf.Reset()
 	cmdUseage := c.Cmd().UsageString()
@@ -65,14 +88,14 @@ service: "Carryout"
 	}
 	tests.Compare(t, string(buf.Bytes()), cmdUseage)
 	buf.Reset()
-	if err := c.basecmd.Run(c.Cmd(), []string{}); err != nil {
+	if err := c.Run(c.Cmd(), []string{}); err != nil {
 		t.Error(err)
 	}
 	tests.Compare(t, string(buf.Bytes()), c.Cmd().UsageString())
 }
 
 func testConfigGet(t *testing.T) {
-	c := newConfigGet() //.(*configGetCmd)
+	c := newConfigGet()
 	buf := &bytes.Buffer{}
 	c.SetOutput(buf)
 	if err := c.Run(c.Cmd(), []string{"email", "name"}); err != nil {

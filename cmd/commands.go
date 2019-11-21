@@ -184,7 +184,7 @@ func (b *cliBuilder) exec() error {
 		newCartCmd(b).Addcmd(
 			newAddOrderCmd(b),
 		),
-		newConfigCmd().Addcmd(
+		newConfigCmd(nil).Addcmd(
 			newConfigSet(),
 			newConfigGet(),
 		),
