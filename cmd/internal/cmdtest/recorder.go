@@ -3,9 +3,12 @@ package cmdtest
 import (
 	"bytes"
 	"io"
+	"math/rand"
 	"strings"
+	"testing"
 
 	"github.com/harrybrwn/apizza/cmd/internal/base"
+	"github.com/harrybrwn/apizza/dawg"
 	"github.com/harrybrwn/apizza/pkg/cache"
 	"github.com/harrybrwn/apizza/pkg/config"
 	"github.com/harrybrwn/apizza/pkg/errs"
@@ -19,12 +22,18 @@ type Recorder struct {
 	Out      *bytes.Buffer
 }
 
+var services = []string{dawg.Carryout, dawg.Delivery}
+
 // NewRecorder create a new command recorder.
 func NewRecorder() *Recorder {
 	return &Recorder{
 		DataBase: must(cache.GetDB(tests.NamedTempFile("test", "apizza_test.db"))),
 		Out:      new(bytes.Buffer),
-		Conf:     new(base.Config),
+		Conf: &base.Config{
+			Name:    "Apizza TestRecorder",
+			Service: services[rand.Intn(2)],
+			Address: *TestAddress(),
+		},
 	}
 }
 
@@ -48,6 +57,18 @@ func (r *Recorder) Build(use, short string, run base.Runner) *base.Command {
 	c := base.NewCommand(use, short, run.Run)
 	c.SetOutput(r.Output())
 	return c
+}
+
+// ToApp returns the arguments needed to create a cmd.App.
+func (r *Recorder) ToApp() (*cache.DataBase, *base.Config, io.Writer) {
+	return r.DB(), r.Conf.(*base.Config), r.Output()
+}
+
+// CleanUp will cleanup all the the Recorder tempfiles and free all resources.
+func (r *Recorder) CleanUp() {
+	if err := r.DataBase.Destroy(); err != nil {
+		panic(err)
+	}
 }
 
 var _ base.Builder = (*Recorder)(nil)
@@ -88,4 +109,9 @@ func (r *Recorder) Contains(s string) bool {
 // StrEq compares a string with the recorder output buffer.
 func (r *Recorder) StrEq(s string) bool {
 	return r.Out.String() == s
+}
+
+// Compare the recorder output with a string
+func (r *Recorder) Compare(t *testing.T, expected string) {
+	tests.Compare(t, r.Out.String(), expected)
 }

@@ -9,7 +9,6 @@ import (
 
 	"github.com/harrybrwn/apizza/cmd/internal/base"
 	"github.com/harrybrwn/apizza/cmd/internal/cmdtest"
-	"github.com/harrybrwn/apizza/dawg"
 	"github.com/harrybrwn/apizza/pkg/cache"
 	"github.com/harrybrwn/apizza/pkg/config"
 	"github.com/harrybrwn/apizza/pkg/tests"
@@ -74,9 +73,8 @@ func testAppRootCmdRun(t *testing.T, buf *bytes.Buffer, a *App) {
 }
 
 func TestAppResetFlag(t *testing.T) {
-	a := newapp(makedummydb(), new(Config), nil)
-	defer a.db.Destroy()
-	a.SetOutput(new(bytes.Buffer))
+	r := cmdtest.NewRecorder()
+	a := newapp(r.ToApp())
 
 	a.Cmd().ParseFlags([]string{"--clear-cache"})
 	a.clearCache = true
@@ -89,23 +87,18 @@ func TestAppResetFlag(t *testing.T) {
 	} else if !os.IsNotExist(err) {
 		t.Error("database should not exitst")
 	}
-	tests.Compare(
-		t, a.Output().(*bytes.Buffer).String(),
-		fmt.Sprintf("removing %s\n", a.DB().Path()))
+	r.Compare(t, fmt.Sprintf("removing %s\n", a.DB().Path()))
+	r.ClearBuf()
 }
 
 func TestAppStoreFinder(t *testing.T) {
-	buf := new(bytes.Buffer)
-	cf := &Config{
-		Service: dawg.Delivery,
-		Address: *cmdtest.TestAddress(),
-	}
-	a := newapp(makedummydb(), cf, buf)
-	defer a.db.Destroy()
+	r := cmdtest.NewRecorder()
+	defer r.CleanUp()
+	a := newapp(r.ToApp())
 
 	store := a.store()
 	if store == nil {
-		// t.Error("what")
+		t.Error("what")
 	}
 }
 
