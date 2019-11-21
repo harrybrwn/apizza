@@ -3,6 +3,7 @@ package dawg
 import (
 	"fmt"
 	"testing"
+	"time"
 )
 
 func testAddress() *StreetAddr {
@@ -123,47 +124,42 @@ func TestNearestStore(t *testing.T) {
 func TestGetAllNearbyStores_Async(t *testing.T) {
 	addr := testAddress()
 	for _, service := range []string{Delivery, Carryout} {
-		funcs := []func(addr Address, service string) ([]*Store, error){
-			GetNearbyStores, GetNearbyStoresAsync,
+		stores, err := GetNearbyStores(addr, service)
+		if err != nil {
+			t.Error(err)
 		}
-		for _, fn := range funcs {
-			stores, err := fn(addr, service)
-			if err != nil {
-				t.Error(err)
+		for _, s := range stores {
+			if s == nil {
+				t.Error("should not have nil store")
 			}
-			for _, s := range stores {
-				if s == nil {
-					t.Error("should not have nil store")
-				}
-				if s.userAddress == nil {
-					t.Fatal("nil store.userAddress")
-				}
-				if s.userService != service {
-					t.Error("wrong service method")
-				}
-				if s.userAddress.City() != addr.City() {
-					t.Error("wrong city")
-				}
-				if s.userAddress.LineOne() != addr.LineOne() {
-					t.Error("wrong line one")
-				}
-				if s.userAddress.StateCode() != addr.StateCode() {
-					t.Error("wrong state code")
-				}
-				if s.userAddress.Zip() != addr.Zip() {
-					t.Error("wrong zip co de")
-				}
+			if s.userAddress == nil {
+				t.Fatal("nil store.userAddress")
+			}
+			if s.userService != service {
+				t.Error("wrong service method")
+			}
+			if s.userAddress.City() != addr.City() {
+				t.Error("wrong city")
+			}
+			if s.userAddress.LineOne() != addr.LineOne() {
+				t.Error("wrong line one")
+			}
+			if s.userAddress.StateCode() != addr.StateCode() {
+				t.Error("wrong state code")
+			}
+			if s.userAddress.Zip() != addr.Zip() {
+				t.Error("wrong zip co de")
 			}
 		}
 	}
 }
 
 func TestGetAllNearbyStores_Async_Err(t *testing.T) {
-	_, err := GetNearbyStoresAsync(&StreetAddr{}, Delivery)
+	_, err := GetNearbyStores(&StreetAddr{}, Delivery)
 	if err == nil {
 		t.Error("expected error")
 	}
-	_, err = GetNearbyStoresAsync(testAddress(), "")
+	_, err = GetNearbyStores(testAddress(), "")
 	if err == nil {
 		t.Error("expected error")
 	}
@@ -251,6 +247,40 @@ func TestGetNearestStore(t *testing.T) {
 		}
 		if s == nil {
 			t.Error("store is nil")
+		}
+	}
+}
+
+func TestAsyncInOrder(t *testing.T) {
+	addr := testAddress()
+	serv := Delivery
+	tm := time.Now()
+	storesInOrder, err := GetNearbyStores(addr, serv)
+	if err != nil {
+		t.Error(err)
+	}
+	fmt.Println("old:", time.Now().Sub(tm))
+
+	tm = time.Now()
+	stores, err := asyncNearbyStores(orderClient, addr, serv)
+	if err != nil {
+		t.Error(err)
+	}
+	fmt.Println("asyncInOrder:", time.Now().Sub(tm))
+
+	n := len(storesInOrder)
+	if n != len(stores) {
+		t.Fatal("the results did not return lists of the same length")
+	}
+	for i := 0; i < n; i++ {
+		if storesInOrder[i].ID != stores[i].ID {
+			t.Error("wrong id")
+		}
+		if storesInOrder[i].Phone != stores[i].Phone {
+			t.Error("stores have different phone numbers")
+		}
+		if storesInOrder[i].Address != stores[i].Address {
+			t.Error("stores have different addresses")
 		}
 	}
 }

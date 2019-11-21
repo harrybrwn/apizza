@@ -31,23 +31,6 @@ func NearestStore(addr Address, service string) (*Store, error) {
 // GetNearbyStores is a way of getting all the nearby stores
 // except they will by full initialized.
 func GetNearbyStores(addr Address, service string) ([]*Store, error) {
-	all, err := findNearbyStores(orderClient, addr, service)
-	if err != nil {
-		return nil, err
-	}
-	for i, store := range all.Stores {
-		store.userAddress = addr
-		store.userService = service
-		if err = initStore(orderClient, all.Stores[i].ID, all.Stores[i]); err != nil {
-			return nil, err
-		}
-	}
-	return all.Stores, nil
-}
-
-// GetNearbyStoresAsync will retrive a list of nearby stores asyncronously, meaning that
-// the first item on the list is not the closest.
-func GetNearbyStoresAsync(addr Address, service string) ([]*Store, error) {
 	return asyncNearbyStores(orderClient, addr, service)
 }
 
@@ -276,7 +259,11 @@ func asyncNearbyStores(cli *client, addr Address, service string) ([]*Store, err
 	}
 
 	var (
-		stores  []*Store // return value
+		nstores = len(all.Stores)
+		ix      = make(map[string]int) // store the indexes my store id
+
+		stores = make([]*Store, nstores) // return value
+
 		store   *Store
 		pair    maybeStore
 		builder = storebuilder{
@@ -284,6 +271,10 @@ func asyncNearbyStores(cli *client, addr Address, service string) ([]*Store, err
 			stores:    make(chan maybeStore),
 		}
 	)
+
+	for i := 0; i < nstores; i++ {
+		ix[all.Stores[i].ID] = i
+	}
 
 	go func() {
 		builder.Wait()
@@ -304,7 +295,7 @@ func asyncNearbyStores(cli *client, addr Address, service string) ([]*Store, err
 		store.userService = service
 		store.cli = cli
 
-		stores = append(stores, store)
+		stores[ix[store.ID]] = store
 	}
 
 	return stores, nil

@@ -48,24 +48,7 @@ func (u *UserProfile) StoresNearMe() ([]*Store, error) {
 	}
 
 	address := u.DefaultAddress()
-	all, err := findNearbyStores(u.auth.cli, address, u.ServiceMethod)
-	if err != nil {
-		return nil, err
-	}
-
-	for _, store := range all.Stores {
-		store.userAddress = address
-		store.userService = u.ServiceMethod
-		if err = initStore(u.auth.cli, store.ID, store); err != nil {
-			return nil, err
-		}
-	}
-	return all.Stores, nil
-}
-
-// StoresNearMeAsync uses go-routines.
-func (u *UserProfile) StoresNearMeAsync() ([]*Store, error) {
-	return asyncNearbyStores(u.auth.cli, u.DefaultAddress(), u.ServiceMethod)
+	return asyncNearbyStores(u.auth.cli, address, u.ServiceMethod)
 }
 
 // NearestStore will find the the store that is closest to the user's default address.
