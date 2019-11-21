@@ -37,6 +37,7 @@ type apizzaCmd struct {
 }
 
 func (c *apizzaCmd) Run(cmd *cobra.Command, args []string) (err error) {
+	// panic("get rid of this command")
 	if c.clearCache {
 		err = db.Close()
 		c.Printf("removing %s\n", db.Path())
@@ -62,20 +63,20 @@ func newApizzaCmd() base.CliCommand {
 	c := &apizzaCmd{address: "", service: "", clearCache: false}
 	c.basecmd = newCommand("apizza", "Dominos pizza from the command line.", c)
 
-	c.Cmd().PersistentPreRunE = c.preRun
+	// c.Cmd().PersistentPreRunE = c.preRun
 
-	c.Flags().BoolVar(&c.clearCache, "clear-cache", false, "delete the database")
-	c.Cmd().PersistentFlags().BoolVar(&c.resetMenu, "delete-menu", false, "delete the menu stored in cache")
+	// c.Flags().BoolVar(&c.clearCache, "clear-cache", false, "delete the database")
+	// c.Cmd().PersistentFlags().BoolVar(&c.resetMenu, "delete-menu", false, "delete the menu stored in cache")
 
-	c.Cmd().PersistentFlags().StringVar(&c.address, "address", c.address, "use a specific address")
-	c.Cmd().PersistentFlags().StringVar(&c.service, "service", c.service, "select a Dominos service, either 'Delivery' or 'Carryout'")
+	// c.Cmd().PersistentFlags().StringVar(&c.address, "address", c.address, "use a specific address")
+	// c.Cmd().PersistentFlags().StringVar(&c.service, "service", c.service, "select a Dominos service, either 'Delivery' or 'Carryout'")
 
-	c.Cmd().PersistentFlags().BoolVar(&test, "test", false, "testing flag (for development)")
-	c.Cmd().PersistentFlags().BoolVar(&reset, "reset", false, "reset the program (for development)")
-	c.Cmd().PersistentFlags().MarkHidden("test")
-	c.Cmd().PersistentFlags().MarkHidden("reset")
+	// c.Cmd().PersistentFlags().BoolVar(&test, "test", false, "testing flag (for development)")
+	// c.Cmd().PersistentFlags().BoolVar(&reset, "reset", false, "reset the program (for development)")
+	// c.Cmd().PersistentFlags().MarkHidden("test")
+	// c.Cmd().PersistentFlags().MarkHidden("reset")
 
-	c.Flags().BoolVarP(&c.storeLocation, "store-location", "L", false, "show the location of the nearest store")
+	// c.Flags().BoolVarP(&c.storeLocation, "store-location", "L", false, "show the location of the nearest store")
 	return c
 }
 

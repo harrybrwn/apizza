@@ -5,7 +5,6 @@ import (
 	"io"
 	"strings"
 
-	"github.com/harrybrwn/apizza/cmd"
 	"github.com/harrybrwn/apizza/cmd/internal/base"
 	"github.com/harrybrwn/apizza/pkg/cache"
 	"github.com/harrybrwn/apizza/pkg/config"
@@ -25,7 +24,7 @@ func NewRecorder() *Recorder {
 	return &Recorder{
 		DataBase: must(cache.GetDB(tests.NamedTempFile("test", "apizza_test.db"))),
 		Out:      new(bytes.Buffer),
-		Conf:     new(cmd.Config),
+		Conf:     new(base.Config),
 	}
 }
 

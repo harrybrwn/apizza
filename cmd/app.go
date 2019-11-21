@@ -19,11 +19,11 @@ import (
 
 // App is the main app, the root command, and the Builder.
 type App struct {
-	base.CliCommand
-	storefinder // for app.store()
+	base.CliCommand // this is also the root command
+	storefinder     // for app.store()
 
 	db   *cache.DataBase
-	conf *Config
+	conf *base.Config
 	addr *obj.Address
 	logf *os.File
 	log  *log.Logger
@@ -44,13 +44,12 @@ type App struct {
 	logfile       string
 }
 
-func newapp(db *cache.DataBase, conf *Config, logs io.Writer) *App {
+func newapp(db *cache.DataBase, conf *base.Config, out io.Writer) *App {
 	app := &App{
 		CliCommand: nil,
 		db:         db,
 		conf:       conf,
 		addr:       &conf.Address,
-		log:        log.New(logs, "", 0),
 
 		// default flag values...
 		address:    "",
@@ -73,7 +72,7 @@ func newapp(db *cache.DataBase, conf *Config, logs io.Writer) *App {
 			return app.addr
 		},
 	)
-	app.SetOutput(os.Stdout)
+	app.SetOutput(out)
 
 	app.builder = &cliBuilder{
 		db:   db,
@@ -100,7 +99,7 @@ func (a *App) Config() config.Config {
 
 // Log to the logging file
 func (a *App) Log(v ...interface{}) {
-	a.log.Print(v...)
+	log.Print(v...)
 }
 
 func (a *App) exec() error {
@@ -127,7 +126,7 @@ func (a *App) Run(cmd *cobra.Command, args []string) (err error) {
 		editor := os.Getenv("EDITOR")
 		c := exec.Command(editor, filepath.Join(config.Folder(), "logs", "dev.log"))
 		c.Stdin = os.Stdin
-		c.Stdout = os.Stdout
+		c.Stdout = a.Output()
 		return c.Run()
 	}
 	if a.clearCache {
@@ -151,11 +150,11 @@ func (a *App) Run(cmd *cobra.Command, args []string) (err error) {
 func (a *App) initflags() {
 	a.Cmd().PersistentPreRunE = a.prerun
 	a.Cmd().PostRunE = a.postrun
-	a.Cmd().PersistentFlags().StringVar(&a.logfile, "log", "", "set a log file")
 
 	a.Flags().BoolVar(&a.clearCache, "clear-cache", false, "delete the database")
 	a.Cmd().PersistentFlags().BoolVar(&a.resetMenu, "delete-menu", false, "delete the menu stored in cache")
 
+	a.Cmd().PersistentFlags().StringVar(&a.logfile, "log", "", "set a log file (found in ~/.apizza/logs)")
 	a.Cmd().PersistentFlags().StringVar(&a.address, "address", a.address, "use a specific address")
 	a.Cmd().PersistentFlags().StringVar(&a.service, "service", a.service, "select a Dominos service, either 'Delivery' or 'Carryout'")
 	a.Flags().BoolVarP(&a.storeLocation, "store-location", "L", false, "show the location of the nearest store")
@@ -185,7 +184,6 @@ func (a *App) prerun(*cobra.Command, []string) (err error) {
 	if a.logfile != "" {
 		file = a.logfile
 		a.logf, e = os.Create(logfile(file))
-		a.log = log.New(a.logf, "", 0)
 		log.SetOutput(a.logf)
 	}
 	return errs.Pair(err, e)

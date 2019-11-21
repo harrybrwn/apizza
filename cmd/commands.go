@@ -43,7 +43,6 @@ var (
 func Execute() {
 	var (
 		err, logErr error
-		logs        *os.File
 	)
 	if err = config.SetConfig(".apizza", cfg); err != nil {
 		handle(err, "Internal Error", 1)
@@ -53,7 +52,7 @@ func Execute() {
 		handle(err, "Internal Error", 1)
 	}
 
-	app := newapp(db, cfg, logs)
+	app := newapp(db, cfg, os.Stdout)
 
 	log.SetOutput(&lumberjack.Logger{
 		Filename:   filepath.Join(config.Folder(), "logs", "dev.log"),
