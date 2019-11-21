@@ -8,6 +8,8 @@ import (
 	"testing"
 
 	"github.com/harrybrwn/apizza/cmd/internal/base"
+	"github.com/harrybrwn/apizza/cmd/internal/cmdtest"
+	"github.com/harrybrwn/apizza/dawg"
 	"github.com/harrybrwn/apizza/pkg/cache"
 	"github.com/harrybrwn/apizza/pkg/config"
 	"github.com/harrybrwn/apizza/pkg/tests"
@@ -26,7 +28,7 @@ func TestRunner(t *testing.T) {
 		withCartCmd(app.builder, testAddToppings),
 		withCartCmd(app.builder, testOrderRunDelete),
 		testFindProduct,
-		withApizzaCmd(testApizzaCmdRun, newApizzaCmd()),
+		withAppCmd(testAppRootCmdRun, app),
 		withDummyDB(withApizzaCmd(testApizzaResetflag, newApizzaCmd())),
 		testMenuRun, testConfigStruct, testConfigCmd,
 		testConfigGet, testConfigSet, withDummyDB(testExec),
@@ -34,17 +36,77 @@ func TestRunner(t *testing.T) {
 	r.Run()
 }
 
-func testApizzaCmdRun(t *testing.T, buf *bytes.Buffer, c *apizzaCmd) {
-	c.Cmd().ParseFlags([]string{})
-	if err := c.Run(c.Cmd(), []string{}); err != nil {
+func testAppRootCmdRun(t *testing.T, buf *bytes.Buffer, a *App) {
+	a.Cmd().ParseFlags([]string{})
+	if err := a.Run(a.Cmd(), []string{}); err != nil {
 		t.Error(err)
 	}
-	c.Cmd().ParseFlags([]string{"--test"})
-	if err := c.Run(c.Cmd(), []string{}); err != nil {
+	if buf.String() != a.Cmd().UsageString() {
+		t.Error("wrong output")
+	}
+
+	a.Cmd().ParseFlags([]string{"--test"})
+	if err := a.Run(a.Cmd(), []string{}); err != nil {
 		t.Error(err)
 	}
 	test = false
 	buf.Reset()
+
+	err := a.prerun(a.Cmd(), []string{})
+	if err != nil {
+		t.Error("should not return an error")
+	}
+	err = a.postrun(a.Cmd(), []string{})
+	if err != nil {
+		t.Error("should not return an error")
+	}
+
+	if len(a.Cmd().Commands()) != 0 {
+		t.Error("should not have commands yet")
+	}
+	err = a.exec()
+	if err != nil {
+		t.Error(err)
+	}
+	if len(a.Cmd().Commands()) == 0 {
+		t.Error("should have commands")
+	}
+}
+
+func TestAppResetFlag(t *testing.T) {
+	a := newapp(makedummydb(), new(Config), nil)
+	defer a.db.Destroy()
+	a.SetOutput(new(bytes.Buffer))
+
+	a.Cmd().ParseFlags([]string{"--clear-cache"})
+	a.clearCache = true
+	test = false
+	if err := a.Run(a.Cmd(), []string{}); err != nil {
+		t.Error(err)
+	}
+	if _, err := os.Stat(a.DB().Path()); os.IsExist(err) {
+		t.Error("database should not exitst")
+	} else if !os.IsNotExist(err) {
+		t.Error("database should not exitst")
+	}
+	tests.Compare(
+		t, a.Output().(*bytes.Buffer).String(),
+		fmt.Sprintf("removing %s\n", a.DB().Path()))
+}
+
+func TestAppStoreFinder(t *testing.T) {
+	buf := new(bytes.Buffer)
+	cf := &Config{
+		Service: dawg.Delivery,
+		Address: *cmdtest.TestAddress(),
+	}
+	a := newapp(makedummydb(), cf, buf)
+	defer a.db.Destroy()
+
+	store := a.store()
+	if store == nil {
+		// t.Error("what")
+	}
 }
 
 func testApizzaResetflag(t *testing.T, buf *bytes.Buffer, c *apizzaCmd) {
@@ -88,10 +150,15 @@ func dummyCheck(t *testing.T) {
 	}
 }
 
+func makedummydb() *cache.DataBase {
+	newDatabase, err := cache.GetDB(tests.NamedTempFile("testdata", "apizza_dummy.db"))
+	check(err, "dummy database")
+	return newDatabase
+}
+
 func withDummyDB(fn func(*testing.T)) func(*testing.T) {
 	return func(t *testing.T) {
-		newDatabase, err := cache.GetDB(tests.NamedTempFile("testdata", "apizza_dummy.db"))
-		check(err, "dummy database")
+		newDatabase := makedummydb()
 		oldDatabase := db
 		db = newDatabase
 		defer func() {
@@ -135,6 +202,18 @@ func withApizzaCmd(f func(*testing.T, *bytes.Buffer, *apizzaCmd), c base.CliComm
 			t.Error("not an *apizzaCmd")
 		}
 		buf := &bytes.Buffer{}
+		cmd.SetOutput(buf)
+		f(t, buf, cmd)
+	}
+}
+
+func withAppCmd(f func(*testing.T, *bytes.Buffer, *App), c base.CliCommand) func(*testing.T) {
+	return func(t *testing.T) {
+		cmd, ok := c.(*App)
+		if !ok {
+			t.Error("not an *App")
+		}
+		buf := new(bytes.Buffer)
 		cmd.SetOutput(buf)
 		f(t, buf, cmd)
 	}
