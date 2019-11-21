@@ -93,7 +93,7 @@ func (a *App) Build(use, short string, r base.Runner) *base.Command {
 }
 
 // Config returns the config struct.
-func (a *App) Config() config.Config {
+func (a *App) Config() *base.Config {
 	return a.conf
 }
 

@@ -4,7 +4,6 @@ import (
 	"io"
 
 	"github.com/harrybrwn/apizza/pkg/cache"
-	"github.com/harrybrwn/apizza/pkg/config"
 )
 
 // Builder defines an interface for an object that builds commands.
@@ -22,5 +21,5 @@ type DBBuilder interface {
 
 // ConfigBuilder is a cli builder that can give away a config struct.
 type ConfigBuilder interface {
-	Config() config.Config
+	Config() *Config
 }

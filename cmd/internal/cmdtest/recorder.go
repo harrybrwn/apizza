@@ -10,7 +10,6 @@ import (
 	"github.com/harrybrwn/apizza/cmd/internal/base"
 	"github.com/harrybrwn/apizza/dawg"
 	"github.com/harrybrwn/apizza/pkg/cache"
-	"github.com/harrybrwn/apizza/pkg/config"
 	"github.com/harrybrwn/apizza/pkg/errs"
 	"github.com/harrybrwn/apizza/pkg/tests"
 )
@@ -18,7 +17,7 @@ import (
 // Recorder is a mock command builder.
 type Recorder struct {
 	DataBase *cache.DataBase
-	Conf     config.Config
+	Conf     *base.Config
 	Out      *bytes.Buffer
 }
 
@@ -47,7 +46,7 @@ func (r *Recorder) DB() *cache.DataBase {
 }
 
 // Config will return the config struct.
-func (r *Recorder) Config() config.Config {
+func (r *Recorder) Config() *base.Config {
 	return r.Conf
 }
 
@@ -65,7 +64,7 @@ func (r *Recorder) Build(use, short string, run base.Runner) *base.Command {
 
 // ToApp returns the arguments needed to create a cmd.App.
 func (r *Recorder) ToApp() (*cache.DataBase, *base.Config, io.Writer) {
-	return r.DB(), r.Conf.(*base.Config), r.Output()
+	return r.DB(), r.Conf, r.Output()
 }
 
 // CleanUp will cleanup all the the Recorder tempfiles and free all resources.
