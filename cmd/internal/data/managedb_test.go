@@ -4,17 +4,15 @@ import (
 	"bytes"
 	"testing"
 
+	"github.com/harrybrwn/apizza/cmd/internal/cmdtest"
 	"github.com/harrybrwn/apizza/cmd/internal/obj"
 	"github.com/harrybrwn/apizza/dawg"
-	"github.com/harrybrwn/apizza/pkg/cache"
 	"github.com/harrybrwn/apizza/pkg/tests"
 )
 
 func TestDBManagment(t *testing.T) {
-	db, err := cache.GetDB(tests.TempFile())
-	if err != nil {
-		t.Error(err)
-	}
+	db := cmdtest.TempDB()
+	var err error
 	db.Get("name")
 	a := &obj.Address{
 		Street:   "1600 Pennsylvania Ave NW",

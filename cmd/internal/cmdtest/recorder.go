@@ -22,12 +22,16 @@ type Recorder struct {
 	Out      *bytes.Buffer
 }
 
+// TODO:
+//   - give the inner config an actual temp file and delete it in
+//     the CleanUp function. (need to get rid of global cfg var first)
+
 var services = []string{dawg.Carryout, dawg.Delivery}
 
 // NewRecorder create a new command recorder.
 func NewRecorder() *Recorder {
 	return &Recorder{
-		DataBase: must(cache.GetDB(tests.NamedTempFile("test", "apizza_test.db"))),
+		DataBase: TempDB(),
 		Out:      new(bytes.Buffer),
 		Conf: &base.Config{
 			Name:    "Apizza TestRecorder",
@@ -44,7 +48,7 @@ func (r *Recorder) DB() *cache.DataBase {
 
 // Config will return the config struct.
 func (r *Recorder) Config() config.Config {
-	return nil
+	return r.Conf
 }
 
 // Output returns the reqorder's output.

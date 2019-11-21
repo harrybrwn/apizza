@@ -143,15 +143,9 @@ func dummyCheck(t *testing.T) {
 	}
 }
 
-func makedummydb() *cache.DataBase {
-	newDatabase, err := cache.GetDB(tests.NamedTempFile("testdata", "apizza_dummy.db"))
-	check(err, "dummy database")
-	return newDatabase
-}
-
 func withDummyDB(fn func(*testing.T)) func(*testing.T) {
 	return func(t *testing.T) {
-		newDatabase := makedummydb()
+		newDatabase := cmdtest.TempDB()
 		oldDatabase := db
 		db = newDatabase
 		defer func() {
