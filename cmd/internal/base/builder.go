@@ -9,11 +9,16 @@ import (
 
 // Builder defines an interface for an object that builds commands.
 type Builder interface {
-	Build(use, short string, r Runner) *Command
-	Output() io.Writer
+	CommandBuilder
 	DBBuilder
 	ConfigBuilder
 	AddressBuilder
+	Output() io.Writer
+}
+
+// CommandBuilder defines an interface for building commnads.
+type CommandBuilder interface {
+	Build(use, short string, r Runner) *Command
 }
 
 // DBBuilder is a cli builder that can give away a database.
@@ -34,6 +39,7 @@ type AddressBuilder interface {
 
 // AddrDBBuilder is an anddress-builder and a db-builder.
 type AddrDBBuilder interface {
+	CommandBuilder
 	AddressBuilder
 	DBBuilder
 }

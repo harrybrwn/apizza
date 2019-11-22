@@ -63,7 +63,7 @@ func Execute() {
 	})
 
 	defer func() {
-		err = errs.Append(db.Close(), config.Save()) //, logs.Close())
+		err = errs.Append(db.Close(), config.Save())
 		if err != nil {
 			handle(err, "Internal Error", 1)
 		}
@@ -84,6 +84,7 @@ var _ base.CliCommand = (*basecmd)(nil)
 
 type basecmd struct {
 	*base.Command
+
 	cache.Updater
 	storefinder
 	menu *dawg.Menu
@@ -131,6 +132,8 @@ func (c *basecmd) init() *basecmd {
 }
 
 func newCommand(use, short string, r base.Runner) *basecmd {
+	// _, file, line, _ := runtime.Caller(2)
+	// fmt.Println("newCommand:", file, line)
 	bc := &basecmd{Command: base.NewCommand(use, short, r.Run)}
 	return bc.init()
 }
@@ -194,6 +197,10 @@ func (b *cliBuilder) exec() error {
 	return b.root.Cmd().Execute()
 }
 
+func (b *cliBuilder) Address() dawg.Address {
+	return nil
+}
+
 func (b *cliBuilder) newCommand(use, short string, c base.Runner) *basecmd {
 	base := newCommand(use, short, c)
 	base.addr = b.addr
@@ -234,10 +241,4 @@ func (s *storegetter) store() *dawg.Store {
 		}
 	}
 	return s.dstore
-}
-
-type menuupdater interface {
-}
-
-type menuUpdater struct {
 }

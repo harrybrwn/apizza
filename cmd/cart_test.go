@@ -89,6 +89,11 @@ func testOrderPriceOutput(cart *cartCmd, buf *bytes.Buffer, t *testing.T) {
 	if err := cart.Run(cart.Cmd(), []string{"to-many", "args"}); err == nil {
 		t.Error("expected error")
 	}
+	m := cart.Menu()
+	m2 := cart.Menu()
+	if m != m2 {
+		t.Error("should have cached the menu")
+	}
 }
 
 func testOrderRunDelete(cart *cartCmd, buf *bytes.Buffer, t *testing.T) {

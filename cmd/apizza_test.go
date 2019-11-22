@@ -19,13 +19,13 @@ func TestRunner(t *testing.T) {
 	app := newapp(cmdtest.TempDB(), cfg, nil)
 	r.AddTest(
 		dummyCheck,
-		base.WithCmds(testOrderNew, newCartCmd(app.builder), newAddOrderCmd(app.builder)),
-		base.WithCmds(testAddOrder, newCartCmd(app.builder), newAddOrderCmd(app.builder)),
+		base.WithCmds(testOrderNew, newCartCmd(app), newAddOrderCmd(app.builder)),
+		base.WithCmds(testAddOrder, newCartCmd(app), newAddOrderCmd(app.builder)),
 		base.WithCmds(testOrderNewErr, newAddOrderCmd(app.builder)),
-		base.WithCmds(testOrderRunAdd, newCartCmd(app.builder)),
-		withCartCmd(app.builder, testOrderPriceOutput),
-		withCartCmd(app.builder, testAddToppings),
-		withCartCmd(app.builder, testOrderRunDelete),
+		base.WithCmds(testOrderRunAdd, newCartCmd(app)),
+		withCartCmd(app, testOrderPriceOutput),
+		withCartCmd(app, testAddToppings),
+		withCartCmd(app, testOrderRunDelete),
 		testFindProduct,
 		withAppCmd(testAppRootCmdRun, app),
 		testMenuRun,
@@ -157,7 +157,7 @@ func withAppCmd(f func(*testing.T, *bytes.Buffer, *App), c base.CliCommand) func
 }
 
 func withCartCmd(
-	b *cliBuilder,
+	b base.Builder,
 	f func(*cartCmd, *bytes.Buffer, *testing.T),
 ) func(*testing.T) {
 	return func(t *testing.T) {

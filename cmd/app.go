@@ -110,7 +110,7 @@ func (a *App) Log(v ...interface{}) {
 func (a *App) exec() error {
 	a.initflags()
 	a.Addcmd(
-		newCartCmd(a.builder).Addcmd(
+		newCartCmd(a).Addcmd(
 			newAddOrderCmd(a.builder),
 		),
 		newConfigCmd(a).Addcmd(

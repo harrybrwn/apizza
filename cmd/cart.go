@@ -26,12 +26,19 @@ import (
 
 	"github.com/harrybrwn/apizza/cmd/internal/base"
 	"github.com/harrybrwn/apizza/cmd/internal/data"
+	"github.com/harrybrwn/apizza/cmd/internal/obj"
 	"github.com/harrybrwn/apizza/cmd/internal/out"
 	"github.com/harrybrwn/apizza/dawg"
+	"github.com/harrybrwn/apizza/pkg/cache"
 )
 
 type cartCmd struct {
-	*basecmd
+	base.CliCommand
+	data.MenuCacher
+	storefinder
+
+	db   *cache.DataBase
+	addr dawg.Address
 
 	updateAddr bool
 	validate   bool
@@ -124,7 +131,7 @@ func (c *cartCmd) Run(cmd *cobra.Command, args []string) (err error) {
 			}
 		} else {
 			for _, newP := range c.add {
-				p, err := c.menu.GetVariant(newP)
+				p, err := c.Menu().GetVariant(newP)
 				if err != nil {
 					return err
 				}
@@ -170,11 +177,36 @@ func getOrderItem(order *dawg.Order, code string) dawg.Item {
 	return nil
 }
 
-func newCartCmd(b *cliBuilder) base.CliCommand {
-	c := &cartCmd{price: false, delete: false, verbose: false}
-	c.basecmd = b.newCommand("cart <order name>", "Manage user created orders", c)
-	c.db = b.DB()
-	c.basecmd.Cmd().Long = `The cart command gets information on all of the user
+func newCartCmd(b base.Builder) base.CliCommand {
+	c := &cartCmd{
+		db:      b.DB(),
+		addr:    b.Address(),
+		price:   false,
+		delete:  false,
+		verbose: false,
+	}
+
+	if app, ok := b.(*App); ok {
+		c.storefinder = app.storefinder
+	} else {
+		c.storefinder = newStoreGetter(
+			func() string { return b.Config().Service },
+			func() dawg.Address {
+				addr := b.Address()
+				if addr != nil {
+					return addr
+				}
+				a, ok := b.Config().Get("address").(obj.Address)
+				if !ok {
+					return nil
+				}
+				return &a
+			},
+		)
+	}
+	c.MenuCacher = data.NewMenuCacher(menuUpdateTime, b.DB(), c.store)
+	c.CliCommand = b.Build("cart <order name>", "Manage user created orders", c)
+	c.Cmd().Long = `The cart command gets information on all of the user
 created orders.`
 
 	c.Cmd().PersistentPreRunE = c.persistentPreRunE

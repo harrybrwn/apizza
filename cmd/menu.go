@@ -98,7 +98,14 @@ func newMenuCmd(b base.Builder) base.CliCommand {
 		c.storefinder = newStoreGetter(
 			func() string { return b.Config().Service },
 			func() dawg.Address {
-				a := b.Config().Get("address").(obj.Address)
+				addr := b.Address()
+				if addr != nil {
+					return addr
+				}
+				a, ok := b.Config().Get("address").(obj.Address)
+				if !ok {
+					return nil
+				}
 				return &a
 			},
 		)
