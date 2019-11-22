@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"reflect"
 	"runtime"
 	"strings"
@@ -44,6 +45,7 @@ func (c *testCnfg) Set(key string, val interface{}) error { return nil }
 func TestConfigGetandSet(t *testing.T) {
 	var c = &testCnfg{}
 	cfg = configfile{conf: c}
+
 	if GetField(c, "msg") != GetField(c, "Msg") {
 		t.Error("the Get function should auto convert 'msg' to 'Msg'.")
 	}
@@ -74,11 +76,7 @@ func TestConfigGetandSet(t *testing.T) {
 	if GetField(c, "More") == nil {
 		t.Error("didn't get struct value")
 	}
-	err := SetField(c, "number", "what")
-	if err == nil {
-		t.Error("should have returned a bad type error")
-	}
-	err = SetField(c, "number2", int64(3))
+	err := SetField(c, "number2", int64(3))
 	if err != nil {
 		t.Error(err)
 	}
@@ -86,29 +84,31 @@ func TestConfigGetandSet(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	if GetField(c, "number").(int64) != int64(6) {
-		t.Error("wrong number")
-	}
-
-	err = SetField(c, "msg", 5)
-	if err == nil {
-		t.Error("expected error")
-	}
-	err = SetField(c, "more", struct{ a string }{"what"})
-	if err == nil {
-		t.Error("expected error")
-	}
 	err = SetField(c, "pi", 6.9)
 	if err != nil {
 		t.Error(err)
 	}
-	err = SetField(c, "pi", "what")
-	if err == nil {
-		t.Error("expected error")
+	if GetField(c, "number").(int64) != int64(6) {
+		t.Error("wrong number")
 	}
-	err = SetField(c, "msg", 9.5)
-	if err == nil {
-		t.Error("expected error")
+
+	tt := []struct {
+		key string
+		val interface{}
+	}{
+		{"number", "what"},
+		{"msg", 5},
+		{"more", struct{ a string }{"what"}},
+		{"pi", "what"},
+		{"msg", 9.5},
+	}
+	for _, tc := range tt {
+		if err = SetField(c, tc.key, tc.val); err == nil {
+			t.Errorf("expected error setting %s to %v", tc.key, tc.val)
+		}
+		if GetField(c, tc.key) == tc.val {
+			t.Errorf("field %s should not have been set to %v", tc.key, tc.val)
+		}
 	}
 }
 
@@ -118,21 +118,18 @@ func TestSetConfig(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	err = Save()
-	if err != nil {
+	if err = Save(); err != nil {
 		t.Error(err)
 	}
-	err = SetConfig(".testconfig", c)
-	if err == nil {
+	if err = SetConfig(".testconfig", c); err == nil {
 		t.Error("The second call to SetConfig should have returned an error")
 	}
 	tests.Compare(t, err.Error(), "cannot set multiple config files")
 
-	err = Reset()
-	if err != nil {
+	if err = Reset(); err != nil {
 		t.Error(err)
 	}
-	b, err := ioutil.ReadFile(Folder() + "/config.json")
+	b, err := ioutil.ReadFile(File())
 	if err != nil {
 		t.Error(err)
 	}
@@ -154,6 +151,9 @@ func TestSetConfig(t *testing.T) {
 	} else {
 		os.Remove(File())
 		os.Remove(Folder())
+	}
+	if _, err = os.Stat(Folder()); os.IsExist(err) {
+		t.Error("test config folder cleanup failed")
 	}
 }
 
@@ -193,18 +193,19 @@ func TestIsField(t *testing.T) {
 
 func TestFieldName(t *testing.T) {
 	var c Config = &testCnfg{}
-
-	if FieldName(c, "msg") != "Msg" {
-		t.Error("bad field name")
+	tt := []struct {
+		key string
+		val string
+	}{
+		{"msg", "Msg"},
+		{"more.one", "More.One"},
+		{"more", "More"},
+		{"badFieldName", ""},
 	}
-	if FieldName(c, "more.one") != "More.One" {
-		t.Error("bad field name")
-	}
-	if FieldName(c, "more") != "More" {
-		t.Error("bad field name")
-	}
-	if FieldName(c, "badFieldName") != "" {
-		t.Error("bad field name")
+	for _, tc := range tt {
+		if name := FieldName(c, tc.key); name != tc.val {
+			t.Errorf("bad field name for %s; got: \"%s\", wanted: \"%s\"", tc.key, name, tc.val)
+		}
 	}
 }
 
@@ -292,5 +293,22 @@ func TestEditor(t *testing.T) {
 	if cfg.save() != nil {
 		t.Error("should have returned nil")
 	}
+}
 
+func TestDeepConfig(t *testing.T) {
+	cfg.file = ""
+	err := SetConfig(".testconfig/deep/config", &testCnfg{})
+	if err != nil {
+		t.Error(err)
+	}
+	if _, err = os.Stat(Folder()); os.IsNotExist(err) {
+		t.Error("the config folder should exist")
+	}
+	dir := filepath.Dir(filepath.Dir(Folder()))
+	if err = os.RemoveAll(dir); err != nil {
+		t.Error(err)
+	}
+	if _, err = os.Stat(dir); os.IsExist(err) {
+		t.Error("should have cleaned up this directory")
+	}
 }

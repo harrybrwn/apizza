@@ -15,7 +15,6 @@ func TestBadCreds(t *testing.T) {
 	tok, err := gettoken("no", "and no")
 	if err == nil {
 		t.Error("expected an error")
-		fmt.Println(err)
 	}
 	if tok != nil {
 		t.Error("expected nil token")
@@ -234,6 +233,9 @@ func TestAuthClient(t *testing.T) {
 	auth, err := newauth(username, password)
 	if err != nil {
 		t.Error(err)
+	}
+	if auth == nil {
+		t.Fatal("got nil auth")
 	}
 
 	if auth.cli == nil {

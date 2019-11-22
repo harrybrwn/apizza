@@ -3,7 +3,6 @@ package dawg
 import (
 	"fmt"
 	"testing"
-	"time"
 )
 
 func testAddress() *StreetAddr {
@@ -254,19 +253,14 @@ func TestGetNearestStore(t *testing.T) {
 func TestAsyncInOrder(t *testing.T) {
 	addr := testAddress()
 	serv := Delivery
-	tm := time.Now()
 	storesInOrder, err := GetNearbyStores(addr, serv)
 	if err != nil {
 		t.Error(err)
 	}
-	fmt.Println("old:", time.Now().Sub(tm))
-
-	tm = time.Now()
 	stores, err := asyncNearbyStores(orderClient, addr, serv)
 	if err != nil {
 		t.Error(err)
 	}
-	fmt.Println("asyncInOrder:", time.Now().Sub(tm))
 
 	n := len(storesInOrder)
 	if n != len(stores) {

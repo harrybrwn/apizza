@@ -162,7 +162,6 @@ func TestNetworking_Err(t *testing.T) {
 }
 
 func TestDominosErrors(t *testing.T) {
-	// fmt.Println("try to find the fields that dominos gives when giving errors")
 	order := &Order{
 		LanguageCode:  "en",
 		ServiceMethod: "Delivery",
