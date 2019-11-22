@@ -3,6 +3,7 @@ package cmd
 import (
 	"bytes"
 	"encoding/json"
+	"os"
 	"testing"
 
 	"github.com/harrybrwn/apizza/cmd/internal/cmdtest"
@@ -56,42 +57,77 @@ func TestConfigStruct(t *testing.T) {
 	config.SetNonFileConfig(cfg) // reset the global config for compatability
 }
 
-func testConfigCmd(t *testing.T) {
+func TestConfigCmd(t *testing.T) {
 	r := cmdtest.NewRecorder()
 	c := newConfigCmd(r).(*configCmd)
-	buf := &bytes.Buffer{}
-	c.SetOutput(buf)
 	c.file = true
 	if err := c.Run(c.Cmd(), []string{}); err != nil {
 		t.Error(err)
 	}
 	c.file = false
-	tests.Compare(t, string(buf.Bytes()), "\n")
-	buf.Reset()
+	r.Compare(t, "\n")
+	r.ClearBuf()
 	c.dir = true
 	if err := c.Run(c.Cmd(), []string{}); err != nil {
 		t.Error(err)
 	}
-	tests.Compare(t, string(buf.Bytes()), "\n")
+	r.Compare(t, "\n")
+	r.ClearBuf()
 	c.dir = false
-	buf.Reset()
 	c.getall = true
 	if err := c.Run(c.Cmd(), []string{}); err != nil {
 		t.Error(err)
 	}
-	tests.Compare(t, string(buf.Bytes()), testConfigOutput)
+	r.Compare(t, testConfigOutput)
+	r.ClearBuf()
 	c.getall = false
-	buf.Reset()
 	cmdUseage := c.Cmd().UsageString()
 	if err := c.Run(c.Cmd(), []string{}); err != nil {
 		t.Error(err)
 	}
-	tests.Compare(t, string(buf.Bytes()), cmdUseage)
-	buf.Reset()
+	r.Compare(t, cmdUseage)
+	r.ClearBuf()
 	if err := c.Run(c.Cmd(), []string{}); err != nil {
 		t.Error(err)
 	}
-	tests.Compare(t, string(buf.Bytes()), c.Cmd().UsageString())
+	r.Compare(t, c.Cmd().UsageString())
+}
+
+func TestConfigEdit(t *testing.T) {
+	r := cmdtest.NewRecorder()
+	c := newConfigCmd(r).(*configCmd)
+	err := config.SetConfig(".apizza/tests", r.Conf)
+	if err != nil {
+		t.Error(err)
+	}
+	os.Setenv("EDITOR", "cat")
+	c.edit = true
+
+	exp := `{
+    "Name": "",
+    "Email": "",
+    "Address": {
+        "Street": "",
+        "CityName": "",
+        "State": "",
+        "Zipcode": ""
+    },
+    "Card": {
+        "Number": "",
+        "Expiration": ""
+    },
+    "Service": "Delivery"
+}`
+
+	tests.CompareOutput(t, exp, func() {
+		if err = c.Run(c.Cmd(), []string{}); err != nil {
+			t.Error(err)
+		}
+	})
+	if err = os.RemoveAll(config.Folder()); err != nil {
+		t.Error(err)
+	}
+	config.SetNonFileConfig(cfg) // for compatibility with old tests
 }
 
 func testConfigGet(t *testing.T) {

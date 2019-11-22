@@ -29,7 +29,7 @@ func TestRunner(t *testing.T) {
 		testFindProduct,
 		withAppCmd(testAppRootCmdRun, app),
 		testMenuRun,
-		testConfigCmd,
+		// testConfigCmd,
 		testConfigGet, testConfigSet,
 	)
 	r.Run()

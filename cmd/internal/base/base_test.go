@@ -6,7 +6,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/harrybrwn/apizza/cmd/internal/cmdtest"
+	"github.com/harrybrwn/apizza/pkg/config"
 	"github.com/harrybrwn/apizza/pkg/errs"
 	"github.com/harrybrwn/apizza/pkg/tests"
 	"github.com/spf13/cobra"
@@ -86,24 +86,23 @@ var testconfigjson = `
 }`
 
 func TestConfigStruct(t *testing.T) {
-	r := cmdtest.NewRecorder()
-	defer r.CleanUp()
-	r.ConfigSetup()
-	err := json.Unmarshal([]byte(testconfigjson), r.Config())
+	c := &Config{}
+	config.SetNonFileConfig(c)
+	err := json.Unmarshal([]byte(testconfigjson), c)
 	if err != nil {
 		t.Error(err)
 	}
 
-	if r.Config().Get("name").(string) != "joe" {
+	if c.Get("name").(string) != "joe" {
 		t.Error("wrong value")
 	}
-	if err := r.Config().Set("name", "not joe"); err != nil {
+	if err := c.Set("name", "not joe"); err != nil {
 		t.Error(err)
 	}
-	if r.Config().Get("Name").(string) != "not joe" {
+	if c.Get("Name").(string) != "not joe" {
 		t.Error("wrong value")
 	}
-	if err := r.Config().Set("name", "joe"); err != nil {
+	if err := c.Set("name", "joe"); err != nil {
 		t.Error(err)
 	}
 }

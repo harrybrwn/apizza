@@ -67,6 +67,7 @@ func (c *configCmd) Run(cmd *cobra.Command, args []string) error {
 func newConfigCmd(b base.Builder) base.CliCommand {
 	c := &configCmd{file: false, dir: false}
 	c.CliCommand = b.Build("config", "Configure apizza", c)
+	c.SetOutput(b.Output())
 	c.Cmd().Long = `The 'config' command is used for accessing the .apizza config file
 in your home directory. Feel free to edit the .apizza json file
 by hand or use the 'config' command.
