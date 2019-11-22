@@ -17,9 +17,10 @@ import (
 
 // Recorder is a mock command builder.
 type Recorder struct {
-	DataBase *cache.DataBase
-	Conf     *base.Config
-	Out      *bytes.Buffer
+	DataBase   *cache.DataBase
+	Conf       *base.Config
+	Out        *bytes.Buffer
+	cfgHasFile bool
 }
 
 // TODO:
@@ -38,6 +39,7 @@ func NewRecorder() *Recorder {
 			Service: services[rand.Intn(2)],
 			Address: *TestAddress(),
 		},
+		cfgHasFile: false,
 	}
 }
 
@@ -123,5 +125,5 @@ func (r *Recorder) StrEq(s string) bool {
 
 // Compare the recorder output with a string
 func (r *Recorder) Compare(t *testing.T, expected string) {
-	tests.Compare(t, r.Out.String(), expected)
+	tests.CompareCallDepth(t, r.Out.String(), expected, 2)
 }
