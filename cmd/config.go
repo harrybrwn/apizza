@@ -29,7 +29,6 @@ import (
 var cfg = &base.Config{}
 
 type configCmd struct {
-	// *basecmd
 	base.CliCommand
 	file   bool
 	dir    bool
@@ -42,9 +41,6 @@ type configCmd struct {
 
 func (c *configCmd) Run(cmd *cobra.Command, args []string) error {
 	if c.edit {
-		if len(args) == 1 {
-			return config.EditFile(args[0])
-		}
 		return config.Edit()
 	}
 	if c.file {

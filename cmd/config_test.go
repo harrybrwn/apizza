@@ -7,7 +7,9 @@ import (
 	"testing"
 
 	"github.com/harrybrwn/apizza/cmd/internal/cmdtest"
+	"github.com/harrybrwn/apizza/cmd/internal/obj"
 	"github.com/harrybrwn/apizza/pkg/config"
+	"github.com/harrybrwn/apizza/pkg/errs"
 	"github.com/harrybrwn/apizza/pkg/tests"
 )
 
@@ -38,8 +40,11 @@ service: "Carryout"
 
 func TestConfigStruct(t *testing.T) {
 	r := cmdtest.NewRecorder()
-	defer r.CleanUp()
 	r.ConfigSetup()
+	defer func() {
+		r.CleanUp()
+		config.SetNonFileConfig(cfg) // for test compatability
+	}()
 	check(json.Unmarshal([]byte(testconfigjson), r.Config()), "json")
 
 	if r.Config().Get("name").(string) != "joe" {
@@ -54,12 +59,17 @@ func TestConfigStruct(t *testing.T) {
 	if err := r.Config().Set("name", "joe"); err != nil {
 		t.Error(err)
 	}
-	config.SetNonFileConfig(cfg) // reset the global config for compatability
 }
 
 func TestConfigCmd(t *testing.T) {
 	r := cmdtest.NewRecorder()
 	c := newConfigCmd(r).(*configCmd)
+	r.ConfigSetup()
+	defer func() {
+		r.CleanUp()
+		config.SetNonFileConfig(cfg) // for test compatability
+	}()
+
 	c.file = true
 	if err := c.Run(c.Cmd(), []string{}); err != nil {
 		t.Error(err)
@@ -73,6 +83,11 @@ func TestConfigCmd(t *testing.T) {
 	}
 	r.Compare(t, "\n")
 	r.ClearBuf()
+
+	err := json.Unmarshal([]byte(testconfigjson), r.Config())
+	if err != nil {
+		t.Error(err)
+	}
 	c.dir = false
 	c.getall = true
 	if err := c.Run(c.Cmd(), []string{}); err != nil {
@@ -100,9 +115,16 @@ func TestConfigEdit(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
+	defer func() {
+		err = errs.Pair(r.DB().Destroy(), os.RemoveAll(config.Folder()))
+		if err != nil {
+			t.Error()
+		}
+		config.SetNonFileConfig(cfg) // for test compatability
+	}()
+
 	os.Setenv("EDITOR", "cat")
 	c.edit = true
-
 	exp := `{
     "Name": "",
     "Email": "",
@@ -118,16 +140,28 @@ func TestConfigEdit(t *testing.T) {
     },
     "Service": "Delivery"
 }`
-
 	tests.CompareOutput(t, exp, func() {
 		if err = c.Run(c.Cmd(), []string{}); err != nil {
 			t.Error(err)
 		}
 	})
-	if err = os.RemoveAll(config.Folder()); err != nil {
+	c.edit = false
+
+	err = json.Unmarshal([]byte(testconfigjson), r.Config())
+	if err != nil {
 		t.Error(err)
 	}
-	config.SetNonFileConfig(cfg) // for compatibility with old tests
+	a := config.Get("address")
+	if a == nil {
+		t.Error("should not be nil")
+	}
+	addr, ok := a.(obj.Address)
+	if !ok {
+		t.Error("this should be an obj.Address")
+	}
+	if addr.City() != "Washington DC" {
+		t.Error("bad config address city")
+	}
 }
 
 func testConfigGet(t *testing.T) {
