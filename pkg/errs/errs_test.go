@@ -1,8 +1,10 @@
 package errs
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
+	"strings"
 	"testing"
 )
 
@@ -177,5 +179,18 @@ func TestEating(t *testing.T) {
 	e := EatInt(f())
 	if e.Error() != "eats" {
 		t.Error("EatInt spat out the wrong error")
+	}
+}
+
+func TestPrintStack(t *testing.T) {
+	buf := new(bytes.Buffer)
+	func() {
+		func() {
+			stackFrame(buf, 0)
+		}()
+	}()
+	lines := strings.Split(buf.String(), "\n")
+	if len(lines) < 8 {
+		t.Error("too few stack frames")
 	}
 }
