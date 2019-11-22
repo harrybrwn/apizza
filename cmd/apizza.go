@@ -17,6 +17,7 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"runtime"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -60,6 +61,12 @@ var test = false
 var reset = false
 
 func newApizzaCmd() base.CliCommand {
+	stacksize := 2
+	for i := 1; i < stacksize; i++ {
+		_, file, line, _ := runtime.Caller(i)
+		fmt.Println("newApizzaCmd:", file, line)
+	}
+
 	c := &apizzaCmd{address: "", service: "", clearCache: false}
 	c.basecmd = newCommand("apizza", "Dominos pizza from the command line.", c)
 

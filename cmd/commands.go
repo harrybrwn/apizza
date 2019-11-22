@@ -153,8 +153,8 @@ func (b *cliBuilder) Output() io.Writer {
 	return b.root.Output()
 }
 
-func (b *cliBuilder) Config() config.Config {
-	return config.Object()
+func (b *cliBuilder) Config() *base.Config {
+	return nil
 }
 
 func newBuilder() *cliBuilder {
@@ -188,7 +188,7 @@ func (b *cliBuilder) exec() error {
 			newConfigSet(),
 			newConfigGet(),
 		),
-		b.newMenuCmd(),
+		newMenuCmd(b),
 		newOrderCmd(),
 	)
 	return b.root.Cmd().Execute()

@@ -2,11 +2,14 @@ package cmd
 
 import (
 	"bytes"
+	"github.com/harrybrwn/apizza/cmd/internal/cmdtest"
 	"testing"
 )
 
 func testMenuRun(t *testing.T) {
-	c := newBuilder().newMenuCmd().(*menuCmd)
+	r := cmdtest.NewRecorder()
+	c := newMenuCmd(r).(*menuCmd)
+
 	c.SetOutput(&bytes.Buffer{})
 	if err := c.Run(c.Cmd(), []string{}); err != nil {
 		t.Error(err)
@@ -15,7 +18,6 @@ func testMenuRun(t *testing.T) {
 	if err := c.Run(c.Cmd(), []string{}); err == nil {
 		t.Error("should raise error")
 	}
-	c.storefinder.(*storegetter).dstore = nil
 	c.item = "10SCREEN"
 	if err := c.Run(c.Cmd(), []string{}); err != nil {
 		t.Error(err)
@@ -28,7 +30,10 @@ func testMenuRun(t *testing.T) {
 }
 
 func testFindProduct(t *testing.T) {
-	c := newBuilder().newMenuCmd().(*menuCmd)
+	r := cmdtest.NewRecorder()
+	app := newapp(r.ToApp())
+	c := newMenuCmd(app).(*menuCmd)
+
 	buf := &bytes.Buffer{}
 	c.SetOutput(buf)
 	if err := db.UpdateTS("menu", c); err != nil {

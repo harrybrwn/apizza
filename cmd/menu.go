@@ -20,6 +20,8 @@ import (
 	"strings"
 	"unicode/utf8"
 
+	"github.com/harrybrwn/apizza/cmd/internal/data"
+	"github.com/harrybrwn/apizza/cmd/internal/obj"
 	"github.com/harrybrwn/apizza/cmd/internal/out"
 
 	"github.com/spf13/cobra"
@@ -29,7 +31,13 @@ import (
 )
 
 type menuCmd struct {
-	*basecmd
+	// *basecmd
+	base.CliCommand
+	data.MenuCacher
+	storefinder
+
+	addr dawg.Address
+
 	all            bool
 	verbose        bool
 	toppings       bool
@@ -50,22 +58,22 @@ func (c *menuCmd) Run(cmd *cobra.Command, args []string) error {
 
 	if len(args) == 1 {
 		if c.item == "" {
-			item = c.menu.FindItem(args[0])
+			item = c.Menu().FindItem(args[0])
 		}
 
 		if item == nil && c.category == "" {
 			c.category = strings.ToLower(args[0])
 		} else {
-			return out.ItemInfo(item, c.menu)
+			return out.ItemInfo(item, c.Menu())
 		}
 	}
 
 	if c.item != "" {
-		prod := c.menu.FindItem(c.item)
+		prod := c.Menu().FindItem(c.item)
 		if prod == nil {
 			return fmt.Errorf("cannot find %s", c.item)
 		}
-		return out.ItemInfo(prod, c.menu)
+		return out.ItemInfo(prod, c.Menu())
 	}
 
 	if c.toppings {
@@ -77,11 +85,29 @@ func (c *menuCmd) Run(cmd *cobra.Command, args []string) error {
 	return c.printMenu(strings.ToLower(c.category)) // still works with an empty string
 }
 
-func (b *cliBuilder) newMenuCmd() base.CliCommand {
+func newMenuCmd(b base.Builder) base.CliCommand {
 	c := &menuCmd{
-		all: false, toppings: false,
-		preconfigured: false, showCategories: false}
-	c.basecmd = b.newCommand("menu <item>", "View the Dominos menu.", c)
+		all:            false,
+		toppings:       false,
+		preconfigured:  false,
+		showCategories: false,
+	}
+	// TODO: this will not work with a global service or address flag
+	if app, ok := b.(*App); ok {
+		c.storefinder = app.storefinder
+	} else {
+		c.storefinder = newStoreGetter(
+			func() string { return b.Config().Service },
+			func() dawg.Address {
+				a := b.Config().Get("address").(obj.Address)
+				return &a
+			},
+		)
+	}
+	c.MenuCacher = data.NewMenuCacher(menuUpdateTime, b.DB(), c.store)
+	c.CliCommand = b.Build("menu <item>", "View the Dominos menu.", c)
+
+	// c.basecmd = b.newCommand("menu <item>", "View the Dominos menu.", c)
 	c.Cmd().Long = `This command will show the dominos menu.
 
 To show a subdivition of the menu, give an item or
@@ -102,17 +128,17 @@ as an argument to the command itself.`
 }
 
 func (c *menuCmd) printMenu(name string) error {
-	var allCategories = c.menu.Categorization.Food.Categories
+	var allCategories = c.Menu().Categorization.Food.Categories
 	if c.preconfigured {
-		allCategories = c.menu.Categorization.Preconfigured.Categories
+		allCategories = c.Menu().Categorization.Preconfigured.Categories
 	} else if c.all {
-		allCategories = append(allCategories, c.menu.Categorization.Preconfigured.Categories...)
+		allCategories = append(allCategories, c.Menu().Categorization.Preconfigured.Categories...)
 	}
 
 	if len(name) > 0 {
 		for _, cat := range allCategories {
 			if name == strings.ToLower(cat.Name) || name == strings.ToLower(cat.Code) {
-				return out.PrintMenu(cat, 0, c.menu)
+				return out.PrintMenu(cat, 0, c.Menu())
 			}
 		}
 		return fmt.Errorf("could not find %s", name)
@@ -126,13 +152,13 @@ func (c *menuCmd) printMenu(name string) error {
 	}
 
 	for _, cat := range allCategories {
-		out.PrintMenu(cat, 0, c.menu)
+		out.PrintMenu(cat, 0, c.Menu())
 	}
 	return nil
 }
 
 func (c *menuCmd) printToppings() {
-	var tops = c.menu.Toppings
+	var tops = c.Menu().Toppings
 
 	if c.category != "" {
 		category := strings.Title(c.category)

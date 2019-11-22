@@ -112,7 +112,7 @@ func (a *App) exec() error {
 			newConfigSet(),
 			newConfigGet(),
 		),
-		a.builder.newMenuCmd(),
+		newMenuCmd(a),
 		newOrderCmd(),
 	)
 	return a.Cmd().Execute()
