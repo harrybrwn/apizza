@@ -23,22 +23,24 @@ shouldfail $?
 apizza cart shouldnotbeincart &> /dev/null
 shouldfail $?
 
-if [ $TRAVIS_OS_NAME = "windows"]; then
-    default_config="C:/Users/$USER/.apizza"
+if [ $TRAVIS_OS_NAME = "windows" ]; then
+    default_config="C:/Users/travis/.apizza"
 else
     default_config="$HOME/.apizza"
 fi
 
+apizza --help &> /dev/null
+
 configdir="$(apizza config -d)"
 if [ $configdir != $default_config ]; then
-    echo 'wrong config dir:' $configdir
+    echo "wrong config dir... got: $configdir, want: $default_config"
     status=1
 fi
 unset configdir
 
 configfile="$(apizza config -f)"
 if [ $configfile != "$default_config/config.json" ]; then
-    echo 'wrong config file:' $configfile
+    echo "wrong config dir... got: $configfile, want: $default_config/config.json"
     status=1
 fi
 unset configfile
