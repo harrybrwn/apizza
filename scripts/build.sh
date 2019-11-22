@@ -2,4 +2,4 @@
 
 set -e
 
-go install
+go install -i github.com/harrybrwn/apizza
