@@ -9,7 +9,6 @@ import (
 
 	"github.com/harrybrwn/apizza/cmd/internal/base"
 	"github.com/harrybrwn/apizza/cmd/internal/obj"
-	"github.com/harrybrwn/apizza/cmd/internal/out"
 	"github.com/harrybrwn/apizza/dawg"
 	"github.com/harrybrwn/apizza/pkg/cache"
 	"github.com/harrybrwn/apizza/pkg/config"
@@ -202,5 +201,5 @@ func (a *App) postrun(*cobra.Command, []string) (err error) {
 }
 
 func logfile(name string) string {
-	return filepath.Join(config.Folder(), out.Logdir, name)
+	return filepath.Join(config.Folder(), "logs", name)
 }
