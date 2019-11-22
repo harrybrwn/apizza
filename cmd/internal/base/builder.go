@@ -3,6 +3,7 @@ package base
 import (
 	"io"
 
+	"github.com/harrybrwn/apizza/dawg"
 	"github.com/harrybrwn/apizza/pkg/cache"
 )
 
@@ -12,6 +13,7 @@ type Builder interface {
 	Output() io.Writer
 	DBBuilder
 	ConfigBuilder
+	AddressBuilder
 }
 
 // DBBuilder is a cli builder that can give away a database.
@@ -22,4 +24,16 @@ type DBBuilder interface {
 // ConfigBuilder is a cli builder that can give away a config struct.
 type ConfigBuilder interface {
 	Config() *Config
+}
+
+// AddressBuilder is a builder interface that should be able to get an
+// address.
+type AddressBuilder interface {
+	Address() dawg.Address
+}
+
+// AddrDBBuilder is an anddress-builder and a db-builder.
+type AddrDBBuilder interface {
+	AddressBuilder
+	DBBuilder
 }

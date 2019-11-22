@@ -97,6 +97,11 @@ func (a *App) Config() *base.Config {
 	return a.conf
 }
 
+// Address returns the address.
+func (a *App) Address() dawg.Address {
+	return a.addr
+}
+
 // Log to the logging file
 func (a *App) Log(v ...interface{}) {
 	log.Print(v...)

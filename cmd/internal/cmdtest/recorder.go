@@ -21,6 +21,7 @@ type Recorder struct {
 	Conf       *base.Config
 	Out        *bytes.Buffer
 	cfgHasFile bool
+	addr       dawg.Address
 }
 
 // TODO:
@@ -31,14 +32,16 @@ var services = []string{dawg.Carryout, dawg.Delivery}
 
 // NewRecorder create a new command recorder.
 func NewRecorder() *Recorder {
+	addr := TestAddress()
 	return &Recorder{
 		DataBase: TempDB(),
 		Out:      new(bytes.Buffer),
 		Conf: &base.Config{
 			Name:    "Apizza TestRecorder",
 			Service: services[rand.Intn(2)],
-			Address: *TestAddress(),
+			Address: *addr,
 		},
+		addr:       addr,
 		cfgHasFile: false,
 	}
 }
@@ -63,6 +66,11 @@ func (r *Recorder) Build(use, short string, run base.Runner) *base.Command {
 	c := base.NewCommand(use, short, run.Run)
 	c.SetOutput(r.Output())
 	return c
+}
+
+// Address returns the address.
+func (r *Recorder) Address() dawg.Address {
+	return r.addr
 }
 
 // ToApp returns the arguments needed to create a cmd.App.

@@ -105,4 +105,7 @@ func TestConfigStruct(t *testing.T) {
 	if err := c.Set("name", "joe"); err != nil {
 		t.Error(err)
 	}
+	if err = c.Set("service", "should fail"); err == nil {
+		t.Error("expected error")
+	}
 }
