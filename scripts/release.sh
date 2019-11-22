@@ -1,3 +1,7 @@
+#!/usr/bin/env bash
+
+set -e
+
 oses=("linux" "windows" "darwin")
 arch="amd64"
 
