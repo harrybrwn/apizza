@@ -43,7 +43,7 @@ func GetField(config Config, key string) interface{} {
 	case reflect.Float32:
 		return val.Float()
 	case reflect.Struct:
-		return val
+		return val.Interface()
 	default:
 		return nil
 	}
