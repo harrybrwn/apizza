@@ -42,10 +42,48 @@ func gettestcreds() (string, string, bool) {
 	return u, p, true
 }
 
+var (
+	testToken *token
+	testAuth  *auth
+	testUser  *UserProfile
+)
+
+func getTestToken(uname, pass string) (*token, error) {
+	var err error
+	if testToken == nil {
+		testToken, err = gettoken(uname, pass)
+	}
+	return testToken, err
+}
+
+func getTestAuth(uname, pass string) (*auth, error) {
+	var err error
+	if testAuth == nil {
+		testAuth, err = newauth(uname, pass)
+	}
+	return testAuth, err
+}
+
+func getTestUser(uname, pass string) (*UserProfile, error) {
+	var err error
+	if testUser == nil {
+		testUser, err = SignIn(uname, pass)
+	}
+	return testUser, err
+}
+
 func TestToken(t *testing.T) {
 	username, password, ok := gettestcreds()
 	if !ok {
 		t.Skip()
+	}
+	copyclient := orderClient
+	orderClient = &client{
+		host: orderHost,
+		Client: &http.Client{
+			Timeout:       10 * time.Second,
+			CheckRedirect: noRedirects,
+		},
 	}
 
 	tok, err := gettoken(username, password)
@@ -55,6 +93,7 @@ func TestToken(t *testing.T) {
 	if tok == nil {
 		t.Fatal("nil token")
 	}
+	testToken = tok
 	if len(tok.AccessToken) == 0 {
 		t.Error("didnt get a auth token")
 	}
@@ -67,6 +106,7 @@ func TestToken(t *testing.T) {
 	if tok.Type != "Bearer" {
 		t.Error("these tokens are usually bearer tokens")
 	}
+	orderClient = copyclient
 }
 
 func TestAuth(t *testing.T) {
@@ -82,6 +122,7 @@ func TestAuth(t *testing.T) {
 	if auth == nil {
 		t.Fatal("got nil auth")
 	}
+	testAuth = auth // save this for later
 	if auth.token == nil {
 		t.Fatal("needs token")
 	}
@@ -223,6 +264,7 @@ func TestSignIn(t *testing.T) {
 	if user == nil {
 		t.Fatal("got nil user from SignIn")
 	}
+	testUser = user
 }
 
 func TestAuthClient(t *testing.T) {
@@ -230,10 +272,8 @@ func TestAuthClient(t *testing.T) {
 	if !ok {
 		t.Skip()
 	}
-	auth, err := newauth(username, password)
-	if err != nil {
-		t.Error(err)
-	}
+
+	auth, err := getTestAuth(username, password)
 	if auth == nil {
 		t.Fatal("got nil auth")
 	}

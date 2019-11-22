@@ -9,7 +9,7 @@ func TestUserNearestStore(t *testing.T) {
 	if !ok {
 		t.Skip()
 	}
-	user, err := SignIn(uname, pass)
+	user, err := getTestUser(uname, pass)
 	if err != nil {
 		t.Error(err)
 	}
@@ -46,7 +46,7 @@ func TestUserStoresNearMe(t *testing.T) {
 		t.Skip()
 	}
 
-	user, err := SignIn(uname, pass)
+	user, err := getTestUser(uname, pass)
 	if err != nil {
 		t.Error(err)
 	}
