@@ -60,6 +60,9 @@ func TestGetOrderPrice(t *testing.T) {
 	if err := ValidateOrder(&order); IsFailure(err) {
 		t.Error(err)
 	}
+	if err := order.Validate(); IsFailure(err) {
+		t.Error(err)
+	}
 	resp, err := getOrderPrice(order)
 	if e, ok := err.(*DominosError); ok && IsFailure(err) {
 		fmt.Printf("%+v\n", resp)
