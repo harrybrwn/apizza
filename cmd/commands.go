@@ -159,7 +159,7 @@ func (b *cliBuilder) Config() *base.Config {
 
 func newBuilder() *cliBuilder {
 	return &cliBuilder{
-		root: newApizzaCmd(),
+		root: nil,
 		addr: &cfg.Address,
 	}
 }

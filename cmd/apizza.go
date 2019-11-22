@@ -16,83 +16,11 @@ package cmd
 
 import (
 	"fmt"
-	"os"
-	"runtime"
 	"strings"
-
-	"github.com/spf13/cobra"
-
-	"github.com/harrybrwn/apizza/cmd/internal/base"
-	"github.com/harrybrwn/apizza/pkg/errs"
 )
-
-type apizzaCmd struct {
-	*basecmd
-	address    string
-	service    string
-	storeID    string
-	clearCache bool
-	resetMenu  bool
-
-	storeLocation bool
-}
-
-func (c *apizzaCmd) Run(cmd *cobra.Command, args []string) (err error) {
-	// panic("get rid of this command")
-	if c.clearCache {
-		err = db.Close()
-		c.Printf("removing %s\n", db.Path())
-		return errs.Pair(err, os.Remove(db.Path()))
-	}
-	if c.storeLocation {
-		c.Println(c.store().Address)
-		c.Printf("\n")
-		c.Println("Store id:", c.store().ID)
-		c.Printf("Coordinates: %s, %s\n",
-			c.store().StoreCoords["StoreLatitude"],
-			c.store().StoreCoords["StoreLongitude"],
-		)
-		return nil
-	}
-	return cmd.Usage()
-}
 
 var test = false
 var reset = false
-
-func newApizzaCmd() base.CliCommand {
-	stacksize := 2
-	for i := 1; i < stacksize; i++ {
-		_, file, line, _ := runtime.Caller(i)
-		fmt.Println("newApizzaCmd:", file, line)
-	}
-
-	c := &apizzaCmd{address: "", service: "", clearCache: false}
-	c.basecmd = newCommand("apizza", "Dominos pizza from the command line.", c)
-
-	// c.Cmd().PersistentPreRunE = c.preRun
-
-	// c.Flags().BoolVar(&c.clearCache, "clear-cache", false, "delete the database")
-	// c.Cmd().PersistentFlags().BoolVar(&c.resetMenu, "delete-menu", false, "delete the menu stored in cache")
-
-	// c.Cmd().PersistentFlags().StringVar(&c.address, "address", c.address, "use a specific address")
-	// c.Cmd().PersistentFlags().StringVar(&c.service, "service", c.service, "select a Dominos service, either 'Delivery' or 'Carryout'")
-
-	// c.Cmd().PersistentFlags().BoolVar(&test, "test", false, "testing flag (for development)")
-	// c.Cmd().PersistentFlags().BoolVar(&reset, "reset", false, "reset the program (for development)")
-	// c.Cmd().PersistentFlags().MarkHidden("test")
-	// c.Cmd().PersistentFlags().MarkHidden("reset")
-
-	// c.Flags().BoolVarP(&c.storeLocation, "store-location", "L", false, "show the location of the nearest store")
-	return c
-}
-
-func (c *apizzaCmd) preRun(cmd *cobra.Command, args []string) (err error) {
-	if c.resetMenu {
-		err = db.Delete("menu")
-	}
-	return
-}
 
 func yesOrNo(msg string) bool {
 	var in string

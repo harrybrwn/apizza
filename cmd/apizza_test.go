@@ -144,18 +144,6 @@ func teardownTests() {
 	}
 }
 
-func withApizzaCmd(f func(*testing.T, *bytes.Buffer, *apizzaCmd), c base.CliCommand) func(*testing.T) {
-	return func(t *testing.T) {
-		cmd, ok := c.(*apizzaCmd)
-		if !ok {
-			t.Error("not an *apizzaCmd")
-		}
-		buf := &bytes.Buffer{}
-		cmd.SetOutput(buf)
-		f(t, buf, cmd)
-	}
-}
-
 func withAppCmd(f func(*testing.T, *bytes.Buffer, *App), c base.CliCommand) func(*testing.T) {
 	return func(t *testing.T) {
 		cmd, ok := c.(*App)
