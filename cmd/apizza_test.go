@@ -16,7 +16,7 @@ import (
 
 func TestRunner(t *testing.T) {
 	r := tests.NewRunner(t, setupTests, teardownTests)
-	app := newapp(db, cfg, nil)
+	app := newapp(cmdtest.TempDB(), cfg, nil)
 	r.AddTest(
 		dummyCheck,
 		base.WithCmds(testOrderNew, newCartCmd(app.builder), newAddOrderCmd(app.builder)),

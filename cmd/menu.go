@@ -31,7 +31,6 @@ import (
 )
 
 type menuCmd struct {
-	// *basecmd
 	base.CliCommand
 	data.MenuCacher
 	storefinder
@@ -107,7 +106,6 @@ func newMenuCmd(b base.Builder) base.CliCommand {
 	c.MenuCacher = data.NewMenuCacher(menuUpdateTime, b.DB(), c.store)
 	c.CliCommand = b.Build("menu <item>", "View the Dominos menu.", c)
 
-	// c.basecmd = b.newCommand("menu <item>", "View the Dominos menu.", c)
 	c.Cmd().Long = `This command will show the dominos menu.
 
 To show a subdivition of the menu, give an item or
@@ -128,17 +126,18 @@ as an argument to the command itself.`
 }
 
 func (c *menuCmd) printMenu(name string) error {
-	var allCategories = c.Menu().Categorization.Food.Categories
+	menu := c.Menu()
+	var allCategories = menu.Categorization.Food.Categories
 	if c.preconfigured {
-		allCategories = c.Menu().Categorization.Preconfigured.Categories
+		allCategories = menu.Categorization.Preconfigured.Categories
 	} else if c.all {
-		allCategories = append(allCategories, c.Menu().Categorization.Preconfigured.Categories...)
+		allCategories = append(allCategories, menu.Categorization.Preconfigured.Categories...)
 	}
 
 	if len(name) > 0 {
 		for _, cat := range allCategories {
 			if name == strings.ToLower(cat.Name) || name == strings.ToLower(cat.Code) {
-				return out.PrintMenu(cat, 0, c.Menu())
+				return out.PrintMenu(cat, 0, menu)
 			}
 		}
 		return fmt.Errorf("could not find %s", name)
@@ -152,7 +151,7 @@ func (c *menuCmd) printMenu(name string) error {
 	}
 
 	for _, cat := range allCategories {
-		out.PrintMenu(cat, 0, c.Menu())
+		out.PrintMenu(cat, 0, menu)
 	}
 	return nil
 }

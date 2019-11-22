@@ -189,7 +189,7 @@ func (b *cliBuilder) exec() error {
 			newConfigGet(),
 		),
 		newMenuCmd(b),
-		newOrderCmd(),
+		newOrderCmd(b),
 	)
 	return b.root.Cmd().Execute()
 }

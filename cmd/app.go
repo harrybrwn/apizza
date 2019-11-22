@@ -75,7 +75,7 @@ func newapp(db *cache.DataBase, conf *base.Config, out io.Writer) *App {
 	app.SetOutput(out)
 
 	app.builder = &cliBuilder{
-		db:   db,
+		db:   app.db,
 		addr: &conf.Address,
 		root: app,
 	}
@@ -113,7 +113,7 @@ func (a *App) exec() error {
 			newConfigGet(),
 		),
 		newMenuCmd(a),
-		newOrderCmd(),
+		newOrderCmd(a),
 	)
 	return a.Cmd().Execute()
 }

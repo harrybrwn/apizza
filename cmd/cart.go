@@ -49,7 +49,7 @@ type cartCmd struct {
 func (c *cartCmd) Run(cmd *cobra.Command, args []string) (err error) {
 	out.SetOutput(cmd.OutOrStdout())
 	if len(args) < 1 {
-		return data.PrintOrders(db, c.Output(), c.verbose)
+		return data.PrintOrders(c.db, c.Output(), c.verbose)
 	}
 
 	if c.topping && c.product == "" {
@@ -61,7 +61,7 @@ func (c *cartCmd) Run(cmd *cobra.Command, args []string) (err error) {
 	name := args[0]
 
 	if c.delete {
-		if err = db.Delete(data.OrderPrefix + name); err != nil {
+		if err = c.db.Delete(data.OrderPrefix + name); err != nil {
 			return err
 		}
 		c.Printf("%s successfully deleted.\n", name)
@@ -69,7 +69,7 @@ func (c *cartCmd) Run(cmd *cobra.Command, args []string) (err error) {
 	}
 
 	var order *dawg.Order
-	if order, err = data.GetOrder(name, db); err != nil {
+	if order, err = data.GetOrder(name, c.db); err != nil {
 		return err
 	}
 
@@ -80,7 +80,7 @@ func (c *cartCmd) Run(cmd *cobra.Command, args []string) (err error) {
 
 	if c.updateAddr {
 		order.Address = dawg.StreetAddrFromAddress(&cfg.Address)
-		err = data.SaveOrder(order, c.Output(), db)
+		err = data.SaveOrder(order, c.Output(), c.db)
 		if dawg.IsFailure(err) {
 			return err
 		}
@@ -103,11 +103,11 @@ func (c *cartCmd) Run(cmd *cobra.Command, args []string) (err error) {
 				return err
 			}
 		}
-		return data.SaveOrder(order, c.Output(), db)
+		return data.SaveOrder(order, c.Output(), c.db)
 	}
 
 	if len(c.add) > 0 {
-		if err := db.UpdateTS("menu", c); err != nil {
+		if err := c.db.UpdateTS("menu", c); err != nil {
 			return err
 		}
 		if c.topping {
@@ -131,7 +131,7 @@ func (c *cartCmd) Run(cmd *cobra.Command, args []string) (err error) {
 				order.AddProduct(p)
 			}
 		}
-		return data.SaveOrder(order, c.Output(), db)
+		return data.SaveOrder(order, c.Output(), c.db)
 	}
 
 	return out.PrintOrder(order, true, c.price)
@@ -173,6 +173,7 @@ func getOrderItem(order *dawg.Order, code string) dawg.Item {
 func newCartCmd(b *cliBuilder) base.CliCommand {
 	c := &cartCmd{price: false, delete: false, verbose: false}
 	c.basecmd = b.newCommand("cart <order name>", "Manage user created orders", c)
+	c.db = b.DB()
 	c.basecmd.Cmd().Long = `The cart command gets information on all of the user
 created orders.`
 
@@ -242,13 +243,14 @@ func (c *addOrderCmd) Run(cmd *cobra.Command, args []string) (err error) {
 	} else if len(c.toppings) > 0 {
 		return errors.New("cannot add just a toppings without products")
 	}
-	return data.SaveOrder(order, &bytes.Buffer{}, db)
+	return data.SaveOrder(order, &bytes.Buffer{}, c.db)
 }
 
 func newAddOrderCmd(b *cliBuilder) base.CliCommand {
 	c := &addOrderCmd{name: "", products: []string{}}
 	c.basecmd = b.newCommand("new <new order name>",
 		"Create a new order that will be stored in the cart.", c)
+	c.basecmd.db = b.DB()
 
 	c.Flags().StringVarP(&c.name, "name", "n", c.name, "set the name of a new order")
 	c.Flags().StringSliceVarP(&c.products, "products", "p", c.products, "product codes for the new order")
@@ -268,7 +270,7 @@ type orderCmd struct {
 
 func (c *orderCmd) Run(cmd *cobra.Command, args []string) (err error) {
 	if len(args) < 1 {
-		return data.PrintOrders(db, c.Output(), c.verbose)
+		return data.PrintOrders(c.db, c.Output(), c.verbose)
 	} else if len(args) > 1 {
 		return errors.New("cannot handle multiple orders")
 	}
@@ -276,7 +278,7 @@ func (c *orderCmd) Run(cmd *cobra.Command, args []string) (err error) {
 	if len(c.cvv) == 0 {
 		return errors.New("must have cvv number. (see --cvv)")
 	}
-	order, err := data.GetOrder(args[0], db)
+	order, err := data.GetOrder(args[0], c.db)
 	if err != nil {
 		return err
 	}
@@ -328,16 +330,17 @@ func (c *orderCmd) Run(cmd *cobra.Command, args []string) (err error) {
 	return nil
 }
 
-func newOrderCmd() base.CliCommand {
+func newOrderCmd(b base.Builder) base.CliCommand {
 	c := &orderCmd{verbose: false}
 	c.basecmd = newCommand("order", "Send an order from the cart to dominos.", c)
+	c.db = b.DB()
 	c.basecmd.Cmd().Long = `The order command is the final destination for an order. This is where
-the order will be populated with payment information and sent off to dominos.
+	the order will be populated with payment information and sent off to dominos.
 
-The --cvv flag must be specified, and the config file will never store the
-cvv. In addition to keeping the cvv safe, payment information will never be
-stored the program cache with orders.
-`
+	The --cvv flag must be specified, and the config file will never store the
+	cvv. In addition to keeping the cvv safe, payment information will never be
+	stored the program cache with orders.
+	`
 
 	c.Flags().BoolVarP(&c.verbose, "verbose", "v", c.verbose, "output the order command verbosly")
 	c.Flags().BoolVarP(&c.track, "track", "t", c.track, "enable tracking for the purchased order")
