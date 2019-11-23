@@ -93,5 +93,56 @@ func TestPrintOrder(t *testing.T) {
 }
 
 func TestPrintItems(t *testing.T) {
+	menu, err := testStore.Menu()
+	if err != nil {
+		t.Error(err)
+	}
+	buf := new(bytes.Buffer)
+	SetOutput(buf)
+	defer ResetOutput()
 
+	v, err := menu.GetVariant("14SCREEN")
+	if err != nil {
+		t.Error(err)
+	}
+	err = ItemInfo(v, menu)
+	if err != nil {
+		t.Error(err)
+	}
+	expected := `Large (14") Hand Tossed Pizza
+  Code: 14SCREEN
+  Category: Pizza
+  Toppings:
+    Robust Inspired Tomato Sauce (X): full 1
+    Cheese (C): full 1
+  Price: 13.99
+  Parent Product: 'Pizza' [S_PIZZA]
+`
+	tests.Compare(t, buf.String(), expected)
+	buf.Reset()
+}
+
+func TestPrintMenu(t *testing.T) {
+	menu, err := testStore.Menu()
+	if err != nil {
+		t.Error(err)
+	}
+	buf := new(bytes.Buffer)
+	SetOutput(buf)
+	defer ResetOutput()
+
+	err = PrintMenu(menu.Categorization.Food, 0, menu)
+	if err != nil {
+		t.Error()
+	}
+	if buf.Len() < 9000 {
+		t.Error("the menu output seems a bit too short")
+	}
+	buf.Reset()
+	if err = PrintMenu(menu.Categorization.Preconfigured, 0, menu); err != nil {
+		t.Error(err)
+	}
+	if buf.Len() < 1000 {
+		t.Error("menu output is too short")
+	}
 }
