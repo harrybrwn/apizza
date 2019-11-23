@@ -53,7 +53,7 @@ func (c *menuCmd) Run(cmd *cobra.Command, args []string) error {
 	if err := c.db.UpdateTS("menu", c); err != nil {
 		return err
 	}
-	out.SetOutput(cmd.OutOrStdout())
+	out.SetOutput(c.Output())
 	defer out.ResetOutput()
 
 	var item dawg.Item
@@ -116,6 +116,7 @@ func newMenuCmd(b base.Builder) base.CliCommand {
 	}
 	c.CliCommand = b.Build("menu <item>", "View the Dominos menu.", c)
 	c.MenuCacher = data.NewMenuCacher(menuUpdateTime, b.DB(), c.store)
+	c.SetOutput(b.Output())
 
 	c.Cmd().Long = `This command will show the dominos menu.
 
@@ -138,6 +139,8 @@ as an argument to the command itself.`
 }
 
 func (c *menuCmd) printMenu(name string) error {
+	out.SetOutput(c.Output())
+	defer out.ResetOutput()
 	menu := c.Menu()
 	var allCategories = menu.Categorization.Food.Categories
 	if c.preconfigured {

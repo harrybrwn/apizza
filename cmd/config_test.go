@@ -170,14 +170,18 @@ func TestConfigEdit(t *testing.T) {
 	}
 }
 
-func testConfigGet(t *testing.T) {
+func TestConfigGet(t *testing.T) {
 	c := newConfigGet()
+	config.SetNonFileConfig(cfg) // don't want it to over ride the file on disk
+	check(json.Unmarshal([]byte(testconfigjson), cfg), "json")
+
 	buf := &bytes.Buffer{}
 	c.SetOutput(buf)
+
 	if err := c.Run(c.Cmd(), []string{"email", "name"}); err != nil {
 		t.Error(err)
 	}
-	tests.Compare(t, string(buf.Bytes()), "nojoe@mail.com\njoe\n")
+	tests.Compare(t, buf.String(), "nojoe@mail.com\njoe\n")
 	buf.Reset()
 	if err := c.Run(c.Cmd(), []string{}); err == nil {
 		t.Error("expected error")
@@ -191,7 +195,7 @@ func testConfigGet(t *testing.T) {
 	}
 }
 
-func testConfigSet(t *testing.T) {
+func TestConfigSet(t *testing.T) {
 	c := newConfigSet() //.(*configSetCmd)
 	if err := c.Run(c.Cmd(), []string{"name=someNameOtherThanJoe"}); err != nil {
 		t.Error(err)

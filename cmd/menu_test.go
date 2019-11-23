@@ -1,16 +1,16 @@
 package cmd
 
 import (
-	"bytes"
-	"github.com/harrybrwn/apizza/cmd/internal/cmdtest"
 	"testing"
+
+	"github.com/harrybrwn/apizza/cmd/internal/cmdtest"
 )
 
-func testMenuRun(t *testing.T) {
+func TestMenuRun(t *testing.T) {
 	r := cmdtest.NewRecorder()
+	defer r.CleanUp()
 	c := newMenuCmd(r).(*menuCmd)
 
-	c.SetOutput(&bytes.Buffer{})
 	if err := c.Run(c.Cmd(), []string{}); err != nil {
 		t.Error(err)
 	}
@@ -29,23 +29,21 @@ func testMenuRun(t *testing.T) {
 	}
 }
 
-func testFindProduct(t *testing.T) {
+func TestFindProduct(t *testing.T) {
 	r := cmdtest.NewRecorder()
-	app := newapp(r.ToApp())
-	c := newMenuCmd(app).(*menuCmd)
+	defer r.CleanUp()
+	c := newMenuCmd(r).(*menuCmd)
 
-	buf := &bytes.Buffer{}
-	c.SetOutput(buf)
-	if err := app.db.UpdateTS("menu", c); err != nil {
+	if err := r.DB().UpdateTS("menu", c); err != nil {
 		t.Error(err)
 	}
 	c.all = true
 	if err := c.printMenu(""); err != nil { // yes, this is supposd to be an empty string... in this case
 		t.Error(err)
 	}
-	buf.Reset()
+	r.ClearBuf()
 	c.printToppings()
-	if len(buf.Bytes()) < 1000 {
+	if len(r.Out.Bytes()) < 1000 {
 		t.Error("toppings menu seems too short")
 	}
 }

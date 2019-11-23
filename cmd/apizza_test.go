@@ -10,14 +10,20 @@ import (
 	"github.com/harrybrwn/apizza/cmd/internal/base"
 	"github.com/harrybrwn/apizza/cmd/internal/cmdtest"
 	"github.com/harrybrwn/apizza/pkg/config"
-	"github.com/harrybrwn/apizza/pkg/tests"
 )
 
+func TestMain(m *testing.M) {
+	config.SetNonFileConfig(cfg) // don't want it to over ride the file on disk
+	check(json.Unmarshal([]byte(testconfigjson), cfg), "json")
+	fmt.Println("testmain...")
+	m.Run()
+}
+
 func TestRunner(t *testing.T) {
-	r := tests.NewRunner(t, setupTests, teardownTests)
 	app := newapp(cmdtest.TempDB(), cfg, nil)
 	defer app.db.Close()
-	r.AddTest(
+
+	tsts := []func(*testing.T){
 		base.WithCmds(testOrderNew, newCartCmd(app), newAddOrderCmd(app)),
 		base.WithCmds(testAddOrder, newCartCmd(app), newAddOrderCmd(app)),
 		base.WithCmds(testOrderNewErr, newAddOrderCmd(app)),
@@ -25,12 +31,11 @@ func TestRunner(t *testing.T) {
 		withCartCmd(app, testOrderPriceOutput),
 		withCartCmd(app, testAddToppings),
 		withCartCmd(app, testOrderRunDelete),
-		testFindProduct,
 		withAppCmd(testAppRootCmdRun, app),
-		testMenuRun,
-		testConfigGet, testConfigSet,
-	)
-	r.Run()
+	}
+	for i, tst := range tsts {
+		t.Run(fmt.Sprintf("Test %d", i), tst)
+	}
 }
 
 func testAppRootCmdRun(t *testing.T, buf *bytes.Buffer, a *App) {
