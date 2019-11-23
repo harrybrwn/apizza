@@ -14,11 +14,13 @@ import (
 // Compare two strings and fail the test with an error message if they are not
 // the same.
 func Compare(t *testing.T, got, expected string) {
+	t.Helper()
 	CompareCallDepth(t, got, expected, 2)
 }
 
 // CompareV compairs strings verbosly.
 func CompareV(t *testing.T, got, expected string) {
+	t.Helper()
 	CompareCallDepth(t, got, expected, 2)
 	var min int
 	if len(got) > len(expected) {
@@ -37,6 +39,7 @@ func CompareV(t *testing.T, got, expected string) {
 
 // CompareOutput will redirect stdout and compair it to the expected string.
 func CompareOutput(t *testing.T, expected string, f func()) {
+	t.Helper()
 	stdout := os.Stdout
 	r, w, err := os.Pipe()
 	if err != nil {
@@ -60,6 +63,7 @@ func CompareOutput(t *testing.T, expected string, f func()) {
 
 // CompareCallDepth compares two strings. depth is the function call depth
 func CompareCallDepth(t *testing.T, got, exp string, depth int) {
+	t.Helper()
 	got = strings.Replace(got, " ", "_", -1)
 	exp = strings.Replace(exp, " ", "_", -1)
 	msg := fmt.Sprintf("wrong output!\n\ngot:\n'%s'\nexpected:\n'%s'\n", got, exp)
