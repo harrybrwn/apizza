@@ -21,7 +21,6 @@ import (
 	"unicode/utf8"
 
 	"github.com/harrybrwn/apizza/cmd/internal/data"
-	"github.com/harrybrwn/apizza/cmd/internal/obj"
 	"github.com/harrybrwn/apizza/cmd/internal/out"
 	"github.com/harrybrwn/apizza/pkg/cache"
 
@@ -34,7 +33,7 @@ import (
 type menuCmd struct {
 	base.CliCommand
 	data.MenuCacher
-	storefinder
+	StoreFinder
 
 	db *cache.DataBase
 
@@ -97,25 +96,13 @@ func newMenuCmd(b base.Builder) base.CliCommand {
 	}
 	// TODO: this will not work with a global service or address flag
 	if app, ok := b.(*App); ok {
-		c.storefinder = app.storefinder
+		c.StoreFinder = app
 	} else {
-		c.storefinder = newStoreGetter(
-			func() string { return b.Config().Service },
-			func() dawg.Address {
-				addr := b.Address()
-				if addr != nil {
-					return addr
-				}
-				a, ok := b.Config().Get("address").(obj.Address)
-				if !ok {
-					return nil
-				}
-				return &a
-			},
-		)
+		c.StoreFinder = NewStoreGetter(b)
 	}
+
 	c.CliCommand = b.Build("menu <item>", "View the Dominos menu.", c)
-	c.MenuCacher = data.NewMenuCacher(menuUpdateTime, b.DB(), c.store)
+	c.MenuCacher = data.NewMenuCacher(menuUpdateTime, b.DB(), c.Store)
 	c.SetOutput(b.Output())
 
 	c.Cmd().Long = `This command will show the dominos menu.

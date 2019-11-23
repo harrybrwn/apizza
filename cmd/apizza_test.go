@@ -19,7 +19,6 @@ func TestMain(m *testing.M) {
 }
 
 func TestRunner(t *testing.T) {
-	// builder := newapp(cmdtest.TempDB(), cfg, nil)
 	app := newapp(cmdtest.TempDB(), cfg, nil)
 	builder := cmdtest.NewRecorder()
 
@@ -104,7 +103,7 @@ func TestAppStoreFinder(t *testing.T) {
 	defer r.CleanUp()
 	a := newapp(r.ToApp())
 
-	store := a.store()
+	store := a.Store()
 	if store == nil {
 		t.Error("what")
 	}

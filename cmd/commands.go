@@ -23,6 +23,7 @@ import (
 
 	"gopkg.in/natefinch/lumberjack.v2"
 
+	"github.com/harrybrwn/apizza/cmd/internal/base"
 	"github.com/harrybrwn/apizza/dawg"
 	"github.com/harrybrwn/apizza/pkg/config"
 )
@@ -31,15 +32,11 @@ var menuUpdateTime = 12 * time.Hour
 
 // Execute runs the root command
 func Execute() {
-	var (
-		err error
-	)
-	app, err := NewApp(os.Stdout)
+	app := NewApp(os.Stdout)
+	err := app.Init()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
-		os.Exit(1)
+		handle(err, "Internal Error", 1)
 	}
-
 	cfg = app.conf
 
 	log.SetOutput(&lumberjack.Logger{
@@ -51,25 +48,25 @@ func Execute() {
 	})
 
 	defer func() {
-		err = app.Cleanup()
-		if err != nil {
-			handle(err, "Internal Error", 1)
-		}
+		handle(app.Cleanup(), "Internal Error", 1)
 	}()
 
-	if err = app.exec(); err != nil {
-		handle(err, "Error", 1)
-	}
+	handle(app.exec(), "Error", 1)
 }
 
 func handle(e error, msg string, code int) {
+	if e == nil {
+		return
+	}
 	log.Printf("(Failure) %s: %s\n", msg, e)
 	fmt.Fprintf(os.Stderr, "%s: %s\n", msg, e)
 	os.Exit(code)
 }
 
-type storefinder interface {
-	store() *dawg.Store
+// StoreFinder is a mixin that allows for efficient caching and retrival of
+// store structs.
+type StoreFinder interface {
+	Store() *dawg.Store
 }
 
 // storegetter is meant to be a mixin for any struct that needs to be able to
@@ -80,11 +77,18 @@ type storegetter struct {
 	dstore    *dawg.Store
 }
 
-var serviceGetter = func() string {
-	return config.GetString("service")
+// NewStoreGetter will create a new storefinder.
+func NewStoreGetter(builder base.Builder) StoreFinder {
+	return &storegetter{
+		getmethod: func() string {
+			return builder.Config().Service
+		},
+		getaddr: builder.Address,
+		dstore:  nil,
+	}
 }
 
-func newStoreGetter(service func() string, addr func() dawg.Address) storefinder {
+func newStoreGetter(service func() string, addr func() dawg.Address) StoreFinder {
 	return &storegetter{
 		getmethod: service,
 		getaddr:   addr,
@@ -92,7 +96,7 @@ func newStoreGetter(service func() string, addr func() dawg.Address) storefinder
 	}
 }
 
-func (s *storegetter) store() *dawg.Store {
+func (s *storegetter) Store() *dawg.Store {
 	if s.dstore == nil {
 		var err error
 		var address = s.getaddr()

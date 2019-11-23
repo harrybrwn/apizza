@@ -26,6 +26,7 @@ import (
 
 	"github.com/harrybrwn/apizza/cmd/internal/base"
 	"github.com/harrybrwn/apizza/cmd/internal/data"
+	"github.com/harrybrwn/apizza/cmd/internal/obj"
 	"github.com/harrybrwn/apizza/cmd/internal/out"
 	"github.com/harrybrwn/apizza/dawg"
 	"github.com/harrybrwn/apizza/pkg/cache"
@@ -34,7 +35,7 @@ import (
 type cartCmd struct {
 	base.CliCommand
 	data.MenuCacher
-	storefinder
+	StoreFinder
 
 	db   *cache.DataBase
 	addr dawg.Address
@@ -186,14 +187,14 @@ func newCartCmd(b base.Builder) base.CliCommand {
 	}
 
 	if app, ok := b.(*App); ok {
-		c.storefinder = app.storefinder
+		c.StoreFinder = app
 	} else {
-		c.storefinder = newStoreGetter(
+		c.StoreFinder = newStoreGetter(
 			func() string { return b.Config().Service },
 			b.Address,
 		)
 	}
-	c.MenuCacher = data.NewMenuCacher(menuUpdateTime, b.DB(), c.store)
+	c.MenuCacher = data.NewMenuCacher(menuUpdateTime, b.DB(), c.Store)
 	c.CliCommand = b.Build("cart <order name>", "Manage user created orders", c)
 	c.Cmd().Long = `The cart command gets information on all of the user
 created orders.`
@@ -230,7 +231,7 @@ func (c *cartCmd) preRun(cmd *cobra.Command, args []string) error {
 type addOrderCmd struct {
 	// *basecmd
 	base.CliCommand
-	storefinder
+	StoreFinder
 	db *cache.DataBase
 
 	name     string
@@ -242,7 +243,7 @@ func (c *addOrderCmd) Run(cmd *cobra.Command, args []string) (err error) {
 	if c.name == "" && len(args) < 1 {
 		return errors.New("No order name... use '--name=<order name>' or give name as an argument")
 	}
-	order := c.store().NewOrder()
+	order := c.Store().NewOrder()
 
 	if c.name == "" {
 		order.SetName(args[0])
@@ -252,7 +253,7 @@ func (c *addOrderCmd) Run(cmd *cobra.Command, args []string) (err error) {
 
 	if len(c.products) > 0 {
 		for i, p := range c.products {
-			prod, err := c.store().GetVariant(p)
+			prod, err := c.Store().GetVariant(p)
 			if err != nil {
 				return err
 			}
@@ -275,10 +276,7 @@ func newAddOrderCmd(b base.Builder) base.CliCommand {
 	c.CliCommand = b.Build("new <new order name>",
 		"Create a new order that will be stored in the cart.", c)
 	c.db = b.DB()
-	c.storefinder = newStoreGetter(
-		func() string { return b.Config().Service },
-		b.Address,
-	)
+	c.StoreFinder = NewStoreGetter(b)
 
 	c.Flags().StringVarP(&c.name, "name", "n", c.name, "set the name of a new order")
 	c.Flags().StringSliceVarP(&c.products, "products", "p", c.products, "product codes for the new order")
@@ -288,7 +286,6 @@ func newAddOrderCmd(b base.Builder) base.CliCommand {
 
 type orderCmd struct {
 	base.CliCommand
-	storefinder
 	db *cache.DataBase
 
 	verbose bool
@@ -332,7 +329,7 @@ func (c *orderCmd) Run(cmd *cobra.Command, args []string) (err error) {
 	order.Email = cfg.Email
 	order.AddPayment(payment)
 
-	c.Printf("Using dominos at %s\n\n", strings.Replace(c.store().Address, "\n", " ", -1))
+	c.Printf("Ordering dominos for %s\n\n", strings.Replace(obj.AddressFmt(order.Address), "\n", " ", -1))
 
 	if yesOrNo("Would you like to purchase this order? (y/n)") {
 		c.Printf("sending order '%s'...\n", order.Name())
@@ -365,10 +362,6 @@ func newOrderCmd(b base.Builder) base.CliCommand {
 	c := &orderCmd{verbose: false}
 	c.CliCommand = b.Build("order", "Send an order from the cart to dominos.", c)
 	c.db = b.DB()
-	c.storefinder = newStoreGetter(
-		func() string { return b.Config().Service },
-		b.Address,
-	)
 	c.Cmd().Long = `The order command is the final destination for an order. This is where
 	the order will be populated with payment information and sent off to dominos.
 

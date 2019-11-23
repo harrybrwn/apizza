@@ -3,7 +3,6 @@ package cmdtest
 import (
 	"bytes"
 	"io"
-	"math/rand"
 	"strings"
 	"testing"
 
@@ -38,7 +37,7 @@ func NewRecorder() *Recorder {
 		Out:      new(bytes.Buffer),
 		Conf: &base.Config{
 			Name:    "Apizza TestRecorder",
-			Service: services[rand.Intn(2)],
+			Service: dawg.Delivery,
 			Address: *addr,
 		},
 		addr:       addr,

@@ -20,7 +20,7 @@ import (
 // App is the main app, the root command, and the Builder.
 type App struct {
 	base.CliCommand // this is also the root command
-	storefinder     // for app.store()
+	StoreFinder     // for app.store()
 
 	db   *cache.DataBase
 	conf *base.Config
@@ -55,7 +55,7 @@ func newapp(db *cache.DataBase, conf *base.Config, out io.Writer) *App {
 	}
 
 	app.CliCommand = base.NewCommand("apizza", "Dominos pizza from the command line.", app.Run)
-	app.storefinder = newStoreGetter(
+	app.StoreFinder = newStoreGetter(
 		func() string {
 			if len(app.service) == 0 {
 				return conf.Service
@@ -69,16 +69,13 @@ func newapp(db *cache.DataBase, conf *base.Config, out io.Writer) *App {
 }
 
 // NewApp creates a new app for the main cli.
-func NewApp(out io.Writer) (*App, error) {
+func NewApp(out io.Writer) *App {
 	app := &App{
 		db:   nil,
 		conf: &base.Config{},
 	}
-	if err := app.Init(); err != nil {
-		return nil, err
-	}
 	app.CliCommand = base.NewCommand("apizza", "Dominos pizza from the command line.", app.Run)
-	app.storefinder = newStoreGetter(
+	app.StoreFinder = newStoreGetter(
 		func() string {
 			if len(app.service) == 0 {
 				return app.conf.Service
@@ -88,7 +85,7 @@ func NewApp(out io.Writer) (*App, error) {
 		app.Address,
 	)
 	app.SetOutput(out)
-	return app, nil
+	return app
 }
 
 // Init wil setup the app.
@@ -173,12 +170,13 @@ func (a *App) Run(cmd *cobra.Command, args []string) (err error) {
 		return errs.Pair(err, os.Remove(a.db.Path()))
 	}
 	if a.storeLocation {
-		a.Println(a.store().Address)
+		store := a.Store()
+		a.Println(store.Address)
 		a.Printf("\n")
-		a.Println("Store id:", a.store().ID)
+		a.Println("Store id:", store.ID)
 		a.Printf("Coordinates: %s, %s\n",
-			a.store().StoreCoords["StoreLatitude"],
-			a.store().StoreCoords["StoreLongitude"],
+			store.StoreCoords["StoreLatitude"],
+			store.StoreCoords["StoreLongitude"],
 		)
 		return nil
 	}
