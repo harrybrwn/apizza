@@ -19,9 +19,9 @@ func TestRunner(t *testing.T) {
 	app := newapp(cmdtest.TempDB(), cfg, nil)
 	r.AddTest(
 		dummyCheck,
-		base.WithCmds(testOrderNew, newCartCmd(app), newAddOrderCmd(app.builder)),
-		base.WithCmds(testAddOrder, newCartCmd(app), newAddOrderCmd(app.builder)),
-		base.WithCmds(testOrderNewErr, newAddOrderCmd(app.builder)),
+		base.WithCmds(testOrderNew, newCartCmd(app), newAddOrderCmd(app)),
+		base.WithCmds(testAddOrder, newCartCmd(app), newAddOrderCmd(app)),
+		base.WithCmds(testOrderNewErr, newAddOrderCmd(app)),
 		base.WithCmds(testOrderRunAdd, newCartCmd(app)),
 		withCartCmd(app, testOrderPriceOutput),
 		withCartCmd(app, testAddToppings),

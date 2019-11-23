@@ -28,9 +28,6 @@ type App struct {
 	logf *os.File
 	log  *log.Logger
 
-	// temporary compatability stuff
-	builder *cliBuilder
-
 	// root command flags
 	address    string
 	service    string
@@ -65,20 +62,9 @@ func newapp(db *cache.DataBase, conf *base.Config, out io.Writer) *App {
 			}
 			return app.service
 		},
-		func() dawg.Address {
-			if app.addr == nil {
-				return &conf.Address
-			}
-			return app.addr
-		},
+		app.Address,
 	)
 	app.SetOutput(out)
-
-	app.builder = &cliBuilder{
-		db:   app.db,
-		addr: &conf.Address,
-		root: app,
-	}
 	return app
 }
 
@@ -152,7 +138,7 @@ func (a *App) exec() error {
 	a.initflags()
 	a.Addcmd(
 		newCartCmd(a).Addcmd(
-			newAddOrderCmd(a.builder),
+			newAddOrderCmd(a),
 		),
 		newConfigCmd(a).Addcmd(
 			newConfigSet(),
@@ -194,28 +180,28 @@ func (a *App) Run(cmd *cobra.Command, args []string) (err error) {
 }
 
 func (a *App) initflags() {
-	a.Cmd().PersistentPreRunE = a.prerun
-	a.Cmd().PostRunE = a.postrun
+	cmd := a.Cmd()
+	flags := cmd.Flags()
+	persistflags := cmd.PersistentFlags()
 
-	a.Flags().BoolVar(&a.clearCache, "clear-cache", false, "delete the database")
-	a.Cmd().PersistentFlags().BoolVar(&a.resetMenu, "delete-menu", false, "delete the menu stored in cache")
+	cmd.PersistentPreRunE = a.prerun
+	cmd.PostRunE = a.postrun
 
-	a.Cmd().PersistentFlags().StringVar(&a.logfile, "log", "", "set a log file (found in ~/.apizza/logs)")
-	a.Cmd().PersistentFlags().StringVar(&a.address, "address", a.address, "use a specific address")
-	a.Cmd().PersistentFlags().StringVar(&a.service, "service", a.service, "select a Dominos service, either 'Delivery' or 'Carryout'")
-	a.Flags().BoolVarP(&a.storeLocation, "store-location", "L", false, "show the location of the nearest store")
+	flags.BoolVar(&a.clearCache, "clear-cache", false, "delete the database")
+	flags.BoolVarP(&a.storeLocation, "store-location", "L", false, "show the location of the nearest store")
+	persistflags.BoolVar(&a.resetMenu, "delete-menu", false, "delete the menu stored in cache")
 
-	a.initDevFlags()
-}
+	persistflags.StringVar(&a.logfile, "log", "", "set a log file (found in ~/.apizza/logs)")
+	persistflags.StringVar(&a.address, "address", a.address, "use a specific address")
+	persistflags.StringVar(&a.service, "service", a.service, "select a Dominos service, either 'Delivery' or 'Carryout'")
 
-func (a *App) initDevFlags() {
-	a.Cmd().PersistentFlags().BoolVar(&test, "test", false, "testing flag (for development)")
-	a.Cmd().PersistentFlags().BoolVar(&reset, "reset", false, "reset the program (for development)")
-	a.Cmd().PersistentFlags().MarkHidden("test")
-	a.Cmd().PersistentFlags().MarkHidden("reset")
+	persistflags.BoolVar(&test, "test", false, "testing flag (for development)")
+	persistflags.BoolVar(&reset, "reset", false, "reset the program (for development)")
+	persistflags.MarkHidden("test")
+	persistflags.MarkHidden("reset")
 
-	a.Flags().BoolVar(&a.openlogs, "open-logs", false, "open the log file")
-	a.Flags().MarkHidden("open-logs")
+	flags.BoolVar(&a.openlogs, "open-logs", false, "open the log file")
+	flags.MarkHidden("open-logs")
 }
 
 func (a *App) prerun(*cobra.Command, []string) (err error) {

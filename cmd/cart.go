@@ -26,7 +26,6 @@ import (
 
 	"github.com/harrybrwn/apizza/cmd/internal/base"
 	"github.com/harrybrwn/apizza/cmd/internal/data"
-	"github.com/harrybrwn/apizza/cmd/internal/obj"
 	"github.com/harrybrwn/apizza/cmd/internal/out"
 	"github.com/harrybrwn/apizza/dawg"
 	"github.com/harrybrwn/apizza/pkg/cache"
@@ -191,17 +190,7 @@ func newCartCmd(b base.Builder) base.CliCommand {
 	} else {
 		c.storefinder = newStoreGetter(
 			func() string { return b.Config().Service },
-			func() dawg.Address {
-				addr := b.Address()
-				if addr != nil {
-					return addr
-				}
-				a, ok := b.Config().Get("address").(obj.Address)
-				if !ok {
-					return nil
-				}
-				return &a
-			},
+			b.Address,
 		)
 	}
 	c.MenuCacher = data.NewMenuCacher(menuUpdateTime, b.DB(), c.store)
@@ -239,7 +228,10 @@ func (c *cartCmd) preRun(cmd *cobra.Command, args []string) error {
 
 // `cart new` command
 type addOrderCmd struct {
-	*basecmd
+	// *basecmd
+	base.CliCommand
+	storefinder
+	db *cache.DataBase
 
 	name     string
 	products []string
@@ -278,11 +270,15 @@ func (c *addOrderCmd) Run(cmd *cobra.Command, args []string) (err error) {
 	return data.SaveOrder(order, &bytes.Buffer{}, c.db)
 }
 
-func newAddOrderCmd(b *cliBuilder) base.CliCommand {
+func newAddOrderCmd(b base.Builder) base.CliCommand {
 	c := &addOrderCmd{name: "", products: []string{}}
-	c.basecmd = b.newCommand("new <new order name>",
+	c.CliCommand = b.Build("new <new order name>",
 		"Create a new order that will be stored in the cart.", c)
-	c.basecmd.db = b.DB()
+	c.db = b.DB()
+	c.storefinder = newStoreGetter(
+		func() string { return b.Config().Service },
+		b.Address,
+	)
 
 	c.Flags().StringVarP(&c.name, "name", "n", c.name, "set the name of a new order")
 	c.Flags().StringSliceVarP(&c.products, "products", "p", c.products, "product codes for the new order")
@@ -291,7 +287,10 @@ func newAddOrderCmd(b *cliBuilder) base.CliCommand {
 }
 
 type orderCmd struct {
-	*basecmd
+	base.CliCommand
+	storefinder
+	db *cache.DataBase
+
 	verbose bool
 	track   bool
 
@@ -364,21 +363,25 @@ func (c *orderCmd) Run(cmd *cobra.Command, args []string) (err error) {
 
 func newOrderCmd(b base.Builder) base.CliCommand {
 	c := &orderCmd{verbose: false}
-	c.basecmd = newCommand("order", "Send an order from the cart to dominos.", c)
+	c.CliCommand = b.Build("order", "Send an order from the cart to dominos.", c)
 	c.db = b.DB()
-	c.basecmd.Cmd().Long = `The order command is the final destination for an order. This is where
+	c.storefinder = newStoreGetter(
+		func() string { return b.Config().Service },
+		b.Address,
+	)
+	c.Cmd().Long = `The order command is the final destination for an order. This is where
 	the order will be populated with payment information and sent off to dominos.
 
 	The --cvv flag must be specified, and the config file will never store the
 	cvv. In addition to keeping the cvv safe, payment information will never be
 	stored the program cache with orders.
 	`
+	flags := c.Cmd().Flags()
+	flags.BoolVarP(&c.verbose, "verbose", "v", c.verbose, "output the order command verbosly")
+	flags.BoolVarP(&c.track, "track", "t", c.track, "enable tracking for the purchased order")
 
-	c.Flags().BoolVarP(&c.verbose, "verbose", "v", c.verbose, "output the order command verbosly")
-	c.Flags().BoolVarP(&c.track, "track", "t", c.track, "enable tracking for the purchased order")
-
-	c.Flags().StringVar(&c.cvv, "cvv", "", "the card's cvv number (must give this to order)")
-	c.Flags().StringVar(&c.number, "number", "", "the card number used for orderings")
-	c.Flags().StringVar(&c.expiration, "expiration", "", "the card's expiration date")
+	flags.StringVar(&c.cvv, "cvv", "", "the card's cvv number (must give this to order)")
+	flags.StringVar(&c.number, "number", "", "the card number used for orderings")
+	flags.StringVar(&c.expiration, "expiration", "", "the card's expiration date")
 	return c
 }
