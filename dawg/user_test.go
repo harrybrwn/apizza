@@ -9,9 +9,15 @@ func TestUserNearestStore(t *testing.T) {
 	if !ok {
 		t.Skip()
 	}
+	reset := setTestClient()
+	defer reset()
+
 	user, err := getTestUser(uname, pass)
 	if err != nil {
 		t.Error(err)
+	}
+	if user == nil {
+		t.Fatal("user is nil")
 	}
 	if user.store != nil {
 		t.Error("we should wait for the user to initialize this")
@@ -45,6 +51,8 @@ func TestUserStoresNearMe(t *testing.T) {
 	if !ok {
 		t.Skip()
 	}
+	reset := setTestClient()
+	defer reset()
 
 	user, err := getTestUser(uname, pass)
 	if err != nil {

@@ -15,26 +15,31 @@ import (
 func TestMain(m *testing.M) {
 	config.SetNonFileConfig(cfg) // don't want it to over ride the file on disk
 	check(json.Unmarshal([]byte(testconfigjson), cfg), "json")
-	fmt.Println("testmain...")
 	m.Run()
 }
 
 func TestRunner(t *testing.T) {
+	// builder := newapp(cmdtest.TempDB(), cfg, nil)
 	app := newapp(cmdtest.TempDB(), cfg, nil)
-	defer app.db.Close()
+	builder := cmdtest.NewRecorder()
 
 	tsts := []func(*testing.T){
-		base.WithCmds(testOrderNew, newCartCmd(app), newAddOrderCmd(app)),
-		base.WithCmds(testAddOrder, newCartCmd(app), newAddOrderCmd(app)),
-		base.WithCmds(testOrderNewErr, newAddOrderCmd(app)),
-		base.WithCmds(testOrderRunAdd, newCartCmd(app)),
-		withCartCmd(app, testOrderPriceOutput),
-		withCartCmd(app, testAddToppings),
-		withCartCmd(app, testOrderRunDelete),
+		base.WithCmds(testOrderNew, newCartCmd(builder), newAddOrderCmd(builder)),
+		base.WithCmds(testAddOrder, newCartCmd(builder), newAddOrderCmd(builder)),
+		base.WithCmds(testOrderNewErr, newAddOrderCmd(builder)),
+		base.WithCmds(testOrderRunAdd, newCartCmd(builder)),
+		withCartCmd(builder, testOrderPriceOutput),
+		withCartCmd(builder, testAddToppings),
+		withCartCmd(builder, testOrderRunDelete),
 		withAppCmd(testAppRootCmdRun, app),
 	}
 	for i, tst := range tsts {
 		t.Run(fmt.Sprintf("Test %d", i), tst)
+	}
+
+	builder.CleanUp()
+	if err := app.db.Close(); err != nil {
+		t.Error(err)
 	}
 }
 

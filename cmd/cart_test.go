@@ -18,6 +18,7 @@ func testOrderNew(t *testing.T, buf *bytes.Buffer, cmds ...base.CliCommand) {
 		t.Error(err)
 	}
 	buf.Reset()
+
 	if err := cart.Run(cart.Cmd(), []string{"testorder"}); err != nil {
 		t.Error(err)
 	}
@@ -34,9 +35,9 @@ func testOrderNew(t *testing.T, buf *bytes.Buffer, cmds ...base.CliCommand) {
          X: 1/1 1
       quantity: 1
   storeID: 4336
-  method:  Carryout
+  method:  Delivery
   address: 1600 Pennsylvania Ave NW
-  	       Washington DC, 20500
+  	       Washington, DC 20500
 `
 	tests.Compare(t, buf.String(), strings.Replace(expected, "\t", "  ", -1))
 }

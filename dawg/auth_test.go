@@ -12,6 +12,8 @@ import (
 )
 
 func TestBadCreds(t *testing.T) {
+	reset := setTestClient()
+	defer reset()
 	tok, err := gettoken("no", "and no")
 	if err == nil {
 		t.Error("expected an error")
@@ -72,11 +74,7 @@ func getTestUser(uname, pass string) (*UserProfile, error) {
 	return testUser, err
 }
 
-func TestToken(t *testing.T) {
-	username, password, ok := gettestcreds()
-	if !ok {
-		t.Skip()
-	}
+func setTestClient() func() {
 	copyclient := orderClient
 	orderClient = &client{
 		host: orderHost,
@@ -85,6 +83,18 @@ func TestToken(t *testing.T) {
 			CheckRedirect: noRedirects,
 		},
 	}
+	return func() {
+		orderClient = copyclient
+	}
+}
+
+func TestToken(t *testing.T) {
+	username, password, ok := gettestcreds()
+	if !ok {
+		t.Skip()
+	}
+	reset := setTestClient()
+	defer reset()
 
 	tok, err := gettoken(username, password)
 	if err != nil {
@@ -106,7 +116,6 @@ func TestToken(t *testing.T) {
 	if tok.Type != "Bearer" {
 		t.Error("these tokens are usually bearer tokens")
 	}
-	orderClient = copyclient
 }
 
 func TestAuth(t *testing.T) {
@@ -114,6 +123,9 @@ func TestAuth(t *testing.T) {
 	if !ok {
 		t.Skip()
 	}
+
+	reset := setTestClient()
+	defer reset()
 
 	auth, err := newauth(username, password)
 	if err != nil {
@@ -214,10 +226,13 @@ func TestAuth(t *testing.T) {
 }
 
 func TestAuth_Err(t *testing.T) {
+	reset := setTestClient()
+	defer reset()
 	a, err := newauth("not a", "valid password")
 	if err == nil {
 		t.Error("expected an error")
 	}
+	fmt.Printf("err: %T\n", err)
 	if a != nil {
 		t.Error("expected a nil auth")
 	}
@@ -256,6 +271,8 @@ func TestSignIn(t *testing.T) {
 	if !ok {
 		t.Skip()
 	}
+	reset := setTestClient()
+	defer reset()
 
 	user, err := SignIn(username, password)
 	if err != nil {
@@ -272,6 +289,8 @@ func TestAuthClient(t *testing.T) {
 	if !ok {
 		t.Skip()
 	}
+	reset := setTestClient()
+	defer reset()
 
 	auth, err := getTestAuth(username, password)
 	if auth == nil {
