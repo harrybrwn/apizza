@@ -24,29 +24,23 @@ import (
 	"gopkg.in/natefinch/lumberjack.v2"
 
 	"github.com/harrybrwn/apizza/dawg"
-	"github.com/harrybrwn/apizza/pkg/cache"
 	"github.com/harrybrwn/apizza/pkg/config"
 )
 
-var (
-	db             *cache.DataBase
-	menuUpdateTime = 12 * time.Hour
-)
+var menuUpdateTime = 12 * time.Hour
 
 // Execute runs the root command
 func Execute() {
 	var (
 		err error
 	)
-	app := NewApp(os.Stdout)
-
-	if err = app.Init(); err != nil {
-		handle(err, "Internal Error", 1)
+	app, err := NewApp(os.Stdout)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		os.Exit(1)
 	}
 
-	// for old system compatability
-	// db = app.db
-	// cfg = app.conf
+	cfg = app.conf
 
 	log.SetOutput(&lumberjack.Logger{
 		Filename:   filepath.Join(config.Folder(), "logs", "dev.log"),

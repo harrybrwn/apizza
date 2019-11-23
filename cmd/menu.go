@@ -23,6 +23,7 @@ import (
 	"github.com/harrybrwn/apizza/cmd/internal/data"
 	"github.com/harrybrwn/apizza/cmd/internal/obj"
 	"github.com/harrybrwn/apizza/cmd/internal/out"
+	"github.com/harrybrwn/apizza/pkg/cache"
 
 	"github.com/spf13/cobra"
 
@@ -34,6 +35,8 @@ type menuCmd struct {
 	base.CliCommand
 	data.MenuCacher
 	storefinder
+
+	db *cache.DataBase
 
 	addr dawg.Address
 
@@ -47,7 +50,7 @@ type menuCmd struct {
 }
 
 func (c *menuCmd) Run(cmd *cobra.Command, args []string) error {
-	if err := db.UpdateTS("menu", c); err != nil {
+	if err := c.db.UpdateTS("menu", c); err != nil {
 		return err
 	}
 	out.SetOutput(cmd.OutOrStdout())
@@ -86,6 +89,7 @@ func (c *menuCmd) Run(cmd *cobra.Command, args []string) error {
 
 func newMenuCmd(b base.Builder) base.CliCommand {
 	c := &menuCmd{
+		db:             b.DB(),
 		all:            false,
 		toppings:       false,
 		preconfigured:  false,
@@ -110,8 +114,8 @@ func newMenuCmd(b base.Builder) base.CliCommand {
 			},
 		)
 	}
-	c.MenuCacher = data.NewMenuCacher(menuUpdateTime, b.DB(), c.store)
 	c.CliCommand = b.Build("menu <item>", "View the Dominos menu.", c)
+	c.MenuCacher = data.NewMenuCacher(menuUpdateTime, b.DB(), c.store)
 
 	c.Cmd().Long = `This command will show the dominos menu.
 
@@ -119,16 +123,17 @@ To show a subdivition of the menu, give an item or
 category to the --category and --item flags or give them
 as an argument to the command itself.`
 
-	c.Flags().BoolVarP(&c.all, "all", "a", c.all, "show the entire menu")
-	c.Flags().BoolVarP(&c.verbose, "verbose", "v", false, "print the menu verbosly")
+	flags := c.Flags()
+	flags.BoolVarP(&c.all, "all", "a", c.all, "show the entire menu")
+	flags.BoolVarP(&c.verbose, "verbose", "v", false, "print the menu verbosly")
 
-	c.Flags().StringVarP(&c.item, "item", "i", "", "show info on the menu item given")
-	c.Flags().StringVarP(&c.category, "category", "c", "", "show one category on the menu")
+	flags.StringVarP(&c.item, "item", "i", "", "show info on the menu item given")
+	flags.StringVarP(&c.category, "category", "c", "", "show one category on the menu")
 
-	c.Flags().BoolVarP(&c.toppings, "toppings", "t", c.toppings, "print out the toppings on the menu")
-	c.Flags().BoolVarP(&c.preconfigured, "preconfigured",
+	flags.BoolVarP(&c.toppings, "toppings", "t", c.toppings, "print out the toppings on the menu")
+	flags.BoolVarP(&c.preconfigured, "preconfigured",
 		"p", c.preconfigured, "show the pre-configured products on the dominos menu")
-	c.Flags().BoolVar(&c.showCategories, "show-categories", c.showCategories, "print categories")
+	flags.BoolVar(&c.showCategories, "show-categories", c.showCategories, "print categories")
 	return c
 }
 

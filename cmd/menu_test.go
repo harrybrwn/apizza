@@ -36,7 +36,7 @@ func testFindProduct(t *testing.T) {
 
 	buf := &bytes.Buffer{}
 	c.SetOutput(buf)
-	if err := db.UpdateTS("menu", c); err != nil {
+	if err := app.db.UpdateTS("menu", c); err != nil {
 		t.Error(err)
 	}
 	c.all = true

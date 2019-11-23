@@ -69,10 +69,13 @@ func newapp(db *cache.DataBase, conf *base.Config, out io.Writer) *App {
 }
 
 // NewApp creates a new app for the main cli.
-func NewApp(out io.Writer) *App {
-	app := &App{}
+func NewApp(out io.Writer) (*App, error) {
+	app := &App{
+		db:   nil,
+		conf: &base.Config{},
+	}
 	if err := app.Init(); err != nil {
-		panic(err)
+		return nil, err
 	}
 	app.CliCommand = base.NewCommand("apizza", "Dominos pizza from the command line.", app.Run)
 	app.storefinder = newStoreGetter(
@@ -85,12 +88,15 @@ func NewApp(out io.Writer) *App {
 		app.Address,
 	)
 	app.SetOutput(out)
-	return app
+	return app, nil
 }
 
 // Init wil setup the app.
 func (a *App) Init() error {
 	var err error
+	if a.conf == nil {
+		a.conf = &base.Config{}
+	}
 	if err = config.SetConfig(".apizza", a.conf); err != nil {
 		return err
 	}

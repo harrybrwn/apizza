@@ -9,7 +9,6 @@ import (
 
 	"github.com/harrybrwn/apizza/cmd/internal/base"
 	"github.com/harrybrwn/apizza/cmd/internal/cmdtest"
-	"github.com/harrybrwn/apizza/pkg/cache"
 	"github.com/harrybrwn/apizza/pkg/config"
 	"github.com/harrybrwn/apizza/pkg/tests"
 )
@@ -17,8 +16,8 @@ import (
 func TestRunner(t *testing.T) {
 	r := tests.NewRunner(t, setupTests, teardownTests)
 	app := newapp(cmdtest.TempDB(), cfg, nil)
+	defer app.db.Close()
 	r.AddTest(
-		dummyCheck,
 		base.WithCmds(testOrderNew, newCartCmd(app), newAddOrderCmd(app)),
 		base.WithCmds(testAddOrder, newCartCmd(app), newAddOrderCmd(app)),
 		base.WithCmds(testOrderNewErr, newAddOrderCmd(app)),
@@ -101,48 +100,12 @@ func TestAppStoreFinder(t *testing.T) {
 	}
 }
 
-func dummyCheck(t *testing.T) {
-	data, err := db.Get("test")
-	if err != nil {
-		t.Error(err)
-	}
-	tests.Compare(t, string(data), "this is some test data")
-	if cfg.Name != "joe" || cfg.Email != "nojoe@mail.com" {
-		t.Error("test data is not correct")
-	}
-	if err = db.Delete("test"); err != nil {
-		t.Error("couldn't delete test", err)
-	}
-}
-
-func withDummyDB(fn func(*testing.T)) func(*testing.T) {
-	return func(t *testing.T) {
-		newDatabase := cmdtest.TempDB()
-		oldDatabase := db
-		db = newDatabase
-		defer func() {
-			db = oldDatabase
-			newDatabase.Destroy()
-		}()
-		fn(t)
-	}
-}
-
 func setupTests() {
-	var err error
-	db, err = cache.GetDB(tests.NamedTempFile("testdata", "apizza_test.db"))
-	check(err, "database")
-	err = db.Put("test", []byte("this is some test data"))
-	check(err, "database put")
 	config.SetNonFileConfig(cfg) // don't want it to over ride the file on disk
 	check(json.Unmarshal([]byte(testconfigjson), cfg), "json")
 }
 
-func teardownTests() {
-	if err := db.Destroy(); err != nil {
-		panic(err)
-	}
-}
+func teardownTests() {}
 
 func withAppCmd(f func(*testing.T, *bytes.Buffer, *App), c base.CliCommand) func(*testing.T) {
 	return func(t *testing.T) {
