@@ -2,25 +2,24 @@ package cmd
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
 	"os"
 	"testing"
 
 	"github.com/harrybrwn/apizza/cmd/internal/base"
 	"github.com/harrybrwn/apizza/cmd/internal/cmdtest"
-	"github.com/harrybrwn/apizza/pkg/config"
 )
 
 func TestMain(m *testing.M) {
-	config.SetNonFileConfig(cfg) // don't want it to over ride the file on disk
-	check(json.Unmarshal([]byte(testconfigjson), cfg), "json")
+	// config.SetNonFileConfig(cfg) // don't want it to over ride the file on disk
+	// check(json.Unmarshal([]byte(testconfigjson), cfg), "json")
 	m.Run()
 }
 
 func TestRunner(t *testing.T) {
-	app := newapp(cmdtest.TempDB(), cfg, nil)
+	app := newapp(cmdtest.TempDB(), &base.Config{}, nil)
 	builder := cmdtest.NewRecorder()
+	builder.ConfigSetup([]byte(testconfigjson))
 
 	tsts := []func(*testing.T){
 		base.WithCmds(testOrderNew, newCartCmd(builder), newAddOrderCmd(builder)),
@@ -110,8 +109,8 @@ func TestAppStoreFinder(t *testing.T) {
 }
 
 func setupTests() {
-	config.SetNonFileConfig(cfg) // don't want it to over ride the file on disk
-	check(json.Unmarshal([]byte(testconfigjson), cfg), "json")
+	// config.SetNonFileConfig(cfg) // don't want it to over ride the file on disk
+	// check(json.Unmarshal([]byte(testconfigjson), cfg), "json")
 }
 
 func teardownTests() {}

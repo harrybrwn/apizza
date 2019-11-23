@@ -26,7 +26,7 @@ import (
 	"github.com/harrybrwn/apizza/pkg/config"
 )
 
-var cfg = &base.Config{}
+// var cfg = &base.Config{}
 
 type configCmd struct {
 	base.CliCommand

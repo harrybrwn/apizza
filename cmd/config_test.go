@@ -6,6 +6,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/harrybrwn/apizza/cmd/internal/base"
 	"github.com/harrybrwn/apizza/cmd/internal/cmdtest"
 	"github.com/harrybrwn/apizza/cmd/internal/obj"
 	"github.com/harrybrwn/apizza/pkg/config"
@@ -40,10 +41,10 @@ service: "Carryout"
 
 func TestConfigStruct(t *testing.T) {
 	r := cmdtest.NewRecorder()
-	r.ConfigSetup()
+	r.ConfigSetup([]byte(testconfigjson))
 	defer func() {
 		r.CleanUp()
-		config.SetNonFileConfig(cfg) // for test compatability
+		// config.SetNonFileConfig(cfg) // for test compatability
 	}()
 	check(json.Unmarshal([]byte(testconfigjson), r.Config()), "json")
 
@@ -64,10 +65,10 @@ func TestConfigStruct(t *testing.T) {
 func TestConfigCmd(t *testing.T) {
 	r := cmdtest.NewRecorder()
 	c := newConfigCmd(r).(*configCmd)
-	r.ConfigSetup()
+	r.ConfigSetup([]byte(testconfigjson))
 	defer func() {
 		r.CleanUp()
-		config.SetNonFileConfig(cfg) // for test compatability
+		// config.SetNonFileConfig(cfg) // for test compatability
 	}()
 
 	c.file = true
@@ -120,7 +121,7 @@ func TestConfigEdit(t *testing.T) {
 		if err != nil {
 			t.Error()
 		}
-		config.SetNonFileConfig(cfg) // for test compatability
+		// config.SetNonFileConfig(cfg) // for test compatability
 	}()
 
 	os.Setenv("EDITOR", "cat")
@@ -172,8 +173,9 @@ func TestConfigEdit(t *testing.T) {
 
 func TestConfigGet(t *testing.T) {
 	c := newConfigGet()
-	config.SetNonFileConfig(cfg) // don't want it to over ride the file on disk
-	check(json.Unmarshal([]byte(testconfigjson), cfg), "json")
+	conf := &base.Config{}
+	config.SetNonFileConfig(conf) // don't want it to over ride the file on disk
+	check(json.Unmarshal([]byte(testconfigjson), conf), "json")
 
 	buf := &bytes.Buffer{}
 	c.SetOutput(buf)
@@ -200,7 +202,7 @@ func TestConfigSet(t *testing.T) {
 	if err := c.Run(c.Cmd(), []string{"name=someNameOtherThanJoe"}); err != nil {
 		t.Error(err)
 	}
-	if cfg.Name != "someNameOtherThanJoe" {
+	if config.GetString("name") != "someNameOtherThanJoe" {
 		t.Error("did not set the name correctly")
 	}
 	if err := c.Run(c.Cmd(), []string{}); err == nil {

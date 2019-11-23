@@ -30,6 +30,7 @@ import (
 	"github.com/harrybrwn/apizza/cmd/internal/out"
 	"github.com/harrybrwn/apizza/dawg"
 	"github.com/harrybrwn/apizza/pkg/cache"
+	"github.com/harrybrwn/apizza/pkg/config"
 )
 
 type cartCmd struct {
@@ -86,7 +87,8 @@ func (c *cartCmd) Run(cmd *cobra.Command, args []string) (err error) {
 	}
 
 	if c.updateAddr {
-		order.Address = dawg.StreetAddrFromAddress(&cfg.Address)
+		addr := config.Get("address").(obj.Address)
+		order.Address = dawg.StreetAddrFromAddress(&addr)
 		err = data.SaveOrder(order, c.Output(), c.db)
 		if dawg.IsFailure(err) {
 			return err
@@ -315,18 +317,21 @@ func (c *orderCmd) Run(cmd *cobra.Command, args []string) (err error) {
 	if len(c.number) != 0 {
 		payment.Number = c.number
 	} else {
-		payment.Number = cfg.Card.Number
+		// payment.Number = cfg.Card.Number
+		payment.Number = config.GetString("cart.number")
 	}
 	if len(c.expiration) != 0 {
 		payment.Expiration = c.expiration
 	} else {
-		payment.Expiration = cfg.Card.Expiration
+		// payment.Expiration = cfg.Card.Expiration
+		payment.Expiration = config.GetString("card.expiration")
 	}
 
-	names := strings.Split(cfg.Name, " ")
+	names := strings.Split(config.GetString("name"), " ")
 	order.FirstName = names[0]
 	order.LastName = strings.Join(names[1:], " ")
-	order.Email = cfg.Email
+	// order.Email = cfg.Email
+	order.Email = config.GetString("email")
 	order.AddPayment(payment)
 
 	c.Printf("Ordering dominos for %s\n\n", strings.Replace(obj.AddressFmt(order.Address), "\n", " ", -1))

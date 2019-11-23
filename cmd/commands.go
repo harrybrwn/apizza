@@ -37,7 +37,7 @@ func Execute() {
 	if err != nil {
 		handle(err, "Internal Error", 1)
 	}
-	cfg = app.conf
+	// cfg = app.conf
 
 	log.SetOutput(&lumberjack.Logger{
 		Filename:   filepath.Join(config.Folder(), "logs", "dev.log"),

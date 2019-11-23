@@ -2,6 +2,7 @@ package cmdtest
 
 import (
 	"bytes"
+	"encoding/json"
 	"io"
 	"strings"
 	"testing"
@@ -95,7 +96,10 @@ func must(db *cache.DataBase, e error) *cache.DataBase {
 
 // ConfigSetup will set the internal recorder config to be main struct used
 // in the config package.
-func (r *Recorder) ConfigSetup() {
+func (r *Recorder) ConfigSetup(b []byte) {
+	if err := json.Unmarshal(b, r.Conf); err != nil {
+		panic(err)
+	}
 	config.SetNonFileConfig(r.Conf)
 }
 
