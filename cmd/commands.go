@@ -26,7 +26,6 @@ import (
 	"gopkg.in/natefinch/lumberjack.v2"
 
 	"github.com/harrybrwn/apizza/cmd/internal/base"
-	"github.com/harrybrwn/apizza/cmd/internal/data"
 	"github.com/harrybrwn/apizza/cmd/internal/obj"
 	"github.com/harrybrwn/apizza/dawg"
 	"github.com/harrybrwn/apizza/pkg/cache"
@@ -42,17 +41,17 @@ var (
 // Execute runs the root command
 func Execute() {
 	var (
-		err, logErr error
+		err error
 	)
-	if err = config.SetConfig(".apizza", cfg); err != nil {
-		handle(err, "Internal Error", 1)
-	}
-
-	if db, err = data.NewDatabase(); err != nil {
-		handle(err, "Internal Error", 1)
-	}
-
 	app := newapp(db, cfg, os.Stdout)
+
+	if err = app.Init(); err != nil {
+		handle(err, "Internal Error", 1)
+	}
+
+	// for old system compatability
+	db = app.db
+	cfg = app.conf
 
 	log.SetOutput(&lumberjack.Logger{
 		Filename:   filepath.Join(config.Folder(), "logs", "dev.log"),
@@ -63,13 +62,13 @@ func Execute() {
 	})
 
 	defer func() {
-		err = errs.Append(db.Close(), config.Save())
+		err = app.Cleanup()
 		if err != nil {
 			handle(err, "Internal Error", 1)
 		}
 	}()
 
-	if err = errs.Pair(logErr, app.exec()); err != nil {
+	if err = app.exec(); err != nil {
 		handle(err, "Error", 1)
 	}
 }

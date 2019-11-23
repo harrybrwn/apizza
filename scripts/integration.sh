@@ -3,7 +3,14 @@
 GREEN="\033[00;32m"
 RED="\033[00;31m"
 
+### Setup ################################################################
+
 status=0
+bin="$1"
+
+if [ -z $bin ]; then
+    bin="$(which apizza)"
+fi
 
 function check() {
     if [ $status ] && [ $1 ]; then
@@ -17,13 +24,16 @@ function shouldfail() {
     fi
 }
 
-apizza _config -e 2> /dev/null
+### Tests ###############################################################
+echo "Running tests with $bin"
+
+$bin _config -e 2> /dev/null
 shouldfail $?
 
-apizza cart shouldnotbeincart &> /dev/null
+$bin cart shouldnotbeincart &> /dev/null
 shouldfail $?
 
-if [ $TRAVIS_OS_NAME = "windows" ]; then
+if [[ $TRAVIS_OS_NAME = "windows" ]]; then
     default_config="C:\\Users\\travis\\.apizza"
     default_configfile="$default_config\\config.json"
 else
@@ -31,16 +41,16 @@ else
     default_configfile="$default_config/config.json"
 fi
 
-apizza --help &> /dev/null
+$bin --help &> /dev/null
 
-configdir="$(apizza config -d)"
+configdir="$($bin config -d)"
 if [ $configdir != $default_config ]; then
     echo "wrong config dir... got: $configdir, want: $default_config"
     status=1
 fi
 unset configdir
 
-configfile="$(apizza config -f)"
+configfile="$($bin config -f)"
 if [ $configfile != "$default_configfile" ]; then
     echo "wrong config dir... got: $configfile, want: $default_configfile"
     status=1
@@ -49,11 +59,12 @@ unset default_config
 unset default_configfile
 unset configfile
 
+### Teardown #############################################################
 
 if [[ $status -eq 0 ]]; then
-    echo -e "${GREEN}pass" "\033[0m"
+    echo -e "${GREEN}Pass" "\033[0m"
 else
-    echo -e "${RED}failure\033[0m" $status
+    echo -e "${RED}Failure\033[0m:" $status
 fi
 
 exit $status

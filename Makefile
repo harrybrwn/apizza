@@ -1,4 +1,3 @@
-COVER_FILE=test-cover
 COVER=go tool cover
 
 all: install
@@ -6,12 +5,15 @@ all: install
 install:
 	go install github.com/harrybrwn/apizza
 
+build:
+	go build -o bin/apizza
+
 release:
 	bash scripts/release.sh
 
-test: setup $(COVER_FILE)
-	go test -cover ./... -coverprofile=$(COVER_FILE) -covermode=atomic
-	$(COVER) -func=$(COVER_FILE)
+test: build coverage.txt
+	bash scripts/integration.sh ./bin/apizza
+	@[ -d bin ] && rm -rf bin
 
 coverage.txt:
 	bash scripts/test.sh
@@ -19,11 +21,8 @@ coverage.txt:
 html: coverage.txt
 	$(COVER) -html=$<
 
-setup:
-	touch $(COVER_FILE)
-
 clean:
-	$(RM) $(COVER_FILE) coverage.txt
-	$(RM) -r release
+	$(RM) coverage.txt
+	$(RM) -r release bin
 
 .PHONY: install test setup clean html release

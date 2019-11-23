@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 
 	"github.com/harrybrwn/apizza/cmd/internal/base"
+	"github.com/harrybrwn/apizza/cmd/internal/data"
 	"github.com/harrybrwn/apizza/cmd/internal/obj"
 	"github.com/harrybrwn/apizza/dawg"
 	"github.com/harrybrwn/apizza/pkg/cache"
@@ -81,6 +82,39 @@ func newapp(db *cache.DataBase, conf *base.Config, out io.Writer) *App {
 	return app
 }
 
+// NewApp creates a new app for the main cli.
+func NewApp(out io.Writer) *App {
+	app := &App{}
+	if err := app.Init(); err != nil {
+		panic(err)
+	}
+	app.CliCommand = base.NewCommand("apizza", "Dominos pizza from the command line.", app.Run)
+	app.storefinder = newStoreGetter(
+		func() string {
+			if len(app.service) == 0 {
+				return app.conf.Service
+			}
+			return app.service
+		},
+		app.Address,
+	)
+	app.SetOutput(out)
+	return app
+}
+
+// Init wil setup the app.
+func (a *App) Init() error {
+	var err error
+	if err = config.SetConfig(".apizza", a.conf); err != nil {
+		return err
+	}
+
+	if a.db, err = data.NewDatabase(); err != nil {
+		return err
+	}
+	return err
+}
+
 // DB returns the database
 func (a *App) DB() *cache.DataBase {
 	return a.db
@@ -98,7 +132,15 @@ func (a *App) Config() *base.Config {
 
 // Address returns the address.
 func (a *App) Address() dawg.Address {
-	return a.addr
+	if a.addr != nil {
+		return a.addr
+	}
+	return &a.conf.Address
+}
+
+// Cleanup cleans everything up.
+func (a *App) Cleanup() error {
+	return errs.Pair(a.db.Close(), config.Save())
 }
 
 // Log to the logging file
