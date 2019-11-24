@@ -10,12 +10,6 @@ import (
 	"github.com/harrybrwn/apizza/cmd/internal/cmdtest"
 )
 
-func TestMain(m *testing.M) {
-	// config.SetNonFileConfig(cfg) // don't want it to over ride the file on disk
-	// check(json.Unmarshal([]byte(testconfigjson), cfg), "json")
-	m.Run()
-}
-
 func TestRunner(t *testing.T) {
 	app := newapp(cmdtest.TempDB(), &base.Config{}, nil)
 	builder := cmdtest.NewRecorder()
@@ -31,6 +25,7 @@ func TestRunner(t *testing.T) {
 		withCartCmd(builder, testOrderRunDelete),
 		withAppCmd(testAppRootCmdRun, app),
 	}
+
 	for i, tst := range tsts {
 		t.Run(fmt.Sprintf("Test %d", i), tst)
 	}

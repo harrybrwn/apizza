@@ -38,7 +38,7 @@ func NewRecorder() *Recorder {
 		Out:      new(bytes.Buffer),
 		Conf: &base.Config{
 			Name:    "Apizza TestRecorder",
-			Service: dawg.Delivery,
+			Service: dawg.Carryout,
 			Address: *addr,
 		},
 		addr:       addr,
