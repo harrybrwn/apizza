@@ -17,6 +17,16 @@ type Address struct {
 	Zipcode  string `config:"zipcode" json:"zipcode"`
 }
 
+// FromAddress makes an obj.Address from an address interface.
+func FromAddress(a dawg.Address) *Address {
+	return &Address{
+		Street:   a.LineOne(),
+		CityName: a.City(),
+		State:    a.StateCode(),
+		Zipcode:  a.Zip(),
+	}
+}
+
 // LineOne returns the first line of the address
 func (a *Address) LineOne() string {
 	return a.Street
@@ -74,4 +84,15 @@ func AddressFmtIndent(a dawg.Address, l int) string {
 
 func (a Address) String() string {
 	return AddressFmt(&a)
+}
+
+// AddrIsEmpty will tell if an address is empty.
+func AddrIsEmpty(a dawg.Address) bool {
+	if a.LineOne() == "" &&
+		a.Zip() == "" &&
+		a.City() == "" &&
+		a.StateCode() == "" {
+		return true
+	}
+	return false
 }

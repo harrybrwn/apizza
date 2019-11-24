@@ -72,7 +72,10 @@ func TestParseAddressTable(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		addr := ParseAddress(tc.raw)
+		addr, err := ParseAddress(tc.raw)
+		if err != nil {
+			t.Error(err)
+		}
 		if addr.StreetNum != tc.expected.StreetNum {
 			t.Error("wrong street num")
 		}

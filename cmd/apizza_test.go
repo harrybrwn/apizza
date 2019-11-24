@@ -64,7 +64,7 @@ func testAppRootCmdRun(t *testing.T, buf *bytes.Buffer, a *App) {
 	if len(a.Cmd().Commands()) != 0 {
 		t.Error("should not have commands yet")
 	}
-	err = a.exec()
+	err = a.Exec()
 	if err != nil {
 		t.Error(err)
 	}

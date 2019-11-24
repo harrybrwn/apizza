@@ -24,8 +24,10 @@ import (
 	"gopkg.in/natefinch/lumberjack.v2"
 
 	"github.com/harrybrwn/apizza/cmd/internal/base"
+	"github.com/harrybrwn/apizza/cmd/internal/obj"
 	"github.com/harrybrwn/apizza/dawg"
 	"github.com/harrybrwn/apizza/pkg/config"
+	"github.com/harrybrwn/apizza/pkg/errs"
 )
 
 var menuUpdateTime = 12 * time.Hour
@@ -37,7 +39,6 @@ func Execute() {
 	if err != nil {
 		handle(err, "Internal Error", 1)
 	}
-	// cfg = app.conf
 
 	log.SetOutput(&lumberjack.Logger{
 		Filename:   filepath.Join(config.Folder(), "logs", "dev.log"),
@@ -51,7 +52,7 @@ func Execute() {
 		handle(app.Cleanup(), "Internal Error", 1)
 	}()
 
-	handle(app.exec(), "Error", 1)
+	handle(app.Exec(), "Error", 1)
 }
 
 func handle(e error, msg string, code int) {
@@ -100,6 +101,9 @@ func (s *storegetter) Store() *dawg.Store {
 	if s.dstore == nil {
 		var err error
 		var address = s.getaddr()
+		if obj.AddrIsEmpty(address) {
+			handle(errs.New("no address given in config file or as flag"), "Error", 1)
+		}
 		s.dstore, err = dawg.NearestStore(address, s.getmethod())
 		if err != nil {
 			handle(err, "Store Find Error", 1) // will exit

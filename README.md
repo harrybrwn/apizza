@@ -51,6 +51,11 @@ or they can be moved to one command like so. Make sure that there are no spaces 
 apizza config set name=Bob email=bob@example.com service=Carryout
 ```
 
+Or just edit the json config file with
+```
+apizza config --edit
+```
+
 
 ### Cart
 To save a new order, use `apizza cart new` along with at least the `--name` flag or an argument representing an order name. The name flag is the name that the app will use when referring to that order. The `--products` flag (part of the 'cart new' command) is a way to add product when creating a new order, it accepts a list of comma separated product codes that can be found in the menu command.

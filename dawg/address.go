@@ -1,6 +1,7 @@
 package dawg
 
 import (
+	"errors"
 	"fmt"
 	"regexp"
 	"strconv"
@@ -17,9 +18,12 @@ var (
 // ParseAddress will parse a raw address and return an address object.
 // This method is prone to all the mishaps that arise when trying to work
 // with addresses, it may not work for all cases.
-func ParseAddress(raw string) *StreetAddr {
-	parsed := parse([]byte(raw))
-	return &StreetAddr{
+func ParseAddress(raw string) (*StreetAddr, error) {
+	parsed, err := parse([]byte(raw))
+	if err != nil {
+		return nil, err
+	}
+	addr := &StreetAddr{
 		StreetNum:  string(parsed[1]),
 		Street:     string(parsed[1]) + " " + string(parsed[2]),
 		StreetName: string(parsed[2]),
@@ -27,10 +31,15 @@ func ParseAddress(raw string) *StreetAddr {
 		State:      string(parsed[4]),
 		Zipcode:    string(parsed[5]),
 	}
+	return addr, nil
 }
 
-func parse(raw []byte) [][]byte {
-	return addressRegex.FindAllSubmatch(raw, -1)[0]
+func parse(raw []byte) ([][]byte, error) {
+	res := addressRegex.FindAllSubmatch(raw, -1)
+	if len(res) > 0 {
+		return res[0], nil
+	}
+	return nil, errors.New("address parsing error")
 }
 
 // Address is a guid for how addresses should be used as input

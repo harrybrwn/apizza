@@ -137,7 +137,8 @@ func (a *App) Log(v ...interface{}) {
 	log.Print(v...)
 }
 
-func (a *App) exec() error {
+// Exec will execute the root command.
+func (a *App) Exec() error {
 	a.initflags()
 	a.Addcmd(
 		newCartCmd(a).Addcmd(
@@ -216,6 +217,13 @@ func (a *App) prerun(*cobra.Command, []string) (err error) {
 		e    error
 		file string
 	)
+	if a.address != "" {
+		parsed, err := dawg.ParseAddress(a.address)
+		if err != nil {
+			return err
+		}
+		a.conf.Address = *obj.FromAddress(parsed)
+	}
 
 	if a.logfile != "" {
 		file = a.logfile
