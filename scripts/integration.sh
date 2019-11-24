@@ -12,6 +12,11 @@ if [ -z $bin ]; then
     bin="$(which apizza)"
 fi
 
+if [ ! -x $bin ]; then
+    echo 'could not find binary'
+    exit 1
+fi
+
 function check() {
     if [ $status ] && [ $1 ]; then
         status=$1
@@ -44,14 +49,14 @@ fi
 $bin --help &> /dev/null
 
 configdir="$($bin config -d)"
-if [ $configdir != $default_config ]; then
+if [[ $configdir != $default_config ]]; then
     echo "wrong config dir... got: $configdir, want: $default_config"
     status=1
 fi
 unset configdir
 
 configfile="$($bin config -f)"
-if [ $configfile != "$default_configfile" ]; then
+if [[ $configfile != "$default_configfile" ]]; then
     echo "wrong config dir... got: $configfile, want: $default_configfile"
     status=1
 fi

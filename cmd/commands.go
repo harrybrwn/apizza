@@ -32,6 +32,8 @@ import (
 
 var menuUpdateTime = 12 * time.Hour
 
+const enableLog = true
+
 // Execute runs the root command
 func Execute() {
 	app := NewApp(os.Stdout)
@@ -40,13 +42,15 @@ func Execute() {
 		handle(err, "Internal Error", 1)
 	}
 
-	log.SetOutput(&lumberjack.Logger{
-		Filename:   filepath.Join(config.Folder(), "logs", "dev.log"),
-		MaxSize:    25,  // megabytes
-		MaxBackups: 10,  // number of spare files
-		MaxAge:     365, //days
-		Compress:   false,
-	})
+	if enableLog {
+		log.SetOutput(&lumberjack.Logger{
+			Filename:   filepath.Join(config.Folder(), "logs", "dev.log"),
+			MaxSize:    25,  // megabytes
+			MaxBackups: 10,  // number of spare files
+			MaxAge:     365, //days
+			Compress:   false,
+		})
+	}
 
 	defer func() {
 		handle(app.Cleanup(), "Internal Error", 1)

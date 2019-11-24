@@ -11,9 +11,12 @@ build:
 release:
 	bash scripts/release.sh
 
-test: build coverage.txt
+test: coverage.txt test-build
 	bash scripts/integration.sh ./bin/apizza
 	@[ -d bin ] && rm -rf bin
+
+test-build:
+	go build -o bin/apizza -ldflags "-X cmd.enableLog=false"
 
 coverage.txt:
 	bash scripts/test.sh
@@ -25,4 +28,4 @@ clean:
 	$(RM) coverage.txt
 	$(RM) -r release bin
 
-.PHONY: install test setup clean html release
+.PHONY: install test clean html release
