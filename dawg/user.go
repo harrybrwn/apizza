@@ -86,7 +86,7 @@ func (u *UserProfile) DefaultAddress() *UserAddress {
 // should be "Delivery" or "Carryout"
 func (u *UserProfile) SetServiceMethod(service string) error {
 	if !(service == Delivery || service == Carryout) {
-		return errBadService
+		return ErrBadService
 	}
 	u.ServiceMethod = service
 	return nil

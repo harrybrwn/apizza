@@ -19,6 +19,9 @@ const (
 	Carryout = "Carryout"
 )
 
+// ErrBadService is returned if a service is needed but the service validation failed.
+var ErrBadService = errors.New("service must be either 'Delivery' or 'Carryout'")
+
 // NearestStore gets the dominos location closest to the given address.
 //
 // The addr argument should be the address to deliver to not the address of the
@@ -228,12 +231,10 @@ func getNearestStore(c *client, addr Address, service string) (*Store, error) {
 	return store, initStore(c, store.ID, store)
 }
 
-var errBadService = errors.New("service must be either 'Delivery' or 'Carryout'")
-
 func findNearbyStores(c *client, addr Address, service string) (*storeLocs, error) {
 	if !(service == Delivery || service == Carryout) {
 		// panic("service must be either 'Delivery' or 'Carryout'")
-		return nil, errBadService
+		return nil, ErrBadService
 	}
 	// TODO: on the dominos website, the c param can sometimes be just the zip code
 	// and it still works.

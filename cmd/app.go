@@ -28,13 +28,7 @@ type App struct {
 	logf *os.File
 	log  *log.Logger
 
-	// root command flags
-	address    string
-	service    string
-	storeID    string
-	clearCache bool
-	resetMenu  bool
-	openlogs   bool
+	opts rootopts
 
 	// persistant flags
 	storeLocation bool
@@ -47,20 +41,16 @@ func newapp(db *cache.DataBase, conf *base.Config, out io.Writer) *App {
 		db:         db,
 		conf:       conf,
 		addr:       &conf.Address,
-
-		// default flag values...
-		address:    "",
-		service:    "",
-		clearCache: false,
+		opts:       rootopts{},
 	}
 
 	app.CliCommand = base.NewCommand("apizza", "Dominos pizza from the command line.", app.Run)
 	app.StoreFinder = newStoreGetter(
 		func() string {
-			if len(app.service) == 0 {
+			if len(app.opts.service) == 0 {
 				return conf.Service
 			}
-			return app.service
+			return app.opts.service
 		},
 		app.Address,
 	)
@@ -77,10 +67,10 @@ func NewApp(out io.Writer) *App {
 	app.CliCommand = base.NewCommand("apizza", "Dominos pizza from the command line.", app.Run)
 	app.StoreFinder = newStoreGetter(
 		func() string {
-			if len(app.service) == 0 {
+			if len(app.opts.service) == 0 {
 				return app.conf.Service
 			}
-			return app.service
+			return app.opts.service
 		},
 		app.Address,
 	)
@@ -128,7 +118,7 @@ func (a *App) Address() dawg.Address {
 }
 
 // Cleanup cleans everything up.
-func (a *App) Cleanup() error {
+func (a *App) Cleanup() (err error) {
 	return errs.Pair(a.db.Close(), config.Save())
 }
 
@@ -158,14 +148,14 @@ var _ base.Builder = (*App)(nil)
 
 // Run the app.
 func (a *App) Run(cmd *cobra.Command, args []string) (err error) {
-	if a.openlogs {
+	if a.opts.openlogs {
 		editor := os.Getenv("EDITOR")
 		c := exec.Command(editor, filepath.Join(config.Folder(), "logs", "dev.log"))
 		c.Stdin = os.Stdin
 		c.Stdout = a.Output()
 		return c.Run()
 	}
-	if a.clearCache {
+	if a.opts.clearCache {
 		err = a.db.Close()
 		a.Printf("removing %s\n", a.db.Path())
 		return errs.Pair(err, os.Remove(a.db.Path()))
@@ -191,38 +181,32 @@ func (a *App) initflags() {
 
 	cmd.PersistentPreRunE = a.prerun
 	cmd.PostRunE = a.postrun
+	a.opts.install(flags, persistflags)
 
-	flags.BoolVar(&a.clearCache, "clear-cache", false, "delete the database")
 	flags.BoolVarP(&a.storeLocation, "store-location", "L", false, "show the location of the nearest store")
-	persistflags.BoolVar(&a.resetMenu, "delete-menu", false, "delete the menu stored in cache")
-
 	persistflags.StringVar(&a.logfile, "log", "", "set a log file (found in ~/.apizza/logs)")
-	persistflags.StringVar(&a.address, "address", a.address, "use a specific address")
-	persistflags.StringVar(&a.service, "service", a.service, "select a Dominos service, either 'Delivery' or 'Carryout'")
-
-	persistflags.BoolVar(&test, "test", false, "testing flag (for development)")
-	persistflags.BoolVar(&reset, "reset", false, "reset the program (for development)")
-	persistflags.MarkHidden("test")
-	persistflags.MarkHidden("reset")
-
-	flags.BoolVar(&a.openlogs, "open-logs", false, "open the log file")
-	flags.MarkHidden("open-logs")
 }
 
 func (a *App) prerun(*cobra.Command, []string) (err error) {
-	if a.resetMenu {
+	if a.opts.resetMenu {
 		err = a.DB().Delete("menu")
 	}
 	var (
 		e    error
 		file string
 	)
-	if a.address != "" {
-		parsed, err := dawg.ParseAddress(a.address)
+	if a.opts.address != "" {
+		parsed, err := dawg.ParseAddress(a.opts.address)
 		if err != nil {
 			return err
 		}
 		a.conf.Address = *obj.FromAddress(parsed)
+	}
+	if a.opts.service != "" {
+		if !(a.opts.service == dawg.Delivery || a.opts.service == dawg.Carryout) {
+			return dawg.ErrBadService
+		}
+		a.conf.Service = a.opts.service
 	}
 
 	if a.logfile != "" {

@@ -29,7 +29,7 @@ func TestFindNearbyStores_Err(t *testing.T) {
 	if err == nil {
 		t.Error("expected an error")
 	}
-	if err != errBadService {
+	if err != ErrBadService {
 		t.Error("findNearbyStores gave the wrong error for an invalid service")
 	}
 	_, err = findNearbyStores(orderClient, &StreetAddr{}, Delivery)

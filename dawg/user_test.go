@@ -64,7 +64,7 @@ func TestUserStoresNearMe(t *testing.T) {
 	if err = user.SetServiceMethod("not correct"); err == nil {
 		t.Error("expected error for an invalid service method")
 	}
-	if err != errBadService {
+	if err != ErrBadService {
 		t.Error("SetServiceMethod with bad val gave wrong error")
 	}
 	user.AddAddress(testAddress())

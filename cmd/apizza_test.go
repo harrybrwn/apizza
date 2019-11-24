@@ -78,7 +78,7 @@ func TestAppResetFlag(t *testing.T) {
 	a := newapp(r.ToApp())
 
 	a.Cmd().ParseFlags([]string{"--clear-cache"})
-	a.clearCache = true
+	a.opts.clearCache = true
 	test = false
 	if err := a.Run(a.Cmd(), []string{}); err != nil {
 		t.Error(err)
