@@ -36,25 +36,10 @@ type App struct {
 }
 
 func newapp(db *cache.DataBase, conf *base.Config, out io.Writer) *App {
-	app := &App{
-		CliCommand: nil,
-		db:         db,
-		conf:       conf,
-		addr:       &conf.Address,
-		opts:       rootopts{},
-	}
-
-	app.CliCommand = base.NewCommand("apizza", "Dominos pizza from the command line.", app.Run)
-	app.StoreFinder = newStoreGetter(
-		func() string {
-			if len(app.opts.service) == 0 {
-				return conf.Service
-			}
-			return app.opts.service
-		},
-		app.Address,
-	)
-	app.SetOutput(out)
+	app := NewApp(out)
+	app.db = db
+	app.conf = conf
+	app.addr = &conf.Address
 	return app
 }
 
@@ -63,17 +48,10 @@ func NewApp(out io.Writer) *App {
 	app := &App{
 		db:   nil,
 		conf: &base.Config{},
+		opts: rootopts{},
 	}
 	app.CliCommand = base.NewCommand("apizza", "Dominos pizza from the command line.", app.Run)
-	app.StoreFinder = newStoreGetter(
-		func() string {
-			if len(app.opts.service) == 0 {
-				return app.conf.Service
-			}
-			return app.opts.service
-		},
-		app.Address,
-	)
+	app.StoreFinder = newStoreGetter(app.getService, app.Address)
 	app.SetOutput(out)
 	return app
 }
@@ -142,6 +120,13 @@ func (a *App) Exec() error {
 		newOrderCmd(a),
 	)
 	return a.Cmd().Execute()
+}
+
+func (a *App) getService() string {
+	if len(a.opts.service) == 0 {
+		return a.conf.Service
+	}
+	return a.opts.service
 }
 
 var _ base.Builder = (*App)(nil)

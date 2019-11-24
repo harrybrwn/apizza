@@ -35,7 +35,7 @@ func testOrderNew(t *testing.T, buf *bytes.Buffer, cmds ...base.CliCommand) {
          X: 1/1 1
       quantity: 1
   storeID: 4336
-  method:  Delivery
+  method:  Carryout
   address: 1600 Pennsylvania Ave NW
   	       Washington, DC 20500
 `
@@ -81,6 +81,7 @@ func testOrderRunAdd(t *testing.T, buf *bytes.Buffer, cmds ...base.CliCommand) {
 func testOrderPriceOutput(cart *cartCmd, buf *bytes.Buffer, t *testing.T) {
 	cart.price = true
 	cart.updateAddr = true
+
 	if err := cart.Run(cart.Cmd(), []string{"testorder"}); err != nil {
 		t.Error(err)
 	}

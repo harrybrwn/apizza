@@ -31,7 +31,7 @@ func TestRunner(t *testing.T) {
 	}
 
 	builder.CleanUp()
-	if err := app.db.Close(); err != nil {
+	if err := app.db.Destroy(); err != nil {
 		t.Error(err)
 	}
 }
@@ -76,6 +76,7 @@ func testAppRootCmdRun(t *testing.T, buf *bytes.Buffer, a *App) {
 func TestAppResetFlag(t *testing.T) {
 	r := cmdtest.NewRecorder()
 	a := newapp(r.ToApp())
+	r.ConfigSetup([]byte(testconfigjson))
 
 	a.Cmd().ParseFlags([]string{"--clear-cache"})
 	a.opts.clearCache = true

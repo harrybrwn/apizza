@@ -31,6 +31,7 @@ import (
 	"github.com/harrybrwn/apizza/dawg"
 	"github.com/harrybrwn/apizza/pkg/cache"
 	"github.com/harrybrwn/apizza/pkg/config"
+	"github.com/harrybrwn/apizza/pkg/errs"
 )
 
 type cartCmd struct {
@@ -88,6 +89,10 @@ func (c *cartCmd) Run(cmd *cobra.Command, args []string) (err error) {
 
 	if c.updateAddr {
 		addr := config.Get("address").(obj.Address)
+		if obj.AddrIsEmpty(&addr) {
+			return errs.New("no address")
+		}
+
 		order.Address = dawg.StreetAddrFromAddress(&addr)
 		err = data.SaveOrder(order, c.Output(), c.db)
 		if dawg.IsFailure(err) {
