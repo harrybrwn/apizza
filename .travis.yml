@@ -17,7 +17,6 @@ os:
 
 before_script:
   - bash scripts/build.sh
-  - go build -o bin/test-apizza -ldflags "-X cmd.enableLog=false"
 
 script:
   - bash scripts/test.sh

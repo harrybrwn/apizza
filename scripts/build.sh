@@ -9,3 +9,4 @@ go list -f '{{ join .Imports "\n" }}' ./... | \
 		go get -u
 
 go install -i github.com/harrybrwn/apizza
+go build -o bin/test-apizza -ldflags "-X cmd.enableLog=false"

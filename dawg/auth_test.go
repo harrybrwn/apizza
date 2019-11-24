@@ -232,7 +232,6 @@ func TestAuth_Err(t *testing.T) {
 	if err == nil {
 		t.Error("expected an error")
 	}
-	fmt.Printf("err: %T\n", err)
 	if a != nil {
 		t.Error("expected a nil auth")
 	}
