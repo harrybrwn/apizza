@@ -17,9 +17,11 @@ os:
 
 before_script:
   - bash scripts/build.sh
+  - go build -o bin/test-apizza -ldflags "-X cmd.enableLog=false"
 
 script:
-  - make test
+  - bash scripts/test.sh
+  - bash scripts/integration.sh ./bin/apizza
 
 after_success:
   - bash <(curl -s https://codecov.io/bash)
