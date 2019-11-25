@@ -84,21 +84,23 @@ func (c *cartCmd) Run(cmd *cobra.Command, args []string) (err error) {
 
 	if c.validate {
 		fmt.Printf("validating order '%s'...\n", order.Name())
-		return dawg.ValidateOrder(order)
+
+		err := order.Validate()
+		if dawg.IsWarning(err) {
+			return nil
+		}
+		return err
 	}
 
 	if c.updateAddr {
 		addr := config.Get("address").(obj.Address)
 		if obj.AddrIsEmpty(&addr) {
-			return errs.New("no address")
+			return errs.New("no address in config file")
 		}
-
 		order.Address = dawg.StreetAddrFromAddress(&addr)
+		order.StoreID = c.Store().ID
 		err = data.SaveOrder(order, c.Output(), c.db)
 		if dawg.IsFailure(err) {
-			return err
-		}
-		if _, ok := err.(*dawg.DominosError); !ok && err != nil {
 			return err
 		}
 		return nil
@@ -151,6 +153,29 @@ func (c *cartCmd) Run(cmd *cobra.Command, args []string) (err error) {
 	return out.PrintOrder(order, true, c.price)
 }
 
+func (c *cartCmd) syncWithConfig(o *dawg.Order) error {
+	addr := config.Get("address").(obj.Address)
+	if obj.AddrIsEmpty(&addr) {
+		return errs.New("no address in config file")
+	}
+
+	o.Address = dawg.StreetAddrFromAddress(&addr)
+	o.StoreID = c.Store().ID
+	err := data.SaveOrder(o, c.Output(), c.db)
+	if dawg.IsFailure(err) {
+		return err
+	}
+
+	if _, ok := err.(*dawg.DominosError); !ok && err != nil {
+		return err
+	}
+	return nil
+}
+
+// adds topping.
+//
+// formated as <name>:<side>:<amount>
+// name is the only one that is required.
 func addTopping(topStr string, p dawg.Item) error {
 	var side, amount string
 
@@ -201,6 +226,7 @@ func newCartCmd(b base.Builder) base.CliCommand {
 			b.Address,
 		)
 	}
+
 	c.MenuCacher = data.NewMenuCacher(menuUpdateTime, b.DB(), c.Store)
 	c.CliCommand = b.Build("cart <order name>", "Manage user created orders", c)
 	c.Cmd().Long = `The cart command gets information on all of the user

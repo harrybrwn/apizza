@@ -45,6 +45,7 @@ type rootopts struct {
 
 	// developer opts
 	openlogs bool
+	dumpdb   bool
 }
 
 func (opts *rootopts) install(flags *pflag.FlagSet, persistflags *pflag.FlagSet) {
@@ -61,4 +62,6 @@ func (opts *rootopts) install(flags *pflag.FlagSet, persistflags *pflag.FlagSet)
 
 	flags.BoolVar(&opts.openlogs, "open-logs", false, "open the log file")
 	flags.MarkHidden("open-logs")
+	flags.BoolVar(&opts.dumpdb, "dump-db", opts.dumpdb, "dump the database to stdout as json")
+	flags.MarkHidden("dump-db")
 }

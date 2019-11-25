@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"fmt"
 	"io"
 	"log"
 	"os"
@@ -156,6 +157,19 @@ func (a *App) Run(cmd *cobra.Command, args []string) (err error) {
 		)
 		return nil
 	}
+	if a.opts.dumpdb {
+		data, err := a.db.Map()
+		if err != nil {
+			return err
+		}
+		log.Println("dumping database to stdout")
+		fmt.Print("{")
+		for k, v := range data {
+			fmt.Printf("\"%s\":%v,", k, string(v))
+		}
+		fmt.Print("}")
+		return nil
+	}
 	return cmd.Usage()
 }
 
@@ -187,6 +201,7 @@ func (a *App) prerun(*cobra.Command, []string) (err error) {
 		}
 		a.conf.Address = *obj.FromAddress(parsed)
 	}
+
 	if a.opts.service != "" {
 		if !(a.opts.service == dawg.Delivery || a.opts.service == dawg.Carryout) {
 			return dawg.ErrBadService
