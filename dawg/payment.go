@@ -82,9 +82,6 @@ func makeOrderPaymentFromCard(c Card) *orderPayment {
 		Number:       c.Num(),
 		Expiration:   formatDate(c.ExpiresOn()),
 		SecurityCode: c.Code(),
-		// Type:         "CreditCard",
-		// CardType: "MASTERCARD",
-		// PostalCode: "95340",
 	}
 }
 

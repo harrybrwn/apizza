@@ -16,7 +16,6 @@ package cmd
 
 import (
 	"bytes"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
@@ -38,9 +37,7 @@ type cartCmd struct {
 	base.CliCommand
 	data.MenuCacher
 	StoreFinder
-
-	db   *cache.DataBase
-	addr dawg.Address
+	db *cache.DataBase
 
 	updateAddr bool
 	validate   bool
@@ -49,10 +46,11 @@ type cartCmd struct {
 	delete  bool
 	verbose bool
 
-	topping bool
 	add     []string
 	remove  string // yes, you can only remove one thing at a time
 	product string
+
+	topping bool // not actually a flag anymore
 }
 
 func (c *cartCmd) Run(cmd *cobra.Command, args []string) (err error) {
@@ -83,27 +81,12 @@ func (c *cartCmd) Run(cmd *cobra.Command, args []string) (err error) {
 	}
 
 	if c.validate {
-		fmt.Printf("validating order '%s'...\n", order.Name())
-
-		err := order.Validate()
-		if dawg.IsWarning(err) {
-			return nil
-		}
-		return err
+		c.Printf("validating order '%s'...\n", order.Name())
+		return onlyFailures(order.Validate())
 	}
 
 	if c.updateAddr {
-		addr := config.Get("address").(obj.Address)
-		if obj.AddrIsEmpty(&addr) {
-			return errs.New("no address in config file")
-		}
-		order.Address = dawg.StreetAddrFromAddress(&addr)
-		order.StoreID = c.Store().ID
-		err = data.SaveOrder(order, c.Output(), c.db)
-		if dawg.IsFailure(err) {
-			return err
-		}
-		return nil
+		return c.syncWithConfig(order)
 	}
 
 	if len(c.remove) > 0 {
@@ -123,9 +106,6 @@ func (c *cartCmd) Run(cmd *cobra.Command, args []string) (err error) {
 	}
 
 	if len(c.add) > 0 {
-		if err := c.db.UpdateTS("menu", c); err != nil {
-			return err
-		}
 		if c.topping {
 			for _, top := range c.add {
 				p := getOrderItem(order, c.product)
@@ -139,17 +119,21 @@ func (c *cartCmd) Run(cmd *cobra.Command, args []string) (err error) {
 				}
 			}
 		} else {
+			if err := c.db.UpdateTS("menu", c); err != nil {
+				return err
+			}
+			menu := c.Menu()
+			var itm dawg.Item
 			for _, newP := range c.add {
-				p, err := c.Menu().GetVariant(newP)
+				itm, err = menu.GetVariant(newP)
+				err = errs.Pair(err, order.AddProduct(itm))
 				if err != nil {
 					return err
 				}
-				order.AddProduct(p)
 			}
 		}
 		return data.SaveOrder(order, c.Output(), c.db)
 	}
-
 	return out.PrintOrder(order, true, c.price)
 }
 
@@ -161,18 +145,17 @@ func (c *cartCmd) syncWithConfig(o *dawg.Order) error {
 
 	o.Address = dawg.StreetAddrFromAddress(&addr)
 	o.StoreID = c.Store().ID
-	err := data.SaveOrder(o, c.Output(), c.db)
-	if dawg.IsFailure(err) {
-		return err
-	}
-
-	if _, ok := err.(*dawg.DominosError); !ok && err != nil {
-		return err
-	}
-	return nil
+	return onlyFailures(data.SaveOrder(o, c.Output(), c.db))
 }
 
-// adds topping.
+func onlyFailures(e error) error {
+	if e == nil || dawg.IsWarning(e) {
+		return nil
+	}
+	return e
+}
+
+// adds a topping.
 //
 // formated as <name>:<side>:<amount>
 // name is the only one that is required.
@@ -212,19 +195,17 @@ func getOrderItem(order *dawg.Order, code string) dawg.Item {
 func newCartCmd(b base.Builder) base.CliCommand {
 	c := &cartCmd{
 		db:      b.DB(),
-		addr:    b.Address(),
 		price:   false,
 		delete:  false,
 		verbose: false,
+		topping: false,
 	}
 
 	if app, ok := b.(*App); ok {
 		c.StoreFinder = app
 	} else {
 		c.StoreFinder = newStoreGetter(
-			func() string { return b.Config().Service },
-			b.Address,
-		)
+			func() string { return b.Config().Service }, b.Address)
 	}
 
 	c.MenuCacher = data.NewMenuCacher(menuUpdateTime, b.DB(), c.Store)
@@ -344,54 +325,49 @@ func (c *orderCmd) Run(cmd *cobra.Command, args []string) (err error) {
 		return err
 	}
 
-	payment := dawg.Payment{CVV: c.cvv}
-	if len(c.number) != 0 {
-		payment.Number = c.number
-	} else {
-		// payment.Number = cfg.Card.Number
-		payment.Number = config.GetString("cart.number")
-	}
-	if len(c.expiration) != 0 {
-		payment.Expiration = c.expiration
-	} else {
-		// payment.Expiration = cfg.Card.Expiration
-		payment.Expiration = config.GetString("card.expiration")
-	}
-
+	order.AddPayment(*setupPayment(c.number, c.expiration, c.cvv))
 	names := strings.Split(config.GetString("name"), " ")
 	order.FirstName = names[0]
 	order.LastName = strings.Join(names[1:], " ")
-	// order.Email = cfg.Email
 	order.Email = config.GetString("email")
-	order.AddPayment(payment)
 
 	c.Printf("Ordering dominos for %s\n\n", strings.Replace(obj.AddressFmt(order.Address), "\n", " ", -1))
+	if !yesOrNo("Would you like to purchase this order? (y/n)") {
+		return nil
+	}
 
-	if yesOrNo("Would you like to purchase this order? (y/n)") {
-		c.Printf("sending order '%s'...\n", order.Name())
+	c.Printf("sending order '%s'...\n", order.Name())
+	log.Println("sending order:", dawg.OrderToJSON(order))
+	if err := order.PlaceOrder(); err != nil {
+		return err
+	}
+	c.Printf("sent to %s %s\n", order.Address.LineOne(), order.Address.City())
 
-		data, err := json.MarshalIndent(order, "", "    ")
-		if err != nil {
-			log.Println("json error:", err)
+	if c.verbose {
+		if order.ServiceMethod == dawg.Delivery {
+			c.Printf("sent by %s to %s %s\n", order.ServiceMethod,
+				order.Address.LineOne(), order.Address.City())
+		} else {
+			c.Printf("sent order for %s\n", order.ServiceMethod)
 		}
-		log.Println("sending order", string(data))
-		log.Println("placing order")
-		if err := order.PlaceOrder(); err != nil {
-			return err
-		}
-		log.Printf("sent to %s %s\n", order.Address.LineOne(), order.Address.City())
-
-		if c.verbose {
-			if order.ServiceMethod == "Delivery" {
-				c.Printf("sent by %s to %s %s\n", order.ServiceMethod,
-					order.Address.LineOne(), order.Address.City())
-			} else {
-				c.Printf("sent order for %s\n", order.ServiceMethod)
-			}
-			c.Printf("%+v\n", order)
-		}
+		c.Printf("%+v\n", order)
 	}
 	return nil
+}
+
+func setupPayment(num, exp, cvv string) *dawg.Payment {
+	payment := &dawg.Payment{CVV: cvv}
+	if len(num) != 0 {
+		payment.Number = num
+	} else {
+		payment.Number = config.GetString("card.number")
+	}
+	if len(exp) != 0 {
+		payment.Expiration = exp
+	} else {
+		payment.Expiration = config.GetString("card.expiration")
+	}
+	return payment
 }
 
 func newOrderCmd(b base.Builder) base.CliCommand {
@@ -399,12 +375,12 @@ func newOrderCmd(b base.Builder) base.CliCommand {
 	c.CliCommand = b.Build("order", "Send an order from the cart to dominos.", c)
 	c.db = b.DB()
 	c.Cmd().Long = `The order command is the final destination for an order. This is where
-	the order will be populated with payment information and sent off to dominos.
+the order will be populated with payment information and sent off to dominos.
 
-	The --cvv flag must be specified, and the config file will never store the
-	cvv. In addition to keeping the cvv safe, payment information will never be
-	stored the program cache with orders.
-	`
+The --cvv flag must be specified, and the config file will never store the
+cvv. In addition to keeping the cvv safe, payment information will never be
+stored the program cache with orders.
+`
 	flags := c.Cmd().Flags()
 	flags.BoolVarP(&c.verbose, "verbose", "v", c.verbose, "output the order command verbosly")
 	flags.BoolVarP(&c.track, "track", "t", c.track, "enable tracking for the purchased order")

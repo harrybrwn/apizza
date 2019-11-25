@@ -126,3 +126,7 @@ type RunFunction func(*cobra.Command, []string) error
 func (rf RunFunction) Run(cmd *cobra.Command, args []string) error {
 	return rf(cmd, args)
 }
+
+var (
+	_ CliCommand = (*Command)(nil)
+)
