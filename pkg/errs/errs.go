@@ -1,6 +1,10 @@
 package errs
 
-import "fmt"
+import (
+	"fmt"
+	"log"
+	"os"
+)
 
 // New returns a new basic error.
 func New(msg interface{}) error {
@@ -13,4 +17,14 @@ type basicError struct {
 
 func (e *basicError) Error() string {
 	return fmt.Sprintf("%v", e.msg)
+}
+
+// Handle errors and exit.
+func Handle(e error, msg string, exitcode int) {
+	if e == nil {
+		return
+	}
+	log.Printf("(Failure) %s: %s\n", msg, e)
+	fmt.Fprintf(os.Stderr, "%s: %s\n", msg, e)
+	os.Exit(exitcode)
 }
