@@ -12,6 +12,7 @@ import (
 	"github.com/harrybrwn/apizza/cmd/internal/base"
 	"github.com/harrybrwn/apizza/cmd/internal/data"
 	"github.com/harrybrwn/apizza/cmd/internal/obj"
+	"github.com/harrybrwn/apizza/cmd/opts"
 	"github.com/harrybrwn/apizza/dawg"
 	"github.com/harrybrwn/apizza/pkg/cache"
 	"github.com/harrybrwn/apizza/pkg/config"
@@ -30,7 +31,7 @@ type App struct {
 	logf *os.File
 	log  *log.Logger
 
-	opts rootopts
+	opts opts.RootFlags
 
 	// persistant flags
 	storeLocation bool
@@ -42,7 +43,7 @@ func NewApp(out io.Writer) *App {
 	app := &App{
 		db:   nil,
 		conf: &base.Config{},
-		opts: rootopts{},
+		opts: opts.RootFlags{},
 	}
 	app.CliCommand = base.NewCommand("apizza", "Dominos pizza from the command line.", app.Run)
 	app.StoreFinder = client.NewStoreGetterFunc(app.getService, app.Address)
@@ -116,24 +117,24 @@ func (a *App) Execute() error {
 }
 
 func (a *App) getService() string {
-	if len(a.opts.service) == 0 {
+	if len(a.opts.Service) == 0 {
 		return a.conf.Service
 	}
-	return a.opts.service
+	return a.opts.Service
 }
 
 var _ base.Builder = (*App)(nil)
 
 // Run the app.
 func (a *App) Run(cmd *cobra.Command, args []string) (err error) {
-	if a.opts.openlogs {
+	if a.opts.Openlogs {
 		editor := os.Getenv("EDITOR")
 		c := exec.Command(editor, filepath.Join(config.Folder(), "logs", "dev.log"))
 		c.Stdin = os.Stdin
 		c.Stdout = a.Output()
 		return c.Run()
 	}
-	if a.opts.clearCache {
+	if a.opts.ClearCache {
 		err = a.db.Close()
 		a.Printf("removing %s\n", a.db.Path())
 		return errs.Pair(err, os.Remove(a.db.Path()))
@@ -149,7 +150,7 @@ func (a *App) Run(cmd *cobra.Command, args []string) (err error) {
 		)
 		return nil
 	}
-	if a.opts.dumpdb {
+	if a.opts.Dumpdb {
 		data, err := a.db.Map()
 		if err != nil {
 			return err
@@ -172,33 +173,38 @@ func (a *App) initflags() {
 
 	cmd.PersistentPreRunE = a.prerun
 	cmd.PostRunE = a.postrun
-	a.opts.install(flags, persistflags)
+	a.opts.Install(flags, persistflags)
 
 	flags.BoolVarP(&a.storeLocation, "store-location", "L", false, "show the location of the nearest store")
 	persistflags.StringVar(&a.logfile, "log", "", "set a log file (found in ~/.apizza/logs)")
+
+	persistflags.BoolVar(&test, "test", false, "testing flag (for development)")
+	persistflags.BoolVar(&reset, "reset", false, "reset the program (for development)")
+	persistflags.MarkHidden("test")
+	persistflags.MarkHidden("reset")
 }
 
 func (a *App) prerun(*cobra.Command, []string) (err error) {
-	if a.opts.resetMenu {
+	if a.opts.ResetMenu {
 		err = a.DB().Delete("menu")
 	}
 	var (
 		e    error
 		file string
 	)
-	if a.opts.address != "" {
-		parsed, err := dawg.ParseAddress(a.opts.address)
+	if a.opts.Address != "" {
+		parsed, err := dawg.ParseAddress(a.opts.Address)
 		if err != nil {
 			return err
 		}
 		a.conf.Address = *obj.FromAddress(parsed)
 	}
 
-	if a.opts.service != "" {
-		if !(a.opts.service == dawg.Delivery || a.opts.service == dawg.Carryout) {
+	if a.opts.Service != "" {
+		if !(a.opts.Service == dawg.Delivery || a.opts.Service == dawg.Carryout) {
 			return dawg.ErrBadService
 		}
-		a.conf.Service = a.opts.service
+		a.conf.Service = a.opts.Service
 	}
 
 	if a.logfile != "" {

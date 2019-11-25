@@ -76,7 +76,7 @@ func TestAppResetFlag(t *testing.T) {
 	r.ConfigSetup([]byte(testconfigjson))
 
 	a.Cmd().ParseFlags([]string{"--clear-cache"})
-	a.opts.clearCache = true
+	a.opts.ClearCache = true
 	test = false
 	if err := a.Run(a.Cmd(), []string{}); err != nil {
 		t.Error(err)

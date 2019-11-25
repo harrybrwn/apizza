@@ -17,9 +17,6 @@ package cmd
 import (
 	"fmt"
 	"strings"
-
-	"github.com/harrybrwn/apizza/cmd/internal/base"
-	"github.com/spf13/pflag"
 )
 
 var test = false
@@ -37,36 +34,38 @@ func yesOrNo(msg string) bool {
 	return false
 }
 
-func newApizzaCmd(app *App) base.CliCommand {
-	return base.NewCommand("apizza", "Dominos pizza from the command line.", app.Run)
-}
+// func newApizzaCmd(app *App) *cobra.Command {
+// 	return base.NewCommand(
+// 		"apizza", "Dominos pizza from the command line.", app.Run,
+// 	).Cmd()
+// }
 
-type rootopts struct {
-	address string
-	service string
+// type rootopts struct {
+// 	address string
+// 	service string
 
-	clearCache bool
-	resetMenu  bool
+// 	clearCache bool
+// 	resetMenu  bool
 
-	// developer opts
-	openlogs bool
-	dumpdb   bool
-}
+// 	// developer opts
+// 	openlogs bool
+// 	dumpdb   bool
+// }
 
-func (opts *rootopts) install(flags *pflag.FlagSet, persistflags *pflag.FlagSet) {
-	flags.BoolVar(&opts.clearCache, "clear-cache", false, "delete the database")
-	persistflags.BoolVar(&opts.resetMenu, "delete-menu", false, "delete the menu stored in cache")
+// func (opts *rootopts) install(flags *pflag.FlagSet, persistflags *pflag.FlagSet) {
+// 	flags.BoolVar(&opts.clearCache, "clear-cache", false, "delete the database")
+// 	persistflags.BoolVar(&opts.resetMenu, "delete-menu", false, "delete the menu stored in cache")
 
-	persistflags.StringVar(&opts.address, "address", opts.address, "use a specific address")
-	persistflags.StringVar(&opts.service, "service", opts.service, "select a Dominos service, either 'Delivery' or 'Carryout'")
+// 	persistflags.StringVar(&opts.address, "address", opts.address, "use a specific address")
+// 	persistflags.StringVar(&opts.service, "service", opts.service, "select a Dominos service, either 'Delivery' or 'Carryout'")
 
-	persistflags.BoolVar(&test, "test", false, "testing flag (for development)")
-	persistflags.BoolVar(&reset, "reset", false, "reset the program (for development)")
-	persistflags.MarkHidden("test")
-	persistflags.MarkHidden("reset")
+// 	persistflags.BoolVar(&test, "test", false, "testing flag (for development)")
+// 	persistflags.BoolVar(&reset, "reset", false, "reset the program (for development)")
+// 	persistflags.MarkHidden("test")
+// 	persistflags.MarkHidden("reset")
 
-	flags.BoolVar(&opts.openlogs, "open-logs", false, "open the log file")
-	flags.MarkHidden("open-logs")
-	flags.BoolVar(&opts.dumpdb, "dump-db", opts.dumpdb, "dump the database to stdout as json")
-	flags.MarkHidden("dump-db")
-}
+// 	flags.BoolVar(&opts.openlogs, "open-logs", false, "open the log file")
+// 	flags.MarkHidden("open-logs")
+// 	flags.BoolVar(&opts.dumpdb, "dump-db", opts.dumpdb, "dump the database to stdout as json")
+// 	flags.MarkHidden("dump-db")
+// }

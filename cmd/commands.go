@@ -15,8 +15,6 @@
 package cmd
 
 import (
-	"fmt"
-	"io"
 	"log"
 	"os"
 	"path/filepath"
@@ -25,6 +23,7 @@ import (
 	"gopkg.in/natefinch/lumberjack.v2"
 
 	"github.com/harrybrwn/apizza/pkg/config"
+	"github.com/harrybrwn/apizza/pkg/errs"
 )
 
 var (
@@ -47,7 +46,7 @@ func Execute() {
 	app := NewApp(os.Stdout)
 	err := app.Init()
 	if err != nil {
-		handle(err, "Internal Error", 1)
+		errs.Handle(err, "Internal Error", 1)
 	}
 
 	if enableLog {
@@ -56,7 +55,7 @@ func Execute() {
 	}
 
 	defer func() {
-		handle(app.Cleanup(), "Internal Error", 1)
+		errs.Handle(app.Cleanup(), "Internal Error", 1)
 	}()
 
 	cmd := app.Cmd()
@@ -72,14 +71,5 @@ func Execute() {
 		newOrderCmd(app).Cmd(),
 	)
 
-	handle(cmd.Execute(), "Error", 1)
-}
-
-func handle(e error, msg string, code int) {
-	if e == nil {
-		return
-	}
-	w := io.MultiWriter(Logger, os.Stderr)
-	fmt.Fprintf(w, "%s: %s\n", msg, e)
-	os.Exit(code)
+	errs.Handle(cmd.Execute(), "Error", 1)
 }
