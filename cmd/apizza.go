@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/harrybrwn/apizza/cmd/internal/base"
 	"github.com/spf13/pflag"
 )
 
@@ -34,6 +35,10 @@ func yesOrNo(msg string) bool {
 		return true
 	}
 	return false
+}
+
+func newApizzaCmd(app *App) base.CliCommand {
+	return base.NewCommand("apizza", "Dominos pizza from the command line.", app.Run)
 }
 
 type rootopts struct {

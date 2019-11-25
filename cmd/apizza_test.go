@@ -11,7 +11,7 @@ import (
 )
 
 func TestRunner(t *testing.T) {
-	app := newapp(cmdtest.TempDB(), &base.Config{}, nil)
+	app := CreateApp(cmdtest.TempDB(), &base.Config{}, nil)
 	builder := cmdtest.NewRecorder()
 	builder.ConfigSetup([]byte(testconfigjson))
 
@@ -64,18 +64,15 @@ func testAppRootCmdRun(t *testing.T, buf *bytes.Buffer, a *App) {
 	if len(a.Cmd().Commands()) != 0 {
 		t.Error("should not have commands yet")
 	}
-	err = a.Exec()
+	err = a.Execute()
 	if err != nil {
 		t.Error(err)
-	}
-	if len(a.Cmd().Commands()) == 0 {
-		t.Error("should have commands")
 	}
 }
 
 func TestAppResetFlag(t *testing.T) {
 	r := cmdtest.NewRecorder()
-	a := newapp(r.ToApp())
+	a := CreateApp(r.ToApp())
 	r.ConfigSetup([]byte(testconfigjson))
 
 	a.Cmd().ParseFlags([]string{"--clear-cache"})
@@ -96,7 +93,7 @@ func TestAppResetFlag(t *testing.T) {
 func TestAppStoreFinder(t *testing.T) {
 	r := cmdtest.NewRecorder()
 	defer r.CleanUp()
-	a := newapp(r.ToApp())
+	a := CreateApp(r.ToApp())
 
 	store := a.Store()
 	if store == nil {

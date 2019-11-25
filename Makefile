@@ -16,7 +16,7 @@ test: coverage.txt test-build
 	@[ -d bin ] && rm -rf bin
 
 test-build:
-	go build -o bin/apizza -ldflags "-X cmd.enableLog=false"
+	go build -o bin/apizza -ldflags "-X cmd.enableLog=false -X cmd.Logger=ioutil.Discard"
 
 coverage.txt:
 	bash scripts/test.sh

@@ -28,7 +28,7 @@ func NewMenuCacher(
 		db:       db,
 		getstore: store,
 	}
-	mc.Updater = cache.NewUpdater(decay, mc.getCachedMenu, mc.cacheNewMenu)
+	mc.Updater = cache.NewUpdater(decay, mc.cacheNewMenu, mc.getCachedMenu)
 	return mc
 }
 

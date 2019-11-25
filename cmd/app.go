@@ -37,14 +37,6 @@ type App struct {
 	logfile       string
 }
 
-func newapp(db *cache.DataBase, conf *base.Config, out io.Writer) *App {
-	app := NewApp(out)
-	app.db = db
-	app.conf = conf
-	app.addr = &conf.Address
-	return app
-}
-
 // NewApp creates a new app for the main cli.
 func NewApp(out io.Writer) *App {
 	app := &App{
@@ -55,6 +47,14 @@ func NewApp(out io.Writer) *App {
 	app.CliCommand = base.NewCommand("apizza", "Dominos pizza from the command line.", app.Run)
 	app.StoreFinder = client.NewStoreGetterFunc(app.getService, app.Address)
 	app.SetOutput(out)
+	return app
+}
+
+// CreateApp from a pre-created database and config.
+func CreateApp(db *cache.DataBase, conf *base.Config, out io.Writer) *App {
+	app := NewApp(out)
+	app.db = db
+	app.conf = conf
 	return app
 }
 
@@ -71,6 +71,8 @@ func (a *App) Init() error {
 	if a.db, err = data.NewDatabase(); err != nil {
 		return err
 	}
+
+	a.initflags()
 	return err
 }
 
@@ -107,20 +109,9 @@ func (a *App) Log(v ...interface{}) {
 	log.Print(v...)
 }
 
-// Exec will execute the root command.
-func (a *App) Exec() error {
+// Execute the root command.
+func (a *App) Execute() error {
 	a.initflags()
-	a.Addcmd(
-		newCartCmd(a).Addcmd(
-			newAddOrderCmd(a),
-		),
-		newConfigCmd(a).Addcmd(
-			newConfigSet(),
-			newConfigGet(),
-		),
-		newMenuCmd(a),
-		newOrderCmd(a),
-	)
 	return a.Cmd().Execute()
 }
 

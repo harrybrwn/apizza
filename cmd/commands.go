@@ -16,6 +16,7 @@ package cmd
 
 import (
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"path/filepath"
@@ -26,7 +27,18 @@ import (
 	"github.com/harrybrwn/apizza/pkg/config"
 )
 
-var menuUpdateTime = 12 * time.Hour
+var (
+	menuUpdateTime = 12 * time.Hour
+
+	// Logger for the cmd package
+	Logger = &lumberjack.Logger{
+		Filename:   "",
+		MaxSize:    25,  // megabytes
+		MaxBackups: 10,  // number of spare files
+		MaxAge:     365, //days
+		Compress:   false,
+	}
+)
 
 const enableLog = true
 
@@ -39,27 +51,35 @@ func Execute() {
 	}
 
 	if enableLog {
-		log.SetOutput(&lumberjack.Logger{
-			Filename:   filepath.Join(config.Folder(), "logs", "dev.log"),
-			MaxSize:    25,  // megabytes
-			MaxBackups: 10,  // number of spare files
-			MaxAge:     365, //days
-			Compress:   false,
-		})
+		Logger.Filename = filepath.Join(config.Folder(), "logs", "dev.log")
+		log.SetOutput(Logger)
 	}
 
 	defer func() {
 		handle(app.Cleanup(), "Internal Error", 1)
 	}()
 
-	handle(app.Exec(), "Error", 1)
+	cmd := app.Cmd()
+	cmd.AddCommand(
+		newCartCmd(app).Addcmd(
+			newAddOrderCmd(app),
+		).Cmd(),
+		newConfigCmd(app).Addcmd(
+			newConfigSet(),
+			newConfigGet(),
+		).Cmd(),
+		newMenuCmd(app).Cmd(),
+		newOrderCmd(app).Cmd(),
+	)
+
+	handle(cmd.Execute(), "Error", 1)
 }
 
 func handle(e error, msg string, code int) {
 	if e == nil {
 		return
 	}
-	log.Printf("(Failure) %s: %s\n", msg, e)
-	fmt.Fprintf(os.Stderr, "%s: %s\n", msg, e)
+	w := io.MultiWriter(Logger, os.Stderr)
+	fmt.Fprintf(w, "%s: %s\n", msg, e)
 	os.Exit(code)
 }

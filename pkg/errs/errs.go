@@ -2,6 +2,7 @@ package errs
 
 import (
 	"fmt"
+	"io"
 	"log"
 	"os"
 )
@@ -24,7 +25,7 @@ func Handle(e error, msg string, exitcode int) {
 	if e == nil {
 		return
 	}
-	log.Printf("(Failure) %s: %s\n", msg, e)
-	fmt.Fprintf(os.Stderr, "%s: %s\n", msg, e)
+	w := io.MultiWriter(os.Stderr, log.Writer())
+	fmt.Fprintf(w, "%s: %s\n", msg, e)
 	os.Exit(exitcode)
 }
