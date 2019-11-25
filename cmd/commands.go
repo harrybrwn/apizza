@@ -23,11 +23,7 @@ import (
 
 	"gopkg.in/natefinch/lumberjack.v2"
 
-	"github.com/harrybrwn/apizza/cmd/internal/base"
-	"github.com/harrybrwn/apizza/cmd/internal/obj"
-	"github.com/harrybrwn/apizza/dawg"
 	"github.com/harrybrwn/apizza/pkg/config"
-	"github.com/harrybrwn/apizza/pkg/errs"
 )
 
 var menuUpdateTime = 12 * time.Hour
@@ -66,52 +62,4 @@ func handle(e error, msg string, code int) {
 	log.Printf("(Failure) %s: %s\n", msg, e)
 	fmt.Fprintf(os.Stderr, "%s: %s\n", msg, e)
 	os.Exit(code)
-}
-
-// StoreFinder is a mixin that allows for efficient caching and retrival of
-// store structs.
-type StoreFinder interface {
-	Store() *dawg.Store
-}
-
-// storegetter is meant to be a mixin for any struct that needs to be able to
-// get a store.
-type storegetter struct {
-	getaddr   func() dawg.Address
-	getmethod func() string
-	dstore    *dawg.Store
-}
-
-// NewStoreGetter will create a new storefinder.
-func NewStoreGetter(builder base.Builder) StoreFinder {
-	return &storegetter{
-		getmethod: func() string {
-			return builder.Config().Service
-		},
-		getaddr: builder.Address,
-		dstore:  nil,
-	}
-}
-
-func newStoreGetter(service func() string, addr func() dawg.Address) StoreFinder {
-	return &storegetter{
-		getmethod: service,
-		getaddr:   addr,
-		dstore:    nil,
-	}
-}
-
-func (s *storegetter) Store() *dawg.Store {
-	if s.dstore == nil {
-		var err error
-		var address = s.getaddr()
-		if obj.AddrIsEmpty(address) {
-			handle(errs.New("no address given in config file or as flag"), "Error", 1)
-		}
-		s.dstore, err = dawg.NearestStore(address, s.getmethod())
-		if err != nil {
-			handle(err, "Store Find Error", 1) // will exit
-		}
-	}
-	return s.dstore
 }

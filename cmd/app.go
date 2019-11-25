@@ -8,6 +8,7 @@ import (
 	"os/exec"
 	"path/filepath"
 
+	"github.com/harrybrwn/apizza/cmd/client"
 	"github.com/harrybrwn/apizza/cmd/internal/base"
 	"github.com/harrybrwn/apizza/cmd/internal/data"
 	"github.com/harrybrwn/apizza/cmd/internal/obj"
@@ -20,8 +21,8 @@ import (
 
 // App is the main app, the root command, and the Builder.
 type App struct {
-	base.CliCommand // this is also the root command
-	StoreFinder     // for app.store()
+	base.CliCommand    // this is also the root command
+	client.StoreFinder // for app.store()
 
 	db   *cache.DataBase
 	conf *base.Config
@@ -52,7 +53,7 @@ func NewApp(out io.Writer) *App {
 		opts: rootopts{},
 	}
 	app.CliCommand = base.NewCommand("apizza", "Dominos pizza from the command line.", app.Run)
-	app.StoreFinder = newStoreGetter(app.getService, app.Address)
+	app.StoreFinder = client.NewStoreGetterFunc(app.getService, app.Address)
 	app.SetOutput(out)
 	return app
 }

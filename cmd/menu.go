@@ -20,6 +20,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
+	"github.com/harrybrwn/apizza/cmd/client"
 	"github.com/harrybrwn/apizza/cmd/internal/data"
 	"github.com/harrybrwn/apizza/cmd/internal/out"
 	"github.com/harrybrwn/apizza/pkg/cache"
@@ -33,7 +34,7 @@ import (
 type menuCmd struct {
 	base.CliCommand
 	data.MenuCacher
-	StoreFinder
+	client.StoreFinder
 
 	db *cache.DataBase
 
@@ -98,7 +99,7 @@ func newMenuCmd(b base.Builder) base.CliCommand {
 	if app, ok := b.(*App); ok {
 		c.StoreFinder = app
 	} else {
-		c.StoreFinder = NewStoreGetter(b)
+		c.StoreFinder = client.NewStoreGetter(b)
 	}
 
 	c.CliCommand = b.Build("menu <item>", "View the Dominos menu.", c)

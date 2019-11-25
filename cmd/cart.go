@@ -23,6 +23,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/harrybrwn/apizza/cmd/client"
 	"github.com/harrybrwn/apizza/cmd/internal/base"
 	"github.com/harrybrwn/apizza/cmd/internal/data"
 	"github.com/harrybrwn/apizza/cmd/internal/obj"
@@ -36,7 +37,7 @@ import (
 type cartCmd struct {
 	base.CliCommand
 	data.MenuCacher
-	StoreFinder
+	client.StoreFinder
 	db *cache.DataBase
 
 	updateAddr bool
@@ -204,7 +205,7 @@ func newCartCmd(b base.Builder) base.CliCommand {
 	if app, ok := b.(*App); ok {
 		c.StoreFinder = app
 	} else {
-		c.StoreFinder = newStoreGetter(
+		c.StoreFinder = client.NewStoreGetterFunc(
 			func() string { return b.Config().Service }, b.Address)
 	}
 
@@ -245,7 +246,7 @@ func (c *cartCmd) preRun(cmd *cobra.Command, args []string) error {
 type addOrderCmd struct {
 	// *basecmd
 	base.CliCommand
-	StoreFinder
+	client.StoreFinder
 	db *cache.DataBase
 
 	name     string
@@ -290,7 +291,7 @@ func newAddOrderCmd(b base.Builder) base.CliCommand {
 	c.CliCommand = b.Build("new <new order name>",
 		"Create a new order that will be stored in the cart.", c)
 	c.db = b.DB()
-	c.StoreFinder = NewStoreGetter(b)
+	c.StoreFinder = client.NewStoreGetter(b)
 
 	c.Flags().StringVarP(&c.name, "name", "n", c.name, "set the name of a new order")
 	c.Flags().StringSliceVarP(&c.products, "products", "p", c.products, "product codes for the new order")
