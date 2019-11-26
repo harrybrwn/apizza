@@ -29,21 +29,21 @@ type App struct {
 	conf *base.Config
 	addr *obj.Address
 	logf *os.File
-	log  *log.Logger
 
-	opts opts.RootFlags
+	// global apizza options
+	gOpts opts.CliFlags
 
-	// persistant flags
-	storeLocation bool
-	logfile       string
+	// root specific opts
+	opts opts.ApizzaFlags
 }
 
 // NewApp creates a new app for the main cli.
 func NewApp(out io.Writer) *App {
 	app := &App{
-		db:   nil,
-		conf: &base.Config{},
-		opts: opts.RootFlags{},
+		db:    nil,
+		conf:  &base.Config{},
+		gOpts: opts.CliFlags{},
+		opts:  opts.ApizzaFlags{},
 	}
 	app.CliCommand = base.NewCommand("apizza", "Dominos pizza from the command line.", app.Run)
 	app.StoreFinder = client.NewStoreGetterFunc(app.getService, app.Address)
@@ -119,10 +119,10 @@ func (a *App) Execute() error {
 }
 
 func (a *App) getService() string {
-	if len(a.opts.Service) == 0 {
+	if len(a.gOpts.Service) == 0 {
 		return a.conf.Service
 	}
-	return a.opts.Service
+	return a.gOpts.Service
 }
 
 var _ base.Builder = (*App)(nil)
@@ -136,11 +136,11 @@ func (a *App) Run(cmd *cobra.Command, args []string) (err error) {
 		c.Stdout = a.Output()
 		return c.Run()
 	}
-	if a.opts.ClearCache {
+	if a.gOpts.ClearCache {
 		a.Printf("removing %s\n", a.db.Path())
 		return a.db.Destroy()
 	}
-	if a.storeLocation {
+	if a.opts.StoreLocation {
 		store := a.Store()
 		a.Println(store.Address)
 		a.Printf("\n")
@@ -174,10 +174,9 @@ func (a *App) initflags() {
 
 	cmd.PersistentPreRunE = a.prerun
 	cmd.PostRunE = a.postrun
-	a.opts.Install(flags, persistflags)
 
-	flags.BoolVarP(&a.storeLocation, "store-location", "L", false, "show the location of the nearest store")
-	persistflags.StringVar(&a.logfile, "log", "", "set a log file (found in ~/.apizza/logs)")
+	a.gOpts.Install(persistflags)
+	a.opts.Install(flags)
 
 	persistflags.BoolVar(&test, "test", false, "testing flag (for development)")
 	persistflags.BoolVar(&reset, "reset", false, "reset the program (for development)")
@@ -186,31 +185,27 @@ func (a *App) initflags() {
 }
 
 func (a *App) prerun(*cobra.Command, []string) (err error) {
-	if a.opts.ResetMenu {
+	if a.gOpts.ResetMenu {
 		err = a.DB().Delete("menu")
 	}
-	var (
-		e    error
-		file string
-	)
-	if a.opts.Address != "" {
-		parsed, err := dawg.ParseAddress(a.opts.Address)
+	var e error
+	if a.gOpts.Address != "" {
+		parsed, err := dawg.ParseAddress(a.gOpts.Address)
 		if err != nil {
 			return err
 		}
 		a.conf.Address = *obj.FromAddress(parsed)
 	}
 
-	if a.opts.Service != "" {
-		if !(a.opts.Service == dawg.Delivery || a.opts.Service == dawg.Carryout) {
+	if a.gOpts.Service != "" {
+		if !(a.gOpts.Service == dawg.Delivery || a.gOpts.Service == dawg.Carryout) {
 			return dawg.ErrBadService
 		}
-		a.conf.Service = a.opts.Service
+		a.conf.Service = a.gOpts.Service
 	}
 
-	if a.logfile != "" {
-		file = a.logfile
-		a.logf, e = os.Create(logfile(file))
+	if a.gOpts.LogFile != "" {
+		a.logf, e = os.Create(logfile(a.gOpts.LogFile))
 		log.SetOutput(a.logf)
 	}
 	return errs.Pair(err, e)
