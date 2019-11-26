@@ -17,6 +17,7 @@ package cmd
 import (
 	"fmt"
 	"io"
+	"os/exec"
 	"strings"
 	"time"
 	"unicode/utf8"
@@ -25,6 +26,7 @@ import (
 	"github.com/harrybrwn/apizza/cmd/internal/data"
 	"github.com/harrybrwn/apizza/cmd/internal/out"
 	"github.com/harrybrwn/apizza/pkg/cache"
+	"github.com/harrybrwn/apizza/pkg/errs"
 
 	"github.com/spf13/cobra"
 
@@ -44,6 +46,7 @@ type menuCmd struct {
 	addr dawg.Address
 
 	all            bool
+	page           bool
 	verbose        bool
 	toppings       bool
 	preconfigured  bool
@@ -87,7 +90,10 @@ func (c *menuCmd) Run(cmd *cobra.Command, args []string) error {
 	}
 
 	// print menu handles most of the menu command's flags
-	return c.printMenu(strings.ToLower(c.category)) // still works with an empty string
+	if c.page {
+		return c.pageMenu(strings.ToLower(c.category))
+	}
+	return c.printMenu(c.Output(), strings.ToLower(c.category)) // still works with an empty string
 }
 
 func NewMenuCmd(b base.Builder) base.CliCommand {
@@ -118,6 +124,7 @@ as an argument to the command itself.`
 	flags := c.Flags()
 	flags.BoolVarP(&c.all, "all", "a", c.all, "show the entire menu")
 	flags.BoolVarP(&c.verbose, "verbose", "v", false, "print the menu verbosly")
+	flags.BoolVar(&c.page, "page", false, "pipe the menu to a pager")
 
 	flags.StringVarP(&c.item, "item", "i", "", "show info on the menu item given")
 	flags.StringVarP(&c.category, "category", "c", "", "show one category on the menu")
@@ -129,8 +136,8 @@ as an argument to the command itself.`
 	return c
 }
 
-func (c *menuCmd) printMenu(name string) error {
-	out.SetOutput(c.Output())
+func (c *menuCmd) printMenu(w io.Writer, name string) error {
+	out.SetOutput(w)
 	defer out.ResetOutput()
 	menu := c.Menu()
 	var allCategories = menu.Categorization.Food.Categories
@@ -150,7 +157,7 @@ func (c *menuCmd) printMenu(name string) error {
 	} else if c.showCategories {
 		for _, cat := range allCategories {
 			if cat.Name != "" {
-				c.Println(strings.ToLower(cat.Name))
+				fmt.Fprintln(w, strings.ToLower(cat.Name))
 			}
 		}
 		return nil
@@ -181,6 +188,23 @@ func (c *menuCmd) printToppings() {
 	for typ, toppings := range tops {
 		printToppingCategory(typ, toppings, c.Output())
 	}
+}
+
+func (c *menuCmd) pageMenu(category string) error {
+	less := exec.Command("less")
+	less.Stdout = c.Output()
+	stdin, err := less.StdinPipe()
+	if err != nil {
+		return err
+	}
+
+	go func() {
+		defer stdin.Close()
+		err = c.printMenu(stdin, strings.ToLower(category)) // still works with an empty string
+		errs.Handle(err, "io Error", 1)
+	}()
+
+	return less.Run()
 }
 
 func printToppingCategory(name string, toppings map[string]dawg.Topping, w io.Writer) {
