@@ -61,20 +61,22 @@ func CreateApp(db *cache.DataBase, conf *base.Config, out io.Writer) *App {
 
 // Init wil setup the app.
 func (a *App) Init() error {
-	var err error
 	if a.conf == nil {
 		a.conf = &base.Config{}
 	}
-	if err = config.SetConfig(".apizza", a.conf); err != nil {
-		return err
-	}
-
-	if a.db, err = data.NewDatabase(); err != nil {
-		return err
-	}
-
 	a.initflags()
-	return err
+	return errs.Pair(a.SetConfig(".apizza"), a.InitDB())
+}
+
+// SetConfig for the the app
+func (a *App) SetConfig(dir string) error {
+	return config.SetConfig(dir, a.conf)
+}
+
+// InitDB for the app.
+func (a *App) InitDB() (err error) {
+	a.db, err = data.NewDatabase()
+	return
 }
 
 // DB returns the database
@@ -135,9 +137,8 @@ func (a *App) Run(cmd *cobra.Command, args []string) (err error) {
 		return c.Run()
 	}
 	if a.opts.ClearCache {
-		err = a.db.Close()
 		a.Printf("removing %s\n", a.db.Path())
-		return errs.Pair(err, os.Remove(a.db.Path()))
+		return a.db.Destroy()
 	}
 	if a.storeLocation {
 		store := a.Store()

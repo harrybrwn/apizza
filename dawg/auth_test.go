@@ -98,6 +98,8 @@ func TestToken(t *testing.T) {
 
 	tok, err := gettoken(username, password)
 	if err != nil {
+		fmt.Printf("%T\n", err)
+		t.Errorf("%T\n", err)
 		t.Error(err)
 	}
 	if tok == nil {
@@ -242,7 +244,7 @@ func TestAuth_Err(t *testing.T) {
 		cli: &client{
 			host: "order.dominos.com",
 			Client: &http.Client{
-				Timeout:       60 * time.Second,
+				Timeout:       15 * time.Second,
 				CheckRedirect: noRedirects,
 			},
 		},

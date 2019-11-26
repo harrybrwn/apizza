@@ -27,5 +27,6 @@ html: coverage.txt
 clean:
 	$(RM) coverage.txt
 	$(RM) -r release bin
+	go clean -testcache
 
 .PHONY: install test clean html release
