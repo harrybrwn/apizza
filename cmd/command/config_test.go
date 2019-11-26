@@ -175,28 +175,47 @@ func TestConfigEdit(t *testing.T) {
 }
 
 func TestConfigGet(t *testing.T) {
-	c := newConfigGet()
 	conf := &base.Config{}
 	config.SetNonFileConfig(conf) // don't want it to over ride the file on disk
-	// check(json.Unmarshal([]byte(testconfigjson), conf), "json")
 	if err := json.Unmarshal([]byte(testconfigjson), conf); err != nil {
 		t.Fatal(err)
 	}
 
 	buf := &bytes.Buffer{}
-	c.SetOutput(buf)
 
-	if err := c.Run(c.Cmd(), []string{"email", "name"}); err != nil {
+	args := []string{"email", "name"}
+	err := get(args, buf)
+	if err != nil {
+		t.Error(err)
+	}
+	if err := configGetCmd.RunE(configGetCmd, []string{"email", "name"}); err != nil {
 		t.Error(err)
 	}
 	tests.Compare(t, buf.String(), "nojoe@mail.com\njoe\n")
 	buf.Reset()
-	if err := c.Run(c.Cmd(), []string{}); err == nil {
+
+	args = []string{}
+	err = get(args, buf)
+	if err == nil {
 		t.Error("expected error")
 	} else if err.Error() != "no variable given" {
 		t.Error("wrong error message, got:", err.Error())
 	}
-	if err := c.Run(c.Cmd(), []string{"nonExistantKey"}); err == nil {
+
+	args = []string{"nonExistantKey"}
+	err = get(args, buf)
+	if err == nil {
+		t.Error("expected error")
+	} else if err.Error() != "cannot find nonExistantKey" {
+		t.Error("wrong error message, got:", err.Error())
+	}
+
+	if err := configGetCmd.RunE(configGetCmd, []string{}); err == nil {
+		t.Error("expected error")
+	} else if err.Error() != "no variable given" {
+		t.Error("wrong error message, got:", err.Error())
+	}
+	if err := configGetCmd.RunE(configGetCmd, []string{"nonExistantKey"}); err == nil {
 		t.Error("expected error")
 	} else if err.Error() != "cannot find nonExistantKey" {
 		t.Error("wrong error message, got:", err.Error())
@@ -204,22 +223,28 @@ func TestConfigGet(t *testing.T) {
 }
 
 func TestConfigSet(t *testing.T) {
-	c := newConfigSet() //.(*configSetCmd)
-	if err := c.Run(c.Cmd(), []string{"name=someNameOtherThanJoe"}); err != nil {
+	// c := newConfigSet() //.(*configSetCmd)
+	conf := &base.Config{}
+	config.SetNonFileConfig(conf) // don't want it to over ride the file on disk
+	if err := json.Unmarshal([]byte(cmdtest.TestConfigjson), conf); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := configSetCmd.RunE(configSetCmd, []string{"name=someNameOtherThanJoe"}); err != nil {
 		t.Error(err)
 	}
 	if config.GetString("name") != "someNameOtherThanJoe" {
 		t.Error("did not set the name correctly")
 	}
-	if err := c.Run(c.Cmd(), []string{}); err == nil {
+	if err := configSetCmd.RunE(configSetCmd, []string{}); err == nil {
 		t.Error("expected error")
 	} else if err.Error() != "no variable given" {
 		t.Error("wrong error message, got:", err.Error())
 	}
-	if err := c.Run(c.Cmd(), []string{"nonExistantKey=someValue"}); err == nil {
+	if err := configSetCmd.RunE(configSetCmd, []string{"nonExistantKey=someValue"}); err == nil {
 		t.Error("expected error")
 	}
-	if err := c.Run(c.Cmd(), []string{"badformat"}); err == nil {
+	if err := configSetCmd.RunE(configSetCmd, []string{"badformat"}); err == nil {
 		t.Error(err)
 	} else if err.Error() != "use '<key>=<value>' format (no spaces), use <key>='-' to set as empty" {
 		t.Error("wrong error message, got:", err.Error())

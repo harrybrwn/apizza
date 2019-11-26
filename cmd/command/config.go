@@ -17,6 +17,7 @@ package command
 import (
 	"errors"
 	"fmt"
+	"io"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -75,53 +76,63 @@ ex. 'apizza config get name' or 'apizza config set name=<your name>'`
 	c.Flags().StringVar(&c.card, "card", "", "store encrypted credit card number in the database")
 	c.Flags().StringVar(&c.exp, "expiration", "", "store the encrypted expiration data of your credit card")
 
-	c.Addcmd(newConfigSet(), newConfigGet())
+	cmd := c.Cmd()
+	cmd.AddCommand(configSetCmd, configGetCmd)
 	return c
 }
 
-func newConfigSet() base.CliCommand {
-	return base.NewCommand(
-		"set", "change variables in the config file",
-		func(cmd *cobra.Command, args []string) error {
-			if len(args) < 1 {
-				return errors.New("no variable given")
-			}
-
-			for _, arg := range args {
-				keys := strings.Split(arg, "=")
-				if len(keys) < 2 || keys[0] == "" || keys[1] == "" {
-					return errors.New(`use '<key>=<value>' format (no spaces), use <key>='-' to set as empty`)
-				}
-
-				if keys[1] == "-" {
-					keys[1] = ""
-				}
-				err := config.Set(keys[0], keys[1])
-				if err != nil {
-					return err
-				}
-			}
-			return nil
-		},
-	)
+var configSetCmd = &cobra.Command{
+	Use:   "set",
+	Short: "change variables in the config file",
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return set(args)
+	},
+	SilenceErrors: true,
+	SilenceUsage:  true,
 }
 
-func newConfigGet() base.CliCommand {
-	return base.NewCommand(
-		"get", "print the specified config variable to screen",
-		func(cmd *cobra.Command, args []string) error {
-			if len(args) < 1 {
-				return errors.New("no variable given")
-			}
+var configGetCmd = &cobra.Command{
+	Use:   "get",
+	Short: "print the specified config variable to screen",
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return get(args, cmd.OutOrStdout())
+	},
+	SilenceErrors: true,
+	SilenceUsage:  true,
+}
 
-			for _, arg := range args {
-				v := config.Get(arg)
-				if v == nil {
-					return fmt.Errorf("cannot find %s", arg)
-				}
-				cmd.Println(v)
-			}
-			return nil
-		},
-	)
+func set(args []string) error {
+	if len(args) < 1 {
+		return errors.New("no variable given")
+	}
+
+	for _, arg := range args {
+		keys := strings.Split(arg, "=")
+		if len(keys) < 2 || keys[0] == "" || keys[1] == "" {
+			return errors.New(`use '<key>=<value>' format (no spaces), use <key>='-' to set as empty`)
+		}
+
+		if keys[1] == "-" {
+			keys[1] = ""
+		}
+		err := config.Set(keys[0], keys[1])
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func get(args []string, out io.Writer) error {
+	if len(args) < 1 {
+		return errors.New("no variable given")
+	}
+	for _, arg := range args {
+		v := config.Get(arg)
+		if v == nil {
+			return fmt.Errorf("cannot find %s", arg)
+		}
+		fmt.Fprintln(out, v)
+	}
+	return nil
 }
