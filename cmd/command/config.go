@@ -12,12 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package cmd
+package command
 
 import (
 	"errors"
 	"fmt"
-	"os"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -51,16 +50,14 @@ func (c *configCmd) Run(cmd *cobra.Command, args []string) error {
 		c.Println(config.Folder())
 		return nil
 	}
-	if reset {
-		return os.Remove(config.File())
-	}
 	if c.getall {
 		return config.FprintAll(cmd.OutOrStdout(), config.Object())
 	}
 	return cmd.Usage()
 }
 
-func newConfigCmd(b base.Builder) base.CliCommand {
+// NewConfigCmd creates a new config command.
+func NewConfigCmd(b base.Builder) base.CliCommand {
 	c := &configCmd{file: false, dir: false}
 	c.CliCommand = b.Build("config", "Configure apizza", c)
 	c.SetOutput(b.Output())

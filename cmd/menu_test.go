@@ -9,7 +9,7 @@ import (
 func TestMenuRun(t *testing.T) {
 	r := cmdtest.NewRecorder()
 	defer r.CleanUp()
-	c := newMenuCmd(r).(*menuCmd)
+	c := NewMenuCmd(r).(*menuCmd)
 
 	if err := c.Run(c.Cmd(), []string{}); err != nil {
 		t.Error(err)
@@ -32,7 +32,7 @@ func TestMenuRun(t *testing.T) {
 func TestFindProduct(t *testing.T) {
 	r := cmdtest.NewRecorder()
 	defer r.CleanUp()
-	c := newMenuCmd(r).(*menuCmd)
+	c := NewMenuCmd(r).(*menuCmd)
 
 	if err := r.DB().UpdateTS("menu", c); err != nil {
 		t.Error(err)

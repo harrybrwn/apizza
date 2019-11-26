@@ -90,7 +90,7 @@ func (c *menuCmd) Run(cmd *cobra.Command, args []string) error {
 	return c.printMenu(strings.ToLower(c.category)) // still works with an empty string
 }
 
-func newMenuCmd(b base.Builder) base.CliCommand {
+func NewMenuCmd(b base.Builder) base.CliCommand {
 	c := &menuCmd{
 		db:             b.DB(),
 		all:            false,

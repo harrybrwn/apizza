@@ -21,6 +21,7 @@ import (
 
 	"gopkg.in/natefinch/lumberjack.v2"
 
+	"github.com/harrybrwn/apizza/cmd/command"
 	"github.com/harrybrwn/apizza/pkg/config"
 	"github.com/harrybrwn/apizza/pkg/errs"
 )
@@ -56,8 +57,8 @@ func Execute() {
 	cmd := app.Cmd()
 	cmd.AddCommand(
 		newCartCmd(app).Cmd(),
-		newConfigCmd(app).Cmd(),
-		newMenuCmd(app).Cmd(),
+		command.NewConfigCmd(app).Cmd(),
+		NewMenuCmd(app).Cmd(),
 		newOrderCmd(app).Cmd(),
 	)
 

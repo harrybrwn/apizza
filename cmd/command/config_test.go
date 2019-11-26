@@ -1,4 +1,4 @@
-package cmd
+package command
 
 import (
 	"bytes"
@@ -46,7 +46,10 @@ func TestConfigStruct(t *testing.T) {
 		r.CleanUp()
 		// config.SetNonFileConfig(cfg) // for test compatability
 	}()
-	check(json.Unmarshal([]byte(testconfigjson), r.Config()), "json")
+	// check(json.Unmarshal([]byte(testconfigjson), r.Config()), "json")
+	if err := json.Unmarshal([]byte(testconfigjson), r.Config()); err != nil {
+		t.Fatal(err)
+	}
 
 	if r.Config().Get("name").(string) != "joe" {
 		t.Error("wrong value")
@@ -64,7 +67,7 @@ func TestConfigStruct(t *testing.T) {
 
 func TestConfigCmd(t *testing.T) {
 	r := cmdtest.NewRecorder()
-	c := newConfigCmd(r).(*configCmd)
+	c := NewConfigCmd(r).(*configCmd)
 	r.ConfigSetup([]byte(testconfigjson))
 	defer func() {
 		r.CleanUp()
@@ -111,7 +114,7 @@ func TestConfigCmd(t *testing.T) {
 
 func TestConfigEdit(t *testing.T) {
 	r := cmdtest.NewRecorder()
-	c := newConfigCmd(r).(*configCmd)
+	c := NewConfigCmd(r).(*configCmd)
 	err := config.SetConfig(".apizza/tests", r.Conf)
 	if err != nil {
 		t.Error(err)
@@ -175,7 +178,10 @@ func TestConfigGet(t *testing.T) {
 	c := newConfigGet()
 	conf := &base.Config{}
 	config.SetNonFileConfig(conf) // don't want it to over ride the file on disk
-	check(json.Unmarshal([]byte(testconfigjson), conf), "json")
+	// check(json.Unmarshal([]byte(testconfigjson), conf), "json")
+	if err := json.Unmarshal([]byte(testconfigjson), conf); err != nil {
+		t.Fatal(err)
+	}
 
 	buf := &bytes.Buffer{}
 	c.SetOutput(buf)

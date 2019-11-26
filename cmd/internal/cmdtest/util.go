@@ -24,3 +24,16 @@ func TempDB() *cache.DataBase {
 	}
 	return db
 }
+
+// TestConfigjson data.
+var TestConfigjson = `
+{
+	"name":"joe","email":"nojoe@mail.com",
+	"address":{
+		"street":"1600 Pennsylvania Ave NW",
+		"cityName":"Washington DC",
+		"state":"","zipcode":"20500"
+	},
+	"card":{"number":"","expiration":"","cvv":""},
+	"service":"Carryout"
+}`

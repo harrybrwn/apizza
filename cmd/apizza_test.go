@@ -13,7 +13,7 @@ import (
 func TestRunner(t *testing.T) {
 	app := CreateApp(cmdtest.TempDB(), &base.Config{}, nil)
 	builder := cmdtest.NewRecorder()
-	builder.ConfigSetup([]byte(testconfigjson))
+	builder.ConfigSetup([]byte(cmdtest.TestConfigjson))
 
 	tsts := []func(*testing.T){
 		base.WithCmds(testOrderNew, newCartCmd(builder), newAddOrderCmd(builder)),
@@ -73,7 +73,7 @@ func testAppRootCmdRun(t *testing.T, buf *bytes.Buffer, a *App) {
 func TestAppResetFlag(t *testing.T) {
 	r := cmdtest.NewRecorder()
 	a := CreateApp(r.ToApp())
-	r.ConfigSetup([]byte(testconfigjson))
+	r.ConfigSetup([]byte(cmdtest.TestConfigjson))
 
 	a.Cmd().ParseFlags([]string{"--clear-cache"})
 	a.opts.ClearCache = true
