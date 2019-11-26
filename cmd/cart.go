@@ -228,6 +228,8 @@ created orders.`
 	c.Flags().StringVarP(&c.product, "product", "p", "", "give the product that will be effected by --add or --remove")
 
 	c.Flags().BoolVarP(&c.verbose, "verbose", "v", c.verbose, "print cart verbosly")
+
+	c.Addcmd(newAddOrderCmd(b))
 	return c
 }
 

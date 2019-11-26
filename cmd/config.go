@@ -77,6 +77,8 @@ ex. 'apizza config get name' or 'apizza config set name=<your name>'`
 
 	c.Flags().StringVar(&c.card, "card", "", "store encrypted credit card number in the database")
 	c.Flags().StringVar(&c.exp, "expiration", "", "store the encrypted expiration data of your credit card")
+
+	c.Addcmd(newConfigSet(), newConfigGet())
 	return c
 }
 

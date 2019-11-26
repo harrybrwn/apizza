@@ -18,7 +18,6 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"time"
 
 	"gopkg.in/natefinch/lumberjack.v2"
 
@@ -26,18 +25,14 @@ import (
 	"github.com/harrybrwn/apizza/pkg/errs"
 )
 
-var (
-	menuUpdateTime = 12 * time.Hour
-
-	// Logger for the cmd package
-	Logger = &lumberjack.Logger{
-		Filename:   "",
-		MaxSize:    25,  // megabytes
-		MaxBackups: 10,  // number of spare files
-		MaxAge:     365, //days
-		Compress:   false,
-	}
-)
+// Logger for the cmd package
+var Logger = &lumberjack.Logger{
+	Filename:   "",
+	MaxSize:    25,  // megabytes
+	MaxBackups: 10,  // number of spare files
+	MaxAge:     365, //days
+	Compress:   false,
+}
 
 const enableLog = true
 
@@ -60,13 +55,8 @@ func Execute() {
 
 	cmd := app.Cmd()
 	cmd.AddCommand(
-		newCartCmd(app).Addcmd(
-			newAddOrderCmd(app),
-		).Cmd(),
-		newConfigCmd(app).Addcmd(
-			newConfigSet(),
-			newConfigGet(),
-		).Cmd(),
+		newCartCmd(app).Cmd(),
+		newConfigCmd(app).Cmd(),
 		newMenuCmd(app).Cmd(),
 		newOrderCmd(app).Cmd(),
 	)

@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"io"
 	"strings"
+	"time"
 	"unicode/utf8"
 
 	"github.com/harrybrwn/apizza/cmd/client"
@@ -30,6 +31,8 @@ import (
 	"github.com/harrybrwn/apizza/cmd/internal/base"
 	"github.com/harrybrwn/apizza/dawg"
 )
+
+var menuUpdateTime = 12 * time.Hour
 
 type menuCmd struct {
 	base.CliCommand
