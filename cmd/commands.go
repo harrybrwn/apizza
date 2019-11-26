@@ -22,8 +22,10 @@ import (
 	"gopkg.in/natefinch/lumberjack.v2"
 
 	"github.com/harrybrwn/apizza/cmd/command"
+	"github.com/harrybrwn/apizza/cmd/internal/base"
 	"github.com/harrybrwn/apizza/pkg/config"
 	"github.com/harrybrwn/apizza/pkg/errs"
+	"github.com/spf13/cobra"
 )
 
 // Logger for the cmd package
@@ -36,6 +38,16 @@ var Logger = &lumberjack.Logger{
 }
 
 const enableLog = true
+
+// AllCommands returns a list of all the Commands.
+func AllCommands(builder base.Builder) []*cobra.Command {
+	return []*cobra.Command{
+		NewCartCmd(builder).Cmd(),
+		command.NewConfigCmd(builder).Cmd(),
+		NewMenuCmd(builder).Cmd(),
+		NewOrderCmd(builder).Cmd(),
+	}
+}
 
 // Execute runs the root command
 func Execute() {
@@ -55,12 +67,6 @@ func Execute() {
 	}()
 
 	cmd := app.Cmd()
-	cmd.AddCommand(
-		newCartCmd(app).Cmd(),
-		command.NewConfigCmd(app).Cmd(),
-		NewMenuCmd(app).Cmd(),
-		newOrderCmd(app).Cmd(),
-	)
-
+	cmd.AddCommand(AllCommands(app)...)
 	errs.Handle(cmd.Execute(), "Error", 1)
 }

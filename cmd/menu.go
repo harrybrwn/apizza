@@ -96,6 +96,7 @@ func (c *menuCmd) Run(cmd *cobra.Command, args []string) error {
 	return c.printMenu(c.Output(), strings.ToLower(c.category)) // still works with an empty string
 }
 
+// NewMenuCmd creates a new menu command.
 func NewMenuCmd(b base.Builder) base.CliCommand {
 	c := &menuCmd{
 		db:             b.DB(),

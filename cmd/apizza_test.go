@@ -16,10 +16,10 @@ func TestRunner(t *testing.T) {
 	builder.ConfigSetup([]byte(cmdtest.TestConfigjson))
 
 	tsts := []func(*testing.T){
-		base.WithCmds(testOrderNew, newCartCmd(builder), newAddOrderCmd(builder)),
-		base.WithCmds(testAddOrder, newCartCmd(builder), newAddOrderCmd(builder)),
+		base.WithCmds(testOrderNew, NewCartCmd(builder), newAddOrderCmd(builder)),
+		base.WithCmds(testAddOrder, NewCartCmd(builder), newAddOrderCmd(builder)),
 		base.WithCmds(testOrderNewErr, newAddOrderCmd(builder)),
-		base.WithCmds(testOrderRunAdd, newCartCmd(builder)),
+		base.WithCmds(testOrderRunAdd, NewCartCmd(builder)),
 		withCartCmd(builder, testOrderPriceOutput),
 		withCartCmd(builder, testAddToppings),
 		withCartCmd(builder, testOrderRunDelete),
@@ -125,7 +125,7 @@ func withCartCmd(
 	f func(*cartCmd, *bytes.Buffer, *testing.T),
 ) func(*testing.T) {
 	return func(t *testing.T) {
-		cart := newCartCmd(b).(*cartCmd)
+		cart := NewCartCmd(b).(*cartCmd)
 		buf := &bytes.Buffer{}
 		cart.SetOutput(buf)
 

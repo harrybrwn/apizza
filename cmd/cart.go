@@ -193,7 +193,8 @@ func getOrderItem(order *dawg.Order, code string) dawg.Item {
 	return nil
 }
 
-func newCartCmd(b base.Builder) base.CliCommand {
+// NewCartCmd creates a new cart command.
+func NewCartCmd(b base.Builder) base.CliCommand {
 	c := &cartCmd{
 		db:      b.DB(),
 		price:   false,
@@ -373,7 +374,8 @@ func setupPayment(num, exp, cvv string) *dawg.Payment {
 	return payment
 }
 
-func newOrderCmd(b base.Builder) base.CliCommand {
+// NewOrderCmd creates a new order command.
+func NewOrderCmd(b base.Builder) base.CliCommand {
 	c := &orderCmd{verbose: false}
 	c.CliCommand = b.Build("order", "Send an order from the cart to dominos.", c)
 	c.db = b.DB()
