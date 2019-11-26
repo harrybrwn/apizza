@@ -38,7 +38,7 @@ func TestFindProduct(t *testing.T) {
 		t.Error(err)
 	}
 	c.all = true
-	if err := c.printMenu(""); err != nil { // yes, this is supposd to be an empty string... in this case
+	if err := c.printMenu(c.Output(), ""); err != nil { // yes, this is supposd to be an empty string... in this case
 		t.Error(err)
 	}
 	r.ClearBuf()
