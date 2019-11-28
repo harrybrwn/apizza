@@ -49,6 +49,17 @@ func TestNewCommand(t *testing.T) {
 			t.Error(err)
 		}
 	})
+
+	buf := new(bytes.Buffer)
+	cmd := NewCommand("no", "this is not a command", nil)
+	cmd.Flags().Bool("testflag", false, "test the flags")
+	cmd.SetOutput(buf)
+	err := cmd.Run(nil, nil)
+	if err != nil {
+		t.Error(err)
+	}
+	exp := "Usage:\n\nFlags:\n      --testflag   test the flags\n"
+	tests.Compare(t, buf.String(), exp)
 }
 
 func TestRunFunction(t *testing.T) {

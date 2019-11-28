@@ -179,9 +179,7 @@ func (a *App) initflags() {
 	a.opts.Install(flags)
 
 	persistflags.BoolVar(&test, "test", false, "testing flag (for development)")
-	persistflags.BoolVar(&reset, "reset", false, "reset the program (for development)")
 	persistflags.MarkHidden("test")
-	persistflags.MarkHidden("reset")
 }
 
 func (a *App) prerun(*cobra.Command, []string) (err error) {

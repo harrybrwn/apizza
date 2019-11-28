@@ -73,7 +73,6 @@ func Execute() {
 }
 
 var test = false
-var reset = false
 
 func yesOrNo(msg string) bool {
 	var in string
