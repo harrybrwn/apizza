@@ -12,8 +12,10 @@ import (
 )
 
 func TestBadCreds(t *testing.T) {
-	reset := setTestClient()
-	defer reset()
+	// swap the default client with one that has a
+	// 10s timeout then defer the cleanup.
+	defer swapclient(10)()
+
 	tok, err := gettoken("no", "and no")
 	if err == nil {
 		t.Error("expected an error")
@@ -45,18 +47,9 @@ func gettestcreds() (string, string, bool) {
 }
 
 var (
-	testToken *token
-	testAuth  *auth
-	testUser  *UserProfile
+	testAuth *auth
+	testUser *UserProfile
 )
-
-func getTestToken(uname, pass string) (*token, error) {
-	var err error
-	if testToken == nil {
-		testToken, err = gettoken(uname, pass)
-	}
-	return testToken, err
-}
 
 func getTestAuth(uname, pass string) (*auth, error) {
 	var err error
@@ -74,18 +67,29 @@ func getTestUser(uname, pass string) (*UserProfile, error) {
 	return testUser, err
 }
 
-func setTestClient() func() {
+// swapclient is meant to swap out the default client for a test
+// function and return a function that resets the default client.
+// This is only here because the dominos auth endpoint times out
+// kind of frequently so im just making the so that it doesn't
+// halt my tests for like 60+ seconds per test.
+//
+// usage:
+// defer swapclient(15)()
+// this will call swapclient and defer the cleanup function
+// that it returns so that the default client is reset.
+//
+// if someone is actually reading this, im sorry, i know this
+// is not very go-like, i know its hacky... sorry
+func swapclient(timeout int) func() {
 	copyclient := orderClient
 	orderClient = &client{
 		host: orderHost,
 		Client: &http.Client{
-			Timeout:       10 * time.Second,
+			Timeout:       time.Duration(timeout) * time.Second,
 			CheckRedirect: noRedirects,
 		},
 	}
-	return func() {
-		orderClient = copyclient
-	}
+	return func() { orderClient = copyclient }
 }
 
 func TestToken(t *testing.T) {
@@ -93,8 +97,9 @@ func TestToken(t *testing.T) {
 	if !ok {
 		t.Skip()
 	}
-	reset := setTestClient()
-	defer reset()
+	// swapclient is called first and the cleaup
+	// function it returns is defered.
+	defer swapclient(10)()
 
 	tok, err := gettoken(username, password)
 	if err != nil {
@@ -105,7 +110,6 @@ func TestToken(t *testing.T) {
 	if tok == nil {
 		t.Fatal("nil token")
 	}
-	testToken = tok
 	if len(tok.AccessToken) == 0 {
 		t.Error("didnt get a auth token")
 	}
@@ -125,18 +129,15 @@ func TestAuth(t *testing.T) {
 	if !ok {
 		t.Skip()
 	}
+	defer swapclient(10)()
 
-	reset := setTestClient()
-	defer reset()
-
-	auth, err := newauth(username, password)
+	auth, err := getTestAuth(username, password)
 	if err != nil {
 		t.Error(err)
 	}
 	if auth == nil {
 		t.Fatal("got nil auth")
 	}
-	testAuth = auth // save this for later
 	if auth.token == nil {
 		t.Fatal("needs token")
 	}
@@ -228,8 +229,11 @@ func TestAuth(t *testing.T) {
 }
 
 func TestAuth_Err(t *testing.T) {
-	reset := setTestClient()
-	defer reset()
+	defer swapclient(10)()
+	if orderClient.Client.Timeout != time.Duration(10)*time.Second {
+		t.Error("client was not swapped")
+	}
+
 	a, err := newauth("not a", "valid password")
 	if err == nil {
 		t.Error("expected an error")
@@ -272,8 +276,7 @@ func TestSignIn(t *testing.T) {
 	if !ok {
 		t.Skip()
 	}
-	reset := setTestClient()
-	defer reset()
+	defer swapclient(10)()
 
 	user, err := SignIn(username, password)
 	if err != nil {
@@ -290,8 +293,7 @@ func TestAuthClient(t *testing.T) {
 	if !ok {
 		t.Skip()
 	}
-	reset := setTestClient()
-	defer reset()
+	defer swapclient(10)()
 
 	auth, err := getTestAuth(username, password)
 	if auth == nil {

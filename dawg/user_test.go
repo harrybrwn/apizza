@@ -9,8 +9,7 @@ func TestUserNearestStore(t *testing.T) {
 	if !ok {
 		t.Skip()
 	}
-	reset := setTestClient()
-	defer reset()
+	defer swapclient(10)()
 
 	user, err := getTestUser(uname, pass)
 	if err != nil {
@@ -51,8 +50,7 @@ func TestUserStoresNearMe(t *testing.T) {
 	if !ok {
 		t.Skip()
 	}
-	reset := setTestClient()
-	defer reset()
+	defer swapclient(10)()
 
 	user, err := getTestUser(uname, pass)
 	if err != nil {
