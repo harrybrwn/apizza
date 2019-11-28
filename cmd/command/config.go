@@ -22,14 +22,14 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/harrybrwn/apizza/cmd/internal/base"
+	"github.com/harrybrwn/apizza/cmd/cli"
 	"github.com/harrybrwn/apizza/pkg/config"
 )
 
 // var cfg = &base.Config{}
 
 type configCmd struct {
-	base.CliCommand
+	cli.CliCommand
 	file   bool
 	dir    bool
 	getall bool
@@ -58,7 +58,7 @@ func (c *configCmd) Run(cmd *cobra.Command, args []string) error {
 }
 
 // NewConfigCmd creates a new config command.
-func NewConfigCmd(b base.Builder) base.CliCommand {
+func NewConfigCmd(b cli.Builder) cli.CliCommand {
 	c := &configCmd{file: false, dir: false}
 	c.CliCommand = b.Build("config", "Configure apizza", c)
 	c.SetOutput(b.Output())

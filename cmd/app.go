@@ -8,8 +8,8 @@ import (
 	"os/exec"
 	"path/filepath"
 
+	"github.com/harrybrwn/apizza/cmd/cli"
 	"github.com/harrybrwn/apizza/cmd/client"
-	"github.com/harrybrwn/apizza/cmd/internal/base"
 	"github.com/harrybrwn/apizza/cmd/internal/data"
 	"github.com/harrybrwn/apizza/cmd/internal/obj"
 	"github.com/harrybrwn/apizza/cmd/opts"
@@ -22,11 +22,11 @@ import (
 
 // App is the main app, the root command, and the Builder.
 type App struct {
-	base.CliCommand    // this is also the root command
+	cli.CliCommand     // this is also the root command
 	client.StoreFinder // for app.store()
 
 	db   *cache.DataBase
-	conf *base.Config
+	conf *cli.Config
 	addr *obj.Address
 	logf *os.File
 
@@ -41,18 +41,18 @@ type App struct {
 func NewApp(out io.Writer) *App {
 	app := &App{
 		db:    nil,
-		conf:  &base.Config{},
+		conf:  &cli.Config{},
 		gOpts: opts.CliFlags{},
 		opts:  opts.ApizzaFlags{},
 	}
-	app.CliCommand = base.NewCommand("apizza", "Dominos pizza from the command line.", app.Run)
+	app.CliCommand = cli.NewCommand("apizza", "Dominos pizza from the command line.", app.Run)
 	app.StoreFinder = client.NewStoreGetterFunc(app.getService, app.Address)
 	app.SetOutput(out)
 	return app
 }
 
 // CreateApp from a pre-created database and config.
-func CreateApp(db *cache.DataBase, conf *base.Config, out io.Writer) *App {
+func CreateApp(db *cache.DataBase, conf *cli.Config, out io.Writer) *App {
 	app := NewApp(out)
 	app.db = db
 	app.conf = conf
@@ -62,7 +62,7 @@ func CreateApp(db *cache.DataBase, conf *base.Config, out io.Writer) *App {
 // Init wil setup the app.
 func (a *App) Init() error {
 	if a.conf == nil {
-		a.conf = &base.Config{}
+		a.conf = &cli.Config{}
 	}
 	a.initflags()
 	return errs.Pair(a.SetConfig(".apizza"), a.InitDB())
@@ -85,12 +85,12 @@ func (a *App) DB() *cache.DataBase {
 }
 
 // Build builds commands.
-func (a *App) Build(use, short string, r base.Runner) *base.Command {
-	return base.NewCommand(use, short, r.Run)
+func (a *App) Build(use, short string, r cli.Runner) *cli.Command {
+	return cli.NewCommand(use, short, r.Run)
 }
 
 // Config returns the config struct.
-func (a *App) Config() *base.Config {
+func (a *App) Config() *cli.Config {
 	return a.conf
 }
 
@@ -125,7 +125,7 @@ func (a *App) getService() string {
 	return a.gOpts.Service
 }
 
-var _ base.Builder = (*App)(nil)
+var _ cli.Builder = (*App)(nil)
 
 // Run the app.
 func (a *App) Run(cmd *cobra.Command, args []string) (err error) {

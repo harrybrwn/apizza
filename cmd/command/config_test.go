@@ -6,7 +6,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/harrybrwn/apizza/cmd/internal/base"
+	"github.com/harrybrwn/apizza/cmd/cli"
 	"github.com/harrybrwn/apizza/cmd/internal/cmdtest"
 	"github.com/harrybrwn/apizza/cmd/internal/obj"
 	"github.com/harrybrwn/apizza/pkg/config"
@@ -175,7 +175,7 @@ func TestConfigEdit(t *testing.T) {
 }
 
 func TestConfigGet(t *testing.T) {
-	conf := &base.Config{}
+	conf := &cli.Config{}
 	config.SetNonFileConfig(conf) // don't want it to over ride the file on disk
 	if err := json.Unmarshal([]byte(testconfigjson), conf); err != nil {
 		t.Fatal(err)
@@ -224,7 +224,7 @@ func TestConfigGet(t *testing.T) {
 
 func TestConfigSet(t *testing.T) {
 	// c := newConfigSet() //.(*configSetCmd)
-	conf := &base.Config{}
+	conf := &cli.Config{}
 	config.SetNonFileConfig(conf) // don't want it to over ride the file on disk
 	if err := json.Unmarshal([]byte(cmdtest.TestConfigjson), conf); err != nil {
 		t.Fatal(err)

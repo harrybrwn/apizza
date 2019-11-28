@@ -6,20 +6,20 @@ import (
 	"os"
 	"testing"
 
-	"github.com/harrybrwn/apizza/cmd/internal/base"
+	"github.com/harrybrwn/apizza/cmd/cli"
 	"github.com/harrybrwn/apizza/cmd/internal/cmdtest"
 )
 
 func TestRunner(t *testing.T) {
-	app := CreateApp(cmdtest.TempDB(), &base.Config{}, nil)
+	app := CreateApp(cmdtest.TempDB(), &cli.Config{}, nil)
 	builder := cmdtest.NewRecorder()
 	builder.ConfigSetup([]byte(cmdtest.TestConfigjson))
 
 	tsts := []func(*testing.T){
-		base.WithCmds(testOrderNew, NewCartCmd(builder), newAddOrderCmd(builder)),
-		base.WithCmds(testAddOrder, NewCartCmd(builder), newAddOrderCmd(builder)),
-		base.WithCmds(testOrderNewErr, newAddOrderCmd(builder)),
-		base.WithCmds(testOrderRunAdd, NewCartCmd(builder)),
+		cli.WithCmds(testOrderNew, NewCartCmd(builder), newAddOrderCmd(builder)),
+		cli.WithCmds(testAddOrder, NewCartCmd(builder), newAddOrderCmd(builder)),
+		cli.WithCmds(testOrderNewErr, newAddOrderCmd(builder)),
+		cli.WithCmds(testOrderRunAdd, NewCartCmd(builder)),
 		withCartCmd(builder, testOrderPriceOutput),
 		withCartCmd(builder, testAddToppings),
 		withCartCmd(builder, testOrderRunDelete),
@@ -108,7 +108,7 @@ func setupTests() {
 
 func teardownTests() {}
 
-func withAppCmd(f func(*testing.T, *bytes.Buffer, *App), c base.CliCommand) func(*testing.T) {
+func withAppCmd(f func(*testing.T, *bytes.Buffer, *App), c cli.CliCommand) func(*testing.T) {
 	return func(t *testing.T) {
 		cmd, ok := c.(*App)
 		if !ok {
@@ -121,7 +121,7 @@ func withAppCmd(f func(*testing.T, *bytes.Buffer, *App), c base.CliCommand) func
 }
 
 func withCartCmd(
-	b base.Builder,
+	b cli.Builder,
 	f func(*cartCmd, *bytes.Buffer, *testing.T),
 ) func(*testing.T) {
 	return func(t *testing.T) {

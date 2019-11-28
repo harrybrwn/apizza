@@ -6,11 +6,11 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/harrybrwn/apizza/cmd/internal/base"
+	"github.com/harrybrwn/apizza/cmd/cli"
 	"github.com/harrybrwn/apizza/pkg/tests"
 )
 
-func testOrderNew(t *testing.T, buf *bytes.Buffer, cmds ...base.CliCommand) {
+func testOrderNew(t *testing.T, buf *bytes.Buffer, cmds ...cli.CliCommand) {
 	cart, add := cmds[0], cmds[1]
 	add.Cmd().ParseFlags([]string{"--name=testorder", "--products=12SCMEATZA"})
 	err := add.Run(add.Cmd(), []string{})
@@ -42,7 +42,7 @@ func testOrderNew(t *testing.T, buf *bytes.Buffer, cmds ...base.CliCommand) {
 	tests.Compare(t, buf.String(), strings.Replace(expected, "\t", "  ", -1))
 }
 
-func testAddOrder(t *testing.T, buf *bytes.Buffer, cmds ...base.CliCommand) {
+func testAddOrder(t *testing.T, buf *bytes.Buffer, cmds ...cli.CliCommand) {
 	cart, add := cmds[0], cmds[1]
 	if err := add.Run(add.Cmd(), []string{"testing"}); err != nil {
 		t.Error(err)
@@ -58,13 +58,13 @@ func testAddOrder(t *testing.T, buf *bytes.Buffer, cmds ...base.CliCommand) {
 	buf.Reset()
 }
 
-func testOrderNewErr(t *testing.T, buf *bytes.Buffer, cmds ...base.CliCommand) {
+func testOrderNewErr(t *testing.T, buf *bytes.Buffer, cmds ...cli.CliCommand) {
 	if err := cmds[0].Run(cmds[0].Cmd(), []string{}); err == nil {
 		t.Error("expected error")
 	}
 }
 
-func testOrderRunAdd(t *testing.T, buf *bytes.Buffer, cmds ...base.CliCommand) {
+func testOrderRunAdd(t *testing.T, buf *bytes.Buffer, cmds ...cli.CliCommand) {
 	cart := cmds[0]
 	if err := cart.Run(cart.Cmd(), []string{}); err != nil {
 		t.Error(err)

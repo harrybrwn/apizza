@@ -22,22 +22,21 @@ import (
 	"time"
 	"unicode/utf8"
 
+	"github.com/harrybrwn/apizza/cmd/cli"
 	"github.com/harrybrwn/apizza/cmd/client"
 	"github.com/harrybrwn/apizza/cmd/internal/data"
 	"github.com/harrybrwn/apizza/cmd/internal/out"
 	"github.com/harrybrwn/apizza/pkg/cache"
 	"github.com/harrybrwn/apizza/pkg/errs"
-
 	"github.com/spf13/cobra"
 
-	"github.com/harrybrwn/apizza/cmd/internal/base"
 	"github.com/harrybrwn/apizza/dawg"
 )
 
 var menuUpdateTime = 12 * time.Hour
 
 type menuCmd struct {
-	base.CliCommand
+	cli.CliCommand
 	data.MenuCacher
 	client.StoreFinder
 
@@ -97,7 +96,7 @@ func (c *menuCmd) Run(cmd *cobra.Command, args []string) error {
 }
 
 // NewMenuCmd creates a new menu command.
-func NewMenuCmd(b base.Builder) base.CliCommand {
+func NewMenuCmd(b cli.Builder) cli.CliCommand {
 	c := &menuCmd{
 		db:             b.DB(),
 		all:            false,
