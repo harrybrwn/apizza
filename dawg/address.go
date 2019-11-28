@@ -68,7 +68,7 @@ type StreetAddr struct {
 	Zipcode  string `json:"PostalCode"`
 
 	// This is a dominos specific field, and should one of the following...
-	// "House", "Apartment", "Buisness", "Campus/Base", "Hotel", or "Other"
+	// "House", "Apartment", "Business", "Campus/Base", "Hotel", or "Other"
 	AddrType string `json:"Type"`
 }
 

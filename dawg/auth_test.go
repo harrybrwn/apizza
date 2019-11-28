@@ -32,7 +32,7 @@ func TestBadCreds(t *testing.T) {
 
 	tok, err = gettoken("5uup;hrg];ht8bijer$u9tot", "hurieahgr9[0249eingurivja")
 	if err == nil {
-		t.Error("wow i accidentlly cracked someone's password:", tok)
+		t.Error("wow i accidently cracked someone's password:", tok)
 	}
 }
 

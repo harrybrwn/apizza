@@ -132,7 +132,7 @@ func TestNetworking_Err(t *testing.T) {
 		t.Error("expected error")
 	}
 	if resp != nil {
-		t.Error("should not have gotten any responce data")
+		t.Error("should not have gotten any response data")
 	}
 	b, err = cli.post("/invalid path", nil, bytes.NewReader(make([]byte, 1)))
 	if err == nil {
@@ -161,7 +161,6 @@ func TestNetworking_Err(t *testing.T) {
 	if err == nil {
 		t.Error("expected an error")
 	}
-	// t.Error(err.Error())
 }
 
 func TestDominosErrors(t *testing.T) {

@@ -78,7 +78,7 @@ func (m *Menu) GetProduct(code string) (prod *Product, err error) {
 	return nil, fmt.Errorf("could not find product '%s'", code)
 }
 
-// GetVariant will get a fully initialized varient from the menu.
+// GetVariant will get a fully initialized variant from the menu.
 func (m *Menu) GetVariant(code string) (*Variant, error) {
 	if vr, ok := m.Variants[code]; ok {
 		return m.initVariant(vr), nil

@@ -131,7 +131,7 @@ func (db *DataBase) Map() (all map[string][]byte, err error) {
 	})
 }
 
-// WithBucket temporaraly sets the bucket to the string given and returns the
+// WithBucket temporarily sets the bucket to the string given and returns the
 // database with the new bucket.
 //
 // The default bucket will be reset when the database calls Put, Get, Exists,

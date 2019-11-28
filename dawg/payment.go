@@ -20,10 +20,10 @@ type Card interface {
 }
 
 // NewCard will create a new Card objected. If the expiration format is wrong then
-// it will return nil. The expriration format should be "mm/yy".
+// it will return nil. The expiration format should be "mm/yy".
 func NewCard(number, expiration string, cvv int) Card {
 	if len(expiration) < 4 || len(expiration) > 5 {
-		return nil // bad expriation date format
+		return nil // bad expiration date format
 	}
 
 	return &Payment{
@@ -47,7 +47,7 @@ type Payment struct {
 	// Number is the card number.
 	Number string `json:"Number"`
 
-	// Expriation is the expriation date of the card formatted exactly as
+	// Expiration is the expiration date of the card formatted exactly as
 	// it is on the physical card.
 	Expiration string `json:"Expiration"`
 	CardType   string `json:"Type"`
@@ -61,7 +61,7 @@ func (p *Payment) Num() string {
 
 var badExpiration = time.Date(0, 0, 0, 0, 0, 0, 0, time.UTC)
 
-// ExpiresOn returns the expriation date as a time.Time.
+// ExpiresOn returns the expiration date as a time.Time.
 func (p *Payment) ExpiresOn() time.Time {
 	m, y := parseDate(p.Expiration)
 	if m < 0 || y < 0 {

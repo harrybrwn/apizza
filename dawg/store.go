@@ -189,7 +189,7 @@ func (s *Store) GetProduct(code string) (*Product, error) {
 	return menu.GetProduct(code)
 }
 
-// GetVariant will get a fully initialized varient from the menu.
+// GetVariant will get a fully initialized variant from the menu.
 func (s *Store) GetVariant(code string) (*Variant, error) {
 	menu, err := s.Menu()
 	if err != nil {

@@ -34,7 +34,7 @@ type UserProfile struct {
 
 // AddAddress will add an address to the dominos account.
 func (u *UserProfile) AddAddress(a Address) {
-	// TODO: concider sending a request to dominos to update the user with this address.
+	// TODO: consider sending a request to dominos to update the user with this address.
 	// this can be done in a separate go-routine
 	u.Addresses = append(u.Addresses, UserAddressFromAddress(a))
 }
@@ -59,7 +59,7 @@ func (u *UserProfile) NearestStore(service string) (*Store, error) {
 	}
 
 	// pass the authorized user's client along to
-	//  the store wich will use the user's credentitals
+	//  the store which will use the user's credentitals
 	// on each request.
 	c := &client{host: orderHost, Client: u.auth.cli.Client}
 	u.store, err = getNearestStore(c, u.DefaultAddress(), service)
@@ -165,7 +165,7 @@ func (ua *UserAddress) LineOne() string {
 	return fmt.Sprintf("%s %s", ua.StreetNumber, ua.StreetName)
 }
 
-// City retuns the city of the address.
+// City returns the city of the address.
 func (ua *UserAddress) City() string {
 	return ua.CityName
 }

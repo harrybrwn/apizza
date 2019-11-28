@@ -150,7 +150,7 @@ func isDominosErr(err error) (*DominosError, bool) {
 }
 
 // because i want my errs.Pair function but i dont want to add it as a
-// dependancy to the dawg package in case i ever want to separate them.
+// dependency to the dawg package in case i ever want to separate them.
 func errpair(first, second error) error {
 	if first == nil || second == nil {
 		if first != nil { // should check the first error first
