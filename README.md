@@ -17,105 +17,71 @@ Dominos pizza from the command line.
 - [DAWG](#the-dominos-api-wrapper-for-go)
 
 ### Installation
-```
+```bash
 go get -u github.com/harrybrwn/apizza
 go install github.com/harrybrwn/apizza
 ```
 
 ### Setup
-The most you have to do as a user in terms of setting up apizza is fill in the
-config variables. The only config variables that are manditory are "Address"
-and "Service" but the other config variables contain information that the Dominos
-website uses.
+The most you have to do as a user in terms of setting up apizza is fill in the config variables. The only config variables that are manditory are "Address" and "Service" but the other config variables contain information that the Dominos website uses.
 
 > **Note**: The config file won't exist if apizza is not run at least once.
 
-To edit the config file, you can either use the built-in `config get` and
-`config set` commands (see [Config](#config)) to configure apizza or you can edit the `config.json` file
-in your home path. Both of these setup methods will have the same results If you
-add a key-value pair to the `config.json` file that is not already in the file
-it will be overwritten the next time the program is run.
+To edit the config file, you can either use the built-in `config get` and `config set` commands (see [Config](#config)) to configure apizza or you can edit the `$HOME/.apizza/config.json` file. Both of these setup methods will have the same results If you add a key-value pair to the `config.json` file that is not already in the file it will be overwritten the next time the program is run.
 
 
 ### Config
-The `config get` and `config set` commands can be used with one config variable
-at a time...
+The `config get` and `config set` commands can be used with one config variable at a time...
+```bash
+apizza config set email='bob@example.com'
+apizza config set name='Bob'
+apizza config set service='Carryout'
 ```
-apizza config set email=bob@example.com
-apizza config set name=Bob
-apizza config set service=Carryout
-```
-
-or they can be moved to one command like so. Make sure that there are no spaces between keys and values and that there is a space between key-value pairs.
-```
-apizza config set name=Bob email=bob@example.com service=Carryout
+or they can be moved to one command like so.
+```bash
+apizza config set name=Bob email='bob@example.com' service='Carryout'
 ```
 
 Or just edit the json config file with
-```
+```bash
 apizza config --edit
 ```
 
 
 ### Cart
-To save a new order, use `apizza cart new` along with at least the `--name` flag or an argument representing an order name. The name flag is the name that the app will use when referring to that order. The `--products` flag (part of the 'cart new' command) is a way to add product when creating a new order, it accepts a list of comma separated product codes that can be found in the menu command.
-
-Viewing all of the saved orders is as simple as `apizza cart`.
+To save a new order, use `apizza cart new`
+```bash
+apizza cart new 'testorder' --products=16SCREEN,2LCOKE
+```
+`apizza cart` is the command the shows all the saved orders.
 
 The two flags `--add` and `--remove` are intended for editing an order. They will not work if no order name is given as a command. To add a product from an order, simply give `apizza cart <order> --add=<product>` and to remove a product give `--remove=<product>`.
 
 Editing a product's toppings a little more complicated. The `--product` flag is the key to editing toppings. To edit a topping, give the product that the topping belogns to to the `--product` flag and give the actual topping name to either `--remove` or `--add`.
 
-Example:<br>
-`apizza cart myorder --product=16SCREEN --add=P`
-this command will add peperoni to the pizza named 16SCREEN.
-
+```bash
+apizza cart myorder --product=16SCREEN --add=P
+```
+This command will add pepperoni to the pizza named 16SCREEN, and...
+```bash
+apizza cart myorder --product=16SCREEN --remove=P
+```
+will remove pepperoni from the 16SCREEN item in the order named 'myorder'.
 
 
 ### Menu
 Run `apizza menu` to print the dominos menu.
 
+The menu command will also give more detailed information when given arguments.
 
-### The Domios API Wrapper for Go
-The DAWG library is the internal api wrapper used by apizza for interfacing with the dominos pizza api.
-```go
-package main
-
-import (
-	"fmt"
-	"log"
-
-	"github.com/harrybrwn/apizza/dawg"
-)
-
-var addr = &dawg.StreetAddr{
-	Street: "1600 Pennsylvania Ave.",
-	City: "Washington",
-	State: "DC",
-	Zip: "20500",
-	AddrType: "House",
-}
-
-func main() {
-	store, err := dawg.NearestStore(addr, "Delivery")
-	if err != nil {
-		log.Fatal(err)
-	}
-	order := store.NewOrder()
-
-	pizza, err := store.GetProduct("16SCREEN")
-	if err != nil {
-		log.Fatal(err)
-	}
-	pizza.AddTopping("P", dawg.ToppingLeft, 1.5)
-	order.AddProduct(pizza)
-
-	if store.IsOpen {
-		fmt.Println(order.Price())
-	} else {
-		fmt.Println("dominos is not open")
-	}
-}
+The arugments can either be a product code or a category name.
+```bash
+apizza menu pizza      # show all the pizza
+apizza menu drinks     # show all the drinks
+apizza menu 10SCEXTRAV # show details on 10SCEXTRAV
 ```
+To see the different menu categories, use the `--show-categories` flag. And to view the different toppings use the `--toppings` flag.
+
+### The [Domios API Wrapper for Go](/docs/dawg.md)
 
 > **Credit**: Logo was made with [Logomakr](https://logomakr.com/).
