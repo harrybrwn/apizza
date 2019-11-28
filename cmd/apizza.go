@@ -16,8 +16,61 @@ package cmd
 
 import (
 	"fmt"
+	"log"
+	"os"
+	"path/filepath"
 	"strings"
+
+	"github.com/harrybrwn/apizza/cmd/cli"
+	"github.com/harrybrwn/apizza/cmd/command"
+	"github.com/harrybrwn/apizza/pkg/config"
+	"github.com/harrybrwn/apizza/pkg/errs"
+	"github.com/spf13/cobra"
+	"gopkg.in/natefinch/lumberjack.v2"
 )
+
+// Logger for the cmd package
+var Logger = &lumberjack.Logger{
+	Filename:   "",
+	MaxSize:    25,  // megabytes
+	MaxBackups: 10,  // number of spare files
+	MaxAge:     365, //days
+	Compress:   false,
+}
+
+const enableLog = true
+
+// AllCommands returns a list of all the Commands.
+func AllCommands(builder cli.Builder) []*cobra.Command {
+	return []*cobra.Command{
+		NewCartCmd(builder).Cmd(),
+		command.NewConfigCmd(builder).Cmd(),
+		NewMenuCmd(builder).Cmd(),
+		NewOrderCmd(builder).Cmd(),
+	}
+}
+
+// Execute runs the root command
+func Execute() {
+	app := NewApp(os.Stdout)
+	err := app.Init()
+	if err != nil {
+		errs.Handle(err, "Internal Error", 1)
+	}
+
+	if enableLog {
+		Logger.Filename = filepath.Join(config.Folder(), "logs", "dev.log")
+		log.SetOutput(Logger)
+	}
+
+	defer func() {
+		errs.Handle(app.Cleanup(), "Internal Error", 1)
+	}()
+
+	cmd := app.Cmd()
+	cmd.AddCommand(AllCommands(app)...)
+	errs.Handle(cmd.Execute(), "Error", 1)
+}
 
 var test = false
 var reset = false
