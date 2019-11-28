@@ -3,7 +3,7 @@ package client
 import (
 	"time"
 
-	"github.com/harrybrwn/apizza/cmd/internal/base"
+	"github.com/harrybrwn/apizza/cmd/cli"
 	"github.com/harrybrwn/apizza/cmd/internal/data"
 )
 
@@ -14,7 +14,7 @@ type Client interface {
 }
 
 // FromBuilder creates a dominos Client from a cli Builder
-func FromBuilder(b base.Builder, menuDecay time.Duration) Client {
+func FromBuilder(b cli.Builder, menuDecay time.Duration) Client {
 	finder := NewStoreGetter(b)
 	return &client{
 		StoreFinder: finder,

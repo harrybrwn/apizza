@@ -23,8 +23,8 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/harrybrwn/apizza/cmd/cli"
 	"github.com/harrybrwn/apizza/cmd/client"
-	"github.com/harrybrwn/apizza/cmd/internal/base"
 	"github.com/harrybrwn/apizza/cmd/internal/data"
 	"github.com/harrybrwn/apizza/cmd/internal/obj"
 	"github.com/harrybrwn/apizza/cmd/internal/out"
@@ -35,7 +35,7 @@ import (
 )
 
 type cartCmd struct {
-	base.CliCommand
+	cli.CliCommand
 	data.MenuCacher
 	client.StoreFinder
 	db *cache.DataBase
@@ -194,7 +194,7 @@ func getOrderItem(order *dawg.Order, code string) dawg.Item {
 }
 
 // NewCartCmd creates a new cart command.
-func NewCartCmd(b base.Builder) base.CliCommand {
+func NewCartCmd(b cli.Builder) cli.CliCommand {
 	c := &cartCmd{
 		db:      b.DB(),
 		price:   false,
@@ -247,8 +247,7 @@ func (c *cartCmd) preRun(cmd *cobra.Command, args []string) error {
 
 // `cart new` command
 type addOrderCmd struct {
-	// *basecmd
-	base.CliCommand
+	cli.CliCommand
 	client.StoreFinder
 	db *cache.DataBase
 
@@ -289,7 +288,7 @@ func (c *addOrderCmd) Run(cmd *cobra.Command, args []string) (err error) {
 	return data.SaveOrder(order, &bytes.Buffer{}, c.db)
 }
 
-func newAddOrderCmd(b base.Builder) base.CliCommand {
+func newAddOrderCmd(b cli.Builder) cli.CliCommand {
 	c := &addOrderCmd{name: "", products: []string{}}
 	c.CliCommand = b.Build("new <new order name>",
 		"Create a new order that will be stored in the cart.", c)
@@ -303,7 +302,7 @@ func newAddOrderCmd(b base.Builder) base.CliCommand {
 }
 
 type orderCmd struct {
-	base.CliCommand
+	cli.CliCommand
 	db *cache.DataBase
 
 	verbose bool
@@ -375,7 +374,7 @@ func setupPayment(num, exp, cvv string) *dawg.Payment {
 }
 
 // NewOrderCmd creates a new order command.
-func NewOrderCmd(b base.Builder) base.CliCommand {
+func NewOrderCmd(b cli.Builder) cli.CliCommand {
 	c := &orderCmd{verbose: false}
 	c.CliCommand = b.Build("order", "Send an order from the cart to dominos.", c)
 	c.db = b.DB()

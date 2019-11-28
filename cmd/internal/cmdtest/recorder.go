@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/harrybrwn/apizza/cmd/internal/base"
+	"github.com/harrybrwn/apizza/cmd/cli"
 	"github.com/harrybrwn/apizza/dawg"
 	"github.com/harrybrwn/apizza/pkg/cache"
 	"github.com/harrybrwn/apizza/pkg/config"
@@ -18,7 +18,7 @@ import (
 // Recorder is a mock command builder.
 type Recorder struct {
 	DataBase   *cache.DataBase
-	Conf       *base.Config
+	Conf       *cli.Config
 	Out        *bytes.Buffer
 	cfgHasFile bool
 	addr       dawg.Address
@@ -36,7 +36,7 @@ func NewRecorder() *Recorder {
 	return &Recorder{
 		DataBase: TempDB(),
 		Out:      new(bytes.Buffer),
-		Conf: &base.Config{
+		Conf: &cli.Config{
 			Name:    "Apizza TestRecorder",
 			Service: dawg.Carryout,
 			Address: *addr,
@@ -52,7 +52,7 @@ func (r *Recorder) DB() *cache.DataBase {
 }
 
 // Config will return the config struct.
-func (r *Recorder) Config() *base.Config {
+func (r *Recorder) Config() *cli.Config {
 	return r.Conf
 }
 
@@ -62,8 +62,8 @@ func (r *Recorder) Output() io.Writer {
 }
 
 // Build a command.
-func (r *Recorder) Build(use, short string, run base.Runner) *base.Command {
-	c := base.NewCommand(use, short, run.Run)
+func (r *Recorder) Build(use, short string, run cli.Runner) *cli.Command {
+	c := cli.NewCommand(use, short, run.Run)
 	c.SetOutput(r.Output())
 	return c
 }
@@ -74,7 +74,7 @@ func (r *Recorder) Address() dawg.Address {
 }
 
 // ToApp returns the arguments needed to create a cmd.App.
-func (r *Recorder) ToApp() (*cache.DataBase, *base.Config, io.Writer) {
+func (r *Recorder) ToApp() (*cache.DataBase, *cli.Config, io.Writer) {
 	return r.DB(), r.Conf, r.Output()
 }
 
@@ -85,7 +85,7 @@ func (r *Recorder) CleanUp() {
 	}
 }
 
-var _ base.Builder = (*Recorder)(nil)
+var _ cli.Builder = (*Recorder)(nil)
 
 func must(db *cache.DataBase, e error) *cache.DataBase {
 	if e != nil {

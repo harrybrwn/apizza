@@ -1,7 +1,7 @@
 package client
 
 import (
-	"github.com/harrybrwn/apizza/cmd/internal/base"
+	"github.com/harrybrwn/apizza/cmd/cli"
 	"github.com/harrybrwn/apizza/cmd/internal/obj"
 	"github.com/harrybrwn/apizza/dawg"
 	"github.com/harrybrwn/apizza/pkg/errs"
@@ -22,7 +22,7 @@ type storegetter struct {
 }
 
 // NewStoreGetter will create a new storefinder.
-func NewStoreGetter(builder base.Builder) StoreFinder {
+func NewStoreGetter(builder cli.Builder) StoreFinder {
 	return &storegetter{
 		getmethod: func() string {
 			return builder.Config().Service

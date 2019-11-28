@@ -21,8 +21,8 @@ import (
 
 	"gopkg.in/natefinch/lumberjack.v2"
 
+	"github.com/harrybrwn/apizza/cmd/cli"
 	"github.com/harrybrwn/apizza/cmd/command"
-	"github.com/harrybrwn/apizza/cmd/internal/base"
 	"github.com/harrybrwn/apizza/pkg/config"
 	"github.com/harrybrwn/apizza/pkg/errs"
 	"github.com/spf13/cobra"
@@ -40,7 +40,7 @@ var Logger = &lumberjack.Logger{
 const enableLog = true
 
 // AllCommands returns a list of all the Commands.
-func AllCommands(builder base.Builder) []*cobra.Command {
+func AllCommands(builder cli.Builder) []*cobra.Command {
 	return []*cobra.Command{
 		NewCartCmd(builder).Cmd(),
 		command.NewConfigCmd(builder).Cmd(),
