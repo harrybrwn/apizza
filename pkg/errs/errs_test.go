@@ -195,3 +195,47 @@ func TestPrintStack(t *testing.T) {
 		t.Error("too few stack frames")
 	}
 }
+
+func BenchmarkAppend(b *testing.B) {
+	var (
+		i int
+		e error
+	)
+	b.Run("linearError on left", func(b *testing.B) {
+		var list = make([]error, b.N)
+		for i = 0; i < b.N; i++ {
+			list[i] = New(fmt.Sprintf("error %d", i))
+		}
+		b.ResetTimer()
+		for i = 0; i < b.N; i++ {
+			e = Append(e, list[i]) // linearError on the left
+		}
+	})
+	b.Run("linearError on right", func(b *testing.B) {
+		var list = make([]error, b.N)
+		for i = 0; i < b.N; i++ {
+			list[i] = New(fmt.Sprintf("error %d", i))
+		}
+		b.ResetTimer()
+		for i = 0; i < b.N; i++ {
+			e = Append(list[i], e) // linearError on the right
+		}
+	})
+}
+
+func BenchmarkPair(b *testing.B) {
+	b.Run("both errors", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			if err := Pair(New("one"), New("two")); err == nil {
+				b.Error("expected error")
+			}
+		}
+	})
+	b.Run("both nil", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			if err := Pair(nil, nil); err != nil {
+				b.Error("expected nil")
+			}
+		}
+	})
+}
