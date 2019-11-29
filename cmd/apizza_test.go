@@ -8,6 +8,8 @@ import (
 
 	"github.com/harrybrwn/apizza/cmd/cli"
 	"github.com/harrybrwn/apizza/cmd/internal/cmdtest"
+	"github.com/harrybrwn/apizza/pkg/config"
+	"github.com/harrybrwn/apizza/pkg/tests"
 )
 
 func TestRunner(t *testing.T) {
@@ -137,5 +139,58 @@ func check(e error, msg string) {
 	if e != nil {
 		fmt.Printf("test setup failed: %s - %s\n", e, msg)
 		os.Exit(1)
+	}
+}
+
+func TestExecute(t *testing.T) {
+	var (
+		exp string
+		err error
+		buf *bytes.Buffer
+	)
+
+	tt := []struct {
+		args    []string
+		exp     string
+		outfunc func() string
+		test    func(*testing.T)
+		cleanup bool
+	}{
+		{
+			args: []string{"config", "-f"}, test: nil, cleanup: false,
+			outfunc: func() string {
+				return fmt.Sprintf("setting up config file at %s\n%s\n", config.File(), config.File())
+			},
+		},
+		{args: []string{"config", "-d"}, outfunc: func() string { return config.Folder() + "\n" }, cleanup: true},
+	}
+
+	for i, tc := range tt {
+		buf, err = tests.CaptureOutput(func() {
+			Execute(tc.args, ".apizza/.tests")
+		})
+		if err != nil {
+			t.Error(err)
+		}
+
+		if len(tc.exp) == 0 && tc.outfunc != nil {
+			exp = tc.outfunc()
+		} else {
+			exp = tc.exp
+		}
+
+		if tc.test != nil {
+			t.Run(fmt.Sprintf("Exec test: %d", i), tc.test)
+		}
+
+		tests.Compare(t, buf.String(), exp)
+
+		config.Save()
+		if tc.cleanup {
+			err := os.RemoveAll(config.Folder())
+			if err != nil {
+				t.Error("could not remove test dir:", err)
+			}
+		}
 	}
 }

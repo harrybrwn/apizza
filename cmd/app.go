@@ -60,12 +60,12 @@ func CreateApp(db *cache.DataBase, conf *cli.Config, out io.Writer) *App {
 }
 
 // Init wil setup the app.
-func (a *App) Init() error {
+func (a *App) Init(dir string) error {
 	if a.conf == nil {
 		a.conf = &cli.Config{}
 	}
 	a.initflags()
-	return errs.Pair(a.SetConfig(".apizza"), a.InitDB())
+	return errs.Pair(a.SetConfig(dir), a.InitDB())
 }
 
 // SetConfig for the the app

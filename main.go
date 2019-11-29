@@ -15,9 +15,11 @@
 package main
 
 import (
+	"os"
+
 	"github.com/harrybrwn/apizza/cmd"
 )
 
 func main() {
-	cmd.Execute()
+	cmd.Execute(os.Args[1:], ".apizza")
 }

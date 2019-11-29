@@ -5,6 +5,9 @@ all: install
 install:
 	go install github.com/harrybrwn/apizza
 
+uninstall:
+	$(RM) "$$GOPATH/bin/apizza"
+
 build:
 	go build -o bin/apizza
 

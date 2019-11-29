@@ -51,9 +51,9 @@ func AllCommands(builder cli.Builder) []*cobra.Command {
 }
 
 // Execute runs the root command
-func Execute() {
+func Execute(args []string, dir string) {
 	app := NewApp(os.Stdout)
-	err := app.Init()
+	err := app.Init(dir)
 	if err != nil {
 		errs.Handle(err, "Internal Error", 1)
 	}
@@ -68,6 +68,7 @@ func Execute() {
 	}()
 
 	cmd := app.Cmd()
+	cmd.SetArgs(args)
 	cmd.AddCommand(AllCommands(app)...)
 	errs.Handle(cmd.Execute(), "Error", 1)
 }
