@@ -9,6 +9,8 @@ import (
 	"runtime"
 	"strings"
 	"testing"
+
+	"github.com/harrybrwn/apizza/pkg/errs"
 )
 
 // Compare two strings and fail the test with an error message if they are not
@@ -37,25 +39,41 @@ func CompareV(t *testing.T, got, expected string) {
 
 // CompareOutput will redirect stdout and compair it to the expected string.
 func CompareOutput(t *testing.T, expected string, f func()) {
-	stdout := os.Stdout
+	stdout, stderr := os.Stdout, os.Stderr
 	r, w, err := os.Pipe()
 	if err != nil {
 		t.Error(err)
 	}
 	os.Stdout = w
-	out := make(chan string)
+	os.Stderr = w
 
 	f()
-
-	go func() {
-		var buf bytes.Buffer
-		io.Copy(&buf, r)
-		out <- buf.String()
-	}()
 	w.Close()
-	os.Stdout = stdout
+	var buf bytes.Buffer
+	io.Copy(&buf, r)
+	os.Stdout, os.Stderr = stdout, stderr
 
-	CompareCallDepth(t, <-out, expected, 2)
+	CompareCallDepth(t, buf.String(), expected, 2)
+}
+
+// CaptureOutput from a function
+func CaptureOutput(f func()) (*bytes.Buffer, error) {
+	stdout, stderr := os.Stdout, os.Stderr
+	r, w, err := os.Pipe()
+	os.Stdout = w
+	os.Stderr = w
+	f()
+	err = errs.Pair(err, w.Close())
+	if err != nil {
+		return nil, err
+	}
+	buf := new(bytes.Buffer)
+	_, err = io.Copy(buf, r)
+	if err != nil {
+		return nil, err
+	}
+	os.Stdout, os.Stderr = stdout, stderr
+	return buf, nil
 }
 
 // CompareCallDepth compares two strings. depth is the function call depth

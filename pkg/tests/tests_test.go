@@ -57,3 +57,15 @@ func TestComparisons(t *testing.T) {
 		CompareV(&testing.T{}, "going_to"+tc+"failcompairison", tc)
 	}
 }
+
+func TestCaptureOutput(t *testing.T) {
+	buf, err := CaptureOutput(func() {
+		fmt.Fprint(os.Stderr, "hell")
+		fmt.Fprint(os.Stdout, "o?")
+	})
+	if err != nil {
+		t.Error(err)
+	}
+	exp := "hello?"
+	Compare(t, buf.String(), exp)
+}

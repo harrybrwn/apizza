@@ -121,10 +121,6 @@ func TestSetConfig(t *testing.T) {
 	if err = Save(); err != nil {
 		t.Error(err)
 	}
-	if err = SetConfig(".testconfig", c); err == nil {
-		t.Error("The second call to SetConfig should have returned an error")
-	}
-	tests.Compare(t, err.Error(), "cannot set multiple config files")
 
 	if err = Reset(); err != nil {
 		t.Error(err)

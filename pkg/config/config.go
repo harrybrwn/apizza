@@ -2,7 +2,6 @@ package config
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -23,9 +22,9 @@ var (
 // SetConfig sets the config file and also runs through the configuration
 // setup process.
 func SetConfig(foldername string, c Config) error {
-	if cfg.file != "" {
-		return errors.New("cannot set multiple config files")
-	}
+	// if cfg.file != "" {
+	// 	return errors.New("cannot set multiple config files")
+	// }
 	dir := getdir(foldername)
 
 	cfg = configfile{
