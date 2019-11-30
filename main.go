@@ -18,8 +18,12 @@ import (
 	"os"
 
 	"github.com/harrybrwn/apizza/cmd"
+	"github.com/harrybrwn/apizza/pkg/errs"
 )
 
 func main() {
-	cmd.Execute(os.Args[1:], ".apizza")
+	err := cmd.Execute(os.Args[1:], ".apizza")
+	if err != nil {
+		errs.Handle(err.Err, err.Msg, err.Code)
+	}
 }

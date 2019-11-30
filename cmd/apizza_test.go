@@ -173,12 +173,16 @@ func TestExecute(t *testing.T) {
 		{args: []string{"config", "-d"}, outfunc: func() string { return config.Folder() + "\n" }, cleanup: true},
 	}
 
+	var errmsg *ErrMsg
 	for i, tc := range tt {
 		buf, err = tests.CaptureOutput(func() {
-			Execute(tc.args, ".apizza/.tests")
+			errmsg = Execute(tc.args, ".apizza/.tests")
 		})
 		if err != nil {
 			t.Error(err)
+		}
+		if errmsg != nil {
+			t.Error(errmsg.Msg, errmsg.Err)
 		}
 
 		if len(tc.exp) == 0 && tc.outfunc != nil {

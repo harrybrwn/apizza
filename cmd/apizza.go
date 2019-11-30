@@ -24,7 +24,6 @@ import (
 	"github.com/harrybrwn/apizza/cmd/cli"
 	"github.com/harrybrwn/apizza/cmd/command"
 	"github.com/harrybrwn/apizza/pkg/config"
-	"github.com/harrybrwn/apizza/pkg/errs"
 	"github.com/spf13/cobra"
 	"gopkg.in/natefinch/lumberjack.v2"
 )
@@ -50,12 +49,28 @@ func AllCommands(builder cli.Builder) []*cobra.Command {
 	}
 }
 
+// ErrMsg is not actually an error but it is my way of
+// containing an error with a message and an exit code.
+type ErrMsg struct {
+	Msg  string
+	Code int
+	Err  error
+}
+
+func senderr(e error, msg string, code int) *ErrMsg {
+	if e == nil {
+		return nil
+	}
+	return &ErrMsg{Msg: msg, Code: code, Err: e}
+}
+
 // Execute runs the root command
-func Execute(args []string, dir string) {
+func Execute(args []string, dir string) (msg *ErrMsg) {
 	app := NewApp(os.Stdout)
 	err := app.Init(dir)
 	if err != nil {
-		errs.Handle(err, "Internal Error", 1)
+		// errs.Handle(err, "Internal Error", 1)
+		return senderr(err, "Internal Error", 1)
 	}
 
 	if enableLog {
@@ -64,13 +79,18 @@ func Execute(args []string, dir string) {
 	}
 
 	defer func() {
-		errs.Handle(app.Cleanup(), "Internal Error", 1)
+		errmsg := senderr(app.Cleanup(), "Internal Error", 1)
+		if errmsg != nil {
+			// if we always set it the the return value will always
+			// be the same as errmsg
+			msg = errmsg
+		}
 	}()
 
 	cmd := app.Cmd()
 	cmd.SetArgs(args)
 	cmd.AddCommand(AllCommands(app)...)
-	errs.Handle(cmd.Execute(), "Error", 1)
+	return senderr(cmd.Execute(), "Error", 1)
 }
 
 var test = false
