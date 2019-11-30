@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/harrybrwn/apizza/cmd/cli"
+	"github.com/harrybrwn/apizza/cmd/internal/cmdtest"
 	"github.com/harrybrwn/apizza/pkg/tests"
 )
 
@@ -195,4 +196,28 @@ func testAddToppings(cart *cartCmd, buf *bytes.Buffer, t *testing.T) {
 	if strings.Contains(buf.String(), expected) {
 		t.Error("bad output")
 	}
+}
+
+func TestOrder(t *testing.T) {
+	r := cmdtest.NewRecorder()
+	defer r.CleanUp()
+
+	ordercmd := NewOrderCmd(r)
+	err := ordercmd.Run(ordercmd.Cmd(), []string{})
+	if err != nil {
+		t.Error(err)
+	}
+	if err = ordercmd.Run(ordercmd.Cmd(), []string{"one", "two"}); err == nil {
+		t.Error("expected error")
+	}
+	err = ordercmd.Run(ordercmd.Cmd(), []string{"anorder"})
+	if err == nil {
+		t.Error("expected an error")
+	}
+	cmd := ordercmd.(*orderCmd)
+	cmd.cvv = "000"
+	if err = cmd.Run(cmd.Cmd(), []string{"nothere"}); err == nil {
+		t.Error("the order is not in the database")
+	}
+	cmd.cvv = ""
 }

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/harrybrwn/apizza/cmd/cli"
@@ -162,6 +163,13 @@ func TestExecute(t *testing.T) {
 				return fmt.Sprintf("setting up config file at %s\n%s\n", config.File(), config.File())
 			},
 		},
+		{args: []string{"--delete-menu", "config", "-d"}, outfunc: func() string { return config.Folder() + "\n" }},
+		{args: []string{"--service=Delivery", "config", "-d"}, outfunc: func() string { return config.Folder() + "\n" }},
+		{args: []string{"--log=log.txt", "config", "-d"}, outfunc: func() string { return config.Folder() + "\n" }, test: func(t *testing.T) {
+			if _, err = os.Stat(filepath.Join(config.Folder(), "logs", "log.txt")); os.IsNotExist(err) {
+				t.Error("file should exist")
+			}
+		}},
 		{args: []string{"config", "-d"}, outfunc: func() string { return config.Folder() + "\n" }, cleanup: true},
 	}
 

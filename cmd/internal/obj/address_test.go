@@ -1,6 +1,10 @@
 package obj
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/harrybrwn/apizza/dawg"
+)
 
 func TestAddressStr(t *testing.T) {
 	a := &Address{
@@ -35,5 +39,26 @@ Washington DC, 20500`,
 		if exp != formatted[i] {
 			t.Errorf("unexpected output...\ngot:\n%s\nwanted:\n%s\n", formatted[i], exp)
 		}
+	}
+	addr := FromAddress(dawg.StreetAddrFromAddress(a))
+	if addr.LineOne() != a.LineOne() {
+		t.Error("wrong lineone")
+	}
+	if addr.StateCode() != a.StateCode() {
+		t.Error("wrong state code")
+	}
+	if addr.City() != a.City() {
+		t.Error("wrong city")
+	}
+	if addr.Zip() != a.Zip() {
+		t.Error("wrong zip")
+	}
+
+	if AddrIsEmpty(addr) {
+		t.Error("should not be empty")
+	}
+	addr = &Address{}
+	if !AddrIsEmpty(addr) {
+		t.Error("addr should be empty")
 	}
 }
