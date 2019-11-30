@@ -203,7 +203,14 @@ func (a *App) prerun(*cobra.Command, []string) (err error) {
 	}
 
 	if a.gOpts.LogFile != "" {
-		a.logf, e = os.Create(logfile(a.gOpts.LogFile))
+		dir := filepath.Join(config.Folder(), "logs")
+		if _, err := os.Stat(dir); os.IsNotExist(err) {
+			err = os.MkdirAll(dir, 0700)
+			if err != nil {
+				return err
+			}
+		}
+		a.logf, e = os.Create(filepath.Join(dir, a.gOpts.LogFile))
 		log.SetOutput(a.logf)
 	}
 	return errs.Pair(err, e)

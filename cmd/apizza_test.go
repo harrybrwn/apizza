@@ -167,7 +167,7 @@ func TestExecute(t *testing.T) {
 		{args: []string{"--service=Delivery", "config", "-d"}, outfunc: func() string { return config.Folder() + "\n" }},
 		{args: []string{"--log=log.txt", "config", "-d"}, outfunc: func() string { return config.Folder() + "\n" }, test: func(t *testing.T) {
 			if _, err = os.Stat(filepath.Join(config.Folder(), "logs", "log.txt")); os.IsNotExist(err) {
-				// t.Error("file should exist")
+				t.Error("file should exist")
 			}
 		}},
 		{args: []string{"config", "-d"}, outfunc: func() string { return config.Folder() + "\n" }, cleanup: true},
