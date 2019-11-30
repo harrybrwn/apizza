@@ -33,7 +33,7 @@ type App struct {
 	// global apizza options
 	gOpts opts.CliFlags
 
-	// root specific opts
+	// root specific options
 	opts opts.ApizzaFlags
 }
 
@@ -105,17 +105,6 @@ func (a *App) Address() dawg.Address {
 // Cleanup cleans everything up.
 func (a *App) Cleanup() (err error) {
 	return errs.Pair(a.db.Close(), config.Save())
-}
-
-// Log to the logging file
-func (a *App) Log(v ...interface{}) {
-	log.Print(v...)
-}
-
-// Execute the root command.
-func (a *App) Execute() error {
-	a.initflags()
-	return a.Cmd().Execute()
 }
 
 func (a *App) getService() string {

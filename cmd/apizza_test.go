@@ -10,6 +10,7 @@ import (
 	"github.com/harrybrwn/apizza/cmd/cli"
 	"github.com/harrybrwn/apizza/cmd/internal/cmdtest"
 	"github.com/harrybrwn/apizza/pkg/config"
+	"github.com/harrybrwn/apizza/pkg/errs"
 	"github.com/harrybrwn/apizza/pkg/tests"
 )
 
@@ -36,6 +37,11 @@ func TestRunner(t *testing.T) {
 	builder.CleanUp()
 	if err := app.db.Destroy(); err != nil {
 		t.Error(err)
+	}
+
+	msg := senderr(errs.New("this is an error"), "error message", 4)
+	if msg.Code != 4 {
+		t.Error("wrong code")
 	}
 }
 
@@ -67,7 +73,7 @@ func testAppRootCmdRun(t *testing.T, buf *bytes.Buffer, a *App) {
 	if len(a.Cmd().Commands()) != 0 {
 		t.Error("should not have commands yet")
 	}
-	err = a.Execute()
+	err = a.Cmd().Execute()
 	if err != nil {
 		t.Error(err)
 	}
@@ -145,9 +151,10 @@ func check(e error, msg string) {
 
 func TestExecute(t *testing.T) {
 	var (
-		exp string
-		err error
-		buf *bytes.Buffer
+		exp    string
+		err    error
+		buf    *bytes.Buffer
+		errmsg *ErrMsg
 	)
 
 	tt := []struct {
@@ -173,7 +180,6 @@ func TestExecute(t *testing.T) {
 		{args: []string{"config", "-d"}, outfunc: func() string { return config.Folder() + "\n" }, cleanup: true},
 	}
 
-	var errmsg *ErrMsg
 	for i, tc := range tt {
 		buf, err = tests.CaptureOutput(func() {
 			errmsg = Execute(tc.args, ".apizza/.tests")
@@ -185,7 +191,7 @@ func TestExecute(t *testing.T) {
 			t.Error(errmsg.Msg, errmsg.Err)
 		}
 
-		if len(tc.exp) == 0 && tc.outfunc != nil {
+		if tc.outfunc != nil {
 			exp = tc.outfunc()
 		} else {
 			exp = tc.exp
