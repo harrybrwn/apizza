@@ -69,7 +69,6 @@ func Execute(args []string, dir string) (msg *ErrMsg) {
 	app := NewApp(os.Stdout)
 	err := app.Init(dir)
 	if err != nil {
-		// errs.Handle(err, "Internal Error", 1)
 		return senderr(err, "Internal Error", 1)
 	}
 

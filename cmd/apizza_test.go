@@ -199,10 +199,7 @@ func TestExecute(t *testing.T) {
 
 		config.Save()
 		if tc.cleanup {
-			err := os.RemoveAll(config.Folder())
-			if err != nil {
-				t.Error("could not remove test dir:", err)
-			}
+			os.RemoveAll(config.Folder())
 		}
 	}
 }
