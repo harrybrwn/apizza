@@ -18,7 +18,7 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"path/filepath"
+	fp "path/filepath"
 	"strings"
 
 	"github.com/harrybrwn/apizza/cmd/cli"
@@ -73,7 +73,7 @@ func Execute(args []string, dir string) (msg *ErrMsg) {
 	}
 
 	if enableLog {
-		Logger.Filename = filepath.Join(config.Folder(), "logs", "dev.log")
+		Logger.Filename = fp.Join(config.Folder(), "logs", "dev.log")
 		log.SetOutput(Logger)
 	}
 

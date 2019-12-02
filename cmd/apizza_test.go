@@ -3,8 +3,11 @@ package cmd
 import (
 	"bytes"
 	"fmt"
+	"io/ioutil"
+	"log"
 	"os"
-	"path/filepath"
+	fp "path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/harrybrwn/apizza/cmd/cli"
@@ -164,19 +167,41 @@ func TestExecute(t *testing.T) {
 		test    func(*testing.T)
 		cleanup bool
 	}{
-		{
-			args: []string{"config", "-f"}, test: nil, cleanup: false,
-			outfunc: func() string {
-				return fmt.Sprintf("setting up config file at %s\n%s\n", config.File(), config.File())
+		{args: []string{"config", "-f"}, outfunc: func() string { return fmt.Sprintf("setting up config file at %s\n%s\n", config.File(), config.File()) }},
+		{args: []string{"--delete-menu", "config", "-d"}, outfunc: func() string { return config.Folder() + "\n" }},
+		{args: []string{"--service=Delivery", "config", "-f"}, outfunc: func() string { return config.File() + "\n" }},
+		{args: []string{"--log=log.txt", "config", "-d"}, outfunc: func() string { return config.Folder() + "\n" },
+			test: func(t *testing.T) {
+				logfile := fp.Join(config.Folder(), "logs", "log.txt")
+				if _, err = os.Stat(logfile); os.IsNotExist(err) {
+					t.Error("file should exist")
+				}
+				log.Print("hello")
+				data, _ := ioutil.ReadFile(logfile)
+				if !strings.HasSuffix(strings.Trim(string(data), "\n\t "), "hello") {
+					t.Error("logfile should end with the last message")
+				}
+			}},
+		{args: []string{
+			"config", "set",
+			"address.street='1600 Pennsylvania Ave NW'",
+			"address.cityname=Washington",
+			"address.state=DC",
+			"address.zipcode=20500"},
+			exp: "", outfunc: nil,
+			test: func(t *testing.T) {
+				if config.GetString("address.zipcode") != "20500" {
+					t.Error("wrong zip")
+				}
+				if config.GetString("address.state") != "DC" {
+					t.Error("wrong state")
+				}
 			},
 		},
-		{args: []string{"--delete-menu", "config", "-d"}, outfunc: func() string { return config.Folder() + "\n" }},
-		{args: []string{"--service=Delivery", "config", "-d"}, outfunc: func() string { return config.Folder() + "\n" }},
-		{args: []string{"--log=log.txt", "config", "-d"}, outfunc: func() string { return config.Folder() + "\n" }, test: func(t *testing.T) {
-			if _, err = os.Stat(filepath.Join(config.Folder(), "logs", "log.txt")); os.IsNotExist(err) {
-				t.Error("file should exist")
-			}
-		}},
+		{args: []string{"cart"}, exp: "No_orders_saved.\n"},
+		{args: []string{"cart", "new", "testorder", "-p=12SCREEN"}, exp: ""},
+		{args: []string{"cart"}, exp: "Your Orders:\n  testorder\n"},
+		{args: []string{"menu"}},
 		{args: []string{"config", "-d"}, outfunc: func() string { return config.Folder() + "\n" }, cleanup: true},
 	}
 

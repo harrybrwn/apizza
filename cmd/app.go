@@ -6,7 +6,7 @@ import (
 	"log"
 	"os"
 	"os/exec"
-	"path/filepath"
+	fp "path/filepath"
 
 	"github.com/harrybrwn/apizza/cmd/cli"
 	"github.com/harrybrwn/apizza/cmd/client"
@@ -120,7 +120,7 @@ var _ cli.Builder = (*App)(nil)
 func (a *App) Run(cmd *cobra.Command, args []string) (err error) {
 	if a.opts.Openlogs {
 		editor := os.Getenv("EDITOR")
-		c := exec.Command(editor, filepath.Join(config.Folder(), "logs", "dev.log"))
+		c := exec.Command(editor, fp.Join(config.Folder(), "logs", "dev.log"))
 		c.Stdin = os.Stdin
 		c.Stdout = a.Output()
 		return c.Run()
@@ -192,14 +192,14 @@ func (a *App) prerun(*cobra.Command, []string) (err error) {
 	}
 
 	if a.gOpts.LogFile != "" {
-		dir := filepath.Join(config.Folder(), "logs")
+		dir := fp.Join(config.Folder(), "logs")
 		if _, err := os.Stat(dir); os.IsNotExist(err) {
 			err = os.MkdirAll(dir, 0700)
 			if err != nil {
 				return err
 			}
 		}
-		a.logf, e = os.Create(filepath.Join(dir, a.gOpts.LogFile))
+		a.logf, e = os.Create(fp.Join(dir, a.gOpts.LogFile))
 		log.SetOutput(a.logf)
 	}
 	return errs.Pair(err, e)
@@ -213,5 +213,5 @@ func (a *App) postrun(*cobra.Command, []string) (err error) {
 }
 
 func logfile(name string) string {
-	return filepath.Join(config.Folder(), "logs", name)
+	return fp.Join(config.Folder(), "logs", name)
 }
