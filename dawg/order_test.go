@@ -394,14 +394,14 @@ func TestOrderToJSON(t *testing.T) {
 func TestOrderCalls(t *testing.T) {
 	o := new(Order)
 	o.Init()
-	err := sendOrder("/power/validate-order", o)
+	err := sendOrder("/power/validate-order", *o)
 	if !IsFailure(err) || err == nil {
 		t.Error("expcted error")
 	}
 
 	o = new(Order)
 	InitOrder(o)
-	err = sendOrder("", o)
+	err = sendOrder("", *o)
 	if err == nil {
 		t.Error("expcted error")
 	}

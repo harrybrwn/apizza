@@ -311,9 +311,11 @@ type orderCmd struct {
 
 	email, phone string
 	fname, lname string
-	cvv          string
+	cvv          int
 	number       string
 	expiration   string
+
+	logonly bool
 }
 
 func (c *orderCmd) Run(cmd *cobra.Command, args []string) (err error) {
@@ -323,7 +325,7 @@ func (c *orderCmd) Run(cmd *cobra.Command, args []string) (err error) {
 		return errors.New("cannot handle multiple orders")
 	}
 
-	if len(c.cvv) == 0 {
+	if c.cvv == 0 {
 		return errors.New("must have cvv number. (see --cvv)")
 	}
 	order, err := data.GetOrder(args[0], c.db)
@@ -331,8 +333,10 @@ func (c *orderCmd) Run(cmd *cobra.Command, args []string) (err error) {
 		return err
 	}
 
-	order.AddPayment(*setupPayment(c.number, c.expiration, c.cvv))
-	order.Payments[0].CardType = "MASTERCARD"
+	order.AddCard(dawg.NewCard(
+		eitherOr(c.number, config.GetString("card.number")),
+		eitherOr(c.expiration, config.GetString("card.expiration")),
+		c.cvv))
 
 	names := strings.Split(config.GetString("name"), " ")
 	order.FirstName = eitherOr(c.fname, names[0])
@@ -341,6 +345,12 @@ func (c *orderCmd) Run(cmd *cobra.Command, args []string) (err error) {
 	order.Phone = eitherOr(c.phone, config.GetString("phone"))
 
 	c.Printf("Ordering dominos for %s\n\n", strings.Replace(obj.AddressFmt(order.Address), "\n", " ", -1))
+
+	if c.logonly {
+		log.Println("logging order:", dawg.OrderToJSON(order))
+		return nil
+	}
+
 	if !yesOrNo(os.Stdin, "Would you like to purchase this order? (y/n)") {
 		return nil
 	}
@@ -366,13 +376,6 @@ func (c *orderCmd) Run(cmd *cobra.Command, args []string) (err error) {
 	return nil
 }
 
-func setupPayment(num, exp, cvv string) *dawg.Payment {
-	payment := &dawg.Payment{CVV: cvv}
-	payment.Number = eitherOr(num, config.GetString("card.number"))
-	payment.Expiration = eitherOr(exp, config.GetString("card.expiration"))
-	return payment
-}
-
 func eitherOr(s1, s2 string) string {
 	if len(s1) == 0 {
 		return s2
@@ -394,15 +397,17 @@ stored the program cache with orders.
 `
 	flags := c.Cmd().Flags()
 	flags.BoolVarP(&c.verbose, "verbose", "v", c.verbose, "output the order command verbosly")
-	// flags.BoolVarP(&c.track, "track", "t", c.track, "enable tracking for the purchased order")
 
 	flags.StringVar(&c.phone, "phone", "", "Set the phone number that will be used for this order")
 	flags.StringVar(&c.email, "email", "", "Set the email that will be used for this order")
 	flags.StringVar(&c.fname, "first-name", "", "Set the first name that will be used for this order")
 	flags.StringVar(&c.fname, "last-name", "", "Set the last name that will be used for this order")
 
-	flags.StringVar(&c.cvv, "cvv", "", "Set the card's cvv number for this order")
+	flags.IntVar(&c.cvv, "cvv", 0, "Set the card's cvv number for this order")
 	flags.StringVar(&c.number, "number", "", "the card number used for orderings")
 	flags.StringVar(&c.expiration, "expiration", "", "the card's expiration date")
+
+	flags.BoolVar(&c.logonly, "log-only", false, "")
+	flags.MarkHidden("log-only")
 	return c
 }

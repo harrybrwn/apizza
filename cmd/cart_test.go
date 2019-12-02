@@ -215,11 +215,11 @@ func TestOrder(t *testing.T) {
 		t.Error("expected an error")
 	}
 	cmd := ordercmd.(*orderCmd)
-	cmd.cvv = "000"
+	cmd.cvv = 100
 	if err = cmd.Run(cmd.Cmd(), []string{"nothere"}); err == nil {
 		t.Error("the order is not in the database")
 	}
-	cmd.cvv = ""
+	cmd.cvv = 0
 }
 
 func TestEitherOr(t *testing.T) {

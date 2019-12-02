@@ -64,6 +64,10 @@ var badExpiration = time.Date(0, 0, 0, 0, 0, 0, 0, time.UTC)
 
 // ExpiresOn returns the expiration date as a time.Time.
 func (p *Payment) ExpiresOn() time.Time {
+	if len(p.Expiration) == 0 {
+		return badExpiration
+	}
+
 	m, y := parseDate(p.Expiration)
 	if m < 0 || y < 0 {
 		return badExpiration

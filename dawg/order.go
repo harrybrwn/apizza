@@ -52,7 +52,7 @@ func (o *Order) PlaceOrder() error {
 	if err := o.prepare(); err != nil {
 		return err
 	}
-	return sendOrder("/power/place-order", o)
+	return sendOrder("/power/place-order", *o)
 }
 
 // Price method returns the total price of an order.
@@ -132,7 +132,7 @@ func (o *Order) SetName(name string) {
 // Validate sends and order to the validation endpoint to be validated by
 // Dominos' servers.
 func (o *Order) Validate() error {
-	err := sendOrder("/power/validate-order", o)
+	err := sendOrder("/power/validate-order", *o)
 	// TODO: make it possible to recognize the warning as an 'AutoAddedOrderId' warning.
 	if IsWarning(err) {
 		e := err.(*DominosError)
@@ -164,7 +164,7 @@ func (o *Order) prepare() error {
 // ValidateOrder sends and order to the validation endpoint to be validated by
 // Dominos' servers.
 func ValidateOrder(order *Order) error {
-	err := sendOrder("/power/validate-order", order)
+	err := sendOrder("/power/validate-order", *order)
 	if IsWarning(err) {
 		e := err.(*DominosError)
 		order.OrderID = e.Order.OrderID
@@ -199,7 +199,7 @@ func (o *Order) raw() *bytes.Buffer {
 	return buf
 }
 
-func sendOrder(path string, ordr *Order) error {
+func sendOrder(path string, ordr Order) error {
 	b, err := ordr.cli.post(path, nil, ordr.raw())
 	if err != nil {
 		return err
