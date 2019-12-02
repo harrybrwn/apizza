@@ -201,7 +201,6 @@ func TestExecute(t *testing.T) {
 		{args: []string{"cart"}, exp: "No_orders_saved.\n"},
 		{args: []string{"cart", "new", "testorder", "-p=12SCREEN"}, exp: ""},
 		{args: []string{"cart"}, exp: "Your Orders:\n  testorder\n"},
-		{args: []string{"menu"}},
 		{args: []string{"config", "-d"}, outfunc: func() string { return config.Folder() + "\n" }, cleanup: true},
 	}
 

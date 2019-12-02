@@ -16,7 +16,7 @@ import (
 
 var testconfigjson = `
 {
-	"name":"joe","email":"nojoe@mail.com",
+	"name":"joe","email":"nojoe@mail.com", "phone":"1231231234",
 	"address":{
 		"street":"1600 Pennsylvania Ave NW",
 		"cityName":"Washington DC",
@@ -28,6 +28,7 @@ var testconfigjson = `
 
 var testConfigOutput = `name: "joe"
 email: "nojoe@mail.com"
+phone: "1231231234"
 address:
   street: "1600 Pennsylvania Ave NW"
   cityname: "Washington DC"
@@ -132,6 +133,7 @@ func TestConfigEdit(t *testing.T) {
 	exp := `{
     "Name": "",
     "Email": "",
+    "Phone": "",
     "Address": {
         "Street": "",
         "CityName": "",
