@@ -201,6 +201,7 @@ func TestExecute(t *testing.T) {
 		{args: []string{"cart"}, exp: "No_orders_saved.\n"},
 		{args: []string{"cart", "new", "testorder", "-p=12SCREEN"}, exp: ""},
 		{args: []string{"cart"}, exp: "Your Orders:\n  testorder\n"},
+		{args: []string{"-L"}, exp: "1300 L St Nw\nWashington, DC 20005\nALL Credit Card orders must have Credit Card and ID present at the Time of Delivery or Pick-up\n\nStore id: 4336\nCoordinates: 38.9036, -77.03\n"},
 		{args: []string{"config", "-d"}, outfunc: func() string { return config.Folder() + "\n" }, cleanup: true},
 	}
 
