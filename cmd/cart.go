@@ -19,6 +19,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"os"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -216,7 +217,7 @@ func NewCartCmd(b cli.Builder) cli.CliCommand {
 created orders.`
 
 	c.Cmd().PersistentPreRunE = c.persistentPreRunE
-	c.Cmd().PreRunE = c.preRun
+	// c.Cmd().PreRunE = c.preRun
 
 	c.Flags().BoolVar(&c.updateAddr, "update-address", c.updateAddr, "update the address of an order in accordance with the address in the config file.")
 	c.Flags().BoolVar(&c.validate, "validate", c.validate, "send an order to the dominos order-validation endpoint.")
@@ -308,9 +309,11 @@ type orderCmd struct {
 	verbose bool
 	track   bool
 
-	cvv        string
-	number     string
-	expiration string
+	email, phone string
+	fname, lname string
+	cvv          string
+	number       string
+	expiration   string
 }
 
 func (c *orderCmd) Run(cmd *cobra.Command, args []string) (err error) {
@@ -329,19 +332,24 @@ func (c *orderCmd) Run(cmd *cobra.Command, args []string) (err error) {
 	}
 
 	order.AddPayment(*setupPayment(c.number, c.expiration, c.cvv))
+	order.Payments[0].CardType = "MASTERCARD"
+
 	names := strings.Split(config.GetString("name"), " ")
-	order.FirstName = names[0]
-	order.LastName = strings.Join(names[1:], " ")
-	order.Email = config.GetString("email")
+	order.FirstName = eitherOr(c.fname, names[0])
+	order.LastName = eitherOr(c.lname, strings.Join(names[1:], " "))
+	order.Email = eitherOr(c.email, config.GetString("email"))
+	order.Phone = eitherOr(c.phone, config.GetString("phone"))
 
 	c.Printf("Ordering dominos for %s\n\n", strings.Replace(obj.AddressFmt(order.Address), "\n", " ", -1))
-	if !yesOrNo("Would you like to purchase this order? (y/n)") {
+	if !yesOrNo(os.Stdin, "Would you like to purchase this order? (y/n)") {
 		return nil
 	}
 
 	c.Printf("sending order '%s'...\n", order.Name())
+	err = order.PlaceOrder()
+	// logging happens after so any data from placeorder is included
 	log.Println("sending order:", dawg.OrderToJSON(order))
-	if err := order.PlaceOrder(); err != nil {
+	if err != nil {
 		return err
 	}
 	c.Printf("sent to %s %s\n", order.Address.LineOne(), order.Address.City())
@@ -360,17 +368,16 @@ func (c *orderCmd) Run(cmd *cobra.Command, args []string) (err error) {
 
 func setupPayment(num, exp, cvv string) *dawg.Payment {
 	payment := &dawg.Payment{CVV: cvv}
-	if len(num) != 0 {
-		payment.Number = num
-	} else {
-		payment.Number = config.GetString("card.number")
-	}
-	if len(exp) != 0 {
-		payment.Expiration = exp
-	} else {
-		payment.Expiration = config.GetString("card.expiration")
-	}
+	payment.Number = eitherOr(num, config.GetString("card.number"))
+	payment.Expiration = eitherOr(exp, config.GetString("card.expiration"))
 	return payment
+}
+
+func eitherOr(s1, s2 string) string {
+	if len(s1) == 0 {
+		return s2
+	}
+	return s1
 }
 
 // NewOrderCmd creates a new order command.
@@ -387,9 +394,14 @@ stored the program cache with orders.
 `
 	flags := c.Cmd().Flags()
 	flags.BoolVarP(&c.verbose, "verbose", "v", c.verbose, "output the order command verbosly")
-	flags.BoolVarP(&c.track, "track", "t", c.track, "enable tracking for the purchased order")
+	// flags.BoolVarP(&c.track, "track", "t", c.track, "enable tracking for the purchased order")
 
-	flags.StringVar(&c.cvv, "cvv", "", "the card's cvv number (must give this to order)")
+	flags.StringVar(&c.phone, "phone", "", "Set the phone number that will be used for this order")
+	flags.StringVar(&c.email, "email", "", "Set the email that will be used for this order")
+	flags.StringVar(&c.fname, "first-name", "", "Set the first name that will be used for this order")
+	flags.StringVar(&c.fname, "last-name", "", "Set the last name that will be used for this order")
+
+	flags.StringVar(&c.cvv, "cvv", "", "Set the card's cvv number for this order")
 	flags.StringVar(&c.number, "number", "", "the card number used for orderings")
 	flags.StringVar(&c.expiration, "expiration", "", "the card's expiration date")
 	return c

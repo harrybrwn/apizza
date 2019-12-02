@@ -221,3 +221,15 @@ func TestOrder(t *testing.T) {
 	}
 	cmd.cvv = ""
 }
+
+func TestEitherOr(t *testing.T) {
+	if eitherOr("one", "") != "one" {
+		t.Error("wrong result from 'eitherOr'")
+	}
+	if eitherOr("", "two") != "two" {
+		t.Error("wrong result from 'eitherOr'")
+	}
+	if eitherOr("a", "b") != "a" {
+		t.Error("wrong result from 'eitherOr'")
+	}
+}

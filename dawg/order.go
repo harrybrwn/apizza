@@ -25,7 +25,8 @@ type Order struct {
 	FirstName     string                 `json:"FirstName"`
 	LastName      string                 `json:"LastName"`
 	Email         string                 `json:"Email"`
-	Payments      []*orderPayment        `json:"Payments"`
+	Phone         string
+	Payments      []*orderPayment `json:"Payments"`
 
 	// OrderName is not a field that is sent to dominos, but is just a way for
 	// users to name a specific order.
@@ -109,7 +110,8 @@ func (o *Order) RemoveProduct(code string) error {
 //
 // Depricated. use AddCard
 func (o *Order) AddPayment(payment Payment) {
-	o.Payments = append(o.Payments, makeOrderPaymentFromCard(&payment))
+	p := makeOrderPaymentFromCard(&payment)
+	o.Payments = append(o.Payments, p)
 }
 
 // AddCard will add a card as a method of payment.
