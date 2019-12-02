@@ -234,3 +234,46 @@ func TestExecute(t *testing.T) {
 		}
 	}
 }
+
+func TestYesOrNo(t *testing.T) {
+	var res bool = false
+	f, err := ioutil.TempFile("", "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err = f.Write([]byte("yes")); err != nil {
+		t.Fatal(err)
+	}
+	if _, err = f.Seek(0, os.SEEK_SET); err != nil {
+		t.Fatal(err)
+	}
+	if yesOrNo(f, "this is a message") {
+		res = true
+	}
+	if !res {
+		t.Error("should have been yes")
+	}
+
+	if err = f.Close(); err != nil {
+		t.Error(err)
+	}
+	if f, err = ioutil.TempFile("", ""); err != nil {
+		t.Fatal(err)
+	}
+	if _, err = f.Write([]byte("no")); err != nil {
+		t.Fatal(err)
+	}
+	if _, err = f.Seek(0, os.SEEK_SET); err != nil {
+		t.Fatal(err)
+	}
+	res = false
+	if yesOrNo(f, "msg") {
+		res = true
+	}
+	if res {
+		t.Error("should have gotten a no")
+	}
+	if err = f.Close(); err != nil {
+		t.Error(err)
+	}
+}

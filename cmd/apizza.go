@@ -94,12 +94,15 @@ func Execute(args []string, dir string) (msg *ErrMsg) {
 
 var test = false
 
-func yesOrNo(msg string) bool {
-	var in string
+func yesOrNo(in *os.File, msg string) bool {
+	var res string
 	fmt.Printf("%s ", msg)
-	fmt.Scan(&in)
+	_, err := fmt.Fscan(in, &res)
+	if err != nil {
+		return false
+	}
 
-	switch strings.ToLower(in) {
+	switch strings.ToLower(res) {
 	case "y", "yes", "si":
 		return true
 	}
