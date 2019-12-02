@@ -11,6 +11,7 @@ import (
 type Config struct {
 	Name    string      `config:"name" json:"name"`
 	Email   string      `config:"email" json:"email"`
+	Phone   string      `config:"phone" json:"phone"`
 	Address obj.Address `config:"address" json:"address"`
 	Card    struct {
 		Number     string `config:"number" json:"number"`
