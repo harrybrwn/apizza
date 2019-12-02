@@ -19,6 +19,7 @@ test-cover
 coverage.html
 *.prof
 /data/
+!dawg/testdata/cardnums.json
 
 # Other
 .vscode

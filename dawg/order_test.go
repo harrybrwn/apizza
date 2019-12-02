@@ -3,6 +3,7 @@ package dawg
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"strings"
 	"testing"
 	"time"
@@ -403,5 +404,31 @@ func TestOrderCalls(t *testing.T) {
 	err = sendOrder("", o)
 	if err == nil {
 		t.Error("expcted error")
+	}
+}
+
+func TestCardTypeRegex(t *testing.T) {
+	b, err := ioutil.ReadFile("testdata/cardnums.json")
+	if err != nil {
+		t.Error(err)
+	}
+	data := make(map[string][]string)
+	if err = json.Unmarshal(b, &data); err != nil {
+		t.Error(err)
+	}
+	for ctype, nums := range data {
+		for _, num := range nums {
+			pat, ok := cardRegex[ctype]
+			if !ok {
+				continue
+			}
+			match := pat.MatchString(num)
+			if !match {
+				t.Errorf("expected %s to match as %s", num, ctype)
+			}
+			if findCardType(num) != ctype {
+				t.Error("wrong card type")
+			}
+		}
 	}
 }
