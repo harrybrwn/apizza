@@ -1,0 +1,166 @@
+#!/usr/bin/python
+
+import os
+from os import path
+import sys
+import subprocess as sp
+import re
+from github import Github, GithubObject
+from github.GithubException import GithubException, UnknownObjectException
+import click
+
+github_token = os.getenv("GITHUB_TOKEN")
+RELEASE_DIR = 'release'
+TAG_REGEX = re.compile('^v([0-9]\.[0-9]\.[0-9])$')
+
+
+def get_repo_name():
+    output = sp.check_output(['git', 'remote', '-v']).decode('utf-8')
+    res = re.search('https://github\.com/(.*?)/(.*?)\.git \(push\)', output)
+    return res.groups()[-1]
+
+
+def get_latest_tag():
+    out = sp.run(['git', '--no-pager', 'tag'], stdout=sp.PIPE)
+    output = out.stdout.decode('utf-8').strip()
+
+    tags = []
+    for tag in output.split('\n'):
+        res = TAG_REGEX.match(tag)
+        if res is None:
+            continue
+        tags.append(res.groups()[0])
+
+    tags = list(reversed(sorted(tags)))
+    return 'v' + tags[0]
+
+
+def release_exists_err(exception):
+    if not isinstance(exception, GithubException):
+        return False
+    data = exception.data
+
+    if exception.status != 422 or data['message'] != 'Validation Failed':
+        return False
+
+    for err in data['errors']:
+        if err['code'] == 'already_exists' and err['resource'] == 'Release':
+            return True
+    return False
+
+
+def handle_github_errs(exception):
+    if release_exists_err(exception):
+        errmsg = exception.data['errors'][0]
+        print(f'Error: {errmsg["resource"]} {errmsg["field"]} {errmsg["code"]}')
+        print("try 'release remove <tag>' to remove the release")
+        sys.exit(1)
+    elif isinstance(exception, UnknownObjectException):
+        print('Error: could not find that release')
+        sys.exit(1)
+    else:
+        raise exception
+
+
+def tag_exsists(tag):
+    out = sp.run(['git', '--no-pager', 'tag'], stdout=sp.PIPE)
+    alltags = out.stdout.decode('utf-8').strip().split('\n')
+    return tag in alltags
+
+
+def get_repo(token, name):
+    g = Github(token)
+    return g.get_user().get_repo(name)
+
+
+def compile_go(folder, oses):
+    for goos in oses:
+        ext = sp.check_output(
+            ["go", "env", "GOEXE"],
+            env=dict(os.environ, GOOS=goos)
+        ).decode('utf-8').strip('\n')
+
+        file = f'{folder}/apizza-{goos}-amd64{ext}'
+        print('compiling', file)
+        res = sp.run(
+            ['go', 'build', '-o', file],
+            env=dict(os.environ, GOOS=goos, GOARCH='amd64'))
+
+
+@click.group()
+def cli():
+    pass
+
+
+repo_opt = click.option('-r', '--repo', default=get_repo_name(),
+                        help='Give the name of the repo being released to.')
+token_opt = click.option('--token', default=github_token,
+                         help='Use a custom github token')
+dir_opt = click.option('-d', '--release-dir', default=RELEASE_DIR,
+                        help='Set the directory that the release binaries are in.')
+
+
+@cli.command()
+@click.option('--tag', default=get_latest_tag(), help='Set the tag used for the release.')
+@click.option('-t', '--title',   default="", help="Set the release title.")
+@click.option('-m', '--message', default="", help='Give the release a release message.')
+@repo_opt
+@dir_opt
+@click.option('--target-commit', default="",    help='Set the taget commit hash.')
+@click.option('--prerelease',    default=False, help='Upload the binaries as a pre-release.')
+@click.option('--draft',         default=False, help='Upload the binaries as a draft release.')
+@token_opt
+def new(tag, title, message, repo, release_dir, target_commit, prerelease,
+        draft, token):
+    '''Publish a new release'''
+    reponame = repo
+    if TAG_REGEX.match(tag) is None:
+        raise Exception('invalid tag (must look like v0.0.0 or v9.9.9)')
+    repo = get_repo(token, reponame)
+
+    release = repo.create_git_release(
+        tag, title, message,
+        draft=draft, prerelease=prerelease,
+        target_commitish=target_commit or GithubObject.NotSet,
+    )
+    compile_go(release_dir, ['linux', 'darwin', 'windows'])
+
+    binaries = os.listdir(release_dir)
+    for binary in binaries:
+        binary = path.join(release_dir, binary)
+        print("uploading '{}'...".format(binary))
+        release.upload_asset(binary)
+
+
+@cli.command()
+@click.option('--tag', default="", help='Set the tag used for the release.')
+@repo_opt
+@token_opt
+def remove(tag, repo, token):
+    '''Remove a published release from github'''
+    reponame = repo
+    if not tag:
+        print("Error: needs tag name")
+        sys.exit(1)
+
+    repo = get_repo(token, reponame)
+    rel = repo.get_release(tag)
+    print(f"deleting '{rel.tag_name} {rel.title}'")
+    rel.delete_release()
+
+
+@cli.command()
+@dir_opt
+def build(release_dir):
+    '''Build the release binaries'''
+    compile_go(release_dir, ['linux', 'darwin', 'windows'])
+
+
+def main():
+    try:
+        cli()
+    except Exception as e:
+        handle_github_errs(e)
+
+if __name__ == '__main__':
+    main()

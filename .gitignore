@@ -2,6 +2,7 @@
 /bin/
 /release/
 /vendor/
+__pycache__/
 
 # Notes
 demo
@@ -28,3 +29,5 @@ coverage.html
 /script/
 scripts/history.sh
 *.mp4
+
+scripts/github.sh

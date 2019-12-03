@@ -12,7 +12,7 @@ build:
 	go build -o bin/apizza
 
 release:
-	bash scripts/release.sh
+	scripts/release build
 
 test: coverage.txt test-build
 	bash scripts/integration.sh ./bin/apizza
