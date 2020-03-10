@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
 import os
 from os import path
@@ -101,8 +101,9 @@ dir_opt = click.option('-d', '--release-dir', default=RELEASE_DIR,
 
 
 @cli.command()
-@click.option('--tag', default=get_latest_tag(), help='Set the tag used for the release.')
+@click.option('--tag', default="", help='Set the tag used for the release.')
 @click.option('-t', '--title',   default="", help="Set the release title.")
+@click.argument('title')
 @click.option('-m', '--message', default="", help='Give the release a release message.')
 @repo_opt
 @dir_opt

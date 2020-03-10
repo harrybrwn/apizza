@@ -344,7 +344,7 @@ func (c *orderCmd) Run(cmd *cobra.Command, args []string) (err error) {
 	order.Email = eitherOr(c.email, config.GetString("email"))
 	order.Phone = eitherOr(c.phone, config.GetString("phone"))
 
-	c.Printf("Ordering dominos for %s\n\n", strings.Replace(obj.AddressFmt(order.Address), "\n", " ", -1))
+	c.Printf("Ordering dominos for %s to %s\n\n", order.ServiceMethod, strings.Replace(obj.AddressFmt(order.Address), "\n", " ", -1))
 
 	if c.logonly {
 		log.Println("logging order:", dawg.OrderToJSON(order))
@@ -356,6 +356,8 @@ func (c *orderCmd) Run(cmd *cobra.Command, args []string) (err error) {
 	}
 
 	c.Printf("sending order '%s'...\n", order.Name())
+	// TODO: save the order id as a traced order and give it a timeout of
+	// an hour or two.
 	err = order.PlaceOrder()
 	// logging happens after so any data from placeorder is included
 	log.Println("sending order:", dawg.OrderToJSON(order))

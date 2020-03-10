@@ -22,6 +22,14 @@ import (
 )
 
 func main() {
+	// TODO:
+	// Make the config dir movable
+	//
+	// config_dir := os.Getenv("APIZZA_CONFIG")
+	// if config_dir == "" {
+	// 		config_dir = ".apizza"
+	// }
+	// cmd.Execute(os.Args[1:], config_dir)
 	err := cmd.Execute(os.Args[1:], ".apizza")
 	if err != nil {
 		errs.Handle(err.Err, err.Msg, err.Code)
