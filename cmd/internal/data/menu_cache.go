@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/gob"
 	"encoding/json"
-	"fmt"
+	"io"
 	"log"
 	"time"
 
@@ -26,49 +26,103 @@ func NewMenuCacher(
 	db cache.Storage,
 	store func() *dawg.Store,
 ) MenuCacher {
-	mc := &menuCache{
-		m:        nil,
-		db:       db,
-		getstore: store,
+	// use gob to cache the menu in binary format
+	return NewGobMenuCacher(decay, db, store)
+}
+
+func init() {
+	gob.Register([]interface{}{})
+}
+
+// Encoder is an interface that defines objects that
+// are able to Encode and interface.
+type Encoder interface {
+	Encode(interface{}) error
+}
+
+// Decoder is an inteface that defines objects
+// that can decode and inteface.
+type Decoder interface {
+	Decode(interface{}) error
+}
+
+type generalMenuCacher struct {
+	cache.Updater
+	m        *dawg.Menu
+	db       cache.Storage
+	getstore func() *dawg.Store
+
+	newEncoder func(io.Writer) Encoder
+	newDecoder func(io.Reader) Decoder
+}
+
+// NewJSONMenuCacher will create a new MenuCacher that stores the
+// menu as json.
+func NewJSONMenuCacher(
+	decay time.Duration,
+	db cache.Storage,
+	store func() *dawg.Store,
+) MenuCacher {
+	mc := &generalMenuCacher{
+		m:          nil,
+		db:         db,
+		getstore:   store,
+		newEncoder: func(w io.Writer) Encoder { return json.NewEncoder(w) },
+		newDecoder: func(r io.Reader) Decoder { return json.NewDecoder(r) },
 	}
 	mc.Updater = cache.NewUpdater(decay, mc.cacheNewMenu, mc.getCachedMenu)
 	return mc
 }
 
-type menuCache struct {
-	cache.Updater
-	m        *dawg.Menu
-	db       cache.Storage
-	getstore func() *dawg.Store
+// NewGobMenuCacher will create a MenuCacher that will store the menu
+// in a binary format using the "encoding/gob" package.
+func NewGobMenuCacher(
+	decay time.Duration,
+	db cache.Storage,
+	store func() *dawg.Store,
+) MenuCacher {
+	mc := &generalMenuCacher{
+		m:          nil,
+		db:         db,
+		getstore:   store,
+		newEncoder: func(w io.Writer) Encoder { return gob.NewEncoder(w) },
+		newDecoder: func(r io.Reader) Decoder { return gob.NewDecoder(r) },
+	}
+	mc.Updater = cache.NewUpdater(decay, mc.cacheNewMenu, mc.getCachedMenu)
+	return mc
 }
 
-func (mc *menuCache) Menu() *dawg.Menu {
+func (mc *generalMenuCacher) Menu() *dawg.Menu {
 	if mc.m != nil {
 		return mc.m
 	}
 	return nil
 }
 
-func (mc *menuCache) cacheNewMenu() error {
+func (mc *generalMenuCacher) cacheNewMenu() error {
 	var e1, e2 error
-	var raw []byte
 	mc.m, e1 = mc.getstore().Menu()
 	log.Println("caching another menu")
-	raw, e2 = json.Marshal(mc.m)
-	return errs.Append(e1, e2, mc.db.Put("menu", raw))
+
+	buf := &bytes.Buffer{}
+	e2 = mc.newEncoder(buf).Encode(mc.m)
+	return errs.Append(e1, e2, mc.db.Put("menu", buf.Bytes()))
 }
 
-func (mc *menuCache) getCachedMenu() error {
+func (mc *generalMenuCacher) getCachedMenu() error {
 	if mc.m == nil {
 		mc.m = new(dawg.Menu)
 		raw, err := mc.db.Get("menu")
 		if raw == nil {
 			return mc.cacheNewMenu()
 		}
-		err = errs.Pair(err, json.Unmarshal(raw, mc.m))
+
+		dec := mc.newDecoder(bytes.NewBuffer(raw))
+		err = errs.Pair(err, dec.Decode(mc.m))
 		if err != nil {
 			return err
 		}
+
 		if mc.m.ID != mc.getstore().ID {
 			return mc.cacheNewMenu()
 		}
@@ -76,57 +130,4 @@ func (mc *menuCache) getCachedMenu() error {
 	return nil
 }
 
-var _ MenuCacher = (*menuCache)(nil)
-
-// TODO: using the encoding/gob package to store the menu does not work
-// because some of the fields in the dawg.Menu struct have the 'item' struct
-// and it is not exported
-
-type binaryMenuCache struct {
-	cache.Updater
-	m        *dawg.Menu
-	db       cache.Storage
-	getstore func() *dawg.Store
-}
-
-func (bmc *binaryMenuCache) Menu() *dawg.Menu {
-	if bmc.m != nil {
-		return bmc.m
-	}
-	return nil
-}
-
-func (bmc *binaryMenuCache) cacheNewMenu() error {
-	var e1, e2 error
-	bmc.m, e1 = bmc.getstore().Menu()
-
-	log.Println("caching another menu")
-
-	buf := &bytes.Buffer{}
-	e2 = gob.NewEncoder(buf).Encode(&bmc.m)
-	fmt.Println(buf.String())
-
-	return errs.Append(e1, e2, bmc.db.Put("menu", buf.Bytes()))
-}
-
-func (bmc *binaryMenuCache) getCachedMenu() error {
-	if bmc.m == nil {
-		bmc.m = new(dawg.Menu)
-		raw, err := bmc.db.Get("menu")
-		if raw == nil {
-			return bmc.cacheNewMenu()
-		}
-
-		err = errs.Pair(err, gob.NewDecoder(bytes.NewBuffer(raw)).Decode(bmc.m))
-		if err != nil {
-			return err
-		}
-		fmt.Printf("%+v\n", bmc.m.Variants)
-		if bmc.m.ID != bmc.getstore().ID {
-			return bmc.cacheNewMenu()
-		}
-	}
-	return nil
-}
-
-var _ MenuCacher = (*binaryMenuCache)(nil)
+var _ MenuCacher = (*generalMenuCacher)(nil)
