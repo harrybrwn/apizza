@@ -42,7 +42,7 @@ type Menu struct {
 	Toppings      map[string]map[string]Topping
 	Preconfigured map[string]*PreConfiguredProduct `json:"PreconfiguredProducts"`
 	Sides         map[string]map[string]struct {
-		item
+		ItemCommon
 		Description string
 	}
 
@@ -137,7 +137,7 @@ func (m *Menu) ViewOptions(itm Item) map[string]string {
 // Note: this struct does not rempresent a topping that is added to an Item
 // and sent to dominos.
 type Topping struct {
-	item
+	ItemCommon
 
 	Description  string
 	Availability []interface{}

@@ -31,8 +31,8 @@ type Item interface {
 	Category() string
 }
 
-// item has the common fields between Product and Varient.
-type item struct {
+// ItemCommon has the common fields between Product and Varient.
+type ItemCommon struct {
 	Code string
 	Name string
 	Tags map[string]interface{}
@@ -44,11 +44,12 @@ type item struct {
 }
 
 // ItemCode is a getter method for the Code field.
-func (im *item) ItemCode() string {
+func (im *ItemCommon) ItemCode() string {
 	return im.Code
 }
 
-func (im *item) ItemName() string {
+// ItemName gives the name of the item
+func (im *ItemCommon) ItemName() string {
 	return im.Name
 }
 
@@ -60,7 +61,7 @@ func (im *item) ItemName() string {
 // a category that houses a list of Variants.
 // All exported field are initialized from json data.
 type Product struct {
-	item
+	ItemCommon
 
 	// Variants is the list of menu items that are a subset of this product.
 	Variants []string
@@ -156,7 +157,7 @@ func (p *Product) optionQtys() (optqtys []string) {
 // Variant is a structure that represents a base component of the Dominos menu.
 // It will be a subset of a Product (see Product).
 type Variant struct {
-	item
+	ItemCommon
 
 	// the price of the variant.
 	Price string
@@ -241,7 +242,7 @@ func (v *Variant) FindProduct(m *Menu) *Product {
 
 // PreConfiguredProduct is pre-configured product.
 type PreConfiguredProduct struct {
-	item
+	ItemCommon
 
 	// Description of the product
 	Description string `json:"Description"`

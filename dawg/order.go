@@ -246,7 +246,7 @@ type priceingData struct {
 // OrderProduct represents an item that will be sent to and from dominos within
 // the Order struct.
 type OrderProduct struct {
-	item
+	ItemCommon
 
 	// Qty is the number of products to be ordered.
 	Qty int `json:"Qty"`
@@ -265,7 +265,7 @@ type OrderProduct struct {
 // OrderProductFromItem will construct an order product from an Item.
 func OrderProductFromItem(itm Item) *OrderProduct {
 	return &OrderProduct{
-		item: item{
+		ItemCommon: ItemCommon{
 			Code: itm.ItemCode(),
 			Name: itm.ItemName(),
 		},

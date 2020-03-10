@@ -39,7 +39,7 @@ func TestGetOrderPrice(t *testing.T) {
 		StoreID: "4336", Payments: []*orderPayment{&orderPayment{}}, OrderID: "",
 		Products: []*OrderProduct{
 			&OrderProduct{
-				item: item{
+				ItemCommon: ItemCommon{
 					Code: "12SCREEN",
 				},
 				Opts: map[string]interface{}{
