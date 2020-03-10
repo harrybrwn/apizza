@@ -80,7 +80,7 @@ def compile_go(folder, oses):
             env=dict(os.environ, GOOS=goos)
         ).decode('utf-8').strip('\n')
 
-        file = f'{folder}/apizza-{goos}-amd64{ext}'
+        file = f'{folder}/apizza-{goos}{ext}'
         print('compiling', file)
         res = sp.run(
             ['go', 'build', '-o', file],

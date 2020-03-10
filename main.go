@@ -1,4 +1,4 @@
-// Copyright © 2019 Harrison Brown harrybrown98@gmail.com
+// Copyright © 2020 Harrison Brown harrybrown98@gmail.com
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,21 +16,25 @@ package main
 
 import (
 	"os"
+	fp "path/filepath"
 
 	"github.com/harrybrwn/apizza/cmd"
 	"github.com/harrybrwn/apizza/pkg/errs"
 )
 
+var xdgConfigHome = os.Getenv("XDG_CONFIG_HOME")
+
 func main() {
-	// TODO:
-	// Make the config dir movable
-	//
-	// config_dir := os.Getenv("APIZZA_CONFIG")
-	// if config_dir == "" {
-	// 		config_dir = ".apizza"
-	// }
-	// cmd.Execute(os.Args[1:], config_dir)
-	err := cmd.Execute(os.Args[1:], ".apizza")
+	configDir := os.Getenv("APIZZA_CONFIG")
+	if configDir == "" {
+		if xdgConfigHome != "" {
+			configDir = fp.Join(xdgConfigHome, "apizza")
+		} else {
+			configDir = ".config/apizza"
+		}
+	}
+
+	err := cmd.Execute(os.Args[1:], configDir)
 	if err != nil {
 		errs.Handle(err.Err, err.Msg, err.Code)
 	}

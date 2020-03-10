@@ -30,7 +30,7 @@ func GetDB(dbfile string) (db *DataBase, err error) {
 	if err != nil {
 		return nil, err
 	}
-	boltdb, err := bolt.Open(dbfile, 0777, nil)
+	boltdb, err := bolt.Open(dbfile, 0600, nil)
 	if err != nil {
 		return nil, err
 	}

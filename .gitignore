@@ -29,5 +29,6 @@ coverage.html
 /script/
 scripts/history.sh
 *.mp4
+*.swp
 
 scripts/github.sh

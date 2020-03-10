@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"strings"
 
 	"github.com/harrybrwn/apizza/pkg/errs"
 	homedir "github.com/mitchellh/go-homedir"
@@ -218,6 +219,9 @@ func getdir(fname string) string {
 	home, err := homedir.Dir()
 	if err != nil {
 		panic(err)
+	}
+	if strings.Contains(fname, home) {
+		return fname
 	}
 	return filepath.Join(home, fname)
 }
