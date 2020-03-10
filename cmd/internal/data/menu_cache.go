@@ -1,7 +1,10 @@
 package data
 
 import (
+	"bytes"
+	"encoding/gob"
 	"encoding/json"
+	"fmt"
 	"log"
 	"time"
 
@@ -74,3 +77,56 @@ func (mc *menuCache) getCachedMenu() error {
 }
 
 var _ MenuCacher = (*menuCache)(nil)
+
+// TODO: using the encoding/gob package to store the menu does not work
+// because some of the fields in the dawg.Menu struct have the 'item' struct
+// and it is not exported
+
+type binaryMenuCache struct {
+	cache.Updater
+	m        *dawg.Menu
+	db       cache.Storage
+	getstore func() *dawg.Store
+}
+
+func (bmc *binaryMenuCache) Menu() *dawg.Menu {
+	if bmc.m != nil {
+		return bmc.m
+	}
+	return nil
+}
+
+func (bmc *binaryMenuCache) cacheNewMenu() error {
+	var e1, e2 error
+	bmc.m, e1 = bmc.getstore().Menu()
+
+	log.Println("caching another menu")
+
+	buf := &bytes.Buffer{}
+	e2 = gob.NewEncoder(buf).Encode(&bmc.m)
+	fmt.Println(buf.String())
+
+	return errs.Append(e1, e2, bmc.db.Put("menu", buf.Bytes()))
+}
+
+func (bmc *binaryMenuCache) getCachedMenu() error {
+	if bmc.m == nil {
+		bmc.m = new(dawg.Menu)
+		raw, err := bmc.db.Get("menu")
+		if raw == nil {
+			return bmc.cacheNewMenu()
+		}
+
+		err = errs.Pair(err, gob.NewDecoder(bytes.NewBuffer(raw)).Decode(bmc.m))
+		if err != nil {
+			return err
+		}
+		fmt.Printf("%+v\n", bmc.m.Variants)
+		if bmc.m.ID != bmc.getstore().ID {
+			return bmc.cacheNewMenu()
+		}
+	}
+	return nil
+}
+
+var _ MenuCacher = (*binaryMenuCache)(nil)
