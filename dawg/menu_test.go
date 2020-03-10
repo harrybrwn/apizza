@@ -2,6 +2,8 @@ package dawg
 
 import (
 	"bytes"
+	"encoding/gob"
+	"os"
 	"testing"
 )
 
@@ -170,12 +172,78 @@ func TestTranslateOpt(t *testing.T) {
 	}
 }
 
+var testmenu = testingMenu()
+
 func TestPrintMenu(t *testing.T) {
-	m := testingMenu()
+	m := testmenu
 	buf := new(bytes.Buffer)
 
 	m.Print(buf)
 	if buf.Len() == 0 {
 		t.Error("should not have a zero length printout")
+	}
+}
+
+func TestMenuStorage(t *testing.T) {
+	check := func(e error) {
+		if e != nil {
+			t.Error(e)
+		}
+	}
+	m := testmenu
+	fname := "/tmp/apizza-binary-menu"
+	buf := &bytes.Buffer{}
+	gob.Register([]interface{}{})
+	err := gob.NewEncoder(buf).Encode(m)
+	if err != nil {
+		t.Fatal("gob encoding error:", err)
+	}
+
+	f, err := os.Create(fname)
+	check(err)
+	_, err = f.Write(buf.Bytes())
+	check(err)
+	check(f.Close())
+	file, err := os.Open(fname)
+	check(err)
+	menu := Menu{}
+	err = gob.NewDecoder(file).Decode(&menu)
+	if err != nil {
+		t.Fatal(err)
+	}
+	file.Close()
+
+	if menu.ID != m.ID {
+		t.Error("wrong id")
+	}
+	if menu.Preconfigured == nil {
+		t.Fatal("should have decoded the Preconfigured products")
+	}
+
+	for k := range m.Preconfigured {
+		mp := m.Preconfigured[k]
+		menup := menu.Preconfigured[k]
+		if mp.Code != menup.Code {
+			t.Errorf("Stored wrong Code - got: %s, want: %s\n", menup.Code, mp.Code)
+		}
+		if mp.Opts != menup.Opts {
+			t.Errorf("Stored wrong opt - got: %s, want: %s\n", menup.Opts, mp.Opts)
+		}
+		if mp.Category() != menup.Category() {
+			t.Error("Stored wrong category")
+		}
+	}
+	for k := range m.Products {
+		mp := m.Products[k]
+		menup := menu.Products[k]
+		if mp.Code != menup.Code {
+			t.Errorf("Stored wrong product code - got: %s, want: %s\n", menup.Code, mp.Code)
+		}
+		if mp.DefaultSides != menup.DefaultSides {
+			t.Errorf("Stored wrong product DefaultSides - got: %s, want: %s\n", menup.DefaultSides, mp.DefaultSides)
+		}
+	}
+	if err = os.Remove(fname); err != nil {
+		t.Error(err)
 	}
 }
