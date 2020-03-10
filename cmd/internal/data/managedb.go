@@ -17,8 +17,8 @@ import (
 // OrderPrefix is the prefix added to user orders when stored in a database.
 const OrderPrefix = "user_order_"
 
-// NewDatabase make the default database.
-func NewDatabase() (*cache.DataBase, error) {
+// OpenDatabase make the default database.
+func OpenDatabase() (*cache.DataBase, error) {
 	dbPath := filepath.Join(config.Folder(), "cache", "apizza.db")
 	return cache.GetDB(dbPath)
 }

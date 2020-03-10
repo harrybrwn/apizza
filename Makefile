@@ -1,6 +1,8 @@
 COVER=go tool cover
 
-all: install
+test: coverage.txt test-build
+	bash scripts/integration.sh ./bin/apizza
+	@[ -d bin ] && rm -rf bin
 
 install:
 	go install github.com/harrybrwn/apizza
@@ -13,10 +15,6 @@ build:
 
 release:
 	scripts/release build
-
-test: coverage.txt test-build
-	bash scripts/integration.sh ./bin/apizza
-	@[ -d bin ] && rm -rf bin
 
 test-build:
 	go build -o bin/apizza -ldflags "-X cmd.enableLog=false"

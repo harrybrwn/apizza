@@ -75,7 +75,7 @@ func (a *App) SetConfig(dir string) error {
 
 // InitDB for the app.
 func (a *App) InitDB() (err error) {
-	a.db, err = data.NewDatabase()
+	a.db, err = data.OpenDatabase()
 	return
 }
 

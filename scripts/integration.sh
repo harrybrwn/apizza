@@ -39,10 +39,10 @@ $bin cart shouldnotbeincart &> /dev/null
 shouldfail $?
 
 if [[ $TRAVIS_OS_NAME = "windows" ]]; then
-    default_config="C:\\Users\\travis\\.apizza"
+    default_config="C:\\Users\\travis\\.config\\apizza"
     default_configfile="$default_config\\config.json"
 else
-    default_config="$HOME/.apizza"
+    default_config="$HOME/.config/apizza"
     default_configfile="$default_config/config.json"
 fi
 
