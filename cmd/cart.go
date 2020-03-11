@@ -108,10 +108,10 @@ func (c *cartCmd) Run(cmd *cobra.Command, args []string) (err error) {
 	}
 
 	if len(c.add) > 0 {
-		if c.product == "" {
-			return errors.New("what product are these toppings being added to")
-		}
 		if c.topping {
+			if c.product == "" {
+				return errors.New("what product are these toppings being added to")
+			}
 			for _, top := range c.add {
 				p := getOrderItem(order, c.product)
 				if p == nil {
