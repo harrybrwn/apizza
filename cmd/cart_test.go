@@ -13,7 +13,7 @@ import (
 
 func testOrderNew(t *testing.T, buf *bytes.Buffer, cmds ...cli.CliCommand) {
 	cart, add := cmds[0], cmds[1]
-	add.Cmd().ParseFlags([]string{"--name=testorder", "--products=12SCMEATZA"})
+	add.Cmd().ParseFlags([]string{"--name=testorder", "--product=12SCMEATZA"})
 	err := add.Run(add.Cmd(), []string{})
 	if err != nil {
 		t.Error(err)

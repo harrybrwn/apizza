@@ -108,6 +108,9 @@ func (c *cartCmd) Run(cmd *cobra.Command, args []string) (err error) {
 	}
 
 	if len(c.add) > 0 {
+		if c.product == "" {
+			return errors.New("what product are these toppings being added to")
+		}
 		if c.topping {
 			for _, top := range c.add {
 				p := getOrderItem(order, c.product)
@@ -128,7 +131,10 @@ func (c *cartCmd) Run(cmd *cobra.Command, args []string) (err error) {
 			var itm dawg.Item
 			for _, newP := range c.add {
 				itm, err = menu.GetVariant(newP)
-				err = errs.Pair(err, order.AddProduct(itm))
+				if err != nil {
+					return err
+				}
+				err = order.AddProduct(itm)
 				if err != nil {
 					return err
 				}
@@ -253,7 +259,6 @@ type addOrderCmd struct {
 	db *cache.DataBase
 
 	name     string
-	products []string
 	product  string
 	toppings []string
 }
@@ -291,15 +296,14 @@ func (c *addOrderCmd) Run(cmd *cobra.Command, args []string) (err error) {
 }
 
 func newAddOrderCmd(b cli.Builder) cli.CliCommand {
-	c := &addOrderCmd{name: "", products: []string{}}
+	c := &addOrderCmd{name: "", product: ""}
 	c.CliCommand = b.Build("new <new order name>",
 		"Create a new order that will be stored in the cart.", c)
 	c.db = b.DB()
 	c.StoreFinder = client.NewStoreGetter(b)
 
 	c.Flags().StringVarP(&c.name, "name", "n", c.name, "set the name of a new order")
-	c.Flags().StringSliceVarP(&c.products, "products", "p", c.products, "product codes for the new order")
-	c.Flags().StringVarP(&c.product, "products", "p", c.product, "product codes for the new order")
+	c.Flags().StringVarP(&c.product, "product", "p", c.product, "product codes for the new order")
 	c.Flags().StringSliceVarP(&c.toppings, "toppings", "t", c.toppings, "toppings for the products being added")
 	return c
 }
