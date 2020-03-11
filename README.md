@@ -51,7 +51,7 @@ apizza config --edit
 ### Cart
 To save a new order, use `apizza cart new`
 ```bash
-apizza cart new 'testorder' --products=16SCREEN,2LCOKE
+apizza cart new 'testorder' --product=16SCREEN --toppings=P,C,X # pepperoni, cheese, sause
 ```
 `apizza cart` is the command the shows all the saved orders.
 

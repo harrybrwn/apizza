@@ -254,6 +254,7 @@ type addOrderCmd struct {
 
 	name     string
 	products []string
+	product  string
 	toppings []string
 }
 
@@ -269,19 +270,19 @@ func (c *addOrderCmd) Run(cmd *cobra.Command, args []string) (err error) {
 		order.SetName(c.name)
 	}
 
-	if len(c.products) > 0 {
-		for i, p := range c.products {
-			prod, err := c.Store().GetVariant(p)
+	if c.product != "" {
+		prod, err := c.Store().GetVariant(c.product)
+		if err != nil {
+			return err
+		}
+		for _, t := range c.toppings {
+			err = prod.AddTopping(t, dawg.ToppingFull, "1.0")
 			if err != nil {
 				return err
 			}
-			if i < len(c.toppings) {
-				err = prod.AddTopping(c.toppings[i], dawg.ToppingFull, "1.0")
-				if err != nil {
-					return err
-				}
-			}
-			order.AddProduct(prod)
+		}
+		if err = order.AddProduct(prod); err != nil {
+			return err
 		}
 	} else if len(c.toppings) > 0 {
 		return errors.New("cannot add just a toppings without products")
@@ -298,6 +299,7 @@ func newAddOrderCmd(b cli.Builder) cli.CliCommand {
 
 	c.Flags().StringVarP(&c.name, "name", "n", c.name, "set the name of a new order")
 	c.Flags().StringSliceVarP(&c.products, "products", "p", c.products, "product codes for the new order")
+	c.Flags().StringVarP(&c.product, "products", "p", c.product, "product codes for the new order")
 	c.Flags().StringSliceVarP(&c.toppings, "toppings", "t", c.toppings, "toppings for the products being added")
 	return c
 }
