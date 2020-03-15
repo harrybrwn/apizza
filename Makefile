@@ -30,4 +30,6 @@ clean:
 	$(RM) -r release bin
 	go clean -testcache
 
+all: test build release
+
 .PHONY: install test clean html release
