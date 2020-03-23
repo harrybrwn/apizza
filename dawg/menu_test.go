@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/gob"
 	"os"
+	"path/filepath"
 	"testing"
 )
 
@@ -52,13 +53,13 @@ func TestItems(t *testing.T) {
 	for _, tc := range testcases {
 		p, err := menu.GetProduct(tc.product)
 		if tc.wanterr && err == nil {
-			t.Error("expected error")
+			t.Errorf("expected error from menu.GetProduct(%s)", tc.product)
 		} else if err != nil {
 			t.Error(err)
 		}
 		v, err := menu.GetVariant(tc.variant)
 		if tc.wanterr && err == nil {
-			t.Error("expected error")
+			t.Errorf("expected error from menu.GetVariant(%s)", tc.variant)
 		} else if err != nil {
 			t.Error(err)
 		}
@@ -156,7 +157,7 @@ func TestTranslateOpt(t *testing.T) {
 		"what": "no",
 	}
 	if translateOpt(opts) != "what no" {
-		t.Error("wrong output")
+		t.Error("wrong outputed option translation")
 	}
 	opt := map[string]string{
 		ToppingRight: "9.0",
@@ -168,7 +169,7 @@ func TestTranslateOpt(t *testing.T) {
 		ToppingLeft: "5.5",
 	}
 	if translateOpt(opt) != "left 5.5" {
-		t.Error("wrong")
+		t.Error("wrong option translation")
 	}
 }
 
@@ -191,7 +192,7 @@ func TestMenuStorage(t *testing.T) {
 		}
 	}
 	m := testmenu
-	fname := "/tmp/apizza-binary-menu"
+	fname := filepath.Join(os.TempDir(), "apizza-binary-menu")
 	buf := &bytes.Buffer{}
 	gob.Register([]interface{}{})
 	err := gob.NewEncoder(buf).Encode(m)

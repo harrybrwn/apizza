@@ -17,6 +17,8 @@ const (
 	// Carryout is a dominos service method that
 	// will require users to go and pickup their pizza.
 	Carryout = "Carryout"
+
+	profileEndpoint = "/power/store/%s/profile"
 )
 
 // ErrBadService is returned if a service is needed but the service validation failed.
@@ -57,7 +59,7 @@ func NewStore(id string, service string, addr Address) (*Store, error) {
 // Use type '*map[string]interface{}' in the object argument for all the
 // store data
 func InitStore(id string, obj interface{}) error {
-	path := fmt.Sprintf("/power/store/%s/profile", id)
+	path := fmt.Sprintf(profileEndpoint, id)
 	b, err := orderClient.get(path, nil)
 	if err != nil {
 		return err
@@ -74,7 +76,7 @@ var orderClient = &client{
 }
 
 func initStore(cli *client, id string, store *Store) error {
-	path := fmt.Sprintf("/power/store/%s/profile", id)
+	path := fmt.Sprintf(profileEndpoint, id)
 	b, err := cli.get(path, nil)
 	if err != nil {
 		return err
@@ -96,7 +98,7 @@ type maybeStore struct {
 
 func (sb *storebuilder) initStore(cli *client, id string, index int) {
 	defer sb.Done()
-	path := fmt.Sprintf("/power/store/%s/profile", id)
+	path := fmt.Sprintf(profileEndpoint, id)
 	store := &Store{}
 
 	b, err := cli.get(path, nil)
