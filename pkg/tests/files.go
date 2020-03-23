@@ -38,7 +38,7 @@ func WithTempFile(test func(string, *testing.T)) func(*testing.T) {
 // TempDir returns a temporary directory.
 func TempDir() string {
 	dir := randFile(os.TempDir(), "", "")
-	if err := os.Mkdir(dir, 0777); err != nil {
+	if err := os.Mkdir(dir, 0755); err != nil {
 		return ""
 	}
 	return dir
