@@ -154,7 +154,12 @@ func TestAuth(t *testing.T) {
 		t.Error("no access token")
 	}
 
-	user, err := auth.login()
+	var user *UserProfile
+	if testUser == nil {
+		testUser, err = auth.login()
+	}
+	user = testUser
+
 	if err != nil {
 		t.Error(err)
 	}
@@ -278,7 +283,7 @@ func TestSignIn(t *testing.T) {
 	}
 	defer swapclient(10)()
 
-	user, err := SignIn(username, password)
+	user, err := getTestUser(username, password)
 	if err != nil {
 		t.Error(err)
 	}

@@ -18,9 +18,6 @@ func TestUserNearestStore(t *testing.T) {
 	if user == nil {
 		t.Fatal("user is nil")
 	}
-	if user.store != nil {
-		t.Error("we should wait for the user to initialize this")
-	}
 	user.Addresses = []*UserAddress{}
 	if user.DefaultAddress() != nil {
 		t.Error("we just set this to an empty array, why is it not so")
