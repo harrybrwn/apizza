@@ -84,7 +84,12 @@ func (c *cartCmd) Run(cmd *cobra.Command, args []string) (err error) {
 
 	if c.validate {
 		c.Printf("validating order '%s'...\n", order.Name())
-		return onlyFailures(order.Validate())
+		err = onlyFailures(order.Validate())
+		if err != nil {
+			return err
+		}
+		c.Println("Order is ok.")
+		return nil
 	}
 
 	if len(c.remove) > 0 {
@@ -218,8 +223,7 @@ func NewCartCmd(b cli.Builder) cli.CliCommand {
 	c.Cmd().Long = `The cart command gets information on all of the user
 created orders.`
 
-	c.Cmd().PersistentPreRunE = c.persistentPreRunE
-	// c.Cmd().PreRunE = c.preRun
+	c.Cmd().PreRunE = c.preRunE
 
 	c.Flags().BoolVar(&c.validate, "validate", c.validate, "send an order to the dominos order-validation endpoint.")
 	c.Flags().BoolVar(&c.price, "price", c.price, "show to price of an order")
@@ -235,14 +239,10 @@ created orders.`
 	return c
 }
 
-func (c *cartCmd) persistentPreRunE(cmd *cobra.Command, args []string) error {
+func (c *cartCmd) preRunE(cmd *cobra.Command, args []string) error {
 	if len(args) > 1 {
 		return errors.New("cannot handle multiple orders")
 	}
-	return nil
-}
-
-func (c *cartCmd) preRun(cmd *cobra.Command, args []string) error {
 	return nil
 }
 

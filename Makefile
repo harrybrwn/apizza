@@ -1,8 +1,9 @@
 COVER=go tool cover
 
-test: coverage.txt test-build
+test: test-build
+	go test ./...
 	bash scripts/integration.sh ./bin/apizza
-	@[ -d bin ] && rm -rf bin
+	@[ -d ./bin ] && [ -x ./bin/apizza ] && rm -rf ./bin
 
 install:
 	go install github.com/harrybrwn/apizza
@@ -20,7 +21,8 @@ test-build:
 	go build -o bin/apizza -ldflags "-X cmd.enableLog=false"
 
 coverage.txt:
-	bash scripts/test.sh
+	@ echo '' > coverage.txt
+	go test -v ./... -coverprofile=coverage.txt -covermode=atomic
 
 html: coverage.txt
 	$(COVER) -html=$<
