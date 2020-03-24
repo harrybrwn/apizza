@@ -42,8 +42,7 @@ type cartCmd struct {
 	client.StoreFinder
 	db *cache.DataBase
 
-	updateAddr bool
-	validate   bool
+	validate bool
 
 	price   bool
 	delete  bool
@@ -86,10 +85,6 @@ func (c *cartCmd) Run(cmd *cobra.Command, args []string) (err error) {
 	if c.validate {
 		c.Printf("validating order '%s'...\n", order.Name())
 		return onlyFailures(order.Validate())
-	}
-
-	if c.updateAddr {
-		return c.syncWithConfig(order)
 	}
 
 	if len(c.remove) > 0 {
@@ -226,7 +221,6 @@ created orders.`
 	c.Cmd().PersistentPreRunE = c.persistentPreRunE
 	// c.Cmd().PreRunE = c.preRun
 
-	c.Flags().BoolVar(&c.updateAddr, "update-address", c.updateAddr, "update the address of an order in accordance with the address in the config file.")
 	c.Flags().BoolVar(&c.validate, "validate", c.validate, "send an order to the dominos order-validation endpoint.")
 
 	c.Flags().BoolVar(&c.price, "price", c.price, "show to price of an order")
@@ -323,7 +317,8 @@ type orderCmd struct {
 	number       string
 	expiration   string
 
-	logonly bool
+	logonly    bool
+	getaddress func() dawg.Address
 }
 
 func (c *orderCmd) Run(cmd *cobra.Command, args []string) (err error) {
@@ -355,6 +350,7 @@ func (c *orderCmd) Run(cmd *cobra.Command, args []string) (err error) {
 	}
 	order.Email = eitherOr(c.email, config.GetString("email"))
 	order.Phone = eitherOr(c.phone, config.GetString("phone"))
+	order.Address = dawg.StreetAddrFromAddress(c.getaddress())
 
 	c.Printf("Ordering dominos for %s to %s\n\n", order.ServiceMethod, strings.Replace(obj.AddressFmt(order.Address), "\n", " ", -1))
 
@@ -399,7 +395,10 @@ func eitherOr(s1, s2 string) string {
 
 // NewOrderCmd creates a new order command.
 func NewOrderCmd(b cli.Builder) cli.CliCommand {
-	c := &orderCmd{verbose: false}
+	c := &orderCmd{
+		verbose:    false,
+		getaddress: b.Address,
+	}
 	c.CliCommand = b.Build("order", "Send an order from the cart to dominos.", c)
 	c.db = b.DB()
 	c.Cmd().Long = `The order command is the final destination for an order. This is where

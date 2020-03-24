@@ -81,12 +81,10 @@ func testOrderRunAdd(t *testing.T, buf *bytes.Buffer, cmds ...cli.CliCommand) {
 
 func testOrderPriceOutput(cart *cartCmd, buf *bytes.Buffer, t *testing.T) {
 	cart.price = true
-	cart.updateAddr = true
 
 	if err := cart.Run(cart.Cmd(), []string{"testorder"}); err != nil {
 		t.Error(err)
 	}
-	cart.updateAddr = false
 	if err := cart.Run(cart.Cmd(), []string{"to-many", "args"}); err == nil {
 		t.Error("expected error")
 	}
