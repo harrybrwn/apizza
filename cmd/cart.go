@@ -43,10 +43,9 @@ type cartCmd struct {
 	db *cache.DataBase
 
 	validate bool
-
-	price   bool
-	delete  bool
-	verbose bool
+	price    bool
+	delete   bool
+	verbose  bool
 
 	add     []string
 	remove  string // yes, you can only remove one thing at a time
@@ -81,6 +80,7 @@ func (c *cartCmd) Run(cmd *cobra.Command, args []string) (err error) {
 	if order, err = data.GetOrder(name, c.db); err != nil {
 		return err
 	}
+	order.Address = dawg.StreetAddrFromAddress(c.Address())
 
 	if c.validate {
 		c.Printf("validating order '%s'...\n", order.Name())
@@ -222,7 +222,6 @@ created orders.`
 	// c.Cmd().PreRunE = c.preRun
 
 	c.Flags().BoolVar(&c.validate, "validate", c.validate, "send an order to the dominos order-validation endpoint.")
-
 	c.Flags().BoolVar(&c.price, "price", c.price, "show to price of an order")
 	c.Flags().BoolVarP(&c.delete, "delete", "d", c.delete, "delete the order from the database")
 

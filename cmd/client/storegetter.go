@@ -10,7 +10,11 @@ import (
 // StoreFinder is a mixin that allows for efficient caching and retrival of
 // store structs.
 type StoreFinder interface {
+	// Store will return a dominos store
 	Store() *dawg.Store
+
+	// Address() will return the address of the delivery location NOT the store address.
+	Addresser
 }
 
 // storegetter is meant to be a mixin for any struct that needs to be able to
@@ -54,4 +58,8 @@ func (s *storegetter) Store() *dawg.Store {
 		}
 	}
 	return s.dstore
+}
+
+func (s *storegetter) Address() dawg.Address {
+	return s.getaddr()
 }
