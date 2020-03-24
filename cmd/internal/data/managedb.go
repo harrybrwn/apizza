@@ -23,6 +23,17 @@ func OpenDatabase() (*cache.DataBase, error) {
 	return cache.GetDB(dbPath)
 }
 
+// ListOrders will return a list of orders stored in the database.
+func ListOrders(db cache.MapDB) (names []string) {
+	all, _ := db.Map()
+	for key := range all {
+		if strings.Contains(key, OrderPrefix) {
+			names = append(names, strings.Replace(key, OrderPrefix, "", -1))
+		}
+	}
+	return
+}
+
 // PrintOrders will print all the names of the saved user orders
 func PrintOrders(db cache.MapDB, w io.Writer, verbose bool) error {
 	all, err := db.Map()

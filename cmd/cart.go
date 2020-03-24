@@ -220,10 +220,12 @@ func NewCartCmd(b cli.Builder) cli.CliCommand {
 
 	c.MenuCacher = data.NewMenuCacher(menuUpdateTime, b.DB(), c.Store)
 	c.CliCommand = b.Build("cart <order name>", "Manage user created orders", c)
-	c.Cmd().Long = `The cart command gets information on all of the user
+	cmd := c.Cmd()
+
+	cmd.Long = `The cart command gets information on all of the user
 created orders.`
 
-	c.Cmd().PreRunE = c.preRunE
+	cmd.PreRunE = cartPreRun(c.db)
 
 	c.Flags().BoolVar(&c.validate, "validate", c.validate, "send an order to the dominos order-validation endpoint.")
 	c.Flags().BoolVar(&c.price, "price", c.price, "show to price of an order")
@@ -239,11 +241,13 @@ created orders.`
 	return c
 }
 
-func (c *cartCmd) preRunE(cmd *cobra.Command, args []string) error {
-	if len(args) > 1 {
-		return errors.New("cannot handle multiple orders")
+func cartPreRun(db cache.MapDB) func(cmd *cobra.Command, args []string) error {
+	return func(cmd *cobra.Command, args []string) error {
+		if len(args) > 1 {
+			return errors.New("cannot handle multiple orders")
+		}
+		return nil
 	}
-	return nil
 }
 
 // `apizza cart new` command
@@ -407,6 +411,8 @@ The --cvv flag must be specified, and the config file will never store the
 cvv. In addition to keeping the cvv safe, payment information will never be
 stored the program cache with orders.
 `
+	c.Cmd().PreRunE = cartPreRun(c.db)
+
 	flags := c.Cmd().Flags()
 	flags.BoolVarP(&c.verbose, "verbose", "v", c.verbose, "output the order command verbosly")
 
