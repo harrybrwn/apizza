@@ -39,7 +39,7 @@ func parse(raw []byte) ([][]byte, error) {
 	if len(res) > 0 {
 		return res[0], nil
 	}
-	return nil, errors.New("address parsing error")
+	return nil, errors.New("could not parse address string")
 }
 
 // Address is a guid for how addresses should be used as input

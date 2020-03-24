@@ -1,6 +1,9 @@
 package obj
 
 import (
+	"bytes"
+	"encoding/gob"
+	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -84,6 +87,24 @@ func AddressFmtIndent(a dawg.Address, l int) string {
 
 func (a Address) String() string {
 	return AddressFmt(&a)
+}
+
+// AsGob converts the Address into a binary format using the gob package.
+func AsGob(a *Address) ([]byte, error) {
+	buf := &bytes.Buffer{}
+	err := gob.NewEncoder(buf).Encode(a)
+	return buf.Bytes(), err
+}
+
+// FromGob will create a new address from binary data encoded using the gob package.
+func FromGob(raw []byte) (*Address, error) {
+	a := &Address{}
+	return a, gob.NewDecoder(bytes.NewReader(raw)).Decode(a)
+}
+
+// AsJSON converts the Address to json format.
+func AsJSON(a *Address) ([]byte, error) {
+	return json.Marshal(a)
 }
 
 // AddrIsEmpty will tell if an address is empty.

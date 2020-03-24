@@ -35,6 +35,7 @@ import (
 	"github.com/harrybrwn/apizza/pkg/errs"
 )
 
+// `apizza cart`
 type cartCmd struct {
 	cli.CliCommand
 	data.MenuCacher
@@ -252,7 +253,7 @@ func (c *cartCmd) preRun(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-// `cart new` command
+// `apizza cart new` command
 type addOrderCmd struct {
 	cli.CliCommand
 	client.StoreFinder
@@ -308,6 +309,7 @@ func newAddOrderCmd(b cli.Builder) cli.CliCommand {
 	return c
 }
 
+// `apizza order`
 type orderCmd struct {
 	cli.CliCommand
 	db *cache.DataBase
@@ -345,8 +347,12 @@ func (c *orderCmd) Run(cmd *cobra.Command, args []string) (err error) {
 		c.cvv))
 
 	names := strings.Split(config.GetString("name"), " ")
-	order.FirstName = eitherOr(c.fname, names[0])
-	order.LastName = eitherOr(c.lname, strings.Join(names[1:], " "))
+	if len(names) >= 1 {
+		order.FirstName = eitherOr(c.fname, names[0])
+	}
+	if len(names) >= 2 {
+		order.LastName = eitherOr(c.lname, strings.Join(names[1:], " "))
+	}
 	order.Email = eitherOr(c.email, config.GetString("email"))
 	order.Phone = eitherOr(c.phone, config.GetString("phone"))
 

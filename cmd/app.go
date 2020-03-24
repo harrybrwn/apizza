@@ -177,11 +177,25 @@ func (a *App) prerun(*cobra.Command, []string) (err error) {
 	}
 	var e error
 	if a.gOpts.Address != "" {
-		parsed, err := dawg.ParseAddress(a.gOpts.Address)
-		if err != nil {
-			return err
+		// First look in the database as if the flag was a named address.
+		// Else check if the flag is a parsable address.
+		if a.db.WithBucket("addresses").Exists(a.gOpts.Address) {
+			raw, err := a.db.WithBucket("addresses").Get(a.gOpts.Address)
+			if err != nil {
+				return err
+			}
+			newaddr, err := obj.FromGob(raw)
+			if err != nil {
+				return err
+			}
+			a.addr = newaddr
+		} else {
+			parsed, err := dawg.ParseAddress(a.gOpts.Address)
+			if err != nil {
+				return err
+			}
+			a.addr = obj.FromAddress(parsed)
 		}
-		a.conf.Address = *obj.FromAddress(parsed)
 	}
 
 	if a.gOpts.Service != "" {
