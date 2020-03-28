@@ -10,7 +10,7 @@ import (
 // The Order struct is the main work horse of the api wrapper. The Order struct
 // is what will end up being sent to dominos as a json object.
 //
-// It is suggensted that the order object be constructed from the Store.NewOrder
+// It is suggested that the order object be constructed from the Store.NewOrder
 // method.
 type Order struct {
 	// LanguageCode is an ISO international language code.
@@ -36,13 +36,13 @@ type Order struct {
 }
 
 // InitOrder will make sure that an order is initialized correctly. An order
-// that is not initialized correctly cannot send itslef to dominos.
+// that is not initialized correctly cannot send itself to dominos.
 func InitOrder(o *Order) {
 	o.cli = orderClient
 }
 
 // Init will make sure that an order is initialized correctly. An order
-// that is not initialized correctly cannot send itslef to dominos.
+// that is not initialized correctly cannot send itself to dominos.
 func (o *Order) Init() {
 	o.cli = orderClient
 }
@@ -108,7 +108,7 @@ func (o *Order) RemoveProduct(code string) error {
 
 // AddPayment adds a payment object to an order
 //
-// Depricated. use AddCard
+// Deprecated. use AddCard
 func (o *Order) AddPayment(payment Payment) {
 	p := makeOrderPaymentFromCard(&payment)
 	o.Payments = append(o.Payments, p)
@@ -199,16 +199,16 @@ func (o *Order) raw() *bytes.Buffer {
 	return buf
 }
 
-func sendOrder(path string, ordr Order) error {
-	b, err := ordr.cli.post(path, nil, ordr.raw())
+func sendOrder(path string, order Order) error {
+	b, err := order.cli.post(path, nil, order.raw())
 	if err != nil {
 		return err
 	}
 	return dominosErr(b)
 }
 
-func orderRequest(path string, ordr *Order) (map[string]interface{}, error) {
-	b, err := ordr.cli.post(path, nil, ordr.raw())
+func orderRequest(path string, order *Order) (map[string]interface{}, error) {
+	b, err := order.cli.post(path, nil, order.raw())
 	respData := map[string]interface{}{}
 
 	if err := errpair(err, json.Unmarshal(b, &respData)); err != nil {
@@ -217,16 +217,16 @@ func orderRequest(path string, ordr *Order) (map[string]interface{}, error) {
 	return respData, dominosErr(b)
 }
 
-// does not take a pointer because ordr.Payments = nil should not be remembered
-func getOrderPrice(ordr Order) (map[string]interface{}, error) {
+// does not take a pointer because order.Payments = nil should not be remembered
+func getOrderPrice(order Order) (map[string]interface{}, error) {
 	// fmt.Println("deprecated... use getPricingData")
-	ordr.Payments = []*orderPayment{}
-	return orderRequest("/power/price-order", &ordr)
+	order.Payments = []*orderPayment{}
+	return orderRequest("/power/price-order", &order)
 }
 
-func getPricingData(ordr Order) (*priceingData, error) {
-	ordr.Payments = []*orderPayment{}
-	b, err := ordr.cli.post("/power/price-order", nil, ordr.raw())
+func getPricingData(order Order) (*priceingData, error) {
+	order.Payments = []*orderPayment{}
+	b, err := order.cli.post("/power/price-order", nil, order.raw())
 	resp := &priceingData{}
 	if err := errpair(err, json.Unmarshal(b, resp)); err != nil {
 		return nil, err
@@ -285,7 +285,7 @@ func (p *OrderProduct) Category() string {
 	return p.pType
 }
 
-// ReadableOptions gives the options that are meant for humas to view.
+// ReadableOptions gives the options that are meant for humans to view.
 func (p *OrderProduct) ReadableOptions() map[string]string {
 	if p.menu != nil { // this menu that is passed along with item is temporary
 		return ReadableToppings(p, p.menu)
@@ -295,7 +295,7 @@ func (p *OrderProduct) ReadableOptions() map[string]string {
 
 // AddTopping adds a topping to the product. The 'code' parameter is a
 // topping code, a list of which can be found in the menu object. The 'coverage'
-// parameter is for specifieing which side of the topping should be on for
+// parameter is for specifying which side of the topping should be on for
 // pizza. The 'amount' parameter is 2.0, 1.5, 1.0, o.5, or 0 and gives the amount
 // of topping should be given.
 func (p *OrderProduct) AddTopping(code, coverage, amount string) error {

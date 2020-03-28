@@ -47,6 +47,6 @@ var itemTmpl = `{{.ItemName}}
 
 var productTmpl = `    Description: {{.Description}}
   Variants: {{.Variants}}
-  Avalable sides: {{ if not .AvailableSides }}none{{else}}{{.AvailableSides}}{{end}}
-  Avalable toppings: {{ if not .AvailableToppings }}none{{else}}{{.AvailableToppings}}{{end}}
+  Available sides: {{ if not .AvailableSides }}none{{else}}{{.AvailableSides}}{{end}}
+  Available toppings: {{ if not .AvailableToppings }}none{{else}}{{.AvailableToppings}}{{end}}
 `

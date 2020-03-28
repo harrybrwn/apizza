@@ -16,7 +16,7 @@ type Putter interface {
 	Put(string, []byte) error
 }
 
-// Deleter is an interface that defines objectes that delete.
+// Deleter is an interface that defines objects that delete.
 type Deleter interface {
 	Delete(string) error
 }

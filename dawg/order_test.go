@@ -396,14 +396,14 @@ func TestOrderCalls(t *testing.T) {
 	o.Init()
 	err := sendOrder("/power/validate-order", *o)
 	if !IsFailure(err) || err == nil {
-		t.Error("expcted error")
+		t.Error("expected error")
 	}
 
 	o = new(Order)
 	InitOrder(o)
 	err = sendOrder("", *o)
 	if err == nil {
-		t.Error("expcted error")
+		t.Error("expected error")
 	}
 }
 

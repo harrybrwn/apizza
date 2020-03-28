@@ -34,7 +34,7 @@ func TestBadCreds(t *testing.T) {
 
 	tok, err = gettoken("5uup;hrg];ht8bijer$u9tot", "hurieahgr9[0249eingurivja")
 	if err == nil {
-		t.Error("wow i accidently cracked someone's password:", tok)
+		t.Error("wow i accidentally cracked someone's password:", tok)
 	}
 }
 
@@ -97,8 +97,8 @@ func TestToken(t *testing.T) {
 	if !ok {
 		t.Skip()
 	}
-	// swapclient is called first and the cleaup
-	// function it returns is defered.
+	// swapclient is called first and the cleanup
+	// function it returns is deferred.
 	defer swapclient(10)()
 
 	tok, err := gettoken(username, password)
@@ -111,7 +111,7 @@ func TestToken(t *testing.T) {
 		t.Fatal("nil token")
 	}
 	if len(tok.AccessToken) == 0 {
-		t.Error("didnt get a auth token")
+		t.Error("didn't get a auth token")
 	}
 	if !strings.HasPrefix(tok.authorization(), "Bearer ") {
 		t.Error("bad auth format")
@@ -142,10 +142,10 @@ func TestAuth(t *testing.T) {
 		t.Fatal("needs token")
 	}
 	if len(auth.username) == 0 {
-		t.Error("didnt save username")
+		t.Error("didn't save username")
 	}
 	if len(auth.password) == 0 {
-		t.Error("didnt save password")
+		t.Error("didn't save password")
 	}
 	if auth.cli == nil {
 		t.Fatal("needs to have client")
@@ -207,7 +207,7 @@ func TestAuth(t *testing.T) {
 	defer res.Body.Close()
 	authhead := res.Request.Header.Get("Authorization")
 	if authhead != auth.token.authorization() {
-		t.Error("store client didnt get the token")
+		t.Error("store client didn't get the token")
 	}
 	b, err := ioutil.ReadAll(res.Body)
 	if err != nil {
@@ -249,7 +249,7 @@ func TestAuth_Err(t *testing.T) {
 	a = &auth{
 		username: "not a",
 		password: "valid password",
-		token:    &token{}, // assume we alread have a token
+		token:    &token{}, // assume we already have a token
 		cli: &client{
 			host: "order.dominos.com",
 			Client: &http.Client{
@@ -269,7 +269,7 @@ func TestAuth_Err(t *testing.T) {
 	a.cli.host = "invalid_host.com"
 	user, err = a.login()
 	if err == nil {
-		t.Error("expedted an error")
+		t.Error("expected an error")
 	}
 	if user != nil {
 		t.Error("user should still be nil")
@@ -337,6 +337,6 @@ func TestAuthClient(t *testing.T) {
 		t.Error("wrong error message")
 	}
 	if IsOk(err) {
-		t.Error("this shouldnt happen")
+		t.Error("this shouldn't happen")
 	}
 }

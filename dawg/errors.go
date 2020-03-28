@@ -20,7 +20,7 @@ const (
 )
 
 var (
-	// Warnings is a package switch for turning warings on or off
+	// Warnings is a package switch for turning warnings on or off
 	Warnings = false
 
 	errCodes = map[int]string{
@@ -149,7 +149,7 @@ func isDominosErr(err error) (*DominosError, bool) {
 	return e, true
 }
 
-// because i want my errs.Pair function but i dont want to add it as a
+// because i want my errs.Pair function but I don't want to add it as a
 // dependency to the dawg package in case i ever want to separate them.
 func errpair(first, second error) error {
 	if first == nil || second == nil {

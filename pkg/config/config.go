@@ -135,7 +135,7 @@ func File() string {
 	return cfg.file
 }
 
-// FileHasChanged tells the config struct if the actuall file has been changed
+// FileHasChanged tells the config struct if the actual file has been changed
 // while the program has run and will not write the contents of the config struct
 // that is in memory.
 func FileHasChanged() {
@@ -226,7 +226,7 @@ func getdir(fname string) string {
 	return filepath.Join(home, fname)
 }
 
-func rightLable(key string, field reflect.StructField) bool {
+func rightLabel(key string, field reflect.StructField) bool {
 	if key == field.Name || key == field.Tag.Get("config") {
 		return true
 	}

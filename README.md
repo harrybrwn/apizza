@@ -1,9 +1,10 @@
 ![apizza logo](/docs/logo.png)
 
 [![Build Status](https://travis-ci.com/harrybrwn/apizza.svg?branch=master)](https://travis-ci.com/harrybrwn/apizza)
-[![GoDoc](https://godoc.org/github.com/github.com/harrybrwn/apizza/dawg?status.svg)](https://godoc.org/github.com/harrybrwn/apizza/dawg)
+[![GoDoc](https://godoc.org/github.com/github.com/harrybrwn/apizza/dawg?status.svg)](https://pkg.go.dev/github.com/harrybrwn/apizza/dawg?tab=doc)
 [![Go Report Card](https://goreportcard.com/badge/github.com/harrybrwn/apizza)](https://goreportcard.com/report/github.com/harrybrwn/apizza)
 [![codecov](https://codecov.io/gh/harrybrwn/apizza/branch/master/graph/badge.svg)](https://codecov.io/gh/harrybrwn/apizza)
+[![TODOs](https://badgen.net/https/api.tickgit.com/badgen/github.com/harrybrwn/apizza)](https://www.tickgit.com/browse?repo=github.com/harrybrwn/apizza)
 
 Dominos pizza from the command line.
 
@@ -14,7 +15,6 @@ Dominos pizza from the command line.
 	- [Config](#config)
 	- [Cart](#cart)
 	- [Menu](#menu)
-- [DAWG](#the-dominos-api-wrapper-for-go)
 
 ### Installation
 ```bash
@@ -23,7 +23,7 @@ go install github.com/harrybrwn/apizza
 ```
 
 ### Setup
-The most you have to do as a user in terms of setting up apizza is fill in the config variables. The only config variables that are manditory are "Address" and "Service" but the other config variables contain information that the Dominos website uses.
+The most you have to do as a user in terms of setting up apizza is fill in the config variables. The only config variables that are mandatory are "Address" and "Service" but the other config variables contain information that the Dominos website uses.
 
 > **Note**: The config file won't exist if apizza is not run at least once.
 
@@ -51,7 +51,7 @@ apizza config --edit
 ### Cart
 To save a new order, use `apizza cart new`
 ```bash
-apizza cart new 'testorder' --product=16SCREEN --toppings=P,C,X # pepperoni, cheese, sause
+apizza cart new 'testorder' --product=16SCREEN --toppings=P,C,X # pepperoni, cheese, sauce
 ```
 `apizza cart` is the command the shows all the saved orders.
 
@@ -74,7 +74,7 @@ Run `apizza menu` to print the dominos menu.
 
 The menu command will also give more detailed information when given arguments.
 
-The arugments can either be a product code or a category name.
+The arguments can either be a product code or a category name.
 ```bash
 apizza menu pizza      # show all the pizza
 apizza menu drinks     # show all the drinks
@@ -82,6 +82,6 @@ apizza menu 10SCEXTRAV # show details on 10SCEXTRAV
 ```
 To see the different menu categories, use the `--show-categories` flag. And to view the different toppings use the `--toppings` flag.
 
-### The [Domios API Wrapper for Go](/docs/dawg.md)
+### The [Dominos API Wrapper for Go](/docs/dawg.md)
 
 > **Credit**: Logo was made with [Logomakr](https://logomakr.com/).

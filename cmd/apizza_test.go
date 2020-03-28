@@ -94,9 +94,9 @@ func TestAppResetFlag(t *testing.T) {
 		t.Error(err)
 	}
 	if _, err := os.Stat(a.DB().Path()); os.IsExist(err) {
-		t.Error("database should not exitst")
+		t.Error("database should not exist")
 	} else if !os.IsNotExist(err) {
-		t.Error("database should not exitst")
+		t.Error("database should not exist")
 	}
 	r.Compare(t, fmt.Sprintf("removing %s\n", a.DB().Path()))
 	r.ClearBuf()

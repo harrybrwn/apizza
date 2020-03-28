@@ -31,7 +31,7 @@ type Item interface {
 	Category() string
 }
 
-// ItemCommon has the common fields between Product and Varient.
+// ItemCommon has the common fields between Product and Variant.
 type ItemCommon struct {
 	Code string
 	Name string
@@ -128,18 +128,18 @@ func (p *Product) Category() string {
 	return p.ProductType
 }
 
-// GetVariants will initialize all the Varients the are a subset of the product.
+// GetVariants will initialize all the Variants the are a subset of the product.
 //
 // The function needs a menu to get the data for each variant code.
-func (p *Product) GetVariants(container ItemContainer) (varients []*Variant) {
+func (p *Product) GetVariants(container ItemContainer) (variants []*Variant) {
 	for _, code := range p.Variants {
 		v, err := container.GetVariant(code)
 		if err != nil {
 			continue
 		}
-		varients = append(varients, v)
+		variants = append(variants, v)
 	}
-	return varients
+	return variants
 }
 
 func (p *Product) optionQtys() (optqtys []string) {
@@ -227,7 +227,7 @@ func (v *Variant) GetProduct() *Product {
 	return v.product
 }
 
-// FindProduct will initialize the Varient with it's parent product and
+// FindProduct will initialize the Variant with it's parent product and
 // return that products. Returns nil if product is not found.
 func (v *Variant) FindProduct(m *Menu) *Product {
 	if v.product != nil {

@@ -105,7 +105,7 @@ func TestNetworking_Err(t *testing.T) {
 	}
 	b, err := orderClient.post("/invalid path", nil, bytes.NewReader(make([]byte, 1)))
 	if len(b) != 0 {
-		t.Error("exepcted zero length response")
+		t.Error("expected zero length response")
 	}
 	if err == nil {
 		t.Error("expected error")
@@ -139,7 +139,7 @@ func TestNetworking_Err(t *testing.T) {
 		t.Error("expected error")
 	}
 	if b != nil {
-		t.Error("exepcted zero length response")
+		t.Error("expected zero length response")
 	}
 	req, err := http.NewRequest("GET", "https://www.google.com/", nil)
 	if err != nil {

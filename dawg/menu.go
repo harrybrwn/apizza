@@ -143,7 +143,7 @@ type Topping struct {
 	Availability []interface{}
 }
 
-// ReadableOptions gives an Item's options in a format meant for humas.
+// ReadableOptions gives an Item's options in a format meant for humans.
 func ReadableOptions(item Item) map[string]string {
 	var out = map[string]string{}
 

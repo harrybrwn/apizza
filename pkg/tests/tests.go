@@ -19,7 +19,7 @@ func Compare(t *testing.T, got, expected string) {
 	CompareCallDepth(t, got, expected, 2)
 }
 
-// CompareV compairs strings verbosly.
+// CompareV compairs strings verbosely.
 func CompareV(t *testing.T, got, expected string) {
 	CompareCallDepth(t, got, expected, 2)
 	var min int

@@ -91,7 +91,7 @@ func SetField(config Config, key string, val interface{}) error {
 	return nil
 }
 
-// IsField will return true is the Config argumetn has either a field or a
+// IsField will return true is the Config argument has either a field or a
 // config tag that coressponds with the key given.
 func IsField(c Config, key string) bool {
 	_, _, val := find(reflect.ValueOf(c).Elem(), strings.Split(key, "."))
@@ -121,7 +121,7 @@ func find(val reflect.Value, keys []string) (string, *reflect.StructField, refle
 	typ := val.Type()
 	for i := 0; i < typ.NumField(); i++ {
 
-		if rightLable(keys[0], typ.Field(i)) {
+		if rightLabel(keys[0], typ.Field(i)) {
 			typFld := typ.Field(i)
 
 			if len(keys) > 1 {

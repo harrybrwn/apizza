@@ -101,7 +101,7 @@ ex. 'apizza config get name' or 'apizza config set name=<your name>'`
 	c.Flags().BoolVarP(&c.file, "file", "f", c.file, "show the path to the config.json file")
 	c.Flags().BoolVarP(&c.dir, "dir", "d", c.dir, "show the apizza config directory path")
 	c.Flags().BoolVar(&c.getall, "get-all", c.getall, "show all the contents of the config file")
-	c.Flags().BoolVarP(&c.edit, "edit", "e", false, "open the conifg file with the text editor set by $EDITOR")
+	c.Flags().BoolVarP(&c.edit, "edit", "e", false, "open the config file with the text editor set by $EDITOR")
 	c.Flags().StringVar(&c.setDefaultAddress, "set-address", "", "name of a pre-stored address (see 'apizza address --new')")
 
 	// c.Flags().StringVar(&c.card, "card", "", "store encrypted credit card number in the database")

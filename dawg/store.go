@@ -28,7 +28,7 @@ var ErrBadService = errors.New("service must be either 'Delivery' or 'Carryout'"
 //
 // The addr argument should be the address to deliver to not the address of the
 // store itself. The service should be either "Carryout" or "Delivery", this will
-// deturmine wether the final order will be for pickup or delivery.
+// determine wether the final order will be for pickup or delivery.
 func NearestStore(addr Address, service string) (*Store, error) {
 	return getNearestStore(orderClient, addr, service)
 }

@@ -135,7 +135,7 @@ func (db *DataBase) Map() (all map[string][]byte, err error) {
 // database with the new bucket.
 //
 // The default bucket will be reset when the database calls Put, Get, Exists,
-// Map, TimeStamp, and UpdateTS (any method that calls view or update internaly).
+// Map, TimeStamp, and UpdateTS (any method that calls view or update internally).
 func (db *DataBase) WithBucket(bucket string) *DataBase {
 	db.bucketHEAD = []byte(bucket)
 	db.db.Update(func(tx *bolt.Tx) error {

@@ -59,7 +59,7 @@ func (u *UserProfile) NearestStore(service string) (*Store, error) {
 	}
 
 	// pass the authorized user's client along to
-	//  the store which will use the user's credentitals
+	//  the store which will use the user's credentials
 	// on each request.
 	c := &client{host: orderHost, Client: u.auth.cli.Client}
 	u.store, err = getNearestStore(c, u.DefaultAddress(), service)

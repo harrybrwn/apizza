@@ -24,7 +24,7 @@ func init() {
 	testStore, _ = dawg.NearestStore(a, "Delivery")
 }
 
-func TestDBManagment(t *testing.T) {
+func TestDBManagement(t *testing.T) {
 	db := cmdtest.TempDB()
 	defer db.Destroy()
 

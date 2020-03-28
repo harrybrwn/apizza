@@ -24,14 +24,15 @@ func OpenDatabase() (*cache.DataBase, error) {
 }
 
 // ListOrders will return a list of orders stored in the database.
-func ListOrders(db cache.MapDB) (names []string) {
+func ListOrders(db cache.MapDB) []string {
 	all, _ := db.Map()
+	names := make([]string, 0, len(all)) // its going to be at least as big
 	for key := range all {
 		if strings.Contains(key, OrderPrefix) {
 			names = append(names, strings.Replace(key, OrderPrefix, "", -1))
 		}
 	}
-	return
+	return names
 }
 
 // PrintOrders will print all the names of the saved user orders
@@ -43,7 +44,7 @@ func PrintOrders(db cache.MapDB, w io.Writer, verbose bool) error {
 	out.SetOutput(w)
 
 	var (
-		orders    []string
+		orders    = make([]string, 0, len(all)) // at least as big as all
 		uOrders   []*dawg.Order
 		tempOrder *dawg.Order
 	)

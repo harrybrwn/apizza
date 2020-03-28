@@ -1,4 +1,4 @@
-### The Domios API Wrapper for Go
+### The Dominos API Wrapper for Go
 The DAWG library is the api wrapper used by apizza for interfacing with the dominos pizza api.
 
 ```go

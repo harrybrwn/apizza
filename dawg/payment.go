@@ -13,7 +13,7 @@ type Card interface {
 	// Number should return the card number.
 	Num() string
 
-	// ExpiresOn returns the date that the payment exprires.
+	// ExpiresOn returns the date that the payment expires.
 	ExpiresOn() time.Time
 
 	// Code returns the security code or the cvv.

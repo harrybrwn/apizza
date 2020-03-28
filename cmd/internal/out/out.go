@@ -30,7 +30,7 @@ func ResetOutput() {
 	output = _output
 }
 
-// FormatLine will take a string and make sure it does not cross a certain lenth
+// FormatLine will take a string and make sure it does not cross a certain length
 // by slicing it at a space closest to the length argument.
 func FormatLine(str string, length int) (lines []string) {
 	strLen := utf8.RuneCountInString(str)

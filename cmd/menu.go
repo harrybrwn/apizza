@@ -117,13 +117,13 @@ func NewMenuCmd(b cli.Builder) cli.CliCommand {
 
 	c.Cmd().Long = `This command will show the dominos menu.
 
-To show a subdivition of the menu, give an item or
+To show a subdivision of the menu, give an item or
 category to the --category and --item flags or give them
 as an argument to the command itself.`
 
 	flags := c.Flags()
 	flags.BoolVarP(&c.all, "all", "a", c.all, "show the entire menu")
-	flags.BoolVarP(&c.verbose, "verbose", "v", false, "print the menu verbosly")
+	flags.BoolVarP(&c.verbose, "verbose", "v", false, "print the menu verbosely")
 	flags.BoolVar(&c.page, "page", false, "pipe the menu to a pager")
 
 	flags.StringVarP(&c.item, "item", "i", "", "show info on the menu item given")

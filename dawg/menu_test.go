@@ -157,7 +157,7 @@ func TestTranslateOpt(t *testing.T) {
 		"what": "no",
 	}
 	if translateOpt(opts) != "what no" {
-		t.Error("wrong outputed option translation")
+		t.Error("wrong outputted option translation")
 	}
 	opt := map[string]string{
 		ToppingRight: "9.0",

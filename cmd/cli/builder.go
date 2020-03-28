@@ -16,7 +16,7 @@ type Builder interface {
 	Output() io.Writer
 }
 
-// CommandBuilder defines an interface for building commnads.
+// CommandBuilder defines an interface for building commands.
 type CommandBuilder interface {
 	Build(use, short string, r Runner) *Command
 }

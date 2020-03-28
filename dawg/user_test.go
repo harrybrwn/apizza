@@ -65,13 +65,13 @@ func TestUserStoresNearMe(t *testing.T) {
 	user.AddAddress(testAddress())
 	stores, err := user.StoresNearMe()
 	if err == nil {
-		t.Error("expedted error")
+		t.Error("expected error")
 	}
 	if err != errNoServiceMethod {
 		t.Error("wrong error")
 	}
 	if stores != nil {
-		t.Error("should not have retured any stores")
+		t.Error("should not have returned any stores")
 	}
 
 	if err = user.SetServiceMethod(Delivery); err != nil {

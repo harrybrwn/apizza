@@ -54,6 +54,8 @@ type cartCmd struct {
 	topping bool // not actually a flag anymore
 }
 
+// TODO: changing a cart item needs to be more intuitive.
+
 func (c *cartCmd) Run(cmd *cobra.Command, args []string) (err error) {
 	out.SetOutput(cmd.OutOrStdout())
 	if len(args) < 1 {
@@ -235,7 +237,7 @@ created orders.`
 	c.Flags().StringVarP(&c.remove, "remove", "r", c.remove, "remove a product from the order")
 	c.Flags().StringVarP(&c.product, "product", "p", "", "give the product that will be effected by --add or --remove")
 
-	c.Flags().BoolVarP(&c.verbose, "verbose", "v", c.verbose, "print cart verbosly")
+	c.Flags().BoolVarP(&c.verbose, "verbose", "v", c.verbose, "print cart verbosely")
 
 	c.Addcmd(newAddOrderCmd(b))
 	return c
@@ -295,7 +297,7 @@ func (c *addOrderCmd) Run(cmd *cobra.Command, args []string) (err error) {
 
 func newAddOrderCmd(b cli.Builder) cli.CliCommand {
 	c := &addOrderCmd{name: "", product: ""}
-	c.CliCommand = b.Build("new <new order name>",
+	c.CliCommand = b.Build("new <order name>",
 		"Create a new order that will be stored in the cart.", c)
 	c.db = b.DB()
 	c.StoreFinder = client.NewStoreGetter(b)
@@ -414,7 +416,7 @@ stored the program cache with orders.
 	c.Cmd().PreRunE = cartPreRun(c.db)
 
 	flags := c.Cmd().Flags()
-	flags.BoolVarP(&c.verbose, "verbose", "v", c.verbose, "output the order command verbosly")
+	flags.BoolVarP(&c.verbose, "verbose", "v", c.verbose, "output the order command verbosely")
 
 	flags.StringVar(&c.phone, "phone", "", "Set the phone number that will be used for this order")
 	flags.StringVar(&c.email, "email", "", "Set the email that will be used for this order")

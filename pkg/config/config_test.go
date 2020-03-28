@@ -55,12 +55,12 @@ func TestConfigGetandSet(t *testing.T) {
 	if GetField(c, "msg").(string) != c.Msg {
 		t.Error("The Get function should be returning the same value as acessing the struct literal.")
 	}
-	SetField(c, "more.one", "hey is this shit workin")
-	if c.More.One != "hey is this shit workin" {
+	SetField(c, "more.one", "hey is this shit working")
+	if c.More.One != "hey is this shit working" {
 		t.Error("Setting variables using dot notation in the key didn't work")
 	}
-	SetField(c, "Test", "this config is part of a test. it should't be here")
-	test := "this config is part of a test. it should't be here"
+	SetField(c, "Test", "this config is part of a test. it shouldn't be here")
+	test := "this config is part of a test. it shouldn't be here"
 	if c.Test != test {
 		t.Errorf("Error in 'Set':\n\twant: %s\n\tgot: %s", test, c.Test)
 	}

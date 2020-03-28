@@ -40,8 +40,8 @@ type Encoder interface {
 	Encode(interface{}) error
 }
 
-// Decoder is an inteface that defines objects
-// that can decode and inteface.
+// Decoder is an interface that defines objects
+// that can decode and interface.
 type Decoder interface {
 	Decode(interface{}) error
 }

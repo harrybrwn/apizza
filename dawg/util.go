@@ -18,7 +18,7 @@ type Params map[string]interface{}
 
 // Encode converts the map alias to a string representation of a url parameter.
 func (p Params) Encode() string {
-	// I totally stole this function from the net/url parckage. I should probably
+	// I totally stole this function from the net/url package. I should probably
 	// give credit where it is due.
 	if p == nil {
 		return ""
