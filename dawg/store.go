@@ -116,31 +116,51 @@ func (sb *storebuilder) initStore(cli *client, id string, index int) {
 
 // The Store object represents a physical dominos location.
 type Store struct {
-	ID                   string            `json:"StoreID"`
-	Status               int               `json:"Status"`
-	IsOpen               bool              `json:"IsOpen"`
-	IsOnlineNow          bool              `json:"IsOnlineNow"`
-	IsDeliveryStore      bool              `json:"IsDeliveryStore"`
-	Phone                string            `json:"Phone"`
-	PaymentTypes         []string          `json:"AcceptablePaymentTypes"`
-	CreditCardTypes      []string          `json:"AcceptableCreditCards"`
-	MinDistance          float64           `json:"MinDistance"`
-	MaxDistance          float64           `json:"MaxDistance"`
-	Address              string            `json:"AddressDescription"`
-	PostalCode           string            `json:"PostalCode"`
-	City                 string            `json:"City"`
-	StoreCoords          map[string]string `json:"StoreCoordinates"`
-	ServiceEstimatedWait map[string]struct {
-		Min int `json:"Min"`
-		Max int `json:"Max"`
-	} `json:"ServiceMethodEstimatedWaitMinutes"`
-	Hours                map[string][]map[string]string `json:"Hours"`
-	MinDeliveryOrderAmnt float64                        `json:"MinimumDeliveryOrderAmount"`
-	userAddress          Address
-	userService          string
+	ID string `json:"StoreID"`
 
-	menu *Menu
-	cli  *client
+	IsOpen          bool
+	IsOnlineNow     bool
+	IsDeliveryStore bool
+	Phone           string
+
+	PaymentTypes    []string `json:"AcceptablePaymentTypes"`
+	CreditCardTypes []string `json:"AcceptableCreditCards"`
+
+	Address     string `json:"AddressDescription"`
+	PostalCode  string
+	City        string
+	StreetName  string
+	StoreCoords map[string]string `json:"StoreCoordinates"`
+	// Min and Max distance
+	MinDistance, MaxDistance float64
+
+	ServiceIsOpen        map[string]bool
+	ServiceEstimatedWait map[string]struct {
+		Min, Max int
+	} `json:"ServiceMethodEstimatedWaitMinutes"`
+	AllowCarryoutOrders, AllowDeliveryOrders bool
+
+	// Hours describes when the store will be open
+	Hours StoreHours
+	// ServiceHours describes when the store supports a given service
+	ServiceHours map[string]StoreHours
+
+	MinDeliveryOrderAmnt float64 `json:"MinimumDeliveryOrderAmount"`
+
+	Status int
+
+	userAddress Address
+	userService string
+	menu        *Menu
+	cli         *client
+}
+
+// StoreHours is a struct that holds Dominos store hours.
+type StoreHours struct {
+	Sun, Mon, Tue, Wed, Thu, Fri, Sat []struct {
+		OpenTime  string
+		CloseTime string
+	}
 }
 
 // Menu returns the menu for a store object
@@ -198,6 +218,15 @@ func (s *Store) GetVariant(code string) (*Variant, error) {
 		return nil, err
 	}
 	return menu.GetVariant(code)
+}
+
+// FindItem is a helper function for Menu.FindItem
+func (s *Store) FindItem(code string) (Item, error) {
+	menu, err := s.Menu()
+	if err != nil {
+		return nil, err
+	}
+	return menu.FindItem(code), nil
 }
 
 // WaitTime returns a pair of integers that are the maximum and
@@ -263,8 +292,8 @@ func asyncNearbyStores(cli *client, addr Address, service string) ([]*Store, err
 	}
 
 	var (
-		nstores = len(all.Stores)
-		stores  = make([]*Store, nstores) // return value
+		nStores = len(all.Stores)
+		stores  = make([]*Store, nStores) // return value
 
 		i       int
 		store   *Store
@@ -274,7 +303,7 @@ func asyncNearbyStores(cli *client, addr Address, service string) ([]*Store, err
 			stores:    make(chan maybeStore),
 		}
 	)
-	builder.Add(nstores)
+	builder.Add(nStores)
 
 	go func() {
 		defer close(builder.stores)

@@ -22,8 +22,11 @@ coverage.html
 /data/
 !dawg/testdata/cardnums.json
 
-# Other
+# Tools
 .vscode
+*.code-workspace
+
+# Other
 *.out
 *.exe
 /script/

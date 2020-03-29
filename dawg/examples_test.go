@@ -9,7 +9,7 @@ import (
 )
 
 var (
-	user     *dawg.UserProfile
+	user     = dawg.UserProfile{}
 	username = os.Getenv("DOMINOS_TEST_USER")
 	password = os.Getenv("DOMINOS_TEST_PASS")
 
@@ -23,7 +23,7 @@ var (
 )
 
 func init() {
-	user, _ = dawg.SignIn(username, password)
+	// user, _ = dawg.SignIn(username, password)
 }
 
 func Example_getStore() {
