@@ -7,6 +7,29 @@ import (
 	"github.com/harrybrwn/apizza/dawg"
 )
 
+var user *dawg.UserProfile
+
+func init() {
+	user, _ = dawg.SignIn(username, password)
+}
+
+func Example_getStore() {
+	// This can be anything that satisfies the dawg.Address interface.
+	var addr = dawg.StreetAddr{
+		Street:   "600 Mountain Ave bldg 5",
+		CityName: "New Providence",
+		State:    "NJ",
+		Zipcode:  "07974",
+		AddrType: "Business",
+	}
+	store, err := dawg.NearestStore(&addr, dawg.Delivery)
+	if err != nil {
+		log.Fatal(err)
+	}
+	store.WaitTime()
+	// Output:
+}
+
 func ExampleNearestStore() {
 	var addr = &dawg.StreetAddr{
 		Street:   "1600 Pennsylvania Ave.",
@@ -19,7 +42,6 @@ func ExampleNearestStore() {
 	if err != nil {
 		log.Fatal(err)
 	}
-
 	fmt.Println(store.City)
 	fmt.Println(store.ID)
 
@@ -28,49 +50,100 @@ func ExampleNearestStore() {
 	// 4336
 }
 
-func ExampleOrder_AddProduct() {
-	var addr = &dawg.StreetAddr{
-		Street:   "1600 Pennsylvania Ave.",
-		CityName: "Washington",
-		State:    "DC",
-		Zipcode:  "20500",
-		AddrType: "House",
+func ExampleSignIn() {
+	user, err := dawg.SignIn(username, password)
+	if err != nil {
+		log.Fatal(err)
 	}
+	fmt.Println(user.Email == username)
+	fmt.Printf("%T\n", user)
+}
 
-	store, err := dawg.NearestStore(addr, "Delivery")
+func ExampleUserProfile() {
+	// Obtain a dawg.UserProfile with the dawg.SignIn function
+	user, err := dawg.SignIn(username, password)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println(user.Email == username)
+	fmt.Printf("%T\n", user)
+
+	// Output:
+	// true
+	// *dawg.UserProfile
+}
+
+func ExampleUserProfile_GetCards() {
+	cards, err := user.GetCards()
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println("Test Card name:", cards[0].NickName) // This is dependant on the account
+
+	// Output:
+	// Test Card name: FakeCard
+}
+
+func ExampleUserProfile_AddAddress() {
+	// The address that is stored in a dawg.UserProfile are the address that dominos
+	// keeps track of and an address may need to be added.
+	fmt.Printf("%+v\n", user.Addresses)
+
+	user.AddAddress(&dawg.StreetAddr{
+		Street:   "600 Mountain Ave bldg 5",
+		CityName: "New Providence",
+		State:    "NJ",
+		Zipcode:  "07974",
+		AddrType: "Business",
+	})
+	fmt.Println(len(user.Addresses) > 0)
+	fmt.Printf("%T\n", user.DefaultAddress())
+
+	// Output:
+	// []
+	// true
+	// *dawg.UserAddress
+}
+
+func ExampleOrder_AddProduct() {
+	store, err := dawg.NearestStore(&address, "Delivery")
 	if err != nil {
 		log.Fatal(err)
 	}
 	order := store.NewOrder()
 
-	pizza, err := store.GetProduct("16SCREEN")
+	pizza, err := store.GetVariant("14SCREEN")
 	if err != nil {
 		log.Fatal(err)
 	}
 	pizza.AddTopping("P", dawg.ToppingFull, "1.5")
 	order.AddProduct(pizza)
+
+	fmt.Println(order.Products[0].Name)
+
+	// Output:
+	// Large (14") Hand Tossed Pizza
 }
 
 func ExampleProduct_AddTopping() {
-	var addr = &dawg.StreetAddr{
-		Street:   "1600 Pennsylvania Ave.",
-		CityName: "Washington",
-		State:    "DC",
-		Zipcode:  "20500",
-		AddrType: "House",
-	}
-
-	store, err := dawg.NearestStore(addr, "Delivery")
+	store, err := dawg.NearestStore(&address, "Delivery")
 	if err != nil {
 		log.Fatal(err)
 	}
 	order := store.NewOrder()
 
-	pizza, err := store.GetProduct("16SCREEN")
+	pizza, err := store.GetVariant("14SCREEN")
 	if err != nil {
 		log.Fatal(err)
 	}
 	pizza.AddTopping("P", dawg.ToppingLeft, "1.0")  // pepperoni on the left
 	pizza.AddTopping("K", dawg.ToppingRight, "2.0") // double bacon on the right
 	order.AddProduct(pizza)
+
+	fmt.Println(pizza.Options()["P"])
+	fmt.Println(pizza.Options()["K"])
+
+	// Output:
+	// map[1/2:1.0]
+	// map[2/2:2.0]
 }
