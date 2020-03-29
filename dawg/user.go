@@ -83,9 +83,10 @@ func (u *UserProfile) StoresNearMe() ([]*Store, error) {
 	if u.ServiceMethod == "" {
 		return nil, errNoServiceMethod
 	}
-	address := u.DefaultAddress()
-	// TODO: make sure that the user actually has a default address
-	return asyncNearbyStores(u.auth.cli, address, u.ServiceMethod)
+	if err := u.addressCheck(); err != nil {
+		return nil, err
+	}
+	return asyncNearbyStores(u.auth.cli, u.DefaultAddress(), u.ServiceMethod)
 }
 
 // NearestStore will find the the store that is closest to the user's default address.
@@ -99,7 +100,9 @@ func (u *UserProfile) NearestStore(service string) (*Store, error) {
 	// store which will use the user's credentials
 	// on each request.
 	c := &client{host: orderHost, Client: u.auth.cli.Client}
-	// TODO: put a check here making sure that the user has at least one address
+	if err = u.addressCheck(); err != nil {
+		return nil, err
+	}
 	u.store, err = getNearestStore(c, u.DefaultAddress(), service)
 	return u.store, err
 }
@@ -196,6 +199,16 @@ func (u *UserProfile) NewOrder(service string) (*Order, error) {
 		cli:           u.auth.cli,
 	}
 	return order, nil
+}
+
+// returns and error if the user has no address
+//
+// addressCheck is meant to be a check before DefaultAddress is called internally.
+func (u *UserProfile) addressCheck() error {
+	if len(u.Addresses) == 0 {
+		return errors.New("UserProfile has no addresses")
+	}
+	return nil
 }
 
 func (u *UserProfile) customerEndpoint(path string, params Params, obj interface{}) error {
