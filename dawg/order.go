@@ -7,12 +7,16 @@ import (
 	"fmt"
 )
 
+// TODO: alphabetize the Order struct fields and add some more documentation
+
 // The Order struct is the main work horse of the api wrapper. The Order struct
 // is what will end up being sent to dominos as a json object.
 //
 // It is suggested that the order object be constructed from the Store.NewOrder
 // method.
 type Order struct {
+	// CustomerID is a id for a customer (see UserProfile)
+	CustomerID string `json:",omitempty"`
 	// LanguageCode is an ISO international language code.
 	LanguageCode string `json:"LanguageCode"`
 
@@ -235,12 +239,14 @@ func getPricingData(order Order) (*priceingData, error) {
 }
 
 type priceingData struct {
-	Order struct {
-		OrderID          string
-		PulseOrderGUID   string `json:"PulseOrderGuid"`
-		Amounts          map[string]float64
-		AmountsBreakdown map[string]interface{}
-	}
+	Order pricedOrder
+}
+
+type pricedOrder struct {
+	OrderID          string
+	Amounts          map[string]float64
+	AmountsBreakdown map[string]interface{}
+	PulseOrderGUID   string `json:"PulseOrderGuid"`
 }
 
 // OrderProduct represents an item that will be sent to and from dominos within

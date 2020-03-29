@@ -153,7 +153,8 @@ type orderPayment struct {
 	// These next fields are just for dominos
 
 	Amount         float64
+	CardID         string `json:"CardID,omitempty"`
 	ProviderID     string
 	OTP            string
-	GpmPaymentType string `json:"gpmPaymentType"`
+	GpmPaymentType string `json:"gpmPaymentType,omitempty"`
 }

@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 	"time"
@@ -17,6 +19,8 @@ func SignIn(username, password string) (*UserProfile, error) {
 	}
 	return a.login()
 }
+
+// TODO: find out how to update a profile on domino's end
 
 // UserProfile is a Dominos user profile.
 type UserProfile struct {
@@ -58,9 +62,11 @@ type UserProfile struct {
 
 	// ServiceMethod should be "Delivery" or "Carryout"
 	ServiceMethod string `json:"-"` // this is a package specific field (not from the api)
+	ordersMeta    *customerOrders
 
-	auth  *auth
-	store *Store
+	auth        *auth
+	store       *Store
+	loyaltyData *CustomerLoyalty
 }
 
 // AddAddress will add an address to the dominos account.
@@ -77,8 +83,8 @@ func (u *UserProfile) StoresNearMe() ([]*Store, error) {
 	if u.ServiceMethod == "" {
 		return nil, errNoServiceMethod
 	}
-
 	address := u.DefaultAddress()
+	// TODO: make sure that the user actually has a default address
 	return asyncNearbyStores(u.auth.cli, address, u.ServiceMethod)
 }
 
@@ -124,17 +130,47 @@ func (u *UserProfile) SetServiceMethod(service string) error {
 	return nil
 }
 
+// TODO: write tests for GetCards, Loyalty, PreviousOrders, GetEasyOrder, initOrdersMeta, and customerEndpoint
+
 // GetCards will get the cards that Dominos has saved in their database. (see UserCard)
 func (u *UserProfile) GetCards() ([]*UserCard, error) {
-	data, err := u.auth.cli.get(
-		fmt.Sprintf("/power/customer/%s/card", u.CustomerID),
-		Params{"_": time.Now().Nanosecond()},
-	)
-	if err != nil {
-		return nil, err
-	}
 	cards := make([]*UserCard, 0)
-	return cards, json.Unmarshal(data, &cards)
+	return cards, u.customerEndpoint("card", nil, &cards)
+}
+
+// Loyalty returns the user's loyalty meta-data (see CustomerLoyalty)
+func (u *UserProfile) Loyalty() (*CustomerLoyalty, error) {
+	if u.loyaltyData != nil {
+		return u.loyaltyData, nil
+	}
+	u.loyaltyData = new(CustomerLoyalty)
+	return u.loyaltyData, u.customerEndpoint("loyalty", nil, u.loyaltyData)
+}
+
+// PreviousOrders will return `n` of the user's previous orders.
+func (u *UserProfile) PreviousOrders(n int) ([]*EasyOrder, error) {
+	return u.ordersMeta.CustomerOrders, u.initOrdersMeta(n)
+}
+
+// GetEasyOrder will return the user's easy order.
+func (u *UserProfile) GetEasyOrder() (*EasyOrder, error) {
+	var err error
+	if u.ordersMeta == nil {
+		if err = u.initOrdersMeta(3); err != nil {
+			return nil, err
+		}
+	}
+	return u.ordersMeta.EasyOrder, nil
+}
+
+// Orders returns a variety of meta-data on the user's previous and saved orders.
+func (u *UserProfile) initOrdersMeta(limit int) error {
+	u.ordersMeta = &customerOrders{}
+	return u.customerEndpoint(
+		"order",
+		Params{"limit": limit, "lang": DefaultLang},
+		&u.ordersMeta,
+	)
 }
 
 // NewOrder will create a new *dawg.Order struct with all of the user's information.
@@ -153,12 +189,40 @@ func (u *UserProfile) NewOrder(service string) (*Order, error) {
 		LanguageCode:  DefaultLang,
 		ServiceMethod: u.ServiceMethod,
 		StoreID:       u.store.ID,
+		CustomerID:    u.CustomerID,
 		Products:      []*OrderProduct{},
 		Address:       StreetAddrFromAddress(u.store.userAddress),
 		Payments:      []*orderPayment{},
 		cli:           u.auth.cli,
 	}
 	return order, nil
+}
+
+func (u *UserProfile) customerEndpoint(path string, params Params, obj interface{}) error {
+	if u.CustomerID == "" {
+		return errors.New("UserProfile not fully initialized: needs CustomerID")
+	}
+	if params == nil {
+		params = make(Params)
+	}
+	params["_"] = time.Now().Nanosecond()
+
+	data, err := u.auth.cli.do(&http.Request{
+		Method: "GET",
+		Host:   u.auth.cli.host,
+		Proto:  "HTTP/1.1",
+		Header: make(http.Header),
+		URL: &url.URL{
+			Scheme:   "https",
+			Host:     u.auth.cli.host,
+			Path:     fmt.Sprintf("/power/customer/%s/%s", u.CustomerID, path),
+			RawQuery: params.Encode(),
+		},
+	})
+	if err != nil {
+		return err
+	}
+	return json.Unmarshal(data, obj)
 }
 
 // UserAddress is an address that is saved by dominos and returned when
@@ -283,4 +347,81 @@ type UserCard struct {
 
 	CardType   string `json:"cardType"`
 	BillingZip string `json:"billingZip"`
+}
+
+// CustomerLoyalty is a struct that holds account meta-data used by
+// Dominos to keep track of customer rewards.
+type CustomerLoyalty struct {
+	CustomerID              string
+	EnrollDate              string
+	LastActivityDate        string
+	BasePointExpirationDate string
+	PendingPointBalance     string
+	AccountStatus           string
+	// VestedPointBalance is the points you have
+	// saved up in order to get a free pizza.
+	VestedPointBalance int
+	// This is a list of possible coupons that a
+	// customer can receive.
+	LoyaltyCoupons []struct {
+		CouponCode    string
+		PointValue    int
+		BaseCoupon    bool
+		LimitPerOrder string
+	}
+}
+
+// TODO: figure out how the dominos website sends an easy order to the servers
+
+type customerOrders struct {
+	CustomerOrders []*EasyOrder            `json:"customerOrders"`
+	EasyOrder      *EasyOrder              `json:"easyOrder"`
+	Products       map[string]OrderProduct `json:"products"`
+
+	ProductsByFrequencyRecency []struct {
+		ProductKey string `json:"productKey"`
+		Frequency  int    `json:"frequency"`
+	} `json:"productsByFrequencyRecency"`
+
+	ProductsByCategory []struct {
+		Category    string   `json:"category"`
+		ProductKeys []string `json:"productKeys"`
+	} `json:"productsByCategory"`
+}
+
+// EasyOrder is an easy order.
+type EasyOrder struct {
+	AddressNickName      string `json:"addressNickName"`
+	OrderNickName        string `json:"easyOrderNickName"`
+	EasyOrder            bool   `json:"easyOrder"`
+	ID                   string `json:"id"`
+	DeliveryInstructions string `json:"deliveryInstructions"`
+	Cards                []struct {
+		ID       string `json:"id"`
+		NickName string `json:"nickName"`
+	}
+
+	// Store *Store `json:"store"`
+	Store struct {
+		Address              *StreetAddr `json:"address"`
+		CarryoutServiceHours string      `json:"carryoutServiceHours"`
+		DeliveryServiceHours string      `json:"deliveryServiceHours"`
+	} `json:"store"`
+	Order previousOrder `json:"order"`
+}
+
+type previousOrder struct {
+	Order
+	pricedOrder
+
+	Partners            interface{}
+	StoreOrderID        string
+	StorePlaceOrderTime string
+	OrderMethod         string
+	IP                  string
+
+	PlaceOrderTime string // YYYY-MM-DD H:M:S
+	BusinessDate   string // YYYY-MM-DD
+
+	OrderInfoCollection []interface{}
 }
