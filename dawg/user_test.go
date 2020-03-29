@@ -4,6 +4,23 @@ import (
 	"testing"
 )
 
+func TestSignIn(t *testing.T) {
+	username, password, ok := gettestcreds()
+	if !ok {
+		t.Skip()
+	}
+	defer swapclient(10)()
+
+	user, err := getTestUser(username, password) // calls SignIn if global user is nil
+	if err != nil {
+		t.Error(err)
+	}
+	if user == nil {
+		t.Fatal("got nil user from SignIn")
+	}
+	testUser = user
+}
+
 func TestUserNearestStore(t *testing.T) {
 	uname, pass, ok := gettestcreds()
 	if !ok {

@@ -276,23 +276,6 @@ func TestAuth_Err(t *testing.T) {
 	}
 }
 
-func TestSignIn(t *testing.T) {
-	username, password, ok := gettestcreds()
-	if !ok {
-		t.Skip()
-	}
-	defer swapclient(10)()
-
-	user, err := getTestUser(username, password)
-	if err != nil {
-		t.Error(err)
-	}
-	if user == nil {
-		t.Fatal("got nil user from SignIn")
-	}
-	testUser = user
-}
-
 func TestAuthClient(t *testing.T) {
 	username, password, ok := gettestcreds()
 	if !ok {
