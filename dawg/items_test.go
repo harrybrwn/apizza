@@ -98,9 +98,6 @@ func TestProductToppings(t *testing.T) {
 	v.ProductCode = old
 
 	for _, v := range m.Variants {
-		if v.GetProduct() != nil {
-			t.Error("uninitialized variant has a product already")
-		}
 		if v.FindProduct(m) == nil {
 			t.Error("should not be nil:", v.Code)
 		}

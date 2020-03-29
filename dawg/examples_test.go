@@ -3,11 +3,24 @@ package dawg_test
 import (
 	"fmt"
 	"log"
+	"os"
 
 	"github.com/harrybrwn/apizza/dawg"
 )
 
-var user *dawg.UserProfile
+var (
+	user     *dawg.UserProfile
+	username = os.Getenv("DOMINOS_TEST_USER")
+	password = os.Getenv("DOMINOS_TEST_PASS")
+
+	address = dawg.StreetAddr{
+		Street:   "600 Mountain Ave bldg 5",
+		CityName: "New Providence",
+		State:    "NJ",
+		Zipcode:  "07974",
+		AddrType: "Business",
+	}
+)
 
 func init() {
 	user, _ = dawg.SignIn(username, password)
@@ -67,10 +80,6 @@ func ExampleUserProfile() {
 	}
 	fmt.Println(user.Email == username)
 	fmt.Printf("%T\n", user)
-
-	// Output:
-	// true
-	// *dawg.UserProfile
 }
 
 func ExampleUserProfile_GetCards() {

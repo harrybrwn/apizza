@@ -136,13 +136,7 @@ func (o *Order) SetName(name string) {
 // Validate sends and order to the validation endpoint to be validated by
 // Dominos' servers.
 func (o *Order) Validate() error {
-	err := sendOrder("/power/validate-order", *o)
-	// TODO: make it possible to recognize the warning as an 'AutoAddedOrderId' warning.
-	if IsWarning(err) {
-		e := err.(*DominosError)
-		o.OrderID = e.Order.OrderID
-	}
-	return err
+	return ValidateOrder(o)
 }
 
 // only returns dominos failures or non-dominos errors.
@@ -170,6 +164,7 @@ func (o *Order) prepare() error {
 func ValidateOrder(order *Order) error {
 	err := sendOrder("/power/validate-order", *order)
 	if IsWarning(err) {
+		// TODO: make it possible to recognize the warning as an 'AutoAddedOrderId' warning.
 		e := err.(*DominosError)
 		order.OrderID = e.Order.OrderID
 	}

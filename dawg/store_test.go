@@ -65,6 +65,9 @@ func TestNewStore(t *testing.T) {
 }
 
 func TestNearestStore(t *testing.T) {
+	if testing.Short() {
+		return
+	}
 	addr := testAddress()
 	service := Delivery
 	s, err := NearestStore(addr, service)
@@ -94,14 +97,16 @@ func TestNearestStore(t *testing.T) {
 			continue
 		}
 	}
-	m, err1 := s.Menu()
-	m2, err2 := s.Menu()
-	err = errpair(err1, err2)
-	if err != nil {
-		t.Error(err)
-	}
-	if m != m2 {
-		t.Errorf("should be the same for two calls to Store.Menu: %p %p", m, m2)
+	if !testing.Short() {
+		m, err1 := s.Menu()
+		m2, err2 := s.Menu()
+		err = errpair(err1, err2)
+		if err != nil {
+			t.Error(err)
+		}
+		if m != m2 {
+			t.Errorf("should be the same for two calls to Store.Menu: %p %p", m, m2)
+		}
 	}
 	id := s.ID
 	s.ID = ""
@@ -122,7 +127,14 @@ func TestNearestStore(t *testing.T) {
 
 func TestGetAllNearbyStores_Async(t *testing.T) {
 	addr := testAddress()
-	for _, service := range []string{Delivery, Carryout} {
+	var services []string
+	if testing.Short() {
+		services = []string{Delivery}
+	} else {
+		services = []string{Delivery, Carryout}
+	}
+
+	for _, service := range services {
 		stores, err := GetNearbyStores(addr, service)
 		if err != nil {
 			t.Error(err)
@@ -154,6 +166,9 @@ func TestGetAllNearbyStores_Async(t *testing.T) {
 }
 
 func TestGetAllNearbyStores_Async_Err(t *testing.T) {
+	if testing.Short() {
+		t.Skip()
+	}
 	_, err := GetNearbyStores(&StreetAddr{}, Delivery)
 	if err == nil {
 		t.Error("expected error")
@@ -251,6 +266,9 @@ func TestGetNearestStore(t *testing.T) {
 }
 
 func TestAsyncInOrder(t *testing.T) {
+	if testing.Short() {
+		t.Skip()
+	}
 	addr := testAddress()
 	serv := Delivery
 	storesInOrder, err := GetNearbyStores(addr, serv)

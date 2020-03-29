@@ -14,7 +14,7 @@ import (
 func TestBadCreds(t *testing.T) {
 	// swap the default client with one that has a
 	// 10s timeout then defer the cleanup.
-	defer swapclient(10)()
+	defer swapclient(1)()
 
 	tok, err := gettoken("no", "and no")
 	if err == nil {
@@ -35,6 +35,9 @@ func TestBadCreds(t *testing.T) {
 	tok, err = gettoken("5uup;hrg];ht8bijer$u9tot", "hurieahgr9[0249eingurivja")
 	if err == nil {
 		t.Error("wow i accidentally cracked someone's password:", tok)
+	}
+	if tok != nil {
+		t.Error("expected nil token")
 	}
 }
 
@@ -129,7 +132,7 @@ func TestAuth(t *testing.T) {
 	if !ok {
 		t.Skip()
 	}
-	defer swapclient(10)()
+	defer swapclient(2)()
 
 	auth, err := getTestAuth(username, password)
 	if err != nil {
@@ -183,6 +186,9 @@ func TestAuth(t *testing.T) {
 		t.Error("line one for UserAddress is broken")
 	}
 
+	if testing.Short() {
+		return
+	}
 	store, err := user.NearestStore("Delivery")
 	if err != nil {
 		t.Error(err)
@@ -234,11 +240,7 @@ func TestAuth(t *testing.T) {
 }
 
 func TestAuth_Err(t *testing.T) {
-	defer swapclient(10)()
-	if orderClient.Client.Timeout != time.Duration(10)*time.Second {
-		t.Error("client was not swapped")
-	}
-
+	defer swapclient(2)()
 	a, err := newauth("not a", "valid password")
 	if err == nil {
 		t.Error("expected an error")
@@ -281,7 +283,7 @@ func TestAuthClient(t *testing.T) {
 	if !ok {
 		t.Skip()
 	}
-	defer swapclient(10)()
+	defer swapclient(5)()
 
 	auth, err := getTestAuth(username, password)
 	if auth == nil {
@@ -299,10 +301,12 @@ func TestAuthClient(t *testing.T) {
 	if err == nil {
 		t.Error("expected error")
 	}
+	cleanup := swapclient(2)
 	tok, err := gettoken("bad", "creds")
 	if err == nil {
 		t.Error("should return error")
 	}
+	cleanup()
 
 	req := newAuthRequest(oauthURL, url.Values{})
 	resp, err := http.DefaultClient.Do(req)

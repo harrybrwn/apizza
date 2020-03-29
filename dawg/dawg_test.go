@@ -9,6 +9,7 @@ import (
 	"net"
 	"net/http"
 	"testing"
+	"time"
 )
 
 func TestFormat(t *testing.T) {
@@ -95,6 +96,7 @@ func TestParseAddressTable(t *testing.T) {
 }
 
 func TestNetworking_Err(t *testing.T) {
+	defer swapclient(2)()
 	_, err := orderClient.get("/", nil)
 	if err == nil {
 		t.Error("expected error")
@@ -125,6 +127,7 @@ func TestNetworking_Err(t *testing.T) {
 					return nil, errors.New("stop")
 				},
 			},
+			Timeout: time.Second,
 		},
 	}
 	resp, err := cli.get("/power/store/4336/profile", nil)
@@ -263,26 +266,38 @@ func TestErrPair(t *testing.T) {
 	}
 }
 
+var (
+	testStore *Store
+	testMenu  *Menu
+)
+
 func testingStore() *Store {
-	var service string
+	var (
+		service string
+		err     error
+	)
 
 	if rand.Intn(2) == 1 {
 		service = "Carryout"
 	} else {
 		service = "Delivery"
 	}
-
-	s, err := NearestStore(testAddress(), service)
-	if err != nil {
-		panic(err)
+	if testStore == nil {
+		testStore, err = NearestStore(testAddress(), service)
+		if err != nil {
+			panic(err)
+		}
 	}
-	return s
+	return testStore
 }
 
 func testingMenu() *Menu {
-	m, err := testingStore().Menu()
-	if err != nil {
-		panic(err)
+	var err error
+	if testMenu == nil {
+		testMenu, err = testingStore().Menu()
+		if err != nil {
+			panic(err)
+		}
 	}
-	return m
+	return testMenu
 }

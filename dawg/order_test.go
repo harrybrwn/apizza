@@ -10,13 +10,10 @@ import (
 )
 
 func TestGetOrderPrice(t *testing.T) {
+	defer swapclient(2)()
 	o := Order{}
 	if o.cli == nil {
 		o.cli = orderClient
-	}
-	_, err := getOrderPrice(o)
-	if err == nil {
-		t.Error("Should have returned an error")
 	}
 	data, err := getPricingData(o)
 	if err == nil {
@@ -26,7 +23,7 @@ func TestGetOrderPrice(t *testing.T) {
 		t.Error("should not have returned a nil value")
 	}
 	if len(data.Order.OrderID) == 0 {
-		t.Error("should alway return an order-id")
+		t.Error("should always return an order-id")
 	}
 	if !IsFailure(err) {
 		t.Error("this error should only be a failure")
@@ -58,9 +55,6 @@ func TestGetOrderPrice(t *testing.T) {
 			AddrType:   "House",
 		},
 	}
-	if err := ValidateOrder(&order); IsFailure(err) {
-		t.Error(err)
-	}
 	if err := order.Validate(); IsFailure(err) {
 		t.Error(err)
 	}
@@ -71,9 +65,6 @@ func TestGetOrderPrice(t *testing.T) {
 	}
 	if len(order.Payments) == 0 {
 		t.Fatal("order.Payments should be empty because tests were about to place an order")
-	}
-	if err = order.PlaceOrder(); err == nil {
-		t.Error("expected error")
 	}
 	order.StoreID = "" // should cause dominos to reject the order and send an error
 	_, err = getOrderPrice(order)
@@ -154,10 +145,12 @@ func TestPrepareOrder(t *testing.T) {
 		t.Error("a new order should be initialized with an order id by default")
 	}
 
-	menu, err := st.Menu()
-	if err != nil {
-		t.Error(err)
-	}
+	// menu, err := st.Menu()
+	menu := testingMenu()
+	var err error
+	// if err != nil {
+	// 	t.Error(err)
+	// }
 	if err = o.AddProduct(menu.FindItem("10SCREEN")); err != nil {
 		t.Error(err)
 	}
@@ -236,10 +229,9 @@ func TestOrder_Err(t *testing.T) {
 func TestRemoveProduct(t *testing.T) {
 	s := testingStore()
 	order := s.NewOrder()
-	menu, err := s.Menu()
-	if err != nil {
-		t.Error(err)
-	}
+	menu := testingMenu()
+
+	var err error
 	productCodes := []string{"2LDCOKE", "12SCREEN", "PSANSABC", "B2PCLAVA"}
 	for _, code := range productCodes {
 		v, err := menu.GetVariant(code)
@@ -265,11 +257,7 @@ func TestRemoveProduct(t *testing.T) {
 }
 
 func TestOrderProduct(t *testing.T) {
-	s := testingStore()
-	menu, err := s.Menu()
-	if err != nil {
-		t.Error(err)
-	}
+	menu := testingMenu() // this will get the menu from the same store but cached
 	item := menu.FindItem("14SCEXTRAV")
 
 	op := OrderProductFromItem(item)
