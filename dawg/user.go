@@ -1,10 +1,12 @@
 package dawg
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strconv"
 	"strings"
+	"time"
 )
 
 // SignIn will create a new UserProfile and sign in the account.
@@ -18,15 +20,44 @@ func SignIn(username, password string) (*UserProfile, error) {
 
 // UserProfile is a Dominos user profile.
 type UserProfile struct {
-	FirstName  string
-	LastName   string
-	Email      string
+	FirstName string
+	LastName  string
+	Phone     string
+
+	// Type of dominos account
+	Type string
+	// Dominos internal user id
 	CustomerID string
-	Phone      string
-	Addresses  []*UserAddress
+	// Identifiers are the pieces of information used to identify the
+	// user (even if they are not signed in)
+	Identifiers []string `json:"CustomerIdentifiers"`
+	// AgreedToTermsOfUse is true if the user has agreed to dominos terms of use.
+	AgreedToTermsOfUse bool `json:"AgreeToTermsOfUse"`
+	// User's gender
+	Gender string
+
+	// List of all the addresses saved in the dominos account
+	Addresses []*UserAddress
+
+	// Email is the user's email address
+	Email string
+	// EmailOptIn tells wether the user is opted in for email updates or not
+	EmailOptIn bool
+	// EmailOptInTime shows what time the user last opted in for email updates
+	EmailOptInTime string
+
+	// SmsPhone is the phone number used for sms updates
+	SmsPhone string
+	// SmsOptIn tells wether the use is opted for sms updates or not
+	SmsOptIn bool
+	// SmsOptInTime shows the last time the user opted in for sms updates
+	SmsOptInTime string
+
+	// UpdateTime shows the last time the user's profile was updated
+	UpdateTime string
 
 	// ServiceMethod should be "Delivery" or "Carryout"
-	ServiceMethod string `json:"-"`
+	ServiceMethod string `json:"-"` // this is a package specific field (not from the api)
 
 	auth  *auth
 	store *Store
@@ -58,10 +89,11 @@ func (u *UserProfile) NearestStore(service string) (*Store, error) {
 		return u.store, nil
 	}
 
-	// pass the authorized user's client along to
-	//  the store which will use the user's credentials
+	// Pass the authorized user's client along to the
+	// store which will use the user's credentials
 	// on each request.
 	c := &client{host: orderHost, Client: u.auth.cli.Client}
+	// TODO: put a check here making sure that the user has at least one address
 	u.store, err = getNearestStore(c, u.DefaultAddress(), service)
 	return u.store, err
 }
@@ -92,37 +124,80 @@ func (u *UserProfile) SetServiceMethod(service string) error {
 	return nil
 }
 
+// GetCards will get the cards that Dominos has saved in their database. (see UserCard)
+func (u *UserProfile) GetCards() ([]*UserCard, error) {
+	data, err := u.auth.cli.get(
+		fmt.Sprintf("/power/customer/%s/card", u.CustomerID),
+		Params{"_": time.Now().Nanosecond()},
+	)
+	if err != nil {
+		return nil, err
+	}
+	cards := make([]*UserCard, 0)
+	return cards, json.Unmarshal(data, &cards)
+}
+
+// NewOrder will create a new *dawg.Order struct with all of the user's information.
+func (u *UserProfile) NewOrder(service string) (*Order, error) {
+	var err error
+	if u.store == nil {
+		_, err = u.NearestStore(service)
+		if err != nil {
+			return nil, err
+		}
+	}
+	order := &Order{
+		FirstName:     u.FirstName,
+		LastName:      u.LastName,
+		Email:         u.Email,
+		LanguageCode:  DefaultLang,
+		ServiceMethod: u.ServiceMethod,
+		StoreID:       u.store.ID,
+		Products:      []*OrderProduct{},
+		Address:       StreetAddrFromAddress(u.store.userAddress),
+		Payments:      []*orderPayment{},
+		cli:           u.auth.cli,
+	}
+	return order, nil
+}
+
 // UserAddress is an address that is saved by dominos and returned when
 // a user signs in.
 type UserAddress struct {
-	// TODO: find out which of these fields are not needed
-	AddressType          string
-	StreetNumber         string
-	StreetRange          string
-	AddressLine2         string
-	PropertyType         string
-	StreetField2         string
-	LocationName         string
-	SubNeighborhood      string
-	StreetField1         string
-	UnitNumber           string
-	AddressLine4         string
-	PostalCode           string
-	BuildingID           string
-	IsDefault            bool
-	UpdateTime           string
-	PropertyNumber       string
-	UnitType             string
-	Coordinates          map[string]float32
-	Neighborhood         string
-	Street               string
-	CityName             string `json:"City"`
-	Region               string
+	// Basic address fields
+	Street       string
+	StreetName   string
+	StreetNumber string
+	CityName     string `json:"City"`
+	Region       string
+	PostalCode   string
+	AddressType  string
+
+	// Dominos specific meta-data
 	Name                 string
-	StreetName           string
+	IsDefault            bool
 	DeliveryInstructions string
-	AddressLine3         string
-	CampusID             string
+	UpdateTime           string
+
+	// Other address specific fields
+	AddressLine2 string
+	AddressLine3 string
+	AddressLine4 string
+	StreetField1 string
+	StreetField2 string
+	StreetRange  string
+
+	// Other rarely-used address meta-data fields
+	PropertyType    string
+	PropertyNumber  string
+	UnitType        string
+	UnitNumber      string
+	BuildingID      string
+	CampusID        string
+	Neighborhood    string
+	SubNeighborhood string
+	LocationName    string
+	Coordinates     map[string]float32
 }
 
 var _ Address = (*UserAddress)(nil)
@@ -178,4 +253,34 @@ func (ua *UserAddress) StateCode() string {
 // Zip returns the postal code.
 func (ua *UserAddress) Zip() string {
 	return ua.PostalCode
+}
+
+// UserCard holds the card data that Dominos stores and send back to users.
+// For security reasons, Dominos does not send the raw card number or the
+// raw security code. Insted they send a card ID that is used to reference
+// that card. This allows users to reference that card using the card's
+// nickname (see 'NickName' field)
+type UserCard struct {
+	// ID is the card id used by dominos internally to reference a user's
+	// card without sending the actual card number over the internet
+	ID string `json:"id"`
+	// NickName is the cards name, given when a user saves a card as a named card
+	NickName  string `json:"nickName"`
+	IsDefault bool   `json:"isDefault"`
+
+	TimesCharged        int  `json:"timesCharged"`
+	TimesChargedIsValid bool `json:"timesChargedIsValid"`
+
+	// LastFour is a field that gives the last four didgets of the card number
+	LastFour string `json:"lastFour"`
+	// true if the card has expired
+	IsExpired       bool `json:"isExpired"`
+	ExpirationMonth int  `json:"expirationMonth"`
+	ExpirationYear  int  `json:"expirationYear"`
+	// LastUpdated shows the date that this card was last updated in
+	// dominos databases
+	LastUpdated string `json:"lastUpdated"`
+
+	CardType   string `json:"cardType"`
+	BillingZip string `json:"billingZip"`
 }
