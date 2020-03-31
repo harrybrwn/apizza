@@ -208,7 +208,7 @@ func TestExecute(t *testing.T) {
 
 	for i, tc := range tt {
 		buf, err = tests.CaptureOutput(func() {
-			errmsg = Execute(tc.args, ".apizza/.tests")
+			errmsg = Execute(tc.args, ".config/apizza/.tests")
 		})
 		if err != nil {
 			t.Error(err)

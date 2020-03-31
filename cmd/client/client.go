@@ -5,7 +5,6 @@ import (
 
 	"github.com/harrybrwn/apizza/cmd/cli"
 	"github.com/harrybrwn/apizza/cmd/internal/data"
-	"github.com/harrybrwn/apizza/dawg"
 )
 
 // Client defines an interface which interacts with the dominos api.
@@ -26,10 +25,4 @@ func FromBuilder(b cli.Builder, menuDecay time.Duration) Client {
 type client struct {
 	StoreFinder
 	data.MenuCacher
-}
-
-// Addresser is an interface that defines objects that can
-// give the address of some location.
-type Addresser interface {
-	Address() dawg.Address
 }

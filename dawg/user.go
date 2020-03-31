@@ -76,12 +76,15 @@ func (u *UserProfile) AddAddress(a Address) {
 	u.Addresses = append(u.Addresses, UserAddressFromAddress(a))
 }
 
-var errNoServiceMethod = errors.New("no service method given")
+var (
+	errNoServiceMethod     = errors.New("no service method given")
+	errUserNoServiceMethod = errors.New("UserProfile.StoresNearMe: user has no ServiceMethod set")
+)
 
 // StoresNearMe will find the stores closest to the user's default address.
 func (u *UserProfile) StoresNearMe() ([]*Store, error) {
 	if u.ServiceMethod == "" {
-		return nil, errNoServiceMethod
+		return nil, errUserNoServiceMethod
 	}
 	if err := u.addressCheck(); err != nil {
 		return nil, err
@@ -130,6 +133,18 @@ func (u *UserProfile) SetServiceMethod(service string) error {
 		return ErrBadService
 	}
 	u.ServiceMethod = service
+	return nil
+}
+
+// SetStore will set the UserProfile struct's internal store variable.
+func (u *UserProfile) SetStore(store *Store) error {
+	if store == nil {
+		return errors.New("cannot set UserProfile store to a nil value")
+	}
+	if store.ID == "" {
+		return errors.New("UserProfile.SetStore: store is uninitialized")
+	}
+	u.store = store
 	return nil
 }
 

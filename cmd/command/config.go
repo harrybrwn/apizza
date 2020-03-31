@@ -23,7 +23,6 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/harrybrwn/apizza/cmd/cli"
-	"github.com/harrybrwn/apizza/cmd/client"
 	"github.com/harrybrwn/apizza/cmd/internal/obj"
 	"github.com/harrybrwn/apizza/pkg/cache"
 	"github.com/harrybrwn/apizza/pkg/config"
@@ -31,7 +30,7 @@ import (
 
 type configCmd struct {
 	cli.CliCommand
-	client.Addresser
+	cli.AddressBuilder
 	db   *cache.DataBase
 	conf *cli.Config
 
@@ -84,16 +83,16 @@ func (c *configCmd) Run(cmd *cobra.Command, args []string) error {
 // NewConfigCmd creates a new config command.
 func NewConfigCmd(b cli.Builder) cli.CliCommand {
 	c := &configCmd{
-		Addresser: b,
-		db:        b.DB(),
-		conf:      b.Config(),
-		file:      false,
-		dir:       false,
+		AddressBuilder: b,
+		db:             b.DB(),
+		conf:           b.Config(),
+		file:           false,
+		dir:            false,
 	}
 	c.CliCommand = b.Build("config", "Configure apizza", c)
 	c.SetOutput(b.Output())
-	c.Cmd().Long = `The 'config' command is used for accessing the .apizza config file
-in your home directory. Feel free to edit the .apizza json file
+	c.Cmd().Long = `The 'config' command is used for accessing the apizza config file
+in your home directory. Feel free to edit the apizza config.json file
 by hand or use the 'config' command.
 
 ex. 'apizza config get name' or 'apizza config set name=<your name>'`

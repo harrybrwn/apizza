@@ -57,7 +57,10 @@ func NewStore(id string, service string, addr Address) (*Store, error) {
 // The obj argument is anything that would be used to decode json data.
 //
 // Use type '*map[string]interface{}' in the object argument for all the
-// store data
+// store data.
+//	store := map[string]interface{}{}
+//	err := dawg.InitStore(id, &store)
+// This will allow all of the fields sent in the api to be viewed.
 func InitStore(id string, obj interface{}) error {
 	path := fmt.Sprintf(profileEndpoint, id)
 	b, err := orderClient.get(path, nil)

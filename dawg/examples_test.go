@@ -88,9 +88,6 @@ func ExampleUserProfile_GetCards() {
 		log.Fatal(err)
 	}
 	fmt.Println("Test Card name:", cards[0].NickName) // This is dependant on the account
-
-	// Output:
-	// Test Card name: FakeCard
 }
 
 func ExampleUserProfile_AddAddress() {

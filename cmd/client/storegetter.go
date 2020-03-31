@@ -14,7 +14,7 @@ type StoreFinder interface {
 	Store() *dawg.Store
 
 	// Address() will return the address of the delivery location NOT the store address.
-	Addresser
+	cli.AddressBuilder
 }
 
 // storegetter is meant to be a mixin for any struct that needs to be able to

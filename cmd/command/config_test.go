@@ -116,7 +116,7 @@ func TestConfigCmd(t *testing.T) {
 func TestConfigEdit(t *testing.T) {
 	r := cmdtest.NewRecorder()
 	c := NewConfigCmd(r).(*configCmd)
-	err := config.SetConfig(".apizza/tests", r.Conf)
+	err := config.SetConfig(".config/apizza/tests", r.Conf)
 	if err != nil {
 		t.Error(err)
 	}
