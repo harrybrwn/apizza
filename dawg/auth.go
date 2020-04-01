@@ -25,17 +25,19 @@ const (
 	loginEndpoint = "https://order.dominos.com/power/login"
 )
 
-var oauthURL = &url.URL{
-	Scheme: "https",
-	Host:   "api.dominos.com",
-	Path:   "/as/token.oauth2",
-}
+var (
+	oauthURL = &url.URL{
+		Scheme: "https",
+		Host:   "api.dominos.com",
+		Path:   "/as/token.oauth2",
+	}
 
-var loginURL = &url.URL{
-	Scheme: "https",
-	Host:   orderHost,
-	Path:   "/power/login",
-}
+	loginURL = &url.URL{
+		Scheme: "https",
+		Host:   orderHost,
+		Path:   "/power/login",
+	}
+)
 
 func newauth(username, password string) (*auth, error) {
 	tok, err := gettoken(username, password)
@@ -173,10 +175,6 @@ type client struct {
 
 func (c *client) do(req *http.Request) ([]byte, error) {
 	var buf bytes.Buffer
-	req.Header.Add(
-		"User-Agent",
-		"Dominos API Wrapper for GO - "+time.Now().String(),
-	)
 	resp, err := c.Do(req)
 	if err != nil {
 		return nil, err

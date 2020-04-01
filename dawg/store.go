@@ -75,6 +75,10 @@ var orderClient = &client{
 	Client: &http.Client{
 		Timeout:       60 * time.Second,
 		CheckRedirect: noRedirects,
+		Transport: newRoundTripper(func(req *http.Request) error {
+			setDawgUserAgent(req.Header)
+			return nil
+		}),
 	},
 }
 

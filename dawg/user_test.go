@@ -84,9 +84,6 @@ func TestUserStoresNearMe(t *testing.T) {
 	if err == nil {
 		t.Error("expected error")
 	}
-	if err != errNoServiceMethod {
-		t.Error("wrong error")
-	}
 	if stores != nil {
 		t.Error("should not have returned any stores")
 	}

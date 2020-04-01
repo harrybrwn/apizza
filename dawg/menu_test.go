@@ -173,10 +173,8 @@ func TestTranslateOpt(t *testing.T) {
 	}
 }
 
-var testmenu = testingMenu()
-
 func TestPrintMenu(t *testing.T) {
-	m := testmenu
+	m := testingMenu()
 	buf := new(bytes.Buffer)
 
 	m.Print(buf)
@@ -191,7 +189,7 @@ func TestMenuStorage(t *testing.T) {
 			t.Error(e)
 		}
 	}
-	m := testmenu
+	m := testingMenu()
 	fname := filepath.Join(os.TempDir(), "apizza-binary-menu")
 	buf := &bytes.Buffer{}
 	gob.Register([]interface{}{})

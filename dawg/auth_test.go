@@ -77,7 +77,7 @@ func getTestUser(uname, pass string) (*UserProfile, error) {
 // halt my tests for like 60+ seconds per test.
 //
 // usage:
-// defer swapclient(15)()
+// 	defer swapclient(15)()
 // this will call swapclient and defer the cleanup function
 // that it returns so that the default client is reset.
 //
@@ -90,6 +90,10 @@ func swapclient(timeout int) func() {
 		Client: &http.Client{
 			Timeout:       time.Duration(timeout) * time.Second,
 			CheckRedirect: noRedirects,
+			Transport: newRoundTripper(func(req *http.Request) error {
+				req.Header.Set("User-Agent", fmt.Sprintf("TestClient: %d", time.Now().Nanosecond()))
+				return nil
+			}),
 		},
 	}
 	return func() { orderClient = copyclient }

@@ -2,9 +2,11 @@ package dawg
 
 import (
 	"fmt"
+	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
+	"time"
 )
 
 // URLParam is an interface that represents a url parameter. It was defined
@@ -52,4 +54,31 @@ func (p Params) Encode() string {
 
 func format(f string, a ...interface{}) string {
 	return fmt.Sprintf(f, a...)
+}
+
+func newRoundTripper(fn func(*http.Request) error) http.RoundTripper {
+	return &roundTripper{
+		inner: http.DefaultTransport,
+		f:     fn,
+	}
+}
+
+type roundTripper struct {
+	inner http.RoundTripper
+	f     func(*http.Request) error
+}
+
+func (rt *roundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
+	err := rt.f(req)
+	if err != nil {
+		return nil, err
+	}
+	return rt.inner.RoundTrip(req)
+}
+
+func setDawgUserAgent(head http.Header) {
+	head.Add(
+		"User-Agent",
+		"Dominos API Wrapper for GO - "+time.Now().String(),
+	)
 }

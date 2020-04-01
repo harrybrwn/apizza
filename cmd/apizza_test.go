@@ -214,7 +214,7 @@ func TestExecute(t *testing.T) {
 			t.Error(err)
 		}
 		if errmsg != nil {
-			t.Error(errmsg.Msg, errmsg.Err)
+			t.Error(errmsg.Msg, errmsg.Err, tc.args)
 		}
 
 		if tc.outfunc != nil {
