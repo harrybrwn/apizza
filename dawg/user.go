@@ -38,7 +38,6 @@ type UserProfile struct {
 	AgreedToTermsOfUse bool `json:"AgreeToTermsOfUse"`
 	// User's gender
 	Gender string
-
 	// List of all the addresses saved in the dominos account
 	Addresses []*UserAddress
 
@@ -96,9 +95,6 @@ func (u *UserProfile) NearestStore(service string) (*Store, error) {
 	var err error
 	if u.store != nil {
 		return u.store, nil
-	}
-	if err = u.serviceCheck(); err != nil {
-		return nil, err
 	}
 
 	// Pass the authorized user's client along to the
@@ -160,11 +156,16 @@ func (u *UserProfile) GetCards() ([]*UserCard, error) {
 
 // Loyalty returns the user's loyalty meta-data (see CustomerLoyalty)
 func (u *UserProfile) Loyalty() (*CustomerLoyalty, error) {
+	u.loyaltyData = new(CustomerLoyalty)
+	return u.loyaltyData, u.customerEndpoint("loyalty", nil, u.loyaltyData)
+}
+
+// for internal use (caches the loyalty data)
+func (u *UserProfile) getLoyalty() (*CustomerLoyalty, error) {
 	if u.loyaltyData != nil {
 		return u.loyaltyData, nil
 	}
-	u.loyaltyData = new(CustomerLoyalty)
-	return u.loyaltyData, u.customerEndpoint("loyalty", nil, u.loyaltyData)
+	return u.Loyalty()
 }
 
 // PreviousOrders will return `n` of the user's previous orders.
@@ -236,7 +237,11 @@ func (u *UserProfile) serviceCheck() error {
 	return nil
 }
 
-func (u *UserProfile) customerEndpoint(path string, params Params, obj interface{}) error {
+func (u *UserProfile) customerEndpoint(
+	path string,
+	params Params,
+	obj interface{},
+) error {
 	if u.CustomerID == "" {
 		return errors.New("UserProfile not fully initialized: needs CustomerID")
 	}

@@ -9,9 +9,10 @@ func TestSignIn(t *testing.T) {
 	if !ok {
 		t.Skip()
 	}
-	defer swapclient(10)()
+	defer swapclient(3)()
 
-	user, err := getTestUser(username, password) // calls SignIn if global user is nil
+	// user, err := getTestUser(username, password) // calls SignIn if global user is nil
+	user, err := SignIn(username, password)
 	if err != nil {
 		t.Error(err)
 	}
@@ -26,7 +27,7 @@ func TestUserNearestStore(t *testing.T) {
 	if !ok {
 		t.Skip()
 	}
-	defer swapclient(10)()
+	defer swapclient(3)()
 
 	user, err := getTestUser(uname, pass)
 	if err != nil {
@@ -35,6 +36,7 @@ func TestUserNearestStore(t *testing.T) {
 	if user == nil {
 		t.Fatal("user is nil")
 	}
+	user.SetServiceMethod(Carryout)
 	user.Addresses = []*UserAddress{}
 	if user.DefaultAddress() != nil {
 		t.Error("we just set this to an empty array, why is it not so")
@@ -64,7 +66,7 @@ func TestUserStoresNearMe(t *testing.T) {
 	if !ok {
 		t.Skip()
 	}
-	defer swapclient(10)()
+	defer swapclient(3)()
 
 	user, err := getTestUser(uname, pass)
 	if err != nil {
@@ -128,7 +130,7 @@ func TestUserNewOrder(t *testing.T) {
 	if !ok {
 		t.Skip()
 	}
-	defer swapclient(10)()
+	defer swapclient(3)()
 
 	user, err := getTestUser(uname, pass)
 	if err != nil {

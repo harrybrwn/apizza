@@ -91,6 +91,7 @@ func NewConfigCmd(b cli.Builder) cli.CliCommand {
 	}
 	c.CliCommand = b.Build("config", "Configure apizza", c)
 	c.SetOutput(b.Output())
+	c.Cmd().Aliases = []string{"conf"}
 	c.Cmd().Long = `The 'config' command is used for accessing the apizza config file
 in your home directory. Feel free to edit the apizza config.json file
 by hand or use the 'config' command.

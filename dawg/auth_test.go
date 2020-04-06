@@ -162,10 +162,11 @@ func TestAuth(t *testing.T) {
 	}
 
 	var user *UserProfile
-	if testUser == nil {
-		testUser, err = auth.login()
-	}
-	user = testUser
+	// if testUser == nil {
+	// 	testUser, err = auth.login()
+	// }
+	// user = testUser
+	user, err = SignIn(username, password)
 	user.SetServiceMethod(Delivery)
 
 	if err != nil {

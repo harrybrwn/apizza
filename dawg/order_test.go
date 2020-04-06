@@ -224,6 +224,18 @@ func TestOrder_Err(t *testing.T) {
 	if err == nil {
 		t.Error("expected error")
 	}
+
+	o = &Order{
+		ServiceMethod: Delivery,
+		Address:       &StreetAddr{},
+		Email:         "jake@statefarm.com",
+		Phone:         "1234567",
+	}
+	o.Init()
+	err = o.PlaceOrder()
+	if !IsFailure(err) {
+		t.Error("placing an empty order should fail")
+	}
 }
 
 func TestRemoveProduct(t *testing.T) {

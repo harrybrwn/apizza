@@ -140,9 +140,7 @@ func (a *auth) login() (*UserProfile, error) {
 	}
 	defer res.Body.Close()
 
-	profile := new(UserProfile)
-	profile.auth = a
-
+	profile := &UserProfile{auth: a}
 	b, err := ioutil.ReadAll(res.Body)
 	if err = errpair(err, dominosErr(b)); err != nil {
 		return nil, err
