@@ -199,6 +199,9 @@ func TestAuth(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
+	if store == nil {
+		t.Fatal("store is nil")
+	}
 	if store.cli == nil {
 		t.Fatal("store did not get a client")
 	}
