@@ -9,7 +9,7 @@ install:
 	go install github.com/harrybrwn/apizza
 
 uninstall:
-	$(RM) "$$GOPATH/bin/apizza"
+	$(RM) "$$GOBIN/apizza"
 
 build:
 	go build -o bin/apizza

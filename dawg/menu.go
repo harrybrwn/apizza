@@ -31,10 +31,10 @@ type ItemContainer interface {
 // Menu represents the dominos menu. It is best if this comes from
 // the Store.Menu() method.
 type Menu struct {
-	ID             string `json:"ID"`
+	ID             string
 	Categorization struct {
-		Food          MenuCategory `json:"Food"`
-		Coupons       MenuCategory `json:"Coupons"`
+		Food          MenuCategory
+		Coupons       MenuCategory
 		Preconfigured MenuCategory `json:"PreconfiguredProducts"`
 	} `json:"Categorization"`
 	Products      map[string]*Product
@@ -51,7 +51,7 @@ type Menu struct {
 
 // MenuCategory is a category on the dominos menu.
 type MenuCategory struct {
-	Categories  []MenuCategory `json:"Categories"`
+	Categories  []MenuCategory
 	Products    []string
 	Name        string
 	Code        string

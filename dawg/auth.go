@@ -191,6 +191,20 @@ func (c *client) do(req *http.Request) ([]byte, error) {
 	return buf.Bytes(), err
 }
 
+func (c *client) dojson(v interface{}, r *http.Request) (err error) {
+	resp, err := c.Do(r)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		e := resp.Body.Close()
+		if err == nil {
+			err = e
+		}
+	}()
+	return json.NewDecoder(resp.Body).Decode(v)
+}
+
 func (c *client) get(path string, params URLParam) ([]byte, error) {
 	if params == nil {
 		params = &Params{}

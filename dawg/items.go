@@ -59,7 +59,6 @@ func (im *ItemCommon) ItemName() string {
 // Product is not a the most basic component of the Dominos menu; this is where
 // the Variant structure comes in. The Product structure can be seen as more of
 // a category that houses a list of Variants.
-// All exported field are initialized from json data.
 type Product struct {
 	ItemCommon
 
@@ -268,11 +267,13 @@ func (pc *PreConfiguredProduct) Options() map[string]interface{} {
 
 // AddTopping adds a topping to the product.
 func (pc *PreConfiguredProduct) AddTopping(code, cover, amnt string) error {
+	// TODO: finish this
 	return errors.New("not implimented")
 }
 
 // Category returns the product category. see Item
 func (pc *PreConfiguredProduct) Category() string {
+	// TODO: finish this
 	return "n/a"
 }
 

@@ -166,6 +166,7 @@ func TestAuth(t *testing.T) {
 		testUser, err = auth.login()
 	}
 	user = testUser
+	user.SetServiceMethod(Delivery)
 
 	if err != nil {
 		t.Error(err)

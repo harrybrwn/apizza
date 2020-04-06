@@ -1,7 +1,6 @@
 package dawg
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -78,7 +77,7 @@ func (u *UserProfile) AddAddress(a Address) {
 
 var (
 	errNoServiceMethod     = errors.New("no service method given")
-	errUserNoServiceMethod = errors.New("UserProfile.StoresNearMe: user has no ServiceMethod set")
+	errUserNoServiceMethod = errors.New("User has no ServiceMethod set")
 )
 
 // StoresNearMe will find the stores closest to the user's default address.
@@ -97,6 +96,9 @@ func (u *UserProfile) NearestStore(service string) (*Store, error) {
 	var err error
 	if u.store != nil {
 		return u.store, nil
+	}
+	if err = u.serviceCheck(); err != nil {
+		return nil, err
 	}
 
 	// Pass the authorized user's client along to the
@@ -192,10 +194,10 @@ func (u *UserProfile) initOrdersMeta(limit int) error {
 }
 
 // NewOrder will create a new *dawg.Order struct with all of the user's information.
-func (u *UserProfile) NewOrder(service string) (*Order, error) {
+func (u *UserProfile) NewOrder() (*Order, error) {
 	var err error
 	if u.store == nil {
-		_, err = u.NearestStore(service)
+		_, err = u.NearestStore(u.ServiceMethod)
 		if err != nil {
 			return nil, err
 		}
@@ -208,6 +210,7 @@ func (u *UserProfile) NewOrder(service string) (*Order, error) {
 		ServiceMethod: u.ServiceMethod,
 		StoreID:       u.store.ID,
 		CustomerID:    u.CustomerID,
+		Phone:         u.Phone,
 		Products:      []*OrderProduct{},
 		Address:       StreetAddrFromAddress(u.store.userAddress),
 		Payments:      []*orderPayment{},
@@ -226,6 +229,13 @@ func (u *UserProfile) addressCheck() error {
 	return nil
 }
 
+func (u *UserProfile) serviceCheck() error {
+	if u.ServiceMethod == "" {
+		return ErrNoUserService
+	}
+	return nil
+}
+
 func (u *UserProfile) customerEndpoint(path string, params Params, obj interface{}) error {
 	if u.CustomerID == "" {
 		return errors.New("UserProfile not fully initialized: needs CustomerID")
@@ -235,9 +245,8 @@ func (u *UserProfile) customerEndpoint(path string, params Params, obj interface
 	}
 	params["_"] = time.Now().Nanosecond()
 
-	data, err := u.auth.cli.do(&http.Request{
+	return u.auth.cli.dojson(obj, &http.Request{
 		Method: "GET",
-		Host:   u.auth.cli.host,
 		Proto:  "HTTP/1.1",
 		Header: make(http.Header),
 		URL: &url.URL{
@@ -247,10 +256,6 @@ func (u *UserProfile) customerEndpoint(path string, params Params, obj interface
 			RawQuery: params.Encode(),
 		},
 	})
-	if err != nil {
-		return err
-	}
-	return json.Unmarshal(data, obj)
 }
 
 // UserAddress is an address that is saved by dominos and returned when
@@ -429,7 +434,6 @@ type EasyOrder struct {
 		NickName string `json:"nickName"`
 	}
 
-	// Store *Store `json:"store"`
 	Store struct {
 		Address              *StreetAddr `json:"address"`
 		CarryoutServiceHours string      `json:"carryoutServiceHours"`

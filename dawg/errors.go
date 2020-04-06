@@ -3,6 +3,7 @@ package dawg
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 
 	"github.com/mitchellh/mapstructure"
@@ -17,6 +18,14 @@ const (
 
 	// OkStatus  is the status code dominos serves use to signify no problems
 	OkStatus = 0
+)
+
+var (
+	// ErrBadService is returned if a service is needed but the service validation failed.
+	ErrBadService = errors.New("service must be either 'Delivery' or 'Carryout'")
+
+	// ErrNoUserService is thrown when a user has no service method.
+	ErrNoUserService = errors.New("UserProfile has no service method (use user.SetServiceMethod)")
 )
 
 var (

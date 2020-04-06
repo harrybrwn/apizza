@@ -79,6 +79,7 @@ func TestUserStoresNearMe(t *testing.T) {
 	if err != ErrBadService {
 		t.Error("SetServiceMethod with bad val gave wrong error")
 	}
+	user.ServiceMethod = ""
 	user.AddAddress(testAddress())
 	stores, err := user.StoresNearMe()
 	if err == nil {
@@ -119,5 +120,44 @@ func TestUserStoresNearMe(t *testing.T) {
 		if s.userAddress.Zip() != addr.Zip() {
 			t.Error("wrong zip code")
 		}
+	}
+}
+
+func TestUserNewOrder(t *testing.T) {
+	uname, pass, ok := gettestcreds()
+	if !ok {
+		t.Skip()
+	}
+	defer swapclient(10)()
+
+	user, err := getTestUser(uname, pass)
+	if err != nil {
+		t.Error(err)
+	}
+	if user == nil {
+		t.Fatal("user should not be nil")
+	}
+	user.SetServiceMethod(Carryout)
+	order, err := user.NewOrder()
+	if err != nil {
+		t.Error(err)
+	}
+	eq := func(a, b, msg string) {
+		if a != b {
+			t.Error(msg)
+		}
+	}
+
+	eq(order.ServiceMethod, Carryout, "wrong service method")
+	eq(order.ServiceMethod, user.ServiceMethod, "service method should carry over from the user")
+	eq(order.Phone, user.Phone, "phone should carry over from user")
+	eq(order.FirstName, user.FirstName, "first name should carry over from user")
+	eq(order.LastName, user.LastName, "last name should carry over from user")
+	eq(order.CustomerID, user.CustomerID, "customer id should carry over")
+	eq(order.Email, user.Email, "order email should carry over from user")
+	eq(order.StoreID, user.store.ID, "store id should carry over")
+
+	if order.Address == nil {
+		t.Error("order should get and address from the user")
 	}
 }

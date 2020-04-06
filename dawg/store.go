@@ -21,9 +21,6 @@ const (
 	profileEndpoint = "/power/store/%s/profile"
 )
 
-// ErrBadService is returned if a service is needed but the service validation failed.
-var ErrBadService = errors.New("service must be either 'Delivery' or 'Carryout'")
-
 // NearestStore gets the dominos location closest to the given address.
 //
 // The addr argument should be the address to deliver to not the address of the
