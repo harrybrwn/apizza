@@ -185,11 +185,9 @@ func TestMenuStorage(t *testing.T) {
 	tests.Check(f.Close())
 	file, err := os.Open(fname)
 	tests.Check(err)
-	defer func() {
-		tests.Check(file.Close())
-	}()
 	menu := Menu{}
 	err = gob.NewDecoder(file).Decode(&menu)
+	tests.Check(file.Close())
 	tests.Fatal(err)
 
 	tests.StrEq(menu.ID, m.ID, "wrong menu id")
