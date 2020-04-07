@@ -92,3 +92,68 @@ func CompareCallDepth(t *testing.T, got, exp string, depth int) {
 		t.Errorf(msg)
 	}
 }
+
+var currentTest *struct {
+	name string
+	t    *testing.T
+} = nil
+
+func nilcheck() {
+	if currentTest == nil {
+		panic("No testing.T registered; must call errs.InitHelpers(t) at test function start")
+	}
+}
+
+// InitHelpers will set the err package testing.T variable for tests
+func InitHelpers(t *testing.T) {
+	t.Cleanup(func() { currentTest = nil })
+	currentTest = &struct {
+		name string
+		t    *testing.T
+	}{
+		name: t.Name(),
+		t:    t,
+	}
+}
+
+// Check will check to see that an error is nil, and cause an error if not
+func Check(err error) {
+	nilcheck()
+	currentTest.t.Helper()
+	if err != nil {
+		currentTest.t.Error(err)
+	}
+}
+
+// Exp will fail the test if the error is nil
+func Exp(err error, vs ...interface{}) {
+	nilcheck()
+	currentTest.t.Helper()
+	if err == nil {
+		if len(vs) > 0 {
+			msg := []interface{}{"expected an error; "}
+			msg = append(msg, vs...)
+			currentTest.t.Error(msg...)
+		} else {
+			currentTest.t.Error("expected an error; got <nil>")
+		}
+	}
+}
+
+// Fatal will fail and exit the test if the error is not nil.
+func Fatal(err error) {
+	nilcheck()
+	currentTest.t.Helper()
+	if err != nil {
+		currentTest.t.Fatal(err)
+	}
+}
+
+// StrEq will show an error message if a is not equal to b.
+func StrEq(a, b string, fmt string, vs ...interface{}) {
+	nilcheck()
+	currentTest.t.Helper()
+	if a != b {
+		currentTest.t.Errorf(fmt+"\n", vs...)
+	}
+}
