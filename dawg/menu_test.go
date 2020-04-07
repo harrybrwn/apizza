@@ -169,8 +169,10 @@ func TestPrintMenu(t *testing.T) {
 
 func TestMenuStorage(t *testing.T) {
 	tests.InitHelpers(t)
+	testdir := tests.MkTempDir(t.Name())
+
 	m := testingMenu()
-	fname := filepath.Join(os.TempDir(), "apizza-binary-menu")
+	fname := filepath.Join(testdir, "apizza-binary-menu")
 	buf := &bytes.Buffer{}
 	gob.Register([]interface{}{})
 	err := gob.NewEncoder(buf).Encode(m)
@@ -208,5 +210,5 @@ func TestMenuStorage(t *testing.T) {
 		tests.StrEq(mp.Code, menup.Code, "Stored wrong product code - got: %s, want: %s", menup.Code, mp.Code)
 		tests.StrEq(mp.DefaultSides, menup.DefaultSides, "Stored wrong product DefaultSides - got: %s, want: %s", menup.DefaultSides, mp.DefaultSides)
 	}
-	tests.Check(os.Remove(fname))
+	tests.Check(os.RemoveAll(testdir))
 }

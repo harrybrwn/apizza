@@ -17,6 +17,7 @@ coverage.html
 *.py
 *.prof
 !dawg/testdata/cardnums.json
+/env/
 
 # Tools
 /.vscode

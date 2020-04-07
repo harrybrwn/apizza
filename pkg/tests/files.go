@@ -39,7 +39,17 @@ func WithTempFile(test func(string, *testing.T)) func(*testing.T) {
 func TempDir() string {
 	dir := randFile(os.TempDir(), "", "")
 	if err := os.Mkdir(dir, 0755); err != nil {
-		return ""
+		return os.TempDir()
+	}
+	return dir
+}
+
+// MkTempDir will create a temporary directory in your operating system's
+// temp directory
+func MkTempDir(name string) string {
+	dir := randFile(os.TempDir(), name, "")
+	if err := os.Mkdir(dir, 0755); err != nil {
+		panic("could not create temp directory " + dir)
 	}
 	return dir
 }
