@@ -1,6 +1,7 @@
 package dawg
 
 import (
+	"bytes"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -9,33 +10,30 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/harrybrwn/apizza/pkg/tests"
 )
 
 func TestBadCreds(t *testing.T) {
 	// swap the default client with one that has a
 	// 10s timeout then defer the cleanup.
 	defer swapclient(1)()
+	tests.InitHelpers(t)
 
 	tok, err := gettoken("no", "and no")
-	if err == nil {
-		t.Error("expected an error")
-	}
+	tests.Exp(err)
 	if tok != nil {
 		t.Error("expected nil token")
 	}
 
 	tok, err = gettoken("", "")
-	if err == nil {
-		t.Error("expected an error")
-	}
+	tests.Exp(err)
 	if tok != nil {
 		t.Error("expected nil token")
 	}
 
 	tok, err = gettoken("5uup;hrg];ht8bijer$u9tot", "hurieahgr9[0249eingurivja")
-	if err == nil {
-		t.Error("wow i accidentally cracked someone's password:", tok)
-	}
+	tests.Exp(err)
 	if tok != nil {
 		t.Error("expected nil token")
 	}
@@ -106,14 +104,11 @@ func TestToken(t *testing.T) {
 	}
 	// swapclient is called first and the cleanup
 	// function it returns is deferred.
-	defer swapclient(10)()
+	defer swapclient(5)()
+	tests.InitHelpers(t)
 
 	tok, err := gettoken(username, password)
-	if err != nil {
-		fmt.Printf("%T\n", err)
-		t.Errorf("%T\n", err)
-		t.Error(err)
-	}
+	tests.Check(err)
 	if tok == nil {
 		t.Fatal("nil token")
 	}
@@ -137,11 +132,10 @@ func TestAuth(t *testing.T) {
 		t.Skip()
 	}
 	defer swapclient(2)()
+	tests.InitHelpers(t)
 
 	auth, err := getTestAuth(username, password)
-	if err != nil {
-		t.Error(err)
-	}
+	tests.Check(err)
 	if auth == nil {
 		t.Fatal("got nil auth")
 	}
@@ -168,10 +162,7 @@ func TestAuth(t *testing.T) {
 	// user = testUser
 	user, err = SignIn(username, password)
 	user.SetServiceMethod(Delivery)
-
-	if err != nil {
-		t.Error(err)
-	}
+	tests.Check(err)
 	if user == nil {
 		t.Fatal("got nil user-profile")
 	}
@@ -196,9 +187,7 @@ func TestAuth(t *testing.T) {
 		return
 	}
 	store, err := user.NearestStore("Delivery")
-	if err != nil {
-		t.Error(err)
-	}
+	tests.Check(err)
 	if store == nil {
 		t.Fatal("store is nil")
 	}
@@ -216,25 +205,19 @@ func TestAuth(t *testing.T) {
 			RawQuery: (&Params{"lang": DefaultLang, "structured": "true"}).Encode()},
 	}
 	res, err := store.cli.Do(req)
-	if err != nil {
-		t.Error(err)
-	}
-	defer res.Body.Close()
+	tests.Check(err)
+	defer func() { tests.Check(res.Body.Close()) }()
 	authhead := res.Request.Header.Get("Authorization")
-	if authhead != auth.token.authorization() {
+	if len(authhead) <= len("Bearer ") {
 		t.Error("store client didn't get the token")
 	}
 	b, err := ioutil.ReadAll(res.Body)
-	if err != nil {
-		t.Error(err)
-	}
+	tests.Check(err)
 	if len(b) == 0 {
 		t.Error("zero length response")
 	}
 	menu, err := store.Menu()
-	if err != nil {
-		t.Error(err)
-	}
+	tests.Check(err)
 	if menu == nil {
 		t.Error("got nil menu")
 	}
@@ -243,17 +226,14 @@ func TestAuth(t *testing.T) {
 		t.Error("nil order")
 	}
 	_, err = o.Price()
-	if err != nil {
-		t.Error(err)
-	}
+	tests.Check(err)
 }
 
 func TestAuth_Err(t *testing.T) {
 	defer swapclient(2)()
+	tests.InitHelpers(t)
 	a, err := newauth("not a", "valid password")
-	if err == nil {
-		t.Error("expected an error")
-	}
+	tests.Exp(err)
 	if a != nil {
 		t.Error("expected a nil auth")
 	}
@@ -271,17 +251,13 @@ func TestAuth_Err(t *testing.T) {
 	}
 
 	user, err := a.login()
-	if err == nil {
-		t.Error("expected an error")
-	}
+	tests.Exp(err)
 	if user != nil {
 		t.Errorf("expected a nil user: %+v", user)
 	}
 	a.cli.host = "invalid_host.com"
 	user, err = a.login()
-	if err == nil {
-		t.Error("expected an error")
-	}
+	tests.Exp(err)
 	if user != nil {
 		t.Error("user should still be nil")
 	}
@@ -293,8 +269,10 @@ func TestAuthClient(t *testing.T) {
 		t.Skip()
 	}
 	defer swapclient(5)()
+	tests.InitHelpers(t)
 
 	auth, err := getTestAuth(username, password)
+	tests.Check(err)
 	if auth == nil {
 		t.Fatal("got nil auth")
 	}
@@ -302,33 +280,25 @@ func TestAuthClient(t *testing.T) {
 	if auth.cli == nil {
 		t.Error("client should not be nil")
 	}
-	err = auth.cli.CheckRedirect(nil, nil)
-	if err == nil {
-		t.Error("order Client should not allow redirects")
-	}
-	err = auth.cli.CheckRedirect(&http.Request{}, []*http.Request{})
-	if err == nil {
-		t.Error("expected error")
-	}
+	tests.Exp(auth.cli.CheckRedirect(nil, nil), "order Client should not allow redirects")
+	tests.Exp(auth.cli.CheckRedirect(&http.Request{}, []*http.Request{}))
 	cleanup := swapclient(2)
 	tok, err := gettoken("bad", "creds")
-	if err == nil {
-		t.Error("should return error")
-	}
+	tests.Exp(err, "should return error")
 	cleanup()
 
 	req := newAuthRequest(oauthURL, url.Values{})
 	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		t.Error(err)
-	}
+	tests.Check(err)
 	tok = &token{}
-	err = unmarshalToken(resp.Body, tok)
-	if err == nil {
-		t.Error("expected error")
-	}
+	buf := &bytes.Buffer{}
+	buf.ReadFrom(resp.Body)
+
+	err = unmarshalToken(ioutil.NopCloser(buf), tok)
+	tests.Exp(err)
 	if e, ok := err.(*tokenError); !ok {
 		t.Error("expected a *tokenError as the error")
+		fmt.Println(buf.String())
 	} else if e.Error() != fmt.Sprintf("%s: %s", e.Err, e.ErrorDesc) {
 		t.Error("wrong error message")
 	}

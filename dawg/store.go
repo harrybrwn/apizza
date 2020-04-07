@@ -292,7 +292,7 @@ func findNearbyStores(c *client, addr Address, service string) (*storeLocs, erro
 func asyncNearbyStores(cli *client, addr Address, service string) ([]*Store, error) {
 	all, err := findNearbyStores(cli, addr, service)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("findNearbyStores: %v", err)
 	}
 
 	var (
@@ -321,6 +321,9 @@ func asyncNearbyStores(cli *client, addr Address, service string) ([]*Store, err
 	for pair = range builder.stores {
 		if pair.err != nil {
 			return nil, pair.err
+            // if err == nil {
+                // err = pair.err
+            // }
 		}
 		store = pair.store
 		store.userAddress = addr
@@ -330,5 +333,5 @@ func asyncNearbyStores(cli *client, addr Address, service string) ([]*Store, err
 		stores[pair.index] = store
 	}
 
-	return stores, nil
+	return stores, err
 }

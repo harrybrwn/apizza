@@ -4,12 +4,13 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"math/rand"
 	"net"
 	"net/http"
 	"testing"
 	"time"
+
+	"github.com/harrybrwn/apizza/pkg/tests"
 )
 
 func TestFormat(t *testing.T) {
@@ -21,6 +22,7 @@ func TestFormat(t *testing.T) {
 }
 
 func TestOrderAddressConvertion(t *testing.T) {
+	tests.InitHelpers(t)
 	exp := &StreetAddr{StreetNum: "1600", StreetName: "Pennsylvania Ave.",
 		Street: "1600 Pennsylvania Ave.", CityName: "Washington",
 		State: "DC", Zipcode: "20500", AddrType: "House"}
@@ -33,27 +35,16 @@ func TestOrderAddressConvertion(t *testing.T) {
 	}
 
 	res := StreetAddrFromAddress(addr)
-	if res.City() != exp.City() {
-		t.Error("wrong city")
-	}
-	if res.LineOne() != exp.LineOne() {
-		t.Error("wrong lineone")
-	}
-	if res.StateCode() != exp.StateCode() {
-		t.Error("wrong state code")
-	}
-	if res.Zip() != exp.Zip() {
-		t.Error("wrong zip code")
-	}
-	if res.StreetNum != exp.StreetNum {
-		t.Error("wrong street number")
-	}
-	if res.StreetName != exp.StreetName {
-		t.Error("wrong street name")
-	}
+	tests.StrEq(res.City(), exp.City(), "wrong city")
+	tests.StrEq(res.LineOne(), exp.LineOne(), "wrong lineone")
+	tests.StrEq(res.StateCode(), exp.StateCode(), "wrong state code")
+	tests.StrEq(res.Zip(), exp.Zip(), "wrong zip code")
+	tests.StrEq(res.StreetNum, exp.StreetNum, "wrong street number")
+	tests.StrEq(res.StreetName, exp.StreetName, "wrong street name")
 }
 
 func TestParseAddressTable(t *testing.T) {
+	tests.InitHelpers(t)
 	var cases = []struct {
 		raw      string
 		expected StreetAddr
@@ -74,52 +65,31 @@ func TestParseAddressTable(t *testing.T) {
 
 	for _, tc := range cases {
 		addr, err := ParseAddress(tc.raw)
-		if err != nil {
-			t.Error(err)
-		}
-		if addr.StreetNum != tc.expected.StreetNum {
-			t.Error("wrong street num")
-		}
-		if addr.Street != tc.expected.Street {
-			t.Error("wrong street")
-		}
-		if addr.CityName != tc.expected.CityName {
-			t.Error("wrong city")
-		}
-		if addr.State != tc.expected.State {
-			t.Error("wrong state")
-		}
-		if addr.Zipcode != tc.expected.Zipcode {
-			t.Error("wrong zip")
-		}
+		tests.Check(err)
+		tests.StrEq(addr.StreetNum, tc.expected.StreetNum, "wrong street num")
+		tests.StrEq(addr.Street, tc.expected.Street, "wrong street")
+		tests.StrEq(addr.CityName, tc.expected.CityName, "wrong city")
+		tests.StrEq(addr.State, tc.expected.State, "wrong state")
+		tests.StrEq(addr.Zipcode, tc.expected.Zipcode, "wrong zip")
 	}
 }
 
 func TestNetworking_Err(t *testing.T) {
+	tests.InitHelpers(t)
 	defer swapclient(2)()
 	_, err := orderClient.get("/", nil)
-	if err == nil {
-		t.Error("expected error")
-	}
+	tests.Exp(err)
 	_, err = orderClient.get("/invalid path", nil)
-	if err == nil {
-		t.Error("expected error")
-	}
+	tests.Exp(err)
 	b, err := orderClient.post("/invalid path", nil, bytes.NewReader(make([]byte, 1)))
+	tests.Exp(err)
 	if len(b) != 0 {
 		t.Error("expected zero length response")
 	}
-	if err == nil {
-		t.Error("expected error")
-	}
 	_, err = orderClient.post("invalid path", nil, bytes.NewReader(nil))
-	if err == nil {
-		t.Error("expected error")
-	}
+	tests.Exp(err)
 	_, err = orderClient.post("/power/price-order", nil, bytes.NewReader([]byte{}))
-	if err == nil {
-		t.Error("expected error")
-	}
+	tests.Exp(err)
 	cli := &client{
 		Client: &http.Client{
 			Transport: &http.Transport{
@@ -131,39 +101,29 @@ func TestNetworking_Err(t *testing.T) {
 		},
 	}
 	resp, err := cli.get("/power/store/4336/profile", nil)
-	if err == nil {
-		t.Error("expected error")
-	}
+	tests.Exp(err)
 	if resp != nil {
 		t.Error("should not have gotten any response data")
 	}
 	b, err = cli.post("/invalid path", nil, bytes.NewReader(make([]byte, 1)))
-	if err == nil {
-		t.Error("expected error")
-	}
+	tests.Exp(err)
 	if b != nil {
 		t.Error("expected zero length response")
 	}
 	req, err := http.NewRequest("GET", "https://www.google.com/", nil)
-	if err != nil {
-		t.Error(err)
-	}
+	tests.Check(err)
 	resp, err = orderClient.do(req)
+	tests.Exp(err, "expected an error because we found an html page\n")
 	if err == nil {
 		t.Error("expected an error because we found an html page")
-		fmt.Println(string(resp))
 	} else if err.Error() != "got html response" {
 		t.Error("got an unexpected error:", err.Error())
 	}
 
 	req, err = http.NewRequest("GET", "https://hjfkghfdjkhgfjkdhgjkdghfdjk.com", nil)
-	if err != nil {
-		t.Error(err)
-	}
+	tests.Check(err)
 	resp, err = orderClient.do(req)
-	if err == nil {
-		t.Error("expected an error")
-	}
+	tests.Exp(err)
 }
 
 func TestDominosErrors(t *testing.T) {

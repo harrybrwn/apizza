@@ -42,12 +42,16 @@ type Order struct {
 // InitOrder will make sure that an order is initialized correctly. An order
 // that is not initialized correctly cannot send itself to dominos.
 func InitOrder(o *Order) {
-	o.cli = orderClient
+	o.init()
 }
 
 // Init will make sure that an order is initialized correctly. An order
 // that is not initialized correctly cannot send itself to dominos.
 func (o *Order) Init() {
+	o.init()
+}
+
+func (o *Order) init() {
 	o.cli = orderClient
 }
 
@@ -141,6 +145,10 @@ func (o *Order) Validate() error {
 
 // only returns dominos failures or non-dominos errors.
 func (o *Order) prepare() error {
+	if o.cli == nil {
+		o.cli = orderClient
+	}
+
 	odata, err := getPricingData(*o)
 	if err != nil && !IsWarning(err) {
 		return err

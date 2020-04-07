@@ -2,6 +2,8 @@ package dawg
 
 import (
 	"testing"
+
+	"github.com/harrybrwn/apizza/pkg/tests"
 )
 
 func TestSignIn(t *testing.T) {
@@ -22,17 +24,16 @@ func TestSignIn(t *testing.T) {
 	testUser = user
 }
 
-func TestUserNearestStore(t *testing.T) {
+func TestUserProfile_NearestStore(t *testing.T) {
 	uname, pass, ok := gettestcreds()
 	if !ok {
 		t.Skip()
 	}
 	defer swapclient(5)()
+	tests.InitHelpers(t)
 
 	user, err := getTestUser(uname, pass)
-	if err != nil {
-		t.Error(err)
-	}
+	tests.Check(err)
 	if user == nil {
 		t.Fatal("user is nil")
 	}
@@ -46,60 +47,49 @@ func TestUserNearestStore(t *testing.T) {
 		t.Error("ok, we just added an address, why am i not getting one")
 	}
 	_, err = user.NearestStore(Delivery)
-	if err != nil {
-		t.Error(err)
-	}
+	tests.Check(err)
 	if user.store == nil {
 		t.Error("ok, now this variable should be stored")
 	}
 	s, err := user.NearestStore(Delivery)
-	if err != nil {
-		t.Error(err)
-	}
+	tests.Check(err)
 	if s != user.store {
 		t.Error("user.NearestStore should return the cached store on the second call")
 	}
 }
 
-func TestUserStoresNearMe(t *testing.T) {
+func TestUserProfile_StoresNearMe(t *testing.T) {
 	uname, pass, ok := gettestcreds()
 	if !ok {
 		t.Skip()
 	}
 	defer swapclient(5)()
+	tests.InitHelpers(t)
 
 	user, err := getTestUser(uname, pass)
-	if err != nil {
-		t.Error(err)
-	}
+	tests.Check(err)
 	if user == nil {
 		t.Fatal("user should not be nil")
 	}
-	if err = user.SetServiceMethod("not correct"); err == nil {
-		t.Error("expected error for an invalid service method")
-	}
+	err = user.SetServiceMethod("not correct")
+	tests.Exp(err, "expected error for an invalid service method")
 	if err != ErrBadService {
 		t.Error("SetServiceMethod with bad val gave wrong error")
 	}
 	user.ServiceMethod = ""
 	user.AddAddress(testAddress())
 	stores, err := user.StoresNearMe()
-	if err == nil {
-		t.Error("expected error")
-	}
+	tests.Exp(err)
 	if stores != nil {
 		t.Error("should not have returned any stores")
 	}
 
-	if err = user.SetServiceMethod(Delivery); err != nil {
-		t.Error(err)
-	}
+	tests.Check(user.SetServiceMethod(Delivery))
 	addr := user.DefaultAddress()
 
 	stores, err = user.StoresNearMe()
-	if err != nil {
-		t.Error(err)
-	}
+	tests.PrintErrType = true
+	tests.Check(err)
 	for _, s := range stores {
 		if s == nil {
 			t.Error("should not have nil store")
@@ -107,58 +97,39 @@ func TestUserStoresNearMe(t *testing.T) {
 		if s.userAddress == nil {
 			t.Fatal("nil store.userAddress")
 		}
-		if s.userService != user.ServiceMethod {
-			t.Error("wrong service method")
-		}
-		if s.userAddress.City() != addr.City() {
-			t.Error("wrong city")
-		}
-		if s.userAddress.LineOne() != addr.LineOne() {
-			t.Error("wrong line one")
-		}
-		if s.userAddress.StateCode() != addr.StateCode() {
-			t.Error("wrong state code")
-		}
-		if s.userAddress.Zip() != addr.Zip() {
-			t.Error("wrong zip code")
-		}
+		tests.StrEq(s.userService, user.ServiceMethod, "wrong service method")
+		tests.StrEq(s.userAddress.City(), addr.City(), "wrong city")
+		tests.StrEq(s.userAddress.LineOne(), addr.LineOne(), "wrong line one")
+		tests.StrEq(s.userAddress.StateCode(), addr.StateCode(), "wrong state code")
+		tests.StrEq(s.userAddress.Zip(), addr.Zip(), "wrong zip code")
 	}
 }
 
-func TestUserNewOrder(t *testing.T) {
+func TestUserProfile_NewOrder(t *testing.T) {
 	uname, pass, ok := gettestcreds()
 	if !ok {
 		t.Skip()
 	}
 	defer swapclient(5)()
+	tests.InitHelpers(t)
 
 	user, err := getTestUser(uname, pass)
-	if err != nil {
-		t.Error(err)
-	}
+	tests.Check(err)
 	if user == nil {
 		t.Fatal("user should not be nil")
 	}
 	user.SetServiceMethod(Carryout)
 	order, err := user.NewOrder()
-	if err != nil {
-		t.Error(err)
-	}
-	eq := func(a, b, msg string) {
-		if a != b {
-			t.Error(msg)
-		}
-	}
+	tests.Check(err)
 
-	eq(order.ServiceMethod, Carryout, "wrong service method")
-	eq(order.ServiceMethod, user.ServiceMethod, "service method should carry over from the user")
-	eq(order.Phone, user.Phone, "phone should carry over from user")
-	eq(order.FirstName, user.FirstName, "first name should carry over from user")
-	eq(order.LastName, user.LastName, "last name should carry over from user")
-	eq(order.CustomerID, user.CustomerID, "customer id should carry over")
-	eq(order.Email, user.Email, "order email should carry over from user")
-	eq(order.StoreID, user.store.ID, "store id should carry over")
-
+	tests.StrEq(order.ServiceMethod, Carryout, "wrong service method")
+	tests.StrEq(order.ServiceMethod, user.ServiceMethod, "service method should carry over from the user")
+	tests.StrEq(order.Phone, user.Phone, "phone should carry over from user")
+	tests.StrEq(order.FirstName, user.FirstName, "first name should carry over from user")
+	tests.StrEq(order.LastName, user.LastName, "last name should carry over from user")
+	tests.StrEq(order.CustomerID, user.CustomerID, "customer id should carry over")
+	tests.StrEq(order.Email, user.Email, "order email should carry over from user")
+	tests.StrEq(order.StoreID, user.store.ID, "store id should carry over")
 	if order.Address == nil {
 		t.Error("order should get and address from the user")
 	}

@@ -3,6 +3,8 @@ package dawg
 import (
 	"fmt"
 	"testing"
+
+	"github.com/harrybrwn/apizza/pkg/tests"
 )
 
 func testAddress() *StreetAddr {
@@ -126,6 +128,7 @@ func TestNearestStore(t *testing.T) {
 }
 
 func TestGetAllNearbyStores_Async(t *testing.T) {
+	tests.InitHelpers(t)
 	addr := testAddress()
 	var services []string
 	if testing.Short() {
@@ -146,21 +149,11 @@ func TestGetAllNearbyStores_Async(t *testing.T) {
 			if s.userAddress == nil {
 				t.Fatal("nil store.userAddress")
 			}
-			if s.userService != service {
-				t.Error("wrong service method")
-			}
-			if s.userAddress.City() != addr.City() {
-				t.Error("wrong city")
-			}
-			if s.userAddress.LineOne() != addr.LineOne() {
-				t.Error("wrong line one")
-			}
-			if s.userAddress.StateCode() != addr.StateCode() {
-				t.Error("wrong state code")
-			}
-			if s.userAddress.Zip() != addr.Zip() {
-				t.Error("wrong zip co de")
-			}
+			tests.StrEq(s.userService, service, "wrong service method")
+			tests.StrEq(s.userAddress.City(), addr.City(), "wrong city")
+			tests.StrEq(s.userAddress.LineOne(), addr.LineOne(), "wrong line one")
+			tests.StrEq(s.userAddress.StateCode(), addr.StateCode(), "wrong state code")
+			tests.StrEq(s.userAddress.Zip(), addr.Zip(), "wrong zip co de")
 		}
 	}
 }
@@ -269,30 +262,21 @@ func TestAsyncInOrder(t *testing.T) {
 	if testing.Short() {
 		t.Skip()
 	}
+	tests.InitHelpers(t)
 	addr := testAddress()
 	serv := Delivery
 	storesInOrder, err := GetNearbyStores(addr, serv)
-	if err != nil {
-		t.Error(err)
-	}
+	tests.Check(err)
 	stores, err := asyncNearbyStores(orderClient, addr, serv)
-	if err != nil {
-		t.Error(err)
-	}
+	tests.Check(err)
 
 	n := len(storesInOrder)
 	if n != len(stores) {
 		t.Fatal("the results did not return lists of the same length")
 	}
 	for i := 0; i < n; i++ {
-		if storesInOrder[i].ID != stores[i].ID {
-			t.Error("wrong id")
-		}
-		if storesInOrder[i].Phone != stores[i].Phone {
-			t.Error("stores have different phone numbers")
-		}
-		if storesInOrder[i].Address != stores[i].Address {
-			t.Error("stores have different addresses")
-		}
+		tests.StrEq(storesInOrder[i].ID, stores[i].ID, "wrong id")
+		tests.StrEq(storesInOrder[i].Phone, stores[i].Phone, "stores have different phone numbers")
+		tests.StrEq(storesInOrder[i].Address, stores[i].Address, "stores have different addresses")
 	}
 }

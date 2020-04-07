@@ -98,6 +98,10 @@ var currentTest *struct {
 	t    *testing.T
 } = nil
 
+// PrintErrType is a switch for the Check method, so that it prints
+// the error type on failure.
+var PrintErrType bool = false
+
 func nilcheck() {
 	if currentTest == nil {
 		panic("No testing.T registered; must call errs.InitHelpers(t) at test function start")
@@ -106,7 +110,10 @@ func nilcheck() {
 
 // InitHelpers will set the err package testing.T variable for tests
 func InitHelpers(t *testing.T) {
-	t.Cleanup(func() { currentTest = nil })
+	t.Cleanup(func() {
+		currentTest = nil
+		PrintErrType = false
+	})
 	currentTest = &struct {
 		name string
 		t    *testing.T
@@ -121,7 +128,11 @@ func Check(err error) {
 	nilcheck()
 	currentTest.t.Helper()
 	if err != nil {
-		currentTest.t.Error(err)
+		if PrintErrType {
+			currentTest.t.Errorf("%T %v\n", err, err)
+		} else {
+			currentTest.t.Errorf("%v\n", err)
+		}
 	}
 }
 

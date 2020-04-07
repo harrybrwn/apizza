@@ -10,28 +10,21 @@ TODO
 *.txt
 
 # Tests
+/test/
+coverage.html
 *.json
 *.test
 *.py
-test
-example
-test-coverage
-test-cover
-coverage.html
 *.prof
-/data/
 !dawg/testdata/cardnums.json
 
 # Tools
-.vscode
+/.vscode
 *.code-workspace
+scripts/history.sh
+scripts/github.sh
 
 # Other
 *.out
 *.exe
-/script/
-scripts/history.sh
 *.mp4
-*.swp
-
-scripts/github.sh

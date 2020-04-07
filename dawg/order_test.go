@@ -7,20 +7,20 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/harrybrwn/apizza/pkg/tests"
 )
 
 func TestGetOrderPrice(t *testing.T) {
-	defer swapclient(2)()
-	o := Order{}
-	if o.cli == nil {
-		o.cli = orderClient
-	}
+	defer swapclient(1)()
+	o := Order{cli: orderClient}
 	data, err := getPricingData(o)
+	// fmt.Printf("%+v %v\n", data, err)
 	if err == nil {
 		t.Error("should have returned an error")
 	}
 	if data == nil {
-		t.Error("should not have returned a nil value")
+		t.Fatal("should not have returned a nil value")
 	}
 	if len(data.Order.OrderID) == 0 {
 		t.Error("should always return an order-id")
@@ -79,6 +79,7 @@ func TestGetOrderPrice(t *testing.T) {
 }
 
 func TestNewOrder(t *testing.T) {
+	tests.InitHelpers(t)
 	s := testingStore()
 	if _, err := s.GetProduct("S_PIZZA"); err != nil {
 		t.Error(err)
@@ -92,28 +93,18 @@ func TestNewOrder(t *testing.T) {
 		t.Error("incorrect order name")
 	}
 	v, err := s.GetVariant("2LDCOKE")
-	if err != nil {
-		t.Fatal(err)
-	}
-	err = o.AddProductQty(v, 2)
-	if err != nil {
-		t.Error(err)
-	}
+	tests.Check(err)
+	tests.Check(o.AddProductQty(v, 2))
 	if o.Products == nil {
 		t.Error("Products should not be empty")
 	}
 	pizza, err := s.GetVariant("14TMEATZA")
-	if err != nil {
-		t.Error(err)
-	}
+	tests.Check(err)
 	if pizza == nil {
 		t.Error("product is nil")
 	}
 	pizza.AddTopping("X", ToppingFull, "1.5")
-	err = o.AddProduct(pizza)
-	if err != nil {
-		t.Error(err)
-	}
+	tests.Check(o.AddProduct(pizza))
 	price, err := o.Price()
 	if IsFailure(err) {
 		t.Error(err)
@@ -121,23 +112,16 @@ func TestNewOrder(t *testing.T) {
 	if price == -1.0 {
 		t.Error("Order.Price() failed")
 	}
-	if err != nil {
-		t.Error(err)
-	}
+	tests.Check(err)
 }
 
 func TestPrepareOrder(t *testing.T) {
+	tests.InitHelpers(t)
 	st := testingStore()
 	o := st.MakeOrder("Bob", "Smith", "bobsmith@aol.com")
-	if o.FirstName != "Bob" {
-		t.Error("wrong first name")
-	}
-	if o.LastName != "Smith" {
-		t.Error("bad last name")
-	}
-	if o.Email != "bobsmith@aol.com" {
-		t.Error("bad email")
-	}
+	tests.StrEq(o.FirstName, "Bob", "wrong first name")
+	tests.StrEq(o.LastName, "Smith", "wrong last name")
+	tests.StrEq(o.Email, "bobsmith@aol.com", "wrong email")
 	if o.price > 0.0 {
 		t.Error("order should not be initialized with a price above zero")
 	}
@@ -145,19 +129,9 @@ func TestPrepareOrder(t *testing.T) {
 		t.Error("a new order should be initialized with an order id by default")
 	}
 
-	// menu, err := st.Menu()
 	menu := testingMenu()
-	var err error
-	// if err != nil {
-	// 	t.Error(err)
-	// }
-	if err = o.AddProduct(menu.FindItem("10SCREEN")); err != nil {
-		t.Error(err)
-	}
-
-	if err = o.prepare(); err != nil {
-		t.Error("Should not have returned error:\n", err)
-	}
+	tests.Check(o.AddProduct(menu.FindItem("10SCREEN")))
+	tests.Check(o.prepare())
 	if o.price <= 0.0 {
 		t.Error("cached price should not be zero or less")
 	}
@@ -176,106 +150,87 @@ func TestPrepareOrder(t *testing.T) {
 }
 
 func TestOrder_Err(t *testing.T) {
+	tests.InitHelpers(t)
 	addr := testAddress()
 	addr.Street = ""
-	store, err := NearestStore(addr, "Delivery")
-	if err != nil {
-		t.Error(err)
-	}
+	store, err := NearestStore(addr, Delivery)
+	tests.Check(err)
 	o := store.NewOrder()
 	v, err := store.GetVariant("2LDCOKE")
-	if err != nil {
-		t.Error(err)
-	}
+	tests.Check(err)
 	if v == nil {
 		t.Fatal("got nil variant")
 	}
-	err = o.AddProduct(v)
-	if err != nil {
-		t.Error(err)
-	}
+	tests.Check(o.AddProduct(v))
 	price, err := o.Price()
-	if err == nil {
-		t.Error(err)
-	}
+	tests.Exp(err)
 	if price != -1.0 {
 		t.Error("expected bad price")
 	}
-	err = o.AddProduct(nil)
-	if err == nil {
-		t.Error("should have returned an error")
-	}
-	err = o.AddProductQty(nil, 50)
-	if err == nil {
-		t.Error("expected an error")
-	}
+	tests.Exp(o.AddProduct(nil))
+	tests.Exp(o.AddProductQty(nil, 50))
 	o = new(Order)
 	InitOrder(o)
-	err = o.PlaceOrder()
-	if err == nil {
-		t.Error("expected error")
-	}
+	tests.Exp(o.PlaceOrder())
 	itm, err := store.GetVariant("12SCREEN")
-	if err != nil {
-		t.Error(err)
-	}
+	tests.Check(err)
 	op := OrderProductFromItem(itm)
-	err = op.AddTopping("test", "test", "test")
-	if err == nil {
-		t.Error("expected error")
-	}
+	tests.Exp(op.AddTopping("test", "test", "test"))
+}
 
-	o = &Order{
-		ServiceMethod: Delivery,
-		Address:       &StreetAddr{},
-		Email:         "jake@statefarm.com",
-		Phone:         "1234567",
-	}
-	o.Init()
+func TestRawOrder(t *testing.T) {
+	tests.InitHelpers(t)
+	var (
+		err   error
+		o     *Order
+		reset = func() {
+			o = &Order{
+				ServiceMethod: Delivery,
+				Address:       &StreetAddr{},
+				Email:         "jake@statefarm.com",
+				Phone:         "1234567",
+			}
+		}
+	)
+	reset()
 	err = o.PlaceOrder()
 	if !IsFailure(err) {
 		t.Error("placing an empty order should fail")
 	}
+	reset()
+	t.Skip()
+	tests.Exp(o.Validate(), "expected validation error from empty order")
 }
 
 func TestRemoveProduct(t *testing.T) {
+	tests.InitHelpers(t)
 	s := testingStore()
 	order := s.NewOrder()
 	menu := testingMenu()
 
-	var err error
 	productCodes := []string{"2LDCOKE", "12SCREEN", "PSANSABC", "B2PCLAVA"}
 	for _, code := range productCodes {
 		v, err := menu.GetVariant(code)
-		if err != nil {
-			t.Error(err)
-		}
-		order.AddProduct(v)
+		tests.Check(err)
+		tests.Check(order.AddProduct(v))
 	}
-	if err = order.RemoveProduct("12SCREEN"); err != nil {
-		t.Error(err)
-	}
-	if err = order.RemoveProduct("B2PCLAVA"); err != nil {
-		t.Error(err)
-	}
+	tests.Check(order.RemoveProduct("12SCREEN"))
+	tests.Check(order.RemoveProduct("B2PCLAVA"))
 	for _, p := range order.Products {
 		if p.Code == "12SCREEN" || p.Code == "B2PCLAVA" {
 			t.Error("should have been removed")
 		}
 	}
-	if err = order.RemoveProduct("nothere"); err == nil {
-		t.Error("expected error")
-	}
+	tests.Exp(order.RemoveProduct("nothere"))
 }
 
 func TestOrderProduct(t *testing.T) {
+	tests.InitHelpers(t)
 	menu := testingMenu() // this will get the menu from the same store but cached
 	item := menu.FindItem("14SCEXTRAV")
 
 	op := OrderProductFromItem(item)
-	if err := op.AddTopping("X", "1/1", "1"); err != nil {
-		t.Error(err)
-	}
+	tests.Check(op.AddTopping("X", "1/1", "1"))
 
 	m := op.ReadableOptions()
 	if len(m) <= 0 {
@@ -290,10 +245,9 @@ func TestOrderProduct(t *testing.T) {
 }
 
 func TestCard(t *testing.T) {
+	tests.InitHelpers(t)
 	c := NewCard("1234123412341234", "01/10", 111)
-	if c.Num() != "1234123412341234" {
-		t.Error("go wrong card number")
-	}
+	tests.StrEq(c.Num(), "1234123412341234", "go wrong card number")
 
 	tm := c.ExpiresOn()
 	if tm.Month() != time.January {
@@ -302,12 +256,8 @@ func TestCard(t *testing.T) {
 	if tm.Year() != 2010 {
 		t.Error("bad expiration year:", tm.Year())
 	}
-	if c.Code() != "111" {
-		t.Error("bad cvv")
-	}
-	if formatDate(tm) != "0110" {
-		t.Error("bad date format:", formatDate(tm))
-	}
+	tests.StrEq(c.Code(), "111", "bad cvv")
+	tests.StrEq(formatDate(tm), "0110", "bad date format: %s", formatDate(tm))
 
 	m, y := parseDate("01/10")
 	if m != 1 {
@@ -355,15 +305,9 @@ func TestCard(t *testing.T) {
 
 	c = NewCard("0000000000000000", "08/08", 123)
 	op := makeOrderPaymentFromCard(c)
-	if op.Number != c.Num() {
-		t.Error("bad number")
-	}
-	if op.Expiration != formatDate(c.ExpiresOn()) {
-		t.Error("bad expiration")
-	}
-	if op.SecurityCode != c.Code() {
-		t.Error("bad cvv")
-	}
+	tests.StrEq(op.Number, c.Num(), "bad number")
+	tests.StrEq(op.Expiration, formatDate(c.ExpiresOn()), "bad expiration")
+	tests.StrEq(op.SecurityCode, c.Code(), "bad cvv")
 }
 
 func TestOrderToJSON(t *testing.T) {

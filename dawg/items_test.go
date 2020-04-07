@@ -2,6 +2,8 @@ package dawg
 
 import (
 	"testing"
+
+	"github.com/harrybrwn/apizza/pkg/tests"
 )
 
 func TestProduct(t *testing.T) {
@@ -41,16 +43,13 @@ func TestProduct(t *testing.T) {
 }
 
 func TestProductToppings(t *testing.T) {
+	tests.InitHelpers(t)
 	m := testingMenu()
 	p, err := m.GetProduct("S_PIZZA") // pizza
-	if err != nil {
-		t.Fatal(err)
-	}
+	tests.Check(err)
 
 	err = p.AddTopping("notatopping", ToppingFull, "1.9")
-	if err == nil {
-		t.Error("expected an error")
-	}
+	tests.Exp(err)
 	if err.Error() != "could not make a notatopping topping" {
 		t.Error("got the wrong error")
 	}
@@ -58,10 +57,7 @@ func TestProductToppings(t *testing.T) {
 	if len(p.Options()) == 0 {
 		t.Error("should not be len zero even after set to nil (see Options impl for Product)")
 	}
-	err = p.AddTopping("K", ToppingLeft, "2.0")
-	if err != nil {
-		t.Error(err)
-	}
+	tests.Check(p.AddTopping("K", ToppingLeft, "2.0"))
 	if _, ok := p.Options()["K"]; !ok {
 		t.Error("bacon should have been added")
 	}
@@ -77,9 +73,7 @@ func TestProductToppings(t *testing.T) {
 	}
 
 	v, err := m.GetVariant("14SCREEN")
-	if err != nil {
-		t.Error(err)
-	}
+	tests.Check(err)
 	if v.FindProduct(m) == nil {
 		t.Error("should not be nil, pizza has a category")
 	}
