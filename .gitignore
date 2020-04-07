@@ -23,6 +23,7 @@ coverage.html
 *.code-workspace
 scripts/history.sh
 scripts/github.sh
+scripts/test-versions.sh
 
 # Other
 *.out

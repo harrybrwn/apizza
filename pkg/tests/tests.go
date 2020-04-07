@@ -110,17 +110,7 @@ func nilcheck() {
 
 // InitHelpers will set the err package testing.T variable for tests
 func InitHelpers(t *testing.T) {
-	t.Cleanup(func() {
-		currentTest = nil
-		PrintErrType = false
-	})
-	currentTest = &struct {
-		name string
-		t    *testing.T
-	}{
-		name: t.Name(),
-		t:    t,
-	}
+	initHelpers(t)
 }
 
 // Check will check to see that an error is nil, and cause an error if not
