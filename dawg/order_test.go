@@ -14,13 +14,9 @@ import (
 func TestGetOrderPrice(t *testing.T) {
 	defer swapclient(1)()
 	o := Order{cli: orderClient}
-	data, err := getPricingData(o)
-	// fmt.Printf("%+v %v\n", data, err)
+	_, err := getPricingData(o)
 	if err == nil {
 		t.Error("should have returned an error")
-	}
-	if len(data.Order.OrderID) == 0 {
-		t.Error("should always return an order-id")
 	}
 	if !IsFailure(err) {
 		t.Error("this error should only be a failure")
