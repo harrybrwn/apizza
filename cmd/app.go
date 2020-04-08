@@ -126,11 +126,8 @@ func (a *App) getService() string {
 
 var _ cli.Builder = (*App)(nil)
 
-var persistanceTest bool = false
-
 // Run the app.
 func (a *App) Run(cmd *cobra.Command, args []string) (err error) {
-	persistanceTest = true
 	if a.opts.Openlogs {
 		editor := os.Getenv("EDITOR")
 		c := exec.Command(editor, fp.Join(config.Folder(), "logs", "dev.log"))
