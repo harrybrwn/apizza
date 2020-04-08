@@ -19,9 +19,6 @@ func TestGetOrderPrice(t *testing.T) {
 	if err == nil {
 		t.Error("should have returned an error")
 	}
-	if data == nil {
-		t.Fatal("should not have returned a nil value")
-	}
 	if len(data.Order.OrderID) == 0 {
 		t.Error("should always return an order-id")
 	}
