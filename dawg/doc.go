@@ -18,10 +18,3 @@
 // To order anything from dominos you need to find a store, create an order,
 // then send that order.
 package dawg
-
-const (
-	// DefaultLang is the package language variable
-	DefaultLang = "en"
-
-	orderHost = "order.dominos.com"
-)

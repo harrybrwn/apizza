@@ -76,7 +76,7 @@ func TestParseAddressTable(t *testing.T) {
 
 func TestNetworking_Err(t *testing.T) {
 	tests.InitHelpers(t)
-	defer swapclient(2)()
+	defer swapclient(3)()
 	_, err := orderClient.get("/", nil)
 	tests.Exp(err)
 	_, err = orderClient.get("/invalid path", nil)

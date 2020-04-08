@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"io/ioutil"
+	"math/rand"
 	"net/http"
 	"net/url"
 	"os"
@@ -17,7 +18,7 @@ import (
 func TestBadCreds(t *testing.T) {
 	// swap the default client with one that has a
 	// 10s timeout then defer the cleanup.
-	defer swapclient(1)()
+	defer swapclient(2)()
 	tests.InitHelpers(t)
 
 	tok, err := gettoken("no", "and no")
@@ -89,7 +90,9 @@ func swapclient(timeout int) func() {
 			Timeout:       time.Duration(timeout) * time.Second,
 			CheckRedirect: noRedirects,
 			Transport: newRoundTripper(func(req *http.Request) error {
-				req.Header.Set("User-Agent", fmt.Sprintf("TestClient: %d", time.Now().Nanosecond()))
+				agent := fmt.Sprintf("TestClient: %d%d", rand.Int(), time.Now().Nanosecond())
+				// fmt.Printf("setting user agent to '%s'\n", agent)
+				req.Header.Set("User-Agent", agent)
 				return nil
 			}),
 		},
@@ -131,7 +134,7 @@ func TestAuth(t *testing.T) {
 	if !ok {
 		t.Skip()
 	}
-	defer swapclient(2)()
+	defer swapclient(5)()
 	tests.InitHelpers(t)
 
 	auth, err := getTestAuth(username, password)
@@ -156,10 +159,6 @@ func TestAuth(t *testing.T) {
 	}
 
 	var user *UserProfile
-	// if testUser == nil {
-	// 	testUser, err = auth.login()
-	// }
-	// user = testUser
 	user, err = SignIn(username, password)
 	user.SetServiceMethod(Delivery)
 	tests.Check(err)

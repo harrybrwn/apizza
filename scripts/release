@@ -121,8 +121,6 @@ def new(tag, title, description, repo, release_dir, target_commit, prerelease,
     validate_tag(tag)
     repo = get_repo(token, reponame)
     title = title or f'{reponame} {tag}'
-    print(title, tag, repo)
-    return
 
     release = repo.create_git_release(
         tag, title, description,
@@ -131,7 +129,6 @@ def new(tag, title, description, repo, release_dir, target_commit, prerelease,
     )
     binaries = compile_go(release_dir, ['linux', 'darwin', 'windows'])
     for binary in binaries:
-        binary = path.join(release_dir, binary)
         print("uploading '{}'...".format(binary))
         release.upload_asset(binary)
 

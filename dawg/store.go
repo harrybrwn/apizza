@@ -19,6 +19,11 @@ const (
 	Carryout = "Carryout"
 
 	profileEndpoint = "/power/store/%s/profile"
+
+	// DefaultLang is the package language variable
+	DefaultLang = "en"
+
+	orderHost = "order.dominos.com"
 )
 
 // NearestStore gets the dominos location closest to the given address.
@@ -321,9 +326,6 @@ func asyncNearbyStores(cli *client, addr Address, service string) ([]*Store, err
 	for pair = range builder.stores {
 		if pair.err != nil {
 			return nil, pair.err
-            // if err == nil {
-                // err = pair.err
-            // }
 		}
 		store = pair.store
 		store.userAddress = addr
