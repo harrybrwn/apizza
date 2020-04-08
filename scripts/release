@@ -14,6 +14,13 @@ RELEASE_DIR = 'release'
 TAG_REGEX = re.compile('^v([0-9]\.[0-9]\.[0-9])$')
 
 
+def validate_tag(tag):
+    if TAG_REGEX.match(tag) is None:
+        raise Exception('invalid tag (must look like v0.0.0 or v9.9.9)')
+    tags = sp.check_output(['git', '--no-pager', 'tag']).decode('utf-8').split('\n')
+    if tag not in tags:
+        raise Exception(f'could not find tag: {tag}')
+
 def get_repo_name():
     output = sp.check_output(['git', 'remote', '-v']).decode('utf-8')
     res = re.search('https://github\.com/(.*?)/(.*?)\.git \(push\)', output)
@@ -63,19 +70,12 @@ def handle_github_errs(exception):
     else:
         raise exception
 
-
-def tag_exsists(tag):
-    out = sp.run(['git', '--no-pager', 'tag'], stdout=sp.PIPE)
-    alltags = out.stdout.decode('utf-8').strip().split('\n')
-    return tag in alltags
-
-
 def get_repo(token, name):
     g = Github(token)
     return g.get_user().get_repo(name)
 
-
 def compile_go(folder, oses):
+    files = []
     for goos in oses:
         ext = sp.check_output(
             ["go", "env", "GOEXE"],
@@ -83,10 +83,12 @@ def compile_go(folder, oses):
         ).decode('utf-8').strip('\n')
 
         file = f'{folder}/apizza-{goos}{ext}'
+        files.append(file)
         print('compiling', file)
         res = sp.run(
             ['go', 'build', '-o', file],
             env=dict(os.environ, GOOS=goos, GOARCH='amd64'))
+    return files
 
 
 @click.group()
@@ -105,30 +107,29 @@ dir_opt = click.option('-d', '--release-dir', default=RELEASE_DIR,
 @cli.command()
 @click.option('--tag', default="", help='Set the tag used for the release.')
 @click.option('-t', '--title',   default="", help="Set the release title.")
-@click.argument('title')
-@click.option('-m', '--message', default="", help='Give the release a release message.')
+@click.option('-d', '--description', default="", help='Give the release a release description.')
 @repo_opt
 @dir_opt
 @click.option('--target-commit', default="",    help='Set the taget commit hash.')
 @click.option('--prerelease',    default=False, help='Upload the binaries as a pre-release.')
 @click.option('--draft',         default=False, help='Upload the binaries as a draft release.')
 @token_opt
-def new(tag, title, message, repo, release_dir, target_commit, prerelease,
+def new(tag, title, description, repo, release_dir, target_commit, prerelease,
         draft, token):
     '''Publish a new release'''
     reponame = repo
-    if TAG_REGEX.match(tag) is None:
-        raise Exception('invalid tag (must look like v0.0.0 or v9.9.9)')
+    validate_tag(tag)
     repo = get_repo(token, reponame)
+    title = title or f'{reponame} {tag}'
+    print(title, tag, repo)
+    return
 
     release = repo.create_git_release(
-        tag, title, message,
+        tag, title, description,
         draft=draft, prerelease=prerelease,
         target_commitish=target_commit or GithubObject.NotSet,
     )
-    compile_go(release_dir, ['linux', 'darwin', 'windows'])
-
-    binaries = os.listdir(release_dir)
+    binaries = compile_go(release_dir, ['linux', 'darwin', 'windows'])
     for binary in binaries:
         binary = path.join(release_dir, binary)
         print("uploading '{}'...".format(binary))
