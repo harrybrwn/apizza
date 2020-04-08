@@ -18,6 +18,7 @@ coverage.html
 *.prof
 !dawg/testdata/cardnums.json
 /env/
+dawg/ratelimit_test.go
 
 # Tools
 /.vscode

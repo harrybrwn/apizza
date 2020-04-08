@@ -99,6 +99,16 @@ func (a *App) Address() dawg.Address {
 	if a.addr != nil {
 		return a.addr
 	}
+	if a.conf.DefaultAddress != "" {
+		addr, err := a.getDBAddress(a.conf.DefaultAddress)
+		if err != nil {
+			fmt.Fprintf(os.Stderr,
+				"Warning: could not find address %s\n", a.conf.DefaultAddress)
+			return &a.conf.Address
+		}
+		a.addr = addr
+		return addr
+	}
 	return &a.conf.Address
 }
 
@@ -135,8 +145,7 @@ func (a *App) Run(cmd *cobra.Command, args []string) (err error) {
 	if a.opts.StoreLocation {
 		store := a.Store()
 		a.Println(store.Address)
-		a.Printf("\n")
-		a.Println("Store id:", store.ID)
+		a.Println("\nStore id:", store.ID)
 		a.Printf("Coordinates: %s, %s\n",
 			store.StoreCoords["StoreLatitude"],
 			store.StoreCoords["StoreLongitude"],
@@ -183,11 +192,7 @@ func (a *App) prerun(*cobra.Command, []string) (err error) {
 		// First look in the database as if the flag was a named address.
 		// Else check if the flag is a parsable address.
 		if a.db.WithBucket("addresses").Exists(a.gOpts.Address) {
-			raw, err := a.db.WithBucket("addresses").Get(a.gOpts.Address)
-			if err != nil {
-				return err
-			}
-			newaddr, err := obj.FromGob(raw)
+			newaddr, err := a.getDBAddress(a.gOpts.Address)
 			if err != nil {
 				return err
 			}
@@ -220,6 +225,14 @@ func (a *App) prerun(*cobra.Command, []string) (err error) {
 		log.SetOutput(a.logf)
 	}
 	return errs.Pair(err, e)
+}
+
+func (a *App) getDBAddress(key string) (*obj.Address, error) {
+	raw, err := a.db.WithBucket("addresses").Get(key)
+	if err != nil {
+		return nil, err
+	}
+	return obj.FromGob(raw)
 }
 
 func (a *App) postrun(*cobra.Command, []string) (err error) {

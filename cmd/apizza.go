@@ -48,7 +48,6 @@ func AllCommands(builder cli.Builder) []*cobra.Command {
 		NewOrderCmd(builder).Cmd(),
 		NewAddAddressCmd(builder, os.Stdin).Cmd(),
 		command.NewCompletionCmd(builder),
-		newTestCmd(builder, true),
 	}
 }
 

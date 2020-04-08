@@ -109,6 +109,9 @@ func AsJSON(a *Address) ([]byte, error) {
 
 // AddrIsEmpty will tell if an address is empty.
 func AddrIsEmpty(a dawg.Address) bool {
+	if a == nil {
+		return true
+	}
 	if a.LineOne() == "" &&
 		a.Zip() == "" &&
 		a.City() == "" &&
