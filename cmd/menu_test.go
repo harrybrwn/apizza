@@ -4,29 +4,23 @@ import (
 	"testing"
 
 	"github.com/harrybrwn/apizza/cmd/internal/cmdtest"
+	"github.com/harrybrwn/apizza/pkg/tests"
 )
 
 func TestMenuRun(t *testing.T) {
+	tests.InitHelpers(t)
 	r := cmdtest.NewRecorder()
 	defer r.CleanUp()
 	c := NewMenuCmd(r).(*menuCmd)
 
-	if err := c.Run(c.Cmd(), []string{}); err != nil {
-		t.Error(err)
-	}
+	tests.Check(c.Run(c.Cmd(), []string{}))
 	c.item = "not a thing"
-	if err := c.Run(c.Cmd(), []string{}); err == nil {
-		t.Error("should raise error")
-	}
+	tests.Exp(c.Run(c.Cmd(), []string{}))
 	c.item = "10SCREEN"
-	if err := c.Run(c.Cmd(), []string{}); err != nil {
-		t.Error(err)
-	}
+	tests.Check(c.Run(c.Cmd(), []string{}))
 	c.item = ""
 	c.toppings = true
-	if err := c.Run(c.Cmd(), []string{}); err != nil {
-		t.Error(err)
-	}
+	tests.Check(c.Run(c.Cmd(), []string{}))
 }
 
 func TestFindProduct(t *testing.T) {

@@ -50,25 +50,18 @@ func init() {
 }
 
 func TestPrintOrder(t *testing.T) {
+	tests.InitHelpers(t)
 	o := testStore.MakeOrder("Jimbo", "Jones", "blahblah@aol.com")
 	o.SetName("TestOrder")
 	pizza, err := testStore.GetVariant("14SCREEN")
-	err = errs.Pair(err, o.AddProduct(pizza))
-	if err != nil {
-		t.Error(err)
-	}
+	tests.Check(errs.Pair(err, o.AddProduct(pizza)))
 
 	buf := new(bytes.Buffer)
 	SetOutput(buf)
-	err = PrintOrder(o, false, false)
-	if err != nil {
-		t.Error(err)
-	}
+	tests.Check(PrintOrder(o, false, false))
 	tests.CompareV(t, buf.String(), "  TestOrder -  14SCREEN, \n")
 	buf.Reset()
-	if err = PrintOrder(o, true, false); err != nil {
-		t.Error(err)
-	}
+	tests.Check(PrintOrder(o, true, false))
 	expected := `TestOrder
   products:
     Large (14") Hand Tossed Pizza
@@ -84,31 +77,22 @@ func TestPrintOrder(t *testing.T) {
 `
 	tests.CompareV(t, buf.String(), expected)
 	buf.Reset()
-
-	if err = PrintOrder(o, true, true); err != nil {
-		t.Error(err)
-	}
+	tests.Check(PrintOrder(o, true, true))
 	tests.Compare(t, buf.String(), expected+"  price:   $20.15\n")
 	ResetOutput()
 }
 
 func TestPrintItems(t *testing.T) {
+	tests.InitHelpers(t)
 	menu, err := testStore.Menu()
-	if err != nil {
-		t.Error(err)
-	}
+	tests.Check(err)
 	buf := new(bytes.Buffer)
 	SetOutput(buf)
 	defer ResetOutput()
 
 	v, err := menu.GetVariant("14SCREEN")
-	if err != nil {
-		t.Error(err)
-	}
-	err = ItemInfo(v, menu)
-	if err != nil {
-		t.Error(err)
-	}
+	tests.Check(err)
+	tests.Check(ItemInfo(v, menu))
 	expected := `Large (14") Hand Tossed Pizza
   Code: 14SCREEN
   Category: Pizza
@@ -127,25 +111,19 @@ func TestPrintItems(t *testing.T) {
 }
 
 func TestPrintMenu(t *testing.T) {
+	tests.InitHelpers(t)
 	menu, err := testStore.Menu()
-	if err != nil {
-		t.Error(err)
-	}
+	tests.Check(err)
 	buf := new(bytes.Buffer)
 	SetOutput(buf)
 	defer ResetOutput()
 
-	err = PrintMenu(menu.Categorization.Food, 0, menu)
-	if err != nil {
-		t.Error()
-	}
+	tests.Check(PrintMenu(menu.Categorization.Food, 0, menu))
 	if buf.Len() < 9000 {
 		t.Error("the menu output seems a bit too short")
 	}
 	buf.Reset()
-	if err = PrintMenu(menu.Categorization.Preconfigured, 0, menu); err != nil {
-		t.Error(err)
-	}
+	tests.Check(PrintMenu(menu.Categorization.Preconfigured, 0, menu))
 	if buf.Len() < 1000 {
 		t.Error("menu output is too short")
 	}

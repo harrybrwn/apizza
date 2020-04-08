@@ -4,9 +4,11 @@ import (
 	"testing"
 
 	"github.com/harrybrwn/apizza/dawg"
+	"github.com/harrybrwn/apizza/pkg/tests"
 )
 
 func TestAddressStr(t *testing.T) {
+	tests.InitHelpers(t)
 	a := &Address{
 		Street: "1600 Pennsylvania Ave NW", CityName: "Washington",
 		State: "dc", Zipcode: "20500",
@@ -41,19 +43,10 @@ Washington DC, 20500`,
 		}
 	}
 	addr := FromAddress(dawg.StreetAddrFromAddress(a))
-	if addr.LineOne() != a.LineOne() {
-		t.Error("wrong lineone")
-	}
-	if addr.StateCode() != a.StateCode() {
-		t.Error("wrong state code")
-	}
-	if addr.City() != a.City() {
-		t.Error("wrong city")
-	}
-	if addr.Zip() != a.Zip() {
-		t.Error("wrong zip")
-	}
-
+	tests.StrEq(addr.LineOne(), a.LineOne(), "wrong lineone")
+	tests.StrEq(addr.StateCode(), a.StateCode(), "wrong state code")
+	tests.StrEq(addr.City(), a.City(), "wrong city")
+	tests.StrEq(addr.Zip(), a.Zip(), "wrong zip")
 	if AddrIsEmpty(addr) {
 		t.Error("should not be empty")
 	}

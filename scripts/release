@@ -17,6 +17,8 @@ TAG_REGEX = re.compile('^v([0-9]\.[0-9]\.[0-9])$')
 def get_repo_name():
     output = sp.check_output(['git', 'remote', '-v']).decode('utf-8')
     res = re.search('https://github\.com/(.*?)/(.*?)\.git \(push\)', output)
+    if res is None:
+        res = re.search('git@github.com:(.*?)/(.*?)\.git \(push\)', output)
     return res.groups()[-1]
 
 

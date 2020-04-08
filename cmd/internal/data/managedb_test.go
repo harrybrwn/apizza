@@ -25,84 +25,59 @@ func init() {
 }
 
 func TestDBManagement(t *testing.T) {
+	tests.InitHelpers(t)
 	db := cmdtest.TempDB()
-	defer db.Destroy()
-
 	var err error
 	o := testStore.NewOrder()
 	o.SetName("test_order")
 	buf := &bytes.Buffer{}
 
-	if err = PrintOrders(db, buf, false); err != nil {
-		t.Error(err)
-	}
+	tests.Check(PrintOrders(db, buf, false))
 	tests.Compare(t, buf.String(), "No orders saved.\n")
 	buf.Reset()
 
-	if err = SaveOrder(o, buf, db); err != nil {
-		t.Error(err)
-	}
+	tests.Check(SaveOrder(o, buf, db))
 	tests.Compare(t, buf.String(), "order successfully updated.\n")
 	buf.Reset()
 
-	if err = PrintOrders(db, buf, false); err != nil {
-		t.Error(err)
-	}
+	tests.Check(PrintOrders(db, buf, false))
 	tests.Compare(t, buf.String(), "Your Orders:\n  test_order\n")
 	buf.Reset()
 
-	if _, err := GetOrder("badorder", db); err == nil {
-		t.Error("expected error")
-	}
+	_, err = GetOrder("badorder", db)
+	tests.Exp(err)
 	newO, err := GetOrder("test_order", db)
-	if err != nil {
-		t.Error(err)
-	}
-	if newO.Name() != o.Name() {
-		t.Error("wrong order")
-	}
-	if newO.Address.LineOne() != o.Address.LineOne() {
-		t.Error("wrong address saved")
-	}
-	if newO.Address.City() != o.Address.City() {
-		t.Error("wrong address saved")
-	}
-	if err = db.Destroy(); err != nil {
-		t.Error(err)
-	}
+	tests.Check(err)
+	tests.StrEq(newO.Name(), o.Name(), "wrong order")
+	tests.StrEq(newO.Address.LineOne(), o.Address.LineOne(), "wrong address saved")
+	tests.StrEq(newO.Address.City(), o.Address.City(), "wrong address saved")
+	tests.Check(db.Destroy())
 }
 
 func TestPrintOrders(t *testing.T) {
+	tests.InitHelpers(t)
 	var err error
 	o := testStore.NewOrder()
 	p, err := testStore.GetVariant("10SCREEN")
-	if err != nil {
-		t.Error(err)
-	}
+	tests.Check(err)
 	if p == nil {
 		t.Fatal("got nil product")
 	}
-	if err = o.AddProductQty(p, 10); err != nil {
-		t.Error(err)
-	}
+	tests.Check(o.AddProductQty(p, 10))
 	db := cmdtest.TempDB()
-	defer db.Destroy()
+	defer func() { tests.Check(db.Destroy()) }()
 
 	o.SetName("test_order")
 	buf := new(bytes.Buffer)
-	if err = SaveOrder(o, buf, db); err != nil {
-		t.Error(err)
-	}
+	tests.Check(SaveOrder(o, buf, db))
 	buf.Reset()
-	if err = PrintOrders(db, buf, true); err != nil {
-		t.Error(err)
-	}
-	exp := "Your Orders:\n  test_order -  10SCREEN, \n"
-	tests.Compare(t, buf.String(), exp)
+	tests.Check(PrintOrders(db, buf, true))
+	tests.Compare(t, buf.String(), "Your Orders:\n  test_order -  10SCREEN, \n")
 }
 
 func TestMenuCacherJSON(t *testing.T) {
 	t.Skip()
+	tests.InitHelpers(t)
 	var err error
 	db := cmdtest.TempDB()
 	defer db.Destroy()
@@ -120,9 +95,7 @@ func TestMenuCacherJSON(t *testing.T) {
 		t.Error("cacher should not have a menu yet")
 	}
 
-	if err = db.UpdateTS("menu", cacher); err != nil {
-		t.Error(err)
-	}
+	tests.Check(db.UpdateTS("menu", cacher))
 	if c.m == nil {
 		t.Error("cacher should have a menu now")
 	}
@@ -130,9 +103,7 @@ func TestMenuCacherJSON(t *testing.T) {
 		t.Error("cacher should have a menu now")
 	}
 	data, err := db.Get("menu")
-	if err != nil {
-		t.Error(err)
-	}
+	tests.Check(err)
 	if len(data) == 0 {
 		t.Error("should have stored a menu")
 	}
@@ -142,11 +113,7 @@ func TestMenuCacherJSON(t *testing.T) {
 	}
 	buf.Reset()
 
-	if err = db.UpdateTS("menu", cacher); err != nil {
-		t.Error(err)
-	}
+	tests.Check(db.UpdateTS("menu", cacher))
 	c.m = nil
-	if err = db.UpdateTS("menu", c); err != nil {
-		t.Error(err)
-	}
+	tests.Check(db.UpdateTS("menu", c))
 }

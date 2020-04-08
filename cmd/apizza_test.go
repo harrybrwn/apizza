@@ -18,6 +18,7 @@ import (
 )
 
 func TestRunner(t *testing.T) {
+	tests.InitHelpers(t)
 	app := CreateApp(cmdtest.TempDB(), &cli.Config{}, nil)
 	builder := cmdtest.NewRecorder()
 	builder.ConfigSetup([]byte(cmdtest.TestConfigjson))
@@ -38,9 +39,7 @@ func TestRunner(t *testing.T) {
 	}
 
 	builder.CleanUp()
-	if err := app.db.Destroy(); err != nil {
-		t.Error(err)
-	}
+	tests.Check(app.db.Destroy())
 
 	msg := senderr(errs.New("this is an error"), "error message", 4)
 	if msg.Code != 4 {
@@ -50,49 +49,34 @@ func TestRunner(t *testing.T) {
 
 func testAppRootCmdRun(t *testing.T, buf *bytes.Buffer, a *App) {
 	a.Cmd().ParseFlags([]string{})
-	if err := a.Run(a.Cmd(), []string{}); err != nil {
-		t.Error(err)
-	}
+	tests.Check(a.Run(a.Cmd(), []string{}))
 	if buf.String() != a.Cmd().UsageString() {
 		t.Error("wrong output")
 	}
 
-	a.Cmd().ParseFlags([]string{"--test"})
-	if err := a.Run(a.Cmd(), []string{}); err != nil {
-		t.Error(err)
-	}
+	test = true
+	tests.Check(a.Run(a.Cmd(), []string{}))
 	test = false
 	buf.Reset()
 
-	err := a.prerun(a.Cmd(), []string{})
-	if err != nil {
-		t.Error("should not return an error")
-	}
-	err = a.postrun(a.Cmd(), []string{})
-	if err != nil {
-		t.Error("should not return an error")
-	}
+	tests.Check(a.prerun(a.Cmd(), []string{}))
+	tests.Check(a.postrun(a.Cmd(), []string{}))
 
 	if len(a.Cmd().Commands()) != 0 {
 		t.Error("should not have commands yet")
 	}
-	err = a.Cmd().Execute()
-	if err != nil {
-		t.Error(err)
-	}
+	tests.Check(a.Cmd().Execute())
 }
 
 func TestAppResetFlag(t *testing.T) {
+	tests.InitHelpers(t)
 	r := cmdtest.NewRecorder()
 	a := CreateApp(r.ToApp())
 	r.ConfigSetup([]byte(cmdtest.TestConfigjson))
 
-	a.Cmd().ParseFlags([]string{"--clear-cache"})
 	a.gOpts.ClearCache = true
 	test = false
-	if err := a.Run(a.Cmd(), []string{}); err != nil {
-		t.Error(err)
-	}
+	tests.Check(a.Run(a.Cmd(), []string{}))
 	if _, err := os.Stat(a.DB().Path()); os.IsExist(err) {
 		t.Error("database should not exist")
 	} else if !os.IsNotExist(err) {
@@ -153,6 +137,7 @@ func check(e error, msg string) {
 }
 
 func TestExecute(t *testing.T) {
+	tests.InitHelpers(t)
 	var (
 		exp    string
 		err    error
@@ -210,25 +195,19 @@ func TestExecute(t *testing.T) {
 		buf, err = tests.CaptureOutput(func() {
 			errmsg = Execute(tc.args, ".config/apizza/.tests")
 		})
-		if err != nil {
-			t.Error(err)
-		}
+		tests.Check(err)
 		if errmsg != nil {
 			t.Error(errmsg.Msg, errmsg.Err, tc.args)
 		}
-
 		if tc.outfunc != nil {
 			exp = tc.outfunc()
 		} else {
 			exp = tc.exp
 		}
-
 		if tc.test != nil {
 			t.Run(fmt.Sprintf("Exec test: %d", i), tc.test)
 		}
-
 		tests.Compare(t, buf.String(), exp)
-
 		config.Save()
 		if tc.cleanup {
 			os.RemoveAll(config.Folder())
@@ -237,17 +216,14 @@ func TestExecute(t *testing.T) {
 }
 
 func TestYesOrNo(t *testing.T) {
+	tests.InitHelpers(t)
 	var res bool = false
 	f, err := ioutil.TempFile("", "")
-	if err != nil {
-		t.Fatal(err)
-	}
-	if _, err = f.Write([]byte("yes")); err != nil {
-		t.Fatal(err)
-	}
-	if _, err = f.Seek(0, os.SEEK_SET); err != nil {
-		t.Fatal(err)
-	}
+	tests.Fatal(err)
+	_, err = f.Write([]byte("yes"))
+	tests.Fatal(err)
+	_, err = f.Seek(0, os.SEEK_SET)
+	tests.Fatal(err)
 	if yesOrNo(f, "this is a message") {
 		res = true
 	}
@@ -255,18 +231,13 @@ func TestYesOrNo(t *testing.T) {
 		t.Error("should have been yes")
 	}
 
-	if err = f.Close(); err != nil {
-		t.Error(err)
-	}
-	if f, err = ioutil.TempFile("", ""); err != nil {
-		t.Fatal(err)
-	}
-	if _, err = f.Write([]byte("no")); err != nil {
-		t.Fatal(err)
-	}
-	if _, err = f.Seek(0, os.SEEK_SET); err != nil {
-		t.Fatal(err)
-	}
+	tests.Check(f.Close())
+	f, err = ioutil.TempFile("", "")
+	tests.Check(err)
+	_, err = f.Write([]byte("no"))
+	tests.Check(err)
+	_, err = f.Seek(0, os.SEEK_SET)
+	tests.Check(err)
 	res = false
 	if yesOrNo(f, "msg") {
 		res = true
@@ -274,7 +245,5 @@ func TestYesOrNo(t *testing.T) {
 	if res {
 		t.Error("should have gotten a no")
 	}
-	if err = f.Close(); err != nil {
-		t.Error(err)
-	}
+	tests.Check(f.Close())
 }

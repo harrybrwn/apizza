@@ -41,91 +41,57 @@ service: "Carryout"
 `
 
 func TestConfigStruct(t *testing.T) {
+	tests.InitHelpers(t)
 	r := cmdtest.NewRecorder()
 	r.ConfigSetup([]byte(testconfigjson))
-	defer func() {
-		r.CleanUp()
-		// config.SetNonFileConfig(cfg) // for test compatability
-	}()
-	// check(json.Unmarshal([]byte(testconfigjson), r.Config()), "json")
-	if err := json.Unmarshal([]byte(testconfigjson), r.Config()); err != nil {
-		t.Fatal(err)
-	}
+	defer func() { r.CleanUp() }()
+	tests.Fatal(json.Unmarshal([]byte(testconfigjson), r.Config()))
 
-	if r.Config().Get("name").(string) != "joe" {
-		t.Error("wrong value")
-	}
-	if err := r.Config().Set("name", "not joe"); err != nil {
-		t.Error(err)
-	}
-	if r.Config().Get("Name").(string) != "not joe" {
-		t.Error("wrong value")
-	}
-	if err := r.Config().Set("name", "joe"); err != nil {
-		t.Error(err)
-	}
+	tests.StrEq(r.Config().Get("name").(string), "joe", "wrong value from Config.Get")
+	tests.Check(r.Config().Set("name", "not joe"))
+	tests.StrEq(r.Config().Get("Name").(string), "not joe", "wrong value from Config.Get")
+	tests.Check(r.Config().Set("name", "joe"))
 }
 
 func TestConfigCmd(t *testing.T) {
+	tests.InitHelpers(t)
 	r := cmdtest.NewRecorder()
 	c := NewConfigCmd(r).(*configCmd)
 	r.ConfigSetup([]byte(testconfigjson))
-	defer func() {
-		r.CleanUp()
-		// config.SetNonFileConfig(cfg) // for test compatability
-	}()
+	defer r.CleanUp()
 
 	c.file = true
-	if err := c.Run(c.Cmd(), []string{}); err != nil {
-		t.Error(err)
-	}
+	tests.Check(c.Run(c.Cmd(), []string{}))
 	c.file = false
 	r.Compare(t, "\n")
 	r.ClearBuf()
 	c.dir = true
-	if err := c.Run(c.Cmd(), []string{}); err != nil {
-		t.Error(err)
-	}
+	tests.Check(c.Run(c.Cmd(), []string{}))
 	r.Compare(t, "\n")
 	r.ClearBuf()
 
-	err := json.Unmarshal([]byte(testconfigjson), r.Config())
-	if err != nil {
-		t.Error(err)
-	}
+	tests.Check(json.Unmarshal([]byte(testconfigjson), r.Config()))
 	c.dir = false
 	c.getall = true
-	if err := c.Run(c.Cmd(), []string{}); err != nil {
-		t.Error(err)
-	}
+	tests.Check(c.Run(c.Cmd(), []string{}))
 	r.Compare(t, testConfigOutput)
 	r.ClearBuf()
 	c.getall = false
 	cmdUseage := c.Cmd().UsageString()
-	if err := c.Run(c.Cmd(), []string{}); err != nil {
-		t.Error(err)
-	}
+	tests.Check(c.Run(c.Cmd(), []string{}))
 	r.Compare(t, cmdUseage)
 	r.ClearBuf()
-	if err := c.Run(c.Cmd(), []string{}); err != nil {
-		t.Error(err)
-	}
+	tests.Check(c.Run(c.Cmd(), []string{}))
 	r.Compare(t, c.Cmd().UsageString())
 }
 
 func TestConfigEdit(t *testing.T) {
+	tests.InitHelpers(t)
 	r := cmdtest.NewRecorder()
 	c := NewConfigCmd(r).(*configCmd)
-	err := config.SetConfig(".config/apizza/tests", r.Conf)
-	if err != nil {
-		t.Error(err)
-	}
+	tests.Check(config.SetConfig(".config/apizza/tests", r.Conf))
 	defer func() {
-		err = errs.Pair(r.DB().Destroy(), os.RemoveAll(config.Folder()))
-		if err != nil {
-			t.Error()
-		}
-		// config.SetNonFileConfig(cfg) // for test compatability
+		tests.Check(errs.Pair(r.DB().Destroy(), os.RemoveAll(config.Folder())))
 	}()
 
 	os.Setenv("EDITOR", "cat")
@@ -152,17 +118,12 @@ func TestConfigEdit(t *testing.T) {
 			t.Skip()
 		}
 		tests.CompareOutput(t, exp, func() {
-			if err = c.Run(c.Cmd(), []string{}); err != nil {
-				t.Error(err)
-			}
+			tests.Check(c.Run(c.Cmd(), []string{}))
 		})
 	})
 	c.edit = false
 
-	err = json.Unmarshal([]byte(testconfigjson), r.Config())
-	if err != nil {
-		t.Error(err)
-	}
+	tests.Check(json.Unmarshal([]byte(testconfigjson), r.Config()))
 	a := config.Get("address")
 	if a == nil {
 		t.Error("should not be nil")
@@ -177,27 +138,20 @@ func TestConfigEdit(t *testing.T) {
 }
 
 func TestConfigGet(t *testing.T) {
+	tests.InitHelpers(t)
 	conf := &cli.Config{}
 	config.SetNonFileConfig(conf) // don't want it to over ride the file on disk
-	if err := json.Unmarshal([]byte(testconfigjson), conf); err != nil {
-		t.Fatal(err)
-	}
-
+	tests.Fatal(json.Unmarshal([]byte(testconfigjson), conf))
 	buf := &bytes.Buffer{}
 
 	args := []string{"email", "name"}
-	err := get(args, buf)
-	if err != nil {
-		t.Error(err)
-	}
-	if err := configGetCmd.RunE(configGetCmd, []string{"email", "name"}); err != nil {
-		t.Error(err)
-	}
+	tests.Check(get(args, buf))
+	tests.Check(configGetCmd.RunE(configGetCmd, []string{"email", "name"}))
 	tests.Compare(t, buf.String(), "nojoe@mail.com\njoe\n")
 	buf.Reset()
 
 	args = []string{}
-	err = get(args, buf)
+	err := get(args, buf)
 	if err == nil {
 		t.Error("expected error")
 	} else if err.Error() != "no variable given" {
@@ -226,18 +180,13 @@ func TestConfigGet(t *testing.T) {
 
 func TestConfigSet(t *testing.T) {
 	// c := newConfigSet() //.(*configSetCmd)
+	tests.InitHelpers(t)
 	conf := &cli.Config{}
 	config.SetNonFileConfig(conf) // don't want it to over ride the file on disk
-	if err := json.Unmarshal([]byte(cmdtest.TestConfigjson), conf); err != nil {
-		t.Fatal(err)
-	}
+	tests.Fatal(json.Unmarshal([]byte(cmdtest.TestConfigjson), conf))
 
-	if err := configSetCmd.RunE(configSetCmd, []string{"name=someNameOtherThanJoe"}); err != nil {
-		t.Error(err)
-	}
-	if config.GetString("name") != "someNameOtherThanJoe" {
-		t.Error("did not set the name correctly")
-	}
+	tests.Check(configSetCmd.RunE(configSetCmd, []string{"name=someNameOtherThanJoe"}))
+	tests.StrEq(config.GetString("name"), "someNameOtherThanJoe", "did not set the name correctly")
 	if err := configSetCmd.RunE(configSetCmd, []string{}); err == nil {
 		t.Error("expected error")
 	} else if err.Error() != "no variable given" {
