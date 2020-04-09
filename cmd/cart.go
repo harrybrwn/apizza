@@ -17,13 +17,13 @@ package cmd
 import (
 	"bytes"
 	"errors"
-	"fmt"
 	"log"
 	"os"
 	"strings"
 
 	"github.com/spf13/cobra"
 
+	"github.com/harrybrwn/apizza/cmd/cart"
 	"github.com/harrybrwn/apizza/cmd/cli"
 	"github.com/harrybrwn/apizza/cmd/client"
 	"github.com/harrybrwn/apizza/cmd/internal/data"
@@ -32,12 +32,13 @@ import (
 	"github.com/harrybrwn/apizza/dawg"
 	"github.com/harrybrwn/apizza/pkg/cache"
 	"github.com/harrybrwn/apizza/pkg/config"
-	"github.com/harrybrwn/apizza/pkg/errs"
 )
 
 // `apizza cart`
 type cartCmd struct {
 	cli.CliCommand
+	cart *cart.Cart
+
 	data.MenuCacher
 	client.StoreFinder
 	db *cache.DataBase
@@ -71,92 +72,51 @@ func (c *cartCmd) Run(cmd *cobra.Command, args []string) (err error) {
 	name := args[0]
 
 	if c.delete {
-		if err = c.db.Delete(data.OrderPrefix + name); err != nil {
+		if err = c.cart.DeleteOrder(name); err != nil {
 			return err
 		}
 		c.Printf("%s successfully deleted.\n", name)
 		return nil
 	}
-
-	var order *dawg.Order
-	if order, err = data.GetOrder(name, c.db); err != nil {
+	c.cart.SetOutput(c.Output())
+	// Set the order that will be used will the cart functions
+	if err = c.cart.SetCurrentOrder(args[0]); err != nil {
 		return err
 	}
-	order.Address = dawg.StreetAddrFromAddress(c.Address())
 
 	if c.validate {
-		c.Printf("validating order '%s'...\n", order.Name())
-		err = onlyFailures(order.Validate())
-		if err != nil {
-			return err
-		}
-		c.Println("Order is ok.")
-		return nil
+		// validate the current order and stop
+		return c.cart.Validate()
 	}
 
 	if len(c.remove) > 0 {
 		if c.topping {
-			for _, p := range order.Products {
+			for _, p := range c.cart.CurrentOrder.Products {
 				if _, ok := p.Options()[c.remove]; ok || p.Code == c.product {
 					delete(p.Opts, c.remove)
 					break
 				}
 			}
 		} else {
-			if err = order.RemoveProduct(c.remove); err != nil {
+			if err = c.cart.CurrentOrder.RemoveProduct(c.remove); err != nil {
 				return err
 			}
 		}
-		return data.SaveOrder(order, c.Output(), c.db)
+		return c.cart.Save()
 	}
 
 	if len(c.add) > 0 {
 		if c.topping {
-			if c.product == "" {
-				return errors.New("what product are these toppings being added to")
-			}
-			for _, top := range c.add {
-				p := getOrderItem(order, c.product)
-				if p == nil {
-					return fmt.Errorf("cannot find '%s' in the '%s' order", c.product, order.Name())
-				}
-
-				err = addTopping(top, p)
-				if err != nil {
-					return err
-				}
-			}
+			err = c.cart.AddToppings(c.product, c.add)
 		} else {
-			if err := c.db.UpdateTS("menu", c); err != nil {
-				return err
-			}
-			menu := c.Menu()
-			var itm dawg.Item
-			for _, newP := range c.add {
-				itm, err = menu.GetVariant(newP)
-				if err != nil {
-					return err
-				}
-				err = order.AddProduct(itm)
-				if err != nil {
-					return err
-				}
-			}
+			err = c.cart.AddProducts(c.add)
 		}
-		return data.SaveOrder(order, c.Output(), c.db)
+		if err != nil {
+			return err
+		}
+		return c.cart.Save()
 	}
-	return out.PrintOrder(order, true, c.price)
-}
-
-func (c *cartCmd) syncWithConfig(o *dawg.Order) error {
-	addr := config.Get("address").(obj.Address)
-	if obj.AddrIsEmpty(&addr) {
-		return errs.New("no address in config file")
-	}
-
-	o.Address = dawg.StreetAddrFromAddress(&addr)
-	o.StoreID = c.Store().ID
-	return onlyFailures(data.SaveOrder(o, c.Output(), c.db))
+	return out.PrintOrder(c.cart.CurrentOrder, true, c.price)
 }
 
 func onlyFailures(e error) error {
@@ -207,6 +167,7 @@ func getOrderItem(order *dawg.Order, code string) dawg.Item {
 func NewCartCmd(b cli.Builder) cli.CliCommand {
 	c := &cartCmd{
 		db:      b.DB(),
+		cart:    cart.New(b),
 		price:   false,
 		delete:  false,
 		verbose: false,

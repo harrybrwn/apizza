@@ -3,6 +3,7 @@ package cart
 import (
 	"errors"
 	"fmt"
+	"io"
 	"strings"
 
 	"github.com/harrybrwn/apizza/cmd/cli"
@@ -46,15 +47,21 @@ type Cart struct {
 	finder client.StoreFinder
 	cacher data.MenuCacher
 
+	CurrentOrder *dawg.Order
+	out          io.Writer
 	currentName  string
-	currentOrder *dawg.Order
 }
 
 // SetCurrentOrder sets the order that the cart is currently working with.
 func (c *Cart) SetCurrentOrder(name string) (err error) {
 	c.currentName = name
-	c.currentOrder, err = c.GetOrder(name)
+	c.CurrentOrder, err = c.GetOrder(name)
 	return err
+}
+
+// SetOutput sets the output of logging messages.
+func (c *Cart) SetOutput(w io.Writer) {
+	c.out = w
 }
 
 // DeleteOrder will delete an order from the database.
@@ -75,15 +82,24 @@ func (c *Cart) GetOrder(name string) (*dawg.Order, error) {
 	return order, nil
 }
 
+// Save will save the current order and reset the current order.
+func (c *Cart) Save() error {
+	err := data.SaveOrder(c.CurrentOrder, c.out, c.db)
+	c.CurrentOrder = nil
+	return err
+}
+
 // Validate the current order
 func (c *Cart) Validate() error {
-	if c.currentOrder == nil {
+	if c.CurrentOrder == nil {
 		return ErrNoCurrentOrder
 	}
-	err = c.currentOrder.Validate()
+	fmt.Fprintf(out, "validating order '%s'...\n", c.CurrentOrder.Name())
+	err = c.CurrentOrder.Validate()
 	if dawg.IsWarning(err) {
 		return nil
 	}
+	fmt.Fprintln(c.out, "Order is ok.")
 	return err
 }
 
@@ -102,7 +118,7 @@ func (c *Cart) ValidateOrder(name string) error {
 
 // AddToppings will add toppings to a product in the current order.
 func (c *Cart) AddToppings(product string, toppings []string) error {
-	if c.currentOrder == nil {
+	if c.CurrentOrder == nil {
 		return ErrNoCurrentOrder
 	}
 	return addToppingsToOrder(c.currentOrder, product, toppings)
@@ -120,13 +136,13 @@ func (c *Cart) AddToppingsToOrder(name, product string, toppings []string) error
 
 // AddProducts adds a list of products to the current order
 func (c *Cart) AddProducts(products []string) error {
-	if c.currentOrder == nil {
+	if c.CurrentOrder == nil {
 		return ErrNoCurrentOrder
 	}
 	if err := c.db.UpdateTS("menu", c.cacher); err != nil {
 		return err
 	}
-	return addProducts(c.currentOrder, c.Menu(), products)
+	return addProducts(c.CurrentOrder, c.Menu(), products)
 }
 
 // AddProductsToOrder adds a list of products to an order that needs to
