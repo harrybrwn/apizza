@@ -1,8 +1,7 @@
-package cmd
+package commands
 
 import (
 	"bufio"
-	"errors"
 	"fmt"
 	"io"
 	"strings"
@@ -111,25 +110,4 @@ func (r *reader) readline() (string, error) {
 		return "", err
 	}
 	return strings.Trim(lineone, "\n \t\r"), nil
-}
-
-func newTestCmd(b cli.Builder, valid bool) *cobra.Command {
-	return &cobra.Command{
-		Use:    "test",
-		Hidden: true,
-		RunE: func(cmd *cobra.Command, args []string) error {
-			if !valid {
-				return errors.New("no such command 'test'")
-			}
-
-			db := b.DB()
-			fmt.Printf("%+v\n", db)
-
-			m, _ := db.Map()
-			for k := range m {
-				fmt.Println(k)
-			}
-			return nil
-		},
-	}
 }
