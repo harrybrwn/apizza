@@ -16,6 +16,7 @@ os:
 
 before_script:
   - bash scripts/build.sh
+  - go get -u github.com/rakyll/gotest
 
 script:
   - bash scripts/test.sh

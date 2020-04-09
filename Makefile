@@ -1,7 +1,7 @@
 COVER=go tool cover
 
 test: test-build
-	go test ./...
+	bash scripts/test.sh
 	bash scripts/integration.sh ./bin/apizza
 	@[ -d ./bin ] && [ -x ./bin/apizza ] && rm -rf ./bin
 

@@ -3,4 +3,4 @@
 set -e
 echo "" > coverage.txt
 
-go test -v ./... -coverprofile=coverage.txt -covermode=atomic
+gotest -v ./... -coverprofile=coverage.txt -covermode=atomic
