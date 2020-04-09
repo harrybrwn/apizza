@@ -39,9 +39,9 @@ type cartCmd struct {
 	cli.CliCommand
 	cart *cart.Cart
 
-	data.MenuCacher
-	client.StoreFinder
-	db *cache.DataBase
+	// data.MenuCacher
+	// client.StoreFinder
+	// db *cache.DataBase
 
 	validate bool
 	price    bool
@@ -59,8 +59,10 @@ type cartCmd struct {
 
 func (c *cartCmd) Run(cmd *cobra.Command, args []string) (err error) {
 	out.SetOutput(cmd.OutOrStdout())
+	c.cart.SetOutput(c.Output())
 	if len(args) < 1 {
-		return data.PrintOrders(c.db, c.Output(), c.verbose)
+		// return data.PrintOrders(c.db, c.Output(), c.verbose)
+		return c.cart.PrintOrders(c.verbose)
 	}
 
 	if c.topping && c.product == "" {
@@ -78,7 +80,6 @@ func (c *cartCmd) Run(cmd *cobra.Command, args []string) (err error) {
 		c.Printf("%s successfully deleted.\n", name)
 		return nil
 	}
-	c.cart.SetOutput(c.Output())
 	// Set the order that will be used will the cart functions
 	if err = c.cart.SetCurrentOrder(args[0]); err != nil {
 		return err
@@ -126,47 +127,10 @@ func onlyFailures(e error) error {
 	return e
 }
 
-// adds a topping.
-//
-// formated as <name>:<side>:<amount>
-// name is the only one that is required.
-func addTopping(topStr string, p dawg.Item) error {
-	var side, amount string
-
-	topping := strings.Split(topStr, ":")
-
-	if len(topping) < 1 {
-		return errors.New("incorrect topping format")
-	}
-
-	if len(topping) == 1 {
-		side = dawg.ToppingFull
-	} else if len(topping) >= 2 {
-		side = topping[1]
-	}
-
-	if len(topping) == 3 {
-		amount = topping[2]
-	} else {
-		amount = "1.0"
-	}
-	p.AddTopping(topping[0], side, amount)
-	return nil
-}
-
-func getOrderItem(order *dawg.Order, code string) dawg.Item {
-	for _, itm := range order.Products {
-		if itm.ItemCode() == code {
-			return itm
-		}
-	}
-	return nil
-}
-
 // NewCartCmd creates a new cart command.
 func NewCartCmd(b cli.Builder) cli.CliCommand {
 	c := &cartCmd{
-		db:      b.DB(),
+		// db:      b.DB(),
 		cart:    cart.New(b),
 		price:   false,
 		delete:  false,
@@ -174,21 +138,21 @@ func NewCartCmd(b cli.Builder) cli.CliCommand {
 		topping: false,
 	}
 
-	if app, ok := b.(*App); ok {
-		c.StoreFinder = app
-	} else {
-		c.StoreFinder = client.NewStoreGetterFunc(
-			func() string { return b.Config().Service }, b.Address)
-	}
+	// if app, ok := b.(*App); ok {
+	// 	c.StoreFinder = app
+	// } else {
+	// 	c.StoreFinder = client.NewStoreGetterFunc(
+	// 		func() string { return b.Config().Service }, b.Address)
+	// }
+	// c.MenuCacher = data.NewMenuCacher(menuUpdateTime, b.DB(), c.Store)
 
-	c.MenuCacher = data.NewMenuCacher(menuUpdateTime, b.DB(), c.Store)
 	c.CliCommand = b.Build("cart <order name>", "Manage user created orders", c)
 	cmd := c.Cmd()
 
 	cmd.Long = `The cart command gets information on all of the user
 created orders.`
 
-	cmd.PreRunE = cartPreRun(c.db)
+	cmd.PreRunE = cartPreRun()
 
 	c.Flags().BoolVar(&c.validate, "validate", c.validate, "send an order to the dominos order-validation endpoint.")
 	c.Flags().BoolVar(&c.price, "price", c.price, "show to price of an order")
@@ -204,7 +168,7 @@ created orders.`
 	return c
 }
 
-func cartPreRun(db cache.MapDB) func(cmd *cobra.Command, args []string) error {
+func cartPreRun() func(cmd *cobra.Command, args []string) error {
 	return func(cmd *cobra.Command, args []string) error {
 		if len(args) > 1 {
 			return errors.New("cannot handle multiple orders")
@@ -374,7 +338,7 @@ The --cvv flag must be specified, and the config file will never store the
 cvv. In addition to keeping the cvv safe, payment information will never be
 stored the program cache with orders.
 `
-	c.Cmd().PreRunE = cartPreRun(c.db)
+	c.Cmd().PreRunE = cartPreRun()
 
 	flags := c.Cmd().Flags()
 	flags.BoolVarP(&c.verbose, "verbose", "v", c.verbose, "output the order command verbosely")

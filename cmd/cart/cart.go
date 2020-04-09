@@ -1,6 +1,7 @@
 package cart
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -27,7 +28,7 @@ func New(b cli.Builder) *Cart {
 	return &Cart{
 		db:     b.DB(),
 		finder: storefinder,
-		cacher: data.NewMenuCacher(
+		MenuCacher: data.NewMenuCacher(
 			opts.MenuUpdateTime,
 			b.DB(),
 			storefinder.Store,
@@ -43,9 +44,8 @@ var ErrNoCurrentOrder = errors.New("cart has no current order set")
 // representing the user's cart for persistant orders
 type Cart struct {
 	data.MenuCacher
-	db     cache.DB
+	db     *cache.DataBase
 	finder client.StoreFinder
-	cacher data.MenuCacher
 
 	CurrentOrder *dawg.Order
 	out          io.Writer
@@ -78,8 +78,8 @@ func (c *Cart) GetOrder(name string) (*dawg.Order, error) {
 	order := &dawg.Order{}
 	order.Init()
 	order.SetName(name)
-	order.Address = c.finder.Address()
-	return order, nil
+	order.Address = dawg.StreetAddrFromAddress(c.finder.Address())
+	return order, json.Unmarshal(raw, order)
 }
 
 // Save will save the current order and reset the current order.
@@ -94,8 +94,8 @@ func (c *Cart) Validate() error {
 	if c.CurrentOrder == nil {
 		return ErrNoCurrentOrder
 	}
-	fmt.Fprintf(out, "validating order '%s'...\n", c.CurrentOrder.Name())
-	err = c.CurrentOrder.Validate()
+	fmt.Fprintf(c.out, "validating order '%s'...\n", c.CurrentOrder.Name())
+	err := c.CurrentOrder.Validate()
 	if dawg.IsWarning(err) {
 		return nil
 	}
@@ -121,7 +121,7 @@ func (c *Cart) AddToppings(product string, toppings []string) error {
 	if c.CurrentOrder == nil {
 		return ErrNoCurrentOrder
 	}
-	return addToppingsToOrder(c.currentOrder, product, toppings)
+	return addToppingsToOrder(c.CurrentOrder, product, toppings)
 }
 
 // AddToppingsToOrder will get an order from the database and add toppings
@@ -139,7 +139,7 @@ func (c *Cart) AddProducts(products []string) error {
 	if c.CurrentOrder == nil {
 		return ErrNoCurrentOrder
 	}
-	if err := c.db.UpdateTS("menu", c.cacher); err != nil {
+	if err := c.db.UpdateTS("menu", c); err != nil {
 		return err
 	}
 	return addProducts(c.CurrentOrder, c.Menu(), products)
@@ -148,7 +148,7 @@ func (c *Cart) AddProducts(products []string) error {
 // AddProductsToOrder adds a list of products to an order that needs to
 // be retrived from the database.
 func (c *Cart) AddProductsToOrder(name string, products []string) error {
-	if err := c.db.UpdateTS("menu", c.cacher); err != nil {
+	if err := c.db.UpdateTS("menu", c); err != nil {
 		return err
 	}
 	order, err := c.GetOrder(name)
@@ -159,14 +159,19 @@ func (c *Cart) AddProductsToOrder(name string, products []string) error {
 	return addProducts(order, menu, products)
 }
 
-func addToppingsToOrder(o *dawg.Order, product string, toppings []string) error {
+// PrintOrders will print out all the orders saved in the database
+func (c *Cart) PrintOrders(verbose bool) error {
+	return data.PrintOrders(c.db, c.out, verbose)
+}
+
+func addToppingsToOrder(o *dawg.Order, product string, toppings []string) (err error) {
 	if product == "" {
 		return errors.New("what product are these toppings being added to")
 	}
 	for _, top := range toppings {
-		p := getOrderItem(order, product)
+		p := getOrderItem(o, product)
 		if p == nil {
-			return fmt.Errorf("cannot find '%s' in the '%s' order", product, order.Name())
+			return fmt.Errorf("cannot find '%s' in the '%s' order", product, o.Name())
 		}
 
 		err = addTopping(top, p)
@@ -174,20 +179,22 @@ func addToppingsToOrder(o *dawg.Order, product string, toppings []string) error 
 			return err
 		}
 	}
+	return nil
 }
 
-func addProducts(o *dawg.Order, menu *dawg.Menu, products []string) error {
+func addProducts(o *dawg.Order, menu *dawg.Menu, products []string) (err error) {
 	var itm dawg.Item
 	for _, newP := range products {
 		itm, err = menu.GetVariant(newP)
 		if err != nil {
 			return err
 		}
-		err = order.AddProduct(itm)
+		err = o.AddProduct(itm)
 		if err != nil {
 			return err
 		}
 	}
+	return nil
 }
 
 func getOrderItem(order *dawg.Order, code string) dawg.Item {
