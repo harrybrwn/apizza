@@ -1,6 +1,13 @@
 package opts
 
-import "github.com/spf13/pflag"
+import (
+	"time"
+
+	"github.com/spf13/pflag"
+)
+
+// MenuUpdateTime is the time a menu is persistant in cache
+var MenuUpdateTime = 12 * time.Hour
 
 // CliFlags for the root apizza command.
 type CliFlags struct {

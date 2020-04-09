@@ -112,6 +112,11 @@ func (a *App) Address() dawg.Address {
 	return &a.conf.Address
 }
 
+// GlobalOptions returns the variables for the app's global flags
+func (a *App) GlobalOptions() *opts.CliFlags {
+	return &a.gOpts
+}
+
 // Cleanup cleans everything up.
 func (a *App) Cleanup() (err error) {
 	return errs.Pair(a.db.Close(), config.Save())
