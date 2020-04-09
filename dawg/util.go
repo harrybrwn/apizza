@@ -77,7 +77,7 @@ func (rt *roundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
 }
 
 func setDawgUserAgent(head http.Header) {
-	head.Add(
+	head.Set(
 		"User-Agent",
 		"Dominos API Wrapper for GO - "+time.Now().String(),
 	)
