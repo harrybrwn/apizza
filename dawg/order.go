@@ -170,6 +170,9 @@ func (o *Order) prepare() error {
 // ValidateOrder sends and order to the validation endpoint to be validated by
 // Dominos' servers.
 func ValidateOrder(order *Order) error {
+	if order.cli == nil {
+		order.cli = orderClient
+	}
 	err := sendOrder("/power/validate-order", *order)
 	if IsWarning(err) {
 		// TODO: make it possible to recognize the warning as an 'AutoAddedOrderId' warning.

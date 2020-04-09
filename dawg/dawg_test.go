@@ -131,7 +131,7 @@ func TestDominosErrors(t *testing.T) {
 		LanguageCode:  "en",
 		ServiceMethod: "Delivery",
 		Products: []*OrderProduct{
-			&OrderProduct{
+			{
 				ItemCommon: ItemCommon{Code: "12SCREEN"},
 				Opts: map[string]interface{}{
 					"C": map[string]string{"1/1": "1"},
