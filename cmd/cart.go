@@ -39,10 +39,6 @@ type cartCmd struct {
 	cli.CliCommand
 	cart *cart.Cart
 
-	// data.MenuCacher
-	// client.StoreFinder
-	// db *cache.DataBase
-
 	validate bool
 	price    bool
 	delete   bool
@@ -130,21 +126,12 @@ func onlyFailures(e error) error {
 // NewCartCmd creates a new cart command.
 func NewCartCmd(b cli.Builder) cli.CliCommand {
 	c := &cartCmd{
-		// db:      b.DB(),
 		cart:    cart.New(b),
 		price:   false,
 		delete:  false,
 		verbose: false,
 		topping: false,
 	}
-
-	// if app, ok := b.(*App); ok {
-	// 	c.StoreFinder = app
-	// } else {
-	// 	c.StoreFinder = client.NewStoreGetterFunc(
-	// 		func() string { return b.Config().Service }, b.Address)
-	// }
-	// c.MenuCacher = data.NewMenuCacher(menuUpdateTime, b.DB(), c.Store)
 
 	c.CliCommand = b.Build("cart <order name>", "Manage user created orders", c)
 	cmd := c.Cmd()
