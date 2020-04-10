@@ -100,12 +100,12 @@ func (a *App) Address() dawg.Address {
 	if a.addr != nil {
 		return a.addr
 	}
-	if a.conf.DefaultAddress != "" {
-		addr, err := a.getDBAddress(a.conf.DefaultAddress)
+	if a.conf.DefaultAddressName != "" {
+		addr, err := a.getDBAddress(a.conf.DefaultAddressName)
 		if err != nil {
 			fmt.Fprintf(os.Stderr,
 				"Warning: could not find an address named '%s'\n",
-				a.conf.DefaultAddress)
+				a.conf.DefaultAddressName)
 			if obj.AddrIsEmpty(&a.conf.Address) {
 				errs.Handle(internal.ErrNoAddress, "Error", 1)
 			}

@@ -84,7 +84,13 @@ func (c *Cart) GetOrder(name string) (*dawg.Order, error) {
 
 // Save will save the current order and reset the current order.
 func (c *Cart) Save() error {
-	err := data.SaveOrder(c.CurrentOrder, c.out, c.db)
+	return data.SaveOrder(c.CurrentOrder, c.out, c.db)
+}
+
+// SaveAndReset will save the order and set it to nil so that
+// it is not accidentally changed.
+func (c *Cart) SaveAndReset() error {
+	err := c.Save()
 	c.CurrentOrder = nil
 	return err
 }

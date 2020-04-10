@@ -9,12 +9,12 @@ import (
 
 // Config is the configuration struct
 type Config struct {
-	Name           string      `config:"name" json:"name"`
-	Email          string      `config:"email" json:"email"`
-	Phone          string      `config:"phone" json:"phone"`
-	Address        obj.Address `config:"address" json:"address"`
-	DefaultAddress string      `config:"default-address"`
-	Card           struct {
+	Name               string      `config:"name" json:"name"`
+	Email              string      `config:"email" json:"email"`
+	Phone              string      `config:"phone" json:"phone"`
+	Address            obj.Address `config:"address" json:"address"`
+	DefaultAddressName string      `config:"default-address-name" json:"default-address-name"`
+	Card               struct {
 		Number     string `config:"number" json:"number"`
 		Expiration string `config:"expiration" json:"expiration"`
 	} `config:"card" json:"card"`

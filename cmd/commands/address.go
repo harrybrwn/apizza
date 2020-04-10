@@ -50,6 +50,11 @@ func (a *addAddressCmd) Run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
+	if len(m) == 0 {
+		a.Println("No addresses stored (see '--new' flag)")
+		return nil
+	}
+
 	var addr *obj.Address
 	for key, val := range m {
 		addr, err = obj.FromGob(val)

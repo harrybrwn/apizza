@@ -111,7 +111,8 @@ func (c *cartCmd) Run(cmd *cobra.Command, args []string) (err error) {
 		if err != nil {
 			return err
 		}
-		return c.cart.Save()
+		// stave order and return early before order is printed out
+		return c.cart.SaveAndReset()
 	}
 	return out.PrintOrder(c.cart.CurrentOrder, true, c.price)
 }
