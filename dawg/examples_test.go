@@ -22,10 +22,6 @@ var (
 	}
 )
 
-func init() {
-	// user, _ = dawg.SignIn(username, password)
-}
-
 func Example_getStore() {
 	// This can be anything that satisfies the dawg.Address interface.
 	var addr = dawg.StreetAddr{
@@ -39,8 +35,7 @@ func Example_getStore() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	store.WaitTime()
-	// Output:
+	fmt.Println(store.WaitTime())
 }
 
 func ExampleNearestStore() {
