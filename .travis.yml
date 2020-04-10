@@ -15,7 +15,7 @@ os:
   - windows
 
 before_script:
-  - bash scripts/build.sh
+  - go build -o bin/apizza
   - go get -u github.com/rakyll/gotest
 
 script:
