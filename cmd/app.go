@@ -10,6 +10,7 @@ import (
 
 	"github.com/harrybrwn/apizza/cmd/cli"
 	"github.com/harrybrwn/apizza/cmd/client"
+	"github.com/harrybrwn/apizza/cmd/internal"
 	"github.com/harrybrwn/apizza/cmd/internal/data"
 	"github.com/harrybrwn/apizza/cmd/internal/obj"
 	"github.com/harrybrwn/apizza/cmd/opts"
@@ -103,7 +104,11 @@ func (a *App) Address() dawg.Address {
 		addr, err := a.getDBAddress(a.conf.DefaultAddress)
 		if err != nil {
 			fmt.Fprintf(os.Stderr,
-				"Warning: could not find address %s\n", a.conf.DefaultAddress)
+				"Warning: could not find an address named '%s'\n",
+				a.conf.DefaultAddress)
+			if obj.AddrIsEmpty(&a.conf.Address) {
+				errs.Handle(internal.ErrNoAddress, "Error", 1)
+			}
 			return &a.conf.Address
 		}
 		a.addr = addr

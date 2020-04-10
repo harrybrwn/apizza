@@ -26,6 +26,7 @@ import (
 	"github.com/harrybrwn/apizza/cmd/cart"
 	"github.com/harrybrwn/apizza/cmd/cli"
 	"github.com/harrybrwn/apizza/cmd/client"
+	"github.com/harrybrwn/apizza/cmd/internal"
 	"github.com/harrybrwn/apizza/cmd/internal/data"
 	"github.com/harrybrwn/apizza/cmd/internal/obj"
 	"github.com/harrybrwn/apizza/cmd/internal/out"
@@ -57,7 +58,6 @@ func (c *cartCmd) Run(cmd *cobra.Command, args []string) (err error) {
 	out.SetOutput(cmd.OutOrStdout())
 	c.cart.SetOutput(c.Output())
 	if len(args) < 1 {
-		// return data.PrintOrders(c.db, c.Output(), c.verbose)
 		return c.cart.PrintOrders(c.verbose)
 	}
 
@@ -177,7 +177,7 @@ type addOrderCmd struct {
 
 func (c *addOrderCmd) Run(cmd *cobra.Command, args []string) (err error) {
 	if c.name == "" && len(args) < 1 {
-		return errors.New("No order name... use '--name=<order name>' or give name as an argument")
+		return internal.ErrNoOrderName
 	}
 	order := c.Store().NewOrder()
 
