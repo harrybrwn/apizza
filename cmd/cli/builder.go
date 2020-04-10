@@ -3,6 +3,7 @@ package cli
 import (
 	"io"
 
+	"github.com/harrybrwn/apizza/cmd/opts"
 	"github.com/harrybrwn/apizza/dawg"
 	"github.com/harrybrwn/apizza/pkg/cache"
 )
@@ -14,6 +15,7 @@ type Builder interface {
 	ConfigBuilder
 	AddressBuilder
 	Output() io.Writer
+	GlobalOptions() *opts.CliFlags
 }
 
 // CommandBuilder defines an interface for building commands.

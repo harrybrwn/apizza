@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/harrybrwn/apizza/cmd/cli"
+	"github.com/harrybrwn/apizza/cmd/opts"
 	"github.com/harrybrwn/apizza/dawg"
 	"github.com/harrybrwn/apizza/pkg/cache"
 	"github.com/harrybrwn/apizza/pkg/config"
@@ -71,6 +72,11 @@ func (r *Recorder) Build(use, short string, run cli.Runner) *cli.Command {
 // Address returns the address.
 func (r *Recorder) Address() dawg.Address {
 	return r.addr
+}
+
+// GlobalOptions has the global flags
+func (r *Recorder) GlobalOptions() *opts.CliFlags {
+	return &opts.CliFlags{}
 }
 
 // ToApp returns the arguments needed to create a cmd.App.

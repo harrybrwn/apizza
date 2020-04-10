@@ -1,6 +1,13 @@
 package opts
 
-import "github.com/spf13/pflag"
+import (
+	"time"
+
+	"github.com/spf13/pflag"
+)
+
+// MenuUpdateTime is the time a menu is persistant in cache
+var MenuUpdateTime = 12 * time.Hour
 
 // CliFlags for the root apizza command.
 type CliFlags struct {
@@ -19,7 +26,7 @@ func (rf *CliFlags) Install(persistflags *pflag.FlagSet) {
 	persistflags.BoolVar(&rf.ResetMenu, "delete-menu", false, "delete the menu stored in cache")
 	persistflags.StringVar(&rf.LogFile, "log", "", "set a log file (found in ~/.config/apizza/logs)")
 
-	persistflags.StringVarP(&rf.Address, "address", "A", rf.Address, "an address name stored with 'apizza address --new' or a parsable address")
+	persistflags.StringVarP(&rf.Address, "address", "A", rf.Address, "an address name stored with 'apizza address --new'")
 	persistflags.StringVar(&rf.Service, "service", rf.Service, "select a Dominos service, either 'Delivery' or 'Carryout'")
 }
 

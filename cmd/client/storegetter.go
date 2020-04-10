@@ -2,6 +2,7 @@ package client
 
 import (
 	"github.com/harrybrwn/apizza/cmd/cli"
+	"github.com/harrybrwn/apizza/cmd/internal"
 	"github.com/harrybrwn/apizza/cmd/internal/obj"
 	"github.com/harrybrwn/apizza/dawg"
 	"github.com/harrybrwn/apizza/pkg/errs"
@@ -50,7 +51,7 @@ func (s *storegetter) Store() *dawg.Store {
 		var err error
 		var address = s.getaddr()
 		if obj.AddrIsEmpty(address) {
-			errs.Handle(errs.New("no address given in config file or as flag"), "Error", 1)
+			errs.Handle(errs.New(internal.ErrNoAddress), "Error", 1)
 		}
 		s.dstore, err = dawg.NearestStore(address, s.getmethod())
 		if err != nil {
