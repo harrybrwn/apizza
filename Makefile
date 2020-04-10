@@ -9,7 +9,7 @@ install:
 	go install github.com/harrybrwn/apizza
 
 uninstall:
-	$(RM) "$$GOBIN/apizza"
+	$(RM) "$$GOPATH/bin/apizza"
 
 build:
 	go build -o bin/apizza
@@ -28,8 +28,8 @@ html: coverage.txt
 	$(COVER) -html=$<
 
 clean:
-	$(RM) coverage.txt
-	$(RM) -r release bin
+	$(RM) coverage.txt release/apizza-linux release/apizza-windows release/apizza-darwin
+	$(RM) -r bin
 	go clean -testcache
 
 all: test build release
