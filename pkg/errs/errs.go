@@ -19,8 +19,8 @@ func (e *basicError) Error() string {
 	return fmt.Sprintf("%v", e.msg)
 }
 
-// Handle errors and exit.
-func Handle(e error, msg string, exitcode int) {
+// StopNow errors and exit.
+func StopNow(e error, msg string, exitcode int) {
 	if e == nil {
 		return
 	}

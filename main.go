@@ -36,6 +36,6 @@ func main() {
 
 	err := cmd.Execute(os.Args[1:], configDir)
 	if err != nil {
-		errs.Handle(err.Err, err.Msg, err.Code)
+		errs.StopNow(err.Err, err.Msg, err.Code)
 	}
 }

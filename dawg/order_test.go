@@ -26,7 +26,8 @@ func TestGetOrderPrice(t *testing.T) {
 	order := Order{
 		cli:          orderClient,
 		LanguageCode: DefaultLang, ServiceMethod: "Delivery",
-		StoreID: "4336", Payments: []*orderPayment{}, OrderID: "",
+		StoreID: "4336", OrderID: "",
+		Payments: []*orderPayment{},
 		Products: []*OrderProduct{
 			{
 				ItemCommon: ItemCommon{
@@ -56,7 +57,7 @@ func TestGetOrderPrice(t *testing.T) {
 		fmt.Printf("%+v\n", resp)
 		t.Error("\n\b", e)
 	}
-	if len(order.Payments) == 0 {
+	if len(order.Payments) != 0 {
 		t.Fatal("order.Payments should be empty because tests were about to place an order")
 	}
 	order.StoreID = "" // should cause dominos to reject the order and send an error

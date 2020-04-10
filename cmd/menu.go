@@ -201,7 +201,7 @@ func (c *menuCmd) pageMenu(category string) error {
 	go func() {
 		defer stdin.Close()
 		err = c.printMenu(stdin, strings.ToLower(category)) // still works with an empty string
-		errs.Handle(err, "io Error", 1)
+		errs.StopNow(err, "io Error", 1)
 	}()
 
 	return less.Run()

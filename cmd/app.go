@@ -107,7 +107,7 @@ func (a *App) Address() dawg.Address {
 				"Warning: could not find an address named '%s'\n",
 				a.conf.DefaultAddressName)
 			if obj.AddrIsEmpty(&a.conf.Address) {
-				errs.Handle(internal.ErrNoAddress, "Error", 1)
+				errs.StopNow(internal.ErrNoAddress, "Error", 1)
 			}
 			return &a.conf.Address
 		}
