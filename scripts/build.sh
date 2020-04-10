@@ -1,4 +1,4 @@
-#!/usr/bin/bash
+#!/bin/bash
 
 set -e
 
@@ -10,5 +10,4 @@ if [ $version = "1.11" ]; then
         go get -u
 fi
 
-go install -i gitub.com/harrybrwn/apizza
 go build -o bin/test-apizza -ldflags "-X cmd.enableLog=false"

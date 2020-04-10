@@ -229,6 +229,14 @@ func addTopping(topStr string, p dawg.Item) error {
 		side = dawg.ToppingFull
 	} else if len(topping) >= 2 {
 		side = topping[1]
+		switch strings.ToLower(side) {
+		case "left":
+			side = dawg.ToppingLeft
+		case "right":
+			side = dawg.ToppingRight
+		case "full":
+			side = dawg.ToppingFull
+		}
 	}
 
 	if len(topping) == 3 {
