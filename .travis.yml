@@ -15,6 +15,7 @@ os:
   - windows
 
 before_script:
+  - go list -f '{{join .Imports "\n"}}' ./... | grep -P '(github\.com|gopkg\.in)/.*' | grep -v "`go list`" | go get -u
   - go build -o bin/apizza
   - go get -u github.com/rakyll/gotest
 
