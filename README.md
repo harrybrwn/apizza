@@ -13,8 +13,8 @@ Dominos pizza from the command line.
 - [Setup](#setup)
 - [Commands](#commands)
 	- [Config](#config)
-	- [Cart](#cart)
 	- [Menu](#menu)
+	- [Cart](#cart)
 
 ### Installation
 ```bash
@@ -31,6 +31,8 @@ To edit the config file, you can either use the built-in `config get` and `confi
 
 
 ### Config
+For documentation on configuration and configuration fields, see [documentation](/docs/configuration.md)
+
 The `config get` and `config set` commands can be used with one config variable at a time...
 ```bash
 apizza config set email='bob@example.com'
@@ -47,28 +49,6 @@ Or just edit the json config file with
 apizza config --edit
 ```
 
-
-### Cart
-To save a new order, use `apizza cart new`
-```bash
-apizza cart new 'testorder' --product=16SCREEN --toppings=P,C,X # pepperoni, cheese, sauce
-```
-`apizza cart` is the command the shows all the saved orders.
-
-The two flags `--add` and `--remove` are intended for editing an order. They will not work if no order name is given as a command. To add a product from an order, simply give `apizza cart <order> --add=<product>` and to remove a product give `--remove=<product>`.
-
-Editing a product's toppings a little more complicated. The `--product` flag is the key to editing toppings. To edit a topping, give the product that the topping belogns to to the `--product` flag and give the actual topping name to either `--remove` or `--add`.
-
-```bash
-apizza cart myorder --product=16SCREEN --add=P
-```
-This command will add pepperoni to the pizza named 16SCREEN, and...
-```bash
-apizza cart myorder --product=16SCREEN --remove=P
-```
-will remove pepperoni from the 16SCREEN item in the order named 'myorder'.
-
-
 ### Menu
 Run `apizza menu` to print the dominos menu.
 
@@ -81,6 +61,37 @@ apizza menu drinks     # show all the drinks
 apizza menu 10SCEXTRAV # show details on 10SCEXTRAV
 ```
 To see the different menu categories, use the `--show-categories` flag. And to view the different toppings use the `--toppings` flag.
+
+
+### Cart
+To save a new order, use `apizza cart new`
+```bash
+apizza cart new 'testorder' --product=16SCREEN --toppings=P,C,X # pepperoni, cheese, sauce
+```
+`apizza cart` is the command the shows all the saved orders.
+
+The two flags `--add` and `--remove` are intended for editing an order. They will not work if no order name is given as a command. To add a product from an order, simply give `apizza cart <order> --add=<product>` and to remove a product give `--remove=<product>`.
+
+Editing a product's toppings a little more complicated. The `--product` flag is the key to editing toppings. To edit a topping, give the product that the topping belongs to to the `--product` flag and give the actual topping name to either `--remove` or `--add`.
+
+```bash
+apizza cart myorder --product=16SCREEN --add=P
+```
+This command will add pepperoni to the pizza named 16SCREEN, and...
+```bash
+apizza cart myorder --product=16SCREEN --remove=P
+```
+will remove pepperoni from the 16SCREEN item in the order named 'myorder'.
+
+
+### Order
+To actually send an order from the cart. Use the `order` command.
+
+```
+apizza order myorder --cvv=000
+```
+Once the command is executed, it will prompt you asking if you are sure you want to send the order. Enter `y` and the order will be sent.
+
 
 ### The [Dominos API Wrapper for Go](/docs/dawg.md)
 
