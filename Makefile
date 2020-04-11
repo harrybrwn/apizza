@@ -1,24 +1,27 @@
 COVER=go tool cover
 
-test: test-build
-	go test ./...
-	bash scripts/integration.sh ./bin/apizza
-	@[ -d ./bin ] && [ -x ./bin/apizza ] && rm -rf ./bin
-
-install:
-	go install github.com/harrybrwn/apizza
-
-uninstall:
-	$(RM) "$$GOBIN/apizza"
+VERSION=$(shell git describe --tags --abbrev=12)
+GOFLAGS=-ldflags "-X $(shell go list)/cmd.version=$(VERSION)"
 
 build:
-	go build -o bin/apizza
+	go build $(GOFLAGS)
+
+install:
+	go install $(GOFLAGS)
+
+uninstall:
+	go clean -i
+
+test: test-build
+	bash scripts/test.sh
+	bash scripts/integration.sh ./bin/apizza
+	@[ -d ./bin ] && [ -x ./bin/apizza ] && rm -rf ./bin
 
 release:
 	scripts/release build
 
 test-build:
-	go build -o bin/apizza -ldflags "-X cmd.enableLog=false"
+	scripts/build.sh test
 
 coverage.txt:
 	@ echo '' > coverage.txt
@@ -28,9 +31,9 @@ html: coverage.txt
 	$(COVER) -html=$<
 
 clean:
-	$(RM) coverage.txt
-	$(RM) -r release bin
+	$(RM) -r coverage.txt release/apizza-* bin
 	go clean -testcache
+	go clean
 
 all: test build release
 

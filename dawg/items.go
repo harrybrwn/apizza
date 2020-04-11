@@ -58,7 +58,8 @@ func (im *ItemCommon) ItemName() string {
 //
 // Product is not a the most basic component of the Dominos menu; this is where
 // the Variant structure comes in. The Product structure can be seen as more of
-// a category that houses a list of Variants.
+// a category that houses a list of Variants. Products are still able to be ordered,
+// however.
 type Product struct {
 	ItemCommon
 

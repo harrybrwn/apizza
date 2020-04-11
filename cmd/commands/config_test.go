@@ -1,4 +1,4 @@
-package command
+package commands
 
 import (
 	"bytes"
@@ -22,7 +22,7 @@ var testconfigjson = `
 		"cityName":"Washington DC",
 		"state":"","zipcode":"20500"
 	},
-	"default-address": "",
+	"default-address-name": "",
 	"card":{"number":"","expiration":"","cvv":""},
 	"service":"Carryout"
 }`
@@ -35,7 +35,7 @@ address:
   cityname: "Washington DC"
   state: ""
   zipcode: "20500"
-default-address: ""
+default-address-name: ""
 card:
   number: ""
   expiration: ""
@@ -108,7 +108,7 @@ func TestConfigEdit(t *testing.T) {
         "State": "",
         "Zipcode": ""
     },
-    "DefaultAddress": "",
+    "DefaultAddressName": "",
     "Card": {
         "Number": "",
         "Expiration": ""
@@ -116,13 +116,12 @@ func TestConfigEdit(t *testing.T) {
     "Service": "Delivery"
 }`
 	t.Run("edit output", func(t *testing.T) {
-		if os.Getenv("TRAVIS") == "true" {
+		if os.Getenv("TRAVIS") != "true" {
 			// for some reason, 'cat' in travis gives no output
-			t.Skip()
+			tests.CompareOutput(t, exp, func() {
+				tests.Check(c.Run(c.Cmd(), []string{}))
+			})
 		}
-		tests.CompareOutput(t, exp, func() {
-			tests.Check(c.Run(c.Cmd(), []string{}))
-		})
 	})
 	c.edit = false
 

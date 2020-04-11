@@ -13,7 +13,7 @@ func TestBasicError(t *testing.T) {
 	if e.Error() != "this is an error" {
 		t.Error("bad error message from basic error")
 	}
-	Handle(nil, "should be nil", 1)
+	StopNow(nil, "should be nil", 1)
 }
 
 func TestLinearErrorsPair(t *testing.T) {

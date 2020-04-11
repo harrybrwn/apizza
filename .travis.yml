@@ -1,7 +1,7 @@
 language: go
 
 go:
-  - 1.11
+  - 1.13
   - 1.14.1
 
 env:
@@ -14,8 +14,11 @@ os:
   - osx
   - windows
 
+before_install: source scripts/before_install.sh
+
 before_script:
-  - bash scripts/build.sh
+  - bash scripts/build.sh test
+  - go get -u github.com/rakyll/gotest
 
 script:
   - bash scripts/test.sh

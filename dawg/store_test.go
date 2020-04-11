@@ -45,6 +45,13 @@ func TestNearestStore_Err(t *testing.T) {
 	if err == nil {
 		t.Error("expected error")
 	}
+	e, ok := err.(*DominosError)
+	if !ok {
+		t.Error("should return dominos error")
+	}
+	if e.Status != -1 {
+		t.Error("should be a dominos failure")
+	}
 }
 
 func TestGetAllNearbyStores(t *testing.T) {
@@ -72,7 +79,7 @@ func TestGetAllNearbyStores(t *testing.T) {
 		tests.StrEq(s.userAddress.City(), addr.City(), "wrong city")
 		tests.StrEq(s.userAddress.LineOne(), addr.LineOne(), "wrong line one")
 		tests.StrEq(s.userAddress.StateCode(), addr.StateCode(), "wrong state code")
-		tests.StrEq(s.userAddress.Zip(), addr.Zip(), "wrong zip co de")
+		tests.StrEq(s.userAddress.Zip(), addr.Zip(), "wrong zip code")
 	}
 	_, err = GetNearbyStores(&StreetAddr{}, Delivery)
 	tests.Exp(err)
@@ -81,35 +88,41 @@ func TestGetAllNearbyStores(t *testing.T) {
 }
 
 func TestInitStore(t *testing.T) {
-	id := "4336"
+	tests.InitHelpers(t)
 	m := map[string]interface{}{}
-	if err := InitStore(id, &m); err != nil {
-		t.Error(err)
+	check := func(k string, exp interface{}) {
+		if res, ok := m[k]; !ok {
+			t.Errorf("key: %s not in store map\n", k)
+		} else if res != exp {
+			t.Errorf("store map: got %s; want %s\n", res, exp)
+		}
 	}
-	if m["StoreID"] != id {
-		t.Error("wrong store id")
+	id := "4336"
+	tests.Check(InitStore(id, &m))
+	check("StoreID", id)
+	check("City", "Washington")
+	check("Region", "DC")
+	check("PreferredCurrency", "USD")
+	check("PostalCode", "20005")
+	ks := []string{"AddressDescription", "Phone", "AcceptablePaymentTypes", "IsOpen", "IsOnlineNow"}
+	for _, k := range ks {
+		if _, ok := m[k]; !ok {
+			t.Errorf("did not find key %s\n", k)
+		}
 	}
+
 	test := &struct {
 		Status  int
 		StoreID string
 	}{}
-	if err := InitStore(id, test); err != nil {
-		t.Error(err)
-	}
-	if test.StoreID != id {
-		t.Error("error in InitStore for custom struct")
-	}
+	tests.Check(InitStore(id, test))
+	tests.StrEq(test.StoreID, id, "error in InitStore for custom struct")
 	if test.Status != 0 {
 		t.Error("bad status")
 	}
 	sMap := map[string]interface{}{}
-	err := InitStore("", &sMap)
-	if err == nil {
-		t.Error("expected error")
-	}
-	if err = InitStore("1234", &sMap); err == nil {
-		t.Error("expected error")
-	}
+	tests.Exp(InitStore("", &sMap))
+	tests.Exp(InitStore("1234", &sMap))
 }
 
 func TestInitStore_Err(t *testing.T) {

@@ -26,9 +26,10 @@ func TestGetOrderPrice(t *testing.T) {
 	order := Order{
 		cli:          orderClient,
 		LanguageCode: DefaultLang, ServiceMethod: "Delivery",
-		StoreID: "4336", Payments: []*orderPayment{&orderPayment{}}, OrderID: "",
+		StoreID: "4336", OrderID: "",
+		Payments: []*orderPayment{},
 		Products: []*OrderProduct{
-			&OrderProduct{
+			{
 				ItemCommon: ItemCommon{
 					Code: "12SCREEN",
 				},
@@ -56,13 +57,13 @@ func TestGetOrderPrice(t *testing.T) {
 		fmt.Printf("%+v\n", resp)
 		t.Error("\n\b", e)
 	}
-	if len(order.Payments) == 0 {
+	if len(order.Payments) != 0 {
 		t.Fatal("order.Payments should be empty because tests were about to place an order")
 	}
 	order.StoreID = "" // should cause dominos to reject the order and send an error
 	_, err = getOrderPrice(order)
 	if err == nil {
-		t.Error("Should have raised an error", "\n\b", err)
+		t.Error("Should have raised an error", err)
 	}
 
 	err = order.prepare()
@@ -191,7 +192,6 @@ func TestRawOrder(t *testing.T) {
 		t.Error("placing an empty order should fail")
 	}
 	reset()
-	t.Skip()
 	tests.Exp(o.Validate(), "expected validation error from empty order")
 }
 

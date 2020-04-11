@@ -15,6 +15,7 @@
 package cmd
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -22,7 +23,7 @@ import (
 	"strings"
 
 	"github.com/harrybrwn/apizza/cmd/cli"
-	"github.com/harrybrwn/apizza/cmd/command"
+	"github.com/harrybrwn/apizza/cmd/commands"
 	"github.com/harrybrwn/apizza/pkg/config"
 	"github.com/spf13/cobra"
 	"gopkg.in/natefinch/lumberjack.v2"
@@ -37,17 +38,23 @@ var Logger = &lumberjack.Logger{
 	Compress:   false,
 }
 
-const enableLog = true
+var (
+	// Version is the cli version id (will be set as an ldflag)
+	version string
+
+	// testing version change this with an ldflag
+	enableLog = "yes"
+)
 
 // AllCommands returns a list of all the Commands.
 func AllCommands(builder cli.Builder) []*cobra.Command {
 	return []*cobra.Command{
 		NewCartCmd(builder).Cmd(),
-		command.NewConfigCmd(builder).Cmd(),
+		commands.NewConfigCmd(builder).Cmd(),
 		NewMenuCmd(builder).Cmd(),
 		NewOrderCmd(builder).Cmd(),
-		NewAddAddressCmd(builder, os.Stdin).Cmd(),
-		command.NewCompletionCmd(builder),
+		commands.NewAddAddressCmd(builder, os.Stdin).Cmd(),
+		commands.NewCompletionCmd(builder),
 	}
 }
 
@@ -74,7 +81,7 @@ func Execute(args []string, dir string) (msg *ErrMsg) {
 		return senderr(err, "Internal Error", 1)
 	}
 
-	if enableLog {
+	if enableLog == "yes" {
 		Logger.Filename = fp.Join(config.Folder(), "logs", "dev.log")
 		log.SetOutput(Logger)
 	}
@@ -89,6 +96,7 @@ func Execute(args []string, dir string) (msg *ErrMsg) {
 	}()
 
 	cmd := app.Cmd()
+	cmd.Version = version
 	cmd.SetArgs(args)
 	cmd.AddCommand(AllCommands(app)...)
 	return senderr(cmd.Execute(), "Error", 1)
@@ -109,4 +117,25 @@ func yesOrNo(in *os.File, msg string) bool {
 		return true
 	}
 	return false
+}
+
+func newTestCmd(b cli.Builder, valid bool) *cobra.Command {
+	return &cobra.Command{
+		Use:    "test",
+		Hidden: true,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if !valid {
+				return errors.New("no such command 'test'")
+			}
+
+			db := b.DB()
+			fmt.Printf("%+v\n", db)
+
+			m, _ := db.Map()
+			for k := range m {
+				fmt.Println(k)
+			}
+			return nil
+		},
+	}
 }

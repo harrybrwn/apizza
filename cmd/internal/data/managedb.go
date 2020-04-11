@@ -110,7 +110,6 @@ func SaveOrder(o *dawg.Order, w io.Writer, db cache.Putter) error {
 	} else {
 		return err
 	}
-
 	err = dawg.ValidateOrder(o)
 	if dawg.IsFailure(err) {
 		return err

@@ -10,8 +10,6 @@ import (
 	"github.com/harrybrwn/apizza/dawg"
 )
 
-var _ dawg.Address = (*Address)(nil)
-
 // Address represents a street address
 type Address struct {
 	Street   string `config:"street" json:"street"`
@@ -60,6 +58,8 @@ func (a *Address) Zip() string {
 	}
 	return ""
 }
+
+var _ dawg.Address = (*Address)(nil)
 
 // AddressFmt returns a formatted address string from and Address interface.
 func AddressFmt(a dawg.Address) string {

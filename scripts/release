@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3.7
 
 import os
 from os import path
@@ -20,6 +20,15 @@ def validate_tag(tag):
     tags = sp.check_output(['git', '--no-pager', 'tag']).decode('utf-8').split('\n')
     if tag not in tags:
         raise Exception(f'could not find tag: {tag}')
+
+def get_ldflags():
+    pkg_path = sp.check_output(
+        ['go', 'list'
+    ]).decode('utf-8').strip()
+    version = sp.check_output([
+        'git', 'describe', '--tags', '--abbrev=12'
+    ]).decode('utf-8').strip()
+    return f'-X {pkg_path}/cmd.version={version}'
 
 def get_repo_name():
     output = sp.check_output(['git', 'remote', '-v']).decode('utf-8')
@@ -76,18 +85,20 @@ def get_repo(token, name):
 
 def compile_go(folder, oses):
     files = []
+    goarch = 'amd64'
+    linker_flag = get_ldflags()
     for goos in oses:
         ext = sp.check_output(
             ["go", "env", "GOEXE"],
             env=dict(os.environ, GOOS=goos)
         ).decode('utf-8').strip('\n')
 
-        file = f'{folder}/apizza-{goos}{ext}'
+        file = f'{folder}/apizza-{goos}-{goarch}{ext}'
         files.append(file)
         print('compiling', file)
         res = sp.run(
-            ['go', 'build', '-o', file],
-            env=dict(os.environ, GOOS=goos, GOARCH='amd64'))
+            ['go', 'build', '-o', file, '-ldflags', linker_flag],
+            env=dict(os.environ, GOOS=goos, GOARCH=goarch))
     return files
 
 

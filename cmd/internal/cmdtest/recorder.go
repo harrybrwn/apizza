@@ -4,10 +4,13 @@ import (
 	"bytes"
 	"encoding/json"
 	"io"
+	"io/ioutil"
+	"os"
 	"strings"
 	"testing"
 
 	"github.com/harrybrwn/apizza/cmd/cli"
+	"github.com/harrybrwn/apizza/cmd/opts"
 	"github.com/harrybrwn/apizza/dawg"
 	"github.com/harrybrwn/apizza/pkg/cache"
 	"github.com/harrybrwn/apizza/pkg/config"
@@ -24,25 +27,28 @@ type Recorder struct {
 	addr       dawg.Address
 }
 
-// TODO:
-//   - give the inner config an actual temp file and delete it in
-//     the CleanUp function. (need to get rid of global cfg var first)
-
 var services = []string{dawg.Carryout, dawg.Delivery}
 
 // NewRecorder create a new command recorder.
 func NewRecorder() *Recorder {
 	addr := TestAddress()
+	conf := &cli.Config{}
+	config.DefaultOutput = ioutil.Discard
+	err := config.SetConfig(".config/apizza/.tests", conf)
+	if err != nil {
+		panic(err.Error())
+	}
+
+	conf.Name = "Apizza TestRecorder"
+	conf.Service = dawg.Carryout
+	conf.Address = *addr
+
 	return &Recorder{
-		DataBase: TempDB(),
-		Out:      new(bytes.Buffer),
-		Conf: &cli.Config{
-			Name:    "Apizza TestRecorder",
-			Service: dawg.Carryout,
-			Address: *addr,
-		},
+		DataBase:   TempDB(),
+		Out:        new(bytes.Buffer),
+		Conf:       conf,
 		addr:       addr,
-		cfgHasFile: false,
+		cfgHasFile: true,
 	}
 }
 
@@ -73,6 +79,11 @@ func (r *Recorder) Address() dawg.Address {
 	return r.addr
 }
 
+// GlobalOptions has the global flags
+func (r *Recorder) GlobalOptions() *opts.CliFlags {
+	return &opts.CliFlags{}
+}
+
 // ToApp returns the arguments needed to create a cmd.App.
 func (r *Recorder) ToApp() (*cache.DataBase, *cli.Config, io.Writer) {
 	return r.DB(), r.Conf, r.Output()
@@ -80,7 +91,17 @@ func (r *Recorder) ToApp() (*cache.DataBase, *cli.Config, io.Writer) {
 
 // CleanUp will cleanup all the the Recorder tempfiles and free all resources.
 func (r *Recorder) CleanUp() {
-	if err := r.DataBase.Destroy(); err != nil {
+	var err error
+	if r.cfgHasFile && config.File() != "" && config.Folder() != "" {
+		err = config.Save()
+		if err = config.Save(); err != nil {
+			panic(err)
+		}
+		if err = os.Remove(config.File()); err != nil {
+			panic(err)
+		}
+	}
+	if err = r.DataBase.Destroy(); err != nil {
 		panic(err)
 	}
 }
@@ -138,3 +159,21 @@ func (r *Recorder) StrEq(s string) bool {
 func (r *Recorder) Compare(t *testing.T, expected string) {
 	tests.CompareCallDepth(t, r.Out.String(), expected, 2)
 }
+
+// TestRecorder is a Recorder that has access to a testing.T
+type TestRecorder struct {
+	*Recorder
+	t *testing.T
+}
+
+// NewTestRecorder creates a new TestRecorder
+func NewTestRecorder(t *testing.T) *TestRecorder {
+	tr := &TestRecorder{
+		Recorder: NewRecorder(),
+		t:        t,
+	}
+	tr.init()
+	return tr
+}
+
+var _ cli.Builder = (*TestRecorder)(nil)

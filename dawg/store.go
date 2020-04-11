@@ -64,12 +64,7 @@ func NewStore(id string, service string, addr Address) (*Store, error) {
 //	err := dawg.InitStore(id, &store)
 // This will allow all of the fields sent in the api to be viewed.
 func InitStore(id string, obj interface{}) error {
-	path := fmt.Sprintf(profileEndpoint, id)
-	b, err := orderClient.get(path, nil)
-	if err != nil {
-		return err
-	}
-	return errpair(json.Unmarshal(b, obj), dominosErr(b))
+	return initStore(orderClient, id, obj)
 }
 
 var orderClient = &client{
@@ -84,43 +79,16 @@ var orderClient = &client{
 	},
 }
 
-func initStore(cli *client, id string, store *Store) error {
+func initStore(cli *client, id string, obj interface{}) error {
 	path := fmt.Sprintf(profileEndpoint, id)
 	b, err := cli.get(path, nil)
 	if err != nil {
 		return err
 	}
-	store.cli = cli
-	return errpair(json.Unmarshal(b, store), dominosErr(b))
-}
-
-type storebuilder struct {
-	sync.WaitGroup
-	stores chan maybeStore
-}
-
-type maybeStore struct {
-	store *Store
-	index int
-	err   error
-}
-
-func (sb *storebuilder) initStore(cli *client, id string, index int) {
-	defer sb.Done()
-	path := fmt.Sprintf(profileEndpoint, id)
-	store := &Store{}
-
-	b, err := cli.get(path, nil)
-	if err != nil {
-		sb.stores <- maybeStore{store: nil, err: err, index: -1}
+	if store, ok := obj.(*Store); ok {
+		store.cli = cli
 	}
-
-	err = errpair(json.Unmarshal(b, store), dominosErr(b))
-	if err != nil {
-		sb.stores <- maybeStore{store: nil, err: err, index: -1}
-	}
-
-	sb.stores <- maybeStore{store: store, err: nil, index: index}
+	return errpair(json.Unmarshal(b, obj), dominosErr(b))
 }
 
 // The Store object represents a physical dominos location.
@@ -336,4 +304,33 @@ func asyncNearbyStores(cli *client, addr Address, service string) ([]*Store, err
 	}
 
 	return stores, err
+}
+
+type storebuilder struct {
+	sync.WaitGroup
+	stores chan maybeStore
+}
+
+type maybeStore struct {
+	store *Store
+	index int
+	err   error
+}
+
+func (sb *storebuilder) initStore(cli *client, id string, index int) {
+	defer sb.Done()
+	path := fmt.Sprintf(profileEndpoint, id)
+	store := &Store{}
+
+	b, err := cli.get(path, nil)
+	if err != nil {
+		sb.stores <- maybeStore{store: nil, err: err, index: -1}
+	}
+
+	err = errpair(json.Unmarshal(b, store), dominosErr(b))
+	if err != nil {
+		sb.stores <- maybeStore{store: nil, err: err, index: -1}
+	}
+
+	sb.stores <- maybeStore{store: store, err: nil, index: index}
 }
