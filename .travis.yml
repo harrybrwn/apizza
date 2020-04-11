@@ -14,8 +14,7 @@ os:
   - osx
   - windows
 
-before_install:
-  - if [ "$TRAVIS_OS_NAME" = "windows" ]; alias make='mingw32-make.exe'; fi
+before_install: source scripts/before_install.sh
 
 before_script:
   - make install
