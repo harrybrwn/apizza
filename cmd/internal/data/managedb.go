@@ -100,6 +100,10 @@ func GetOrder(name string, db cache.Getter) (*dawg.Order, error) {
 // Also sends the order to the validation endpoint after saving it to the
 // cache.Putter.
 func SaveOrder(o *dawg.Order, w io.Writer, db cache.Putter) error {
+	err := dawg.ValidateOrder(o)
+	if dawg.IsFailure(err) {
+		return err
+	}
 	raw, err := json.Marshal(o)
 	if err != nil {
 		return err
@@ -108,11 +112,6 @@ func SaveOrder(o *dawg.Order, w io.Writer, db cache.Putter) error {
 	if err == nil {
 		fmt.Fprintln(w, "order successfully updated.")
 	} else {
-		return err
-	}
-
-	err = dawg.ValidateOrder(o)
-	if dawg.IsFailure(err) {
 		return err
 	}
 	return nil

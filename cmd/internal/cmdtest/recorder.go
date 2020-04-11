@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"io"
+	"io/ioutil"
 	"os"
 	"strings"
 	"testing"
@@ -32,11 +33,13 @@ var services = []string{dawg.Carryout, dawg.Delivery}
 func NewRecorder() *Recorder {
 	addr := TestAddress()
 	conf := &cli.Config{}
-
+	config.DefaultOutput = ioutil.Discard
 	err := config.SetConfig(".config/apizza/.tests", conf)
 	if err != nil {
 		panic(err.Error())
 	}
+	config.DefaultOutput = os.Stdout
+
 	conf.Name = "Apizza TestRecorder"
 	conf.Service = dawg.Carryout
 	conf.Address = *addr

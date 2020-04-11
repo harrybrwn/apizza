@@ -3,6 +3,7 @@ package config
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -18,6 +19,9 @@ var (
 
 	// DefaultEditor is the default editor used to edit config files
 	DefaultEditor = "vim"
+
+	// DefaultOutput is the default write object for config logging statements.
+	DefaultOutput io.Writer = os.Stdout
 )
 
 // SetConfig sets the config file and also runs through the configuration
@@ -36,7 +40,7 @@ func SetConfig(foldername string, c Config) error {
 
 	if !cfg.exists() {
 		os.MkdirAll(cfg.dir, 0700)
-		fmt.Printf("setting up config file at %s\n", cfg.file)
+		fmt.Fprintf(DefaultOutput, "setting up config file at %s\n", cfg.file)
 		cfg.setup()
 	}
 	return cfg.init()

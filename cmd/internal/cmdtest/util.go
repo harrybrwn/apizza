@@ -2,6 +2,7 @@ package cmdtest
 
 import (
 	"github.com/harrybrwn/apizza/cmd/internal/obj"
+	"github.com/harrybrwn/apizza/dawg"
 	"github.com/harrybrwn/apizza/pkg/cache"
 	"github.com/harrybrwn/apizza/pkg/tests"
 )
@@ -23,6 +24,22 @@ func TempDB() *cache.DataBase {
 		panic(err)
 	}
 	return db
+}
+
+// OrderName is the name of all testing orders created by the cmdtest package.
+const OrderName = "cmdtest.TestingOrder"
+
+// NewTestOrder creates an order for testing.
+func NewTestOrder() *dawg.Order {
+	o := &dawg.Order{
+		StoreID:   "4336",
+		Address:   dawg.StreetAddrFromAddress(TestAddress()),
+		FirstName: "Jimmy",
+		LastName:  "James",
+		OrderName: OrderName,
+	}
+	o.Init()
+	return o
 }
 
 // TestConfigjson data.
