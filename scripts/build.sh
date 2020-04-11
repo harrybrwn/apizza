@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 set -e
 
@@ -10,4 +10,15 @@ if [ $version = "1.11" ]; then
         go get -u
 fi
 
-go build -o bin/test-apizza -ldflags "-X cmd.enableLog=false"
+build_no="$(git describe --tags --abbrev=12)"
+modpath="$(go list)"
+
+version_flag="$modpath/cmd.version=$build_no"
+
+if [ "$1" = "test" ]; then
+    go build \
+        -o bin/test-apizza \
+        -ldflags "-X $modpath/cmd.enableLog=no -X ${version_flag}_test-build"
+else
+    go build -o bin/apizza -ldflags "-X $version_flag"
+fi

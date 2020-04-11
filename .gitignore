@@ -3,6 +3,7 @@
 /release/
 /vendor/
 __pycache__/
+/apizza
 
 # Notes
 demo

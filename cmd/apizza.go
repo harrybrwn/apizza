@@ -38,7 +38,13 @@ var Logger = &lumberjack.Logger{
 	Compress:   false,
 }
 
-const enableLog = true
+var (
+	// Version is the cli version id (will be set as an ldflag)
+	version string
+
+	// testing version change this with an ldflag
+	enableLog = "yes"
+)
 
 // AllCommands returns a list of all the Commands.
 func AllCommands(builder cli.Builder) []*cobra.Command {
@@ -75,7 +81,7 @@ func Execute(args []string, dir string) (msg *ErrMsg) {
 		return senderr(err, "Internal Error", 1)
 	}
 
-	if enableLog {
+	if enableLog == "yes" {
 		Logger.Filename = fp.Join(config.Folder(), "logs", "dev.log")
 		log.SetOutput(Logger)
 	}
@@ -90,6 +96,7 @@ func Execute(args []string, dir string) (msg *ErrMsg) {
 	}()
 
 	cmd := app.Cmd()
+	cmd.Version = version
 	cmd.SetArgs(args)
 	cmd.AddCommand(AllCommands(app)...)
 	return senderr(cmd.Execute(), "Error", 1)

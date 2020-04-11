@@ -14,8 +14,12 @@ os:
   - osx
   - windows
 
+before_install:
+  - if [ "$TRAVIS_OS_NAME" = "windows" ]; alias make='mingw32-make.exe'; fi
+
 before_script:
-  - bash scripts/build.sh
+  - make install
+  - bash scripts/build.sh test
   - go get -u github.com/rakyll/gotest
 
 script:
