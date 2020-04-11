@@ -157,3 +157,21 @@ func (r *Recorder) StrEq(s string) bool {
 func (r *Recorder) Compare(t *testing.T, expected string) {
 	tests.CompareCallDepth(t, r.Out.String(), expected, 2)
 }
+
+// TestRecorder is a Recorder that has access to a testing.T
+type TestRecorder struct {
+	*Recorder
+	t *testing.T
+}
+
+// NewTestRecorder creates a new TestRecorder
+func NewTestRecorder(t *testing.T) *TestRecorder {
+	tr := &TestRecorder{
+		Recorder: NewRecorder(),
+		t:        t,
+	}
+	tr.init()
+	return tr
+}
+
+var _ cli.Builder = (*TestRecorder)(nil)
