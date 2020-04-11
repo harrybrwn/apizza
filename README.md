@@ -17,7 +17,7 @@ Dominos pizza from the command line.
 	- [Menu](#menu)
 
 ### Installation
-Download the precompiled binaries from Mac, Windows, and Linux (only for amd64)
+Download the precompiled binaries for Mac, Windows, and Linux (only for amd64)
 ```
 wget https://github.com/harrybrwn/apizza/releases/download/v0.0.2/apizza-linux
 wget https://github.com/harrybrwn/apizza/releases/download/v0.0.2/apizza-darwin
