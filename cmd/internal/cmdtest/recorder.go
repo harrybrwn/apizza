@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"io"
+	"os"
 	"strings"
 	"testing"
 
@@ -25,25 +26,27 @@ type Recorder struct {
 	addr       dawg.Address
 }
 
-// TODO:
-//   - give the inner config an actual temp file and delete it in
-//     the CleanUp function. (need to get rid of global cfg var first)
-
 var services = []string{dawg.Carryout, dawg.Delivery}
 
 // NewRecorder create a new command recorder.
 func NewRecorder() *Recorder {
 	addr := TestAddress()
+	conf := &cli.Config{}
+
+	err := config.SetConfig(".config/apizza/.tests", conf)
+	if err != nil {
+		panic(err.Error())
+	}
+	conf.Name = "Apizza TestRecorder"
+	conf.Service = dawg.Carryout
+	conf.Address = *addr
+
 	return &Recorder{
-		DataBase: TempDB(),
-		Out:      new(bytes.Buffer),
-		Conf: &cli.Config{
-			Name:    "Apizza TestRecorder",
-			Service: dawg.Carryout,
-			Address: *addr,
-		},
+		DataBase:   TempDB(),
+		Out:        new(bytes.Buffer),
+		Conf:       conf,
 		addr:       addr,
-		cfgHasFile: false,
+		cfgHasFile: true,
 	}
 }
 
@@ -86,7 +89,17 @@ func (r *Recorder) ToApp() (*cache.DataBase, *cli.Config, io.Writer) {
 
 // CleanUp will cleanup all the the Recorder tempfiles and free all resources.
 func (r *Recorder) CleanUp() {
-	if err := r.DataBase.Destroy(); err != nil {
+	var err error
+	if r.cfgHasFile || config.Folder() != "" {
+		err = config.Save()
+		if err = config.Save(); err != nil {
+			panic(err)
+		}
+		if err = os.Remove(config.File()); err != nil {
+			panic(err)
+		}
+	}
+	if err = r.DataBase.Destroy(); err != nil {
 		panic(err)
 	}
 }

@@ -282,8 +282,7 @@ func (c *orderCmd) Run(cmd *cobra.Command, args []string) (err error) {
 	}
 
 	c.Printf("sending order '%s'...\n", order.Name())
-	// TODO: save the order id as a traced order and give it a timeout of
-	// an hour or two.
+	// TODO: save the order id for tracking and give it a timeout of an hour or two.
 	err = order.PlaceOrder()
 	// logging happens after so any data from placeorder is included
 	log.Println("sending order:", dawg.OrderToJSON(order))

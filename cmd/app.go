@@ -217,6 +217,7 @@ func (a *App) prerun(*cobra.Command, []string) (err error) {
 		if !(a.gOpts.Service == dawg.Delivery || a.gOpts.Service == dawg.Carryout) {
 			return dawg.ErrBadService
 		}
+		// BUG: setting the config field will implicitly change the config file
 		a.conf.Service = a.gOpts.Service
 	}
 

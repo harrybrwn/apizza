@@ -104,7 +104,6 @@ func NewMenuCmd(b cli.Builder) cli.CliCommand {
 		preconfigured:  false,
 		showCategories: false,
 	}
-	// TODO: this will not work with a global service or address flag
 	if app, ok := b.(*App); ok {
 		c.StoreFinder = app
 	} else {
