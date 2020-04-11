@@ -17,11 +17,11 @@ os:
 before_install: source scripts/before_install.sh
 
 before_script:
-  - make install
   - bash scripts/build.sh test
   - go get -u github.com/rakyll/gotest
 
 script:
+  - make install
   - bash scripts/test.sh
   - bash scripts/integration.sh ./bin/test-apizza
 

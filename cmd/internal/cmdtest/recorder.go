@@ -38,7 +38,6 @@ func NewRecorder() *Recorder {
 	if err != nil {
 		panic(err.Error())
 	}
-	config.DefaultOutput = os.Stdout
 
 	conf.Name = "Apizza TestRecorder"
 	conf.Service = dawg.Carryout
@@ -93,7 +92,7 @@ func (r *Recorder) ToApp() (*cache.DataBase, *cli.Config, io.Writer) {
 // CleanUp will cleanup all the the Recorder tempfiles and free all resources.
 func (r *Recorder) CleanUp() {
 	var err error
-	if r.cfgHasFile || config.Folder() != "" {
+	if r.cfgHasFile && config.File() != "" && config.Folder() != "" {
 		err = config.Save()
 		if err = config.Save(); err != nil {
 			panic(err)

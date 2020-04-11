@@ -152,7 +152,7 @@ func TestExecute(t *testing.T) {
 		test    func(*testing.T)
 		cleanup bool
 	}{
-		{args: []string{"config", "-f"}, outfunc: func() string { return fmt.Sprintf("setting up config file at %s\n%s\n", config.File(), config.File()) }},
+		{args: []string{"config", "-f"}, outfunc: func() string { return fmt.Sprintf("%s\n", config.File()) }},
 		{args: []string{"--delete-menu", "config", "-d"}, outfunc: func() string { return config.Folder() + "\n" }},
 		{args: []string{"--service=Delivery", "config", "-f"}, outfunc: func() string { return config.File() + "\n" }},
 		{args: []string{"--log=log.txt", "config", "-d"}, outfunc: func() string { return config.Folder() + "\n" },
