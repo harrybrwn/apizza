@@ -27,8 +27,6 @@ go install github.com/harrybrwn/apizza
 ### Setup
 The most you have to do as a user in terms of setting up apizza is fill in the config variables. The only config variables that are mandatory are "Address" and "Service" but the other config variables contain information that the Dominos website uses.
 
-> **Note**: The config file won't exist if apizza is not run at least once.
-
 To edit the config file, you can either use the built-in `config get` and `config set` commands (see [Config](#config)) to configure apizza or you can edit the `$HOME/.config/apizza/config.json` file. Both of these setup methods will have the same results If you add a key-value pair to the `config.json` file that is not already in the file it will be overwritten the next time the program is run.
 
 

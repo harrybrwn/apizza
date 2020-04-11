@@ -32,11 +32,14 @@ const OrderName = "cmdtest.TestingOrder"
 // NewTestOrder creates an order for testing.
 func NewTestOrder() *dawg.Order {
 	o := &dawg.Order{
-		StoreID:   "4336",
-		Address:   dawg.StreetAddrFromAddress(TestAddress()),
-		FirstName: "Jimmy",
-		LastName:  "James",
-		OrderName: OrderName,
+		StoreID:       "4336",
+		Address:       dawg.StreetAddrFromAddress(TestAddress()),
+		FirstName:     "Jimmy",
+		LastName:      "James",
+		OrderName:     OrderName,
+		LanguageCode:  dawg.DefaultLang,
+		ServiceMethod: dawg.Delivery,
+		Products:      []*dawg.OrderProduct{},
 	}
 	o.Init()
 	return o

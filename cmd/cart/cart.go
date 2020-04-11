@@ -49,12 +49,10 @@ type Cart struct {
 
 	CurrentOrder *dawg.Order
 	out          io.Writer
-	currentName  string
 }
 
 // SetCurrentOrder sets the order that the cart is currently working with.
 func (c *Cart) SetCurrentOrder(name string) (err error) {
-	c.currentName = name
 	c.CurrentOrder, err = c.GetOrder(name)
 	return err
 }
@@ -130,16 +128,6 @@ func (c *Cart) AddToppings(product string, toppings []string) error {
 	return addToppingsToOrder(c.CurrentOrder, product, toppings)
 }
 
-// AddToppingsToOrder will get an order from the database and add toppings
-// to a product in that order.
-func (c *Cart) AddToppingsToOrder(name, product string, toppings []string) error {
-	order, err := c.GetOrder(name)
-	if err != nil {
-		return err
-	}
-	return addToppingsToOrder(order, product, toppings)
-}
-
 // AddProducts adds a list of products to the current order
 func (c *Cart) AddProducts(products []string) error {
 	if c.CurrentOrder == nil {
@@ -149,20 +137,6 @@ func (c *Cart) AddProducts(products []string) error {
 		return err
 	}
 	return addProducts(c.CurrentOrder, c.Menu(), products)
-}
-
-// AddProductsToOrder adds a list of products to an order that needs to
-// be retrived from the database.
-func (c *Cart) AddProductsToOrder(name string, products []string) error {
-	if err := c.db.UpdateTS("menu", c); err != nil {
-		return err
-	}
-	order, err := c.GetOrder(name)
-	if err != nil {
-		return err
-	}
-	menu := c.Menu()
-	return addProducts(order, menu, products)
 }
 
 // PrintOrders will print out all the orders saved in the database
@@ -221,10 +195,12 @@ func addTopping(topStr string, p dawg.Item) error {
 
 	topping := strings.Split(topStr, ":")
 
-	if len(topping) < 1 {
+	// assuming strings.Split cannot return zero length array
+	if topping[0] == "" || len(topping) > 3 {
 		return errors.New("incorrect topping format")
 	}
 
+	// TODO: need to check for bed values and use appropriate error handling
 	if len(topping) == 1 {
 		side = dawg.ToppingFull
 	} else if len(topping) >= 2 {
@@ -244,6 +220,5 @@ func addTopping(topStr string, p dawg.Item) error {
 	} else {
 		amount = "1.0"
 	}
-	p.AddTopping(topping[0], side, amount)
-	return nil
+	return p.AddTopping(topping[0], side, amount)
 }

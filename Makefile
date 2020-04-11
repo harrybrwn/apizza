@@ -33,7 +33,7 @@ html: coverage.txt
 clean:
 	$(RM) -r coverage.txt release/apizza-* bin
 	go clean -testcache
-	go clean -n
+	go clean
 
 all: test build release
 
