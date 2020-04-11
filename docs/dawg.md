@@ -12,11 +12,11 @@ import (
 )
 
 var addr = &dawg.StreetAddr{
-	Street: "1600 Pennsylvania Ave.",
-	City: "Washington",
-	State: "DC",
-	Zip: "20500",
-	AddrType: "House",
+        Street:   "1600 Pennsylvania Ave.",
+        CityName: "Washington",
+        State:    "DC",
+        Zipcode:  "20500",
+        AddrType: "House",
 }
 
 func main() {
