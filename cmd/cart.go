@@ -99,7 +99,7 @@ func (c *cartCmd) Run(cmd *cobra.Command, args []string) (err error) {
 				return err
 			}
 		}
-		return c.cart.Save()
+		return c.cart.SaveAndReset()
 	}
 
 	if len(c.add) > 0 {
@@ -137,10 +137,11 @@ func NewCartCmd(b cli.Builder) cli.CliCommand {
 	c.CliCommand = b.Build("cart <order name>", "Manage user created orders", c)
 	cmd := c.Cmd()
 
-	cmd.Long = `The cart command gets information on all of the user
+	cmd.Long = `The cart command gets information on and edit all of the user
 created orders.`
 
 	cmd.PreRunE = cartPreRun()
+	cmd.ValidArgsFunction = c.cart.OrdersCompletion
 
 	c.Flags().BoolVar(&c.validate, "validate", c.validate, "send an order to the dominos order-validation endpoint.")
 	c.Flags().BoolVar(&c.price, "price", c.price, "show to price of an order")

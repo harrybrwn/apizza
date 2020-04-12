@@ -2,19 +2,16 @@ package commands
 
 import (
 	"errors"
+	"fmt"
 	"strings"
 
 	"github.com/harrybrwn/apizza/cmd/cli"
-	"github.com/harrybrwn/apizza/cmd/internal/data"
 	"github.com/spf13/cobra"
 )
 
 // NewCompletionCmd creates a new command for shell completion.
 func NewCompletionCmd(b cli.Builder) *cobra.Command {
-	var (
-		listOrders    bool
-		listAddresses bool
-	)
+	var validArgs = []string{"zsh", "bash", "ps", "powershell", "fish"}
 
 	cmd := &cobra.Command{
 		Use:   "completion [bash|zsh|powershell]",
@@ -28,25 +25,11 @@ note: for zsh you will need to run 'compdef _apizza apizza'`,
 			root := cmd.Root()
 			out := cmd.OutOrStdout()
 
-			if listOrders {
-				orders := data.ListOrders(b.DB())
-				cmd.Print(strings.Join(orders, " "))
-				return nil
-			}
-			if listAddresses {
-				m, err := b.DB().WithBucket("addresses").Map()
-				if err != nil {
-					return err
-				}
-				keys := make([]string, 0, len(m))
-				for key := range m {
-					keys = append(keys, key)
-				}
-				cmd.Print(strings.Join(keys, " "))
-				return nil
-			}
 			if len(args) == 0 {
-				return errors.New("no shell type given")
+				return fmt.Errorf(
+					"no shell type given; (expected %s, or %s)",
+					strings.Join(validArgs[:len(validArgs)-1], ", "),
+					validArgs[len(validArgs)-1])
 			}
 			switch args[0] {
 			case "zsh":
@@ -55,17 +38,13 @@ note: for zsh you will need to run 'compdef _apizza apizza'`,
 				return root.GenPowerShellCompletion(out)
 			case "bash":
 				return root.GenBashCompletion(out)
+			case "fish":
+				return root.GenFishCompletion(out, false)
 			}
 			return errors.New("unknown shell type")
 		},
-		ValidArgs: []string{"zsh", "bash", "ps", "powershell"},
+		ValidArgs: validArgs,
 		Aliases:   []string{"comp"},
 	}
-
-	flg := cmd.Flags()
-	flg.BoolVar(&listOrders, "list-orders", false, "")
-	flg.BoolVar(&listAddresses, "list-addresses", false, "")
-	flg.MarkHidden("list-orders")
-	flg.MarkHidden("list-addresses")
 	return cmd
 }

@@ -29,7 +29,6 @@ wget https://github.com/harrybrwn/apizza/releases/download/v0.0.2/apizza-windows
 Or compile from source
 ```bash
 go get -u github.com/harrybrwn/apizza
-go install github.com/harrybrwn/apizza
 ```
 
 ### Setup

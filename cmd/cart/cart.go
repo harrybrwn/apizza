@@ -7,6 +7,8 @@ import (
 	"io"
 	"strings"
 
+	"github.com/spf13/cobra"
+
 	"github.com/harrybrwn/apizza/cmd/cli"
 	"github.com/harrybrwn/apizza/cmd/client"
 	"github.com/harrybrwn/apizza/cmd/internal/data"
@@ -36,9 +38,15 @@ func New(b cli.Builder) *Cart {
 	}
 }
 
-// ErrNoCurrentOrder tells when a method of the cart struct is called
-// that requires the current order to be set but it cannot find one.
-var ErrNoCurrentOrder = errors.New("cart has no current order set")
+var (
+	// ErrNoCurrentOrder tells when a method of the cart struct is called
+	// that requires the current order to be set but it cannot find one.
+	ErrNoCurrentOrder = errors.New("cart has no current order set")
+
+	// ErrOrderNotFound is raised when the cart cannot find the order
+	// the it was asked to get.
+	ErrOrderNotFound = errors.New("could not find that order")
+)
 
 // Cart is an abstraction on the cache.DataBase struct
 // representing the user's cart for persistant orders
@@ -73,6 +81,9 @@ func (c *Cart) GetOrder(name string) (*dawg.Order, error) {
 	if err != nil {
 		return nil, err
 	}
+	if len(raw) == 0 {
+		return nil, ErrOrderNotFound
+	}
 	order := &dawg.Order{}
 	order.Init()
 	order.SetName(name)
@@ -91,6 +102,34 @@ func (c *Cart) SaveAndReset() error {
 	err := c.Save()
 	c.CurrentOrder = nil
 	return err
+}
+
+// ListOrders will return a list of the orders stored in the cart.
+func (c *Cart) ListOrders() ([]string, error) {
+	mp, err := c.db.Map()
+	names := make([]string, 0, len(mp))
+	if err != nil {
+		return nil, err
+	}
+	for k := range mp {
+		if strings.HasPrefix(k, data.OrderPrefix) {
+			names = append(names, strings.ReplaceAll(k, data.OrderPrefix, ""))
+		}
+	}
+	return names, nil
+}
+
+// OrdersCompletion is a cobra valide args function for getting order names.
+func (c *Cart) OrdersCompletion(
+	cmd *cobra.Command,
+	args []string,
+	toComplete string,
+) ([]string, cobra.ShellCompDirective) {
+	names, err := c.ListOrders()
+	if err != nil {
+		return nil, cobra.ShellCompDirectiveError
+	}
+	return names, cobra.ShellCompDirectiveNoFileComp
 }
 
 // Validate the current order

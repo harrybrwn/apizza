@@ -104,9 +104,6 @@ ex. 'apizza config get name' or 'apizza config set name=<your name>'`
 	c.Flags().BoolVarP(&c.edit, "edit", "e", false, "open the config file with the text editor set by $EDITOR")
 	c.Flags().StringVar(&c.setDefaultAddress, "set-address", "", "name of a pre-stored address (see 'apizza address --new')")
 
-	// c.Flags().StringVar(&c.card, "card", "", "store encrypted credit card number in the database")
-	// c.Flags().StringVar(&c.exp, "expiration", "", "store the encrypted expiration data of your credit card")
-
 	cmd := c.Cmd()
 	cmd.AddCommand(configSetCmd, configGetCmd)
 	return c

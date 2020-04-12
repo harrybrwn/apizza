@@ -77,8 +77,13 @@ func (c *Command) Run(cmd *cobra.Command, args []string) error {
 
 // SetOutput sets the command output
 func (c *Command) SetOutput(out io.Writer) {
+	c.SetOut(out)
+}
+
+// SetOut sets the command output
+func (c *Command) SetOut(out io.Writer) {
 	c.output = out
-	c.cmd.SetOutput(c.output)
+	c.cmd.SetOut(c.output)
 }
 
 // Output returns the command's output writer.
