@@ -7,6 +7,8 @@ import (
 	"github.com/harrybrwn/apizza/cmd/internal/data"
 )
 
+// TODO: this has a terrible name, in fact the whole package needs renaming
+
 // Client defines an interface which interacts with the dominos api.
 type Client interface {
 	StoreFinder

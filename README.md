@@ -16,6 +16,7 @@ Dominos pizza from the command line.
 	- [Menu](#menu)
 	- [Cart](#cart)
 	- [Order](#order)
+- [Tutorials](#tutorials)
 	- [None Pizza with Left Beef](#none-pizza-with-left-beef)
 
 ### Installation
@@ -30,6 +31,10 @@ Or compile from source
 ```bash
 go get -u github.com/harrybrwn/apizza
 ```
+or
+```bash
+make install
+```
 
 ### Setup
 The most you have to do as a user in terms of setting up apizza is fill in the config variables. The only config variables that are mandatory are "Address" and "Service" but the other config variables contain information that the Dominos website uses.
@@ -41,7 +46,7 @@ To edit the config file, you can either use the built-in `config get` and `confi
 For documentation on configuration and configuration fields, see [documentation](/docs/configuration.md)
 
 The `config get` and `config set` commands can be used with one config variable at a time...
-```bash
+```sh
 $ apizza config set email='bob@example.com'
 $ apizza config set name='Bob'
 $ apizza config set service='Carryout'
@@ -103,7 +108,9 @@ $ apizza order myorder --cvv=000
 ```
 Once the command is executed, it will prompt you asking if you are sure you want to send the order. Enter `y` and the order will be sent.
 
-### None Pizza with Left Beef
+### Tutorials
+
+#### None Pizza with Left Beef
 ```bash
 $ apizza cart new --name=leftbeef --product=12SCREEN
 $ apizza cart leftbeef --remove=C --product=12SCREEN # remove cheese

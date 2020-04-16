@@ -19,21 +19,19 @@ import (
 	"io"
 	"os/exec"
 	"strings"
-	"time"
 	"unicode/utf8"
 
 	"github.com/harrybrwn/apizza/cmd/cli"
 	"github.com/harrybrwn/apizza/cmd/client"
 	"github.com/harrybrwn/apizza/cmd/internal/data"
 	"github.com/harrybrwn/apizza/cmd/internal/out"
+	"github.com/harrybrwn/apizza/cmd/opts"
 	"github.com/harrybrwn/apizza/pkg/cache"
 	"github.com/harrybrwn/apizza/pkg/errs"
 	"github.com/spf13/cobra"
 
 	"github.com/harrybrwn/apizza/dawg"
 )
-
-var menuUpdateTime = 12 * time.Hour
 
 type menuCmd struct {
 	cli.CliCommand
@@ -88,7 +86,7 @@ func (c *menuCmd) Run(cmd *cobra.Command, args []string) error {
 		return nil
 	}
 
-	// print menu handles most of the menu command's flags
+	// printmenu and pageMenu handle most of the menu command's flags
 	if c.page {
 		return c.pageMenu(strings.ToLower(c.category))
 	}
@@ -111,7 +109,7 @@ func NewMenuCmd(b cli.Builder) cli.CliCommand {
 	}
 
 	c.CliCommand = b.Build("menu <item>", "View the Dominos menu.", c)
-	c.MenuCacher = data.NewMenuCacher(menuUpdateTime, b.DB(), c.Store)
+	c.MenuCacher = data.NewMenuCacher(opts.MenuUpdateTime, b.DB(), c.Store)
 	c.SetOutput(b.Output())
 
 	c.Cmd().Long = `This command will show the dominos menu.
@@ -119,6 +117,8 @@ func NewMenuCmd(b cli.Builder) cli.CliCommand {
 To show a subdivision of the menu, give an item or
 category to the --category and --item flags or give them
 as an argument to the command itself.`
+
+	c.Cmd().ValidArgsFunction = c.categoryCompletion
 
 	flags := c.Flags()
 	flags.BoolVarP(&c.all, "all", "a", c.all, "show the entire menu")
@@ -139,12 +139,7 @@ func (c *menuCmd) printMenu(w io.Writer, name string) error {
 	out.SetOutput(w)
 	defer out.ResetOutput()
 	menu := c.Menu()
-	var allCategories = menu.Categorization.Food.Categories
-	if c.preconfigured {
-		allCategories = menu.Categorization.Preconfigured.Categories
-	} else if c.all {
-		allCategories = append(allCategories, menu.Categorization.Preconfigured.Categories...)
-	}
+	var allCategories = c.getCategories(menu)
 
 	if len(name) > 0 {
 		for _, cat := range allCategories {
@@ -154,11 +149,8 @@ func (c *menuCmd) printMenu(w io.Writer, name string) error {
 		}
 		return fmt.Errorf("could not find %s", name)
 	} else if c.showCategories {
-		for _, cat := range allCategories {
-			if cat.Name != "" {
-				fmt.Fprintln(w, strings.ToLower(cat.Name))
-			}
-		}
+		cats, _ := c.categoryCompletion(nil, []string{}, "")
+		fmt.Fprintln(w, strings.Join(cats, "\n"))
 		return nil
 	}
 
@@ -204,6 +196,32 @@ func (c *menuCmd) pageMenu(category string) error {
 	}()
 
 	return less.Run()
+}
+
+func (c *menuCmd) getCategories(m *dawg.Menu) []dawg.MenuCategory {
+	var all = m.Categorization.Food.Categories
+	if c.preconfigured {
+		all = m.Categorization.Preconfigured.Categories
+	} else if c.all {
+		all = append(all, m.Categorization.Preconfigured.Categories...)
+	}
+	return all
+}
+
+func (c *menuCmd) categoryCompletion(
+	cmd *cobra.Command,
+	args []string,
+	toComplete string,
+) ([]string, cobra.ShellCompDirective) {
+	all := c.getCategories(c.Menu())
+	categories := make([]string, 0, len(all))
+	for _, cat := range all {
+		if cat.Name == "" {
+			continue
+		}
+		categories = append(categories, strings.ToLower(cat.Name))
+	}
+	return categories, cobra.ShellCompDirectiveNoFileComp
 }
 
 func printToppingCategory(name string, toppings map[string]dawg.Topping, w io.Writer) {

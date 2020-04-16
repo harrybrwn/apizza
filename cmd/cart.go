@@ -17,6 +17,7 @@ package cmd
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"log"
 	"os"
 	"strings"
@@ -52,7 +53,7 @@ type cartCmd struct {
 	topping bool // not actually a flag anymore
 }
 
-// TODO: changing a cart item needs to be more intuitive.
+// TODO: changing a cart item needs to be more intuitive at the user level
 
 func (c *cartCmd) Run(cmd *cobra.Command, args []string) (err error) {
 	out.SetOutput(cmd.OutOrStdout())
@@ -235,6 +236,7 @@ type orderCmd struct {
 	cvv          int
 	number       string
 	expiration   string
+	yes          bool
 
 	logonly    bool
 	getaddress func() dawg.Address
@@ -255,10 +257,16 @@ func (c *orderCmd) Run(cmd *cobra.Command, args []string) (err error) {
 		return err
 	}
 
-	order.AddCard(dawg.NewCard(
-		eitherOr(c.number, config.GetString("card.number")),
-		eitherOr(c.expiration, config.GetString("card.expiration")),
-		c.cvv))
+	num := eitherOr(c.number, config.GetString("card.number"))
+	exp := eitherOr(c.expiration, config.GetString("card.expiration"))
+	if num == "" {
+		fmt.Println(num)
+		return errors.New("no card number given")
+	}
+	if exp == "" {
+		return errors.New("no card expiration date given")
+	}
+	order.AddCard(dawg.NewCard(num, exp, c.cvv))
 
 	names := strings.Split(config.GetString("name"), " ")
 	if len(names) >= 1 {
@@ -278,12 +286,13 @@ func (c *orderCmd) Run(cmd *cobra.Command, args []string) (err error) {
 		return nil
 	}
 
-	if !yesOrNo(os.Stdin, "Would you like to purchase this order? (y/n)") {
-		return nil
+	if !c.yes {
+		if !yesOrNo(os.Stdin, "Would you like to purchase this order? (y/n)") {
+			return nil
+		}
 	}
 
 	c.Printf("sending order '%s'...\n", order.Name())
-	// TODO: save the order id for tracking and give it a timeout of an hour or two.
 	err = order.PlaceOrder()
 	// logging happens after so any data from placeorder is included
 	log.Println("sending order:", dawg.OrderToJSON(order))
@@ -340,6 +349,7 @@ stored the program cache with orders.
 	flags.StringVar(&c.number, "number", "", "the card number used for orderings")
 	flags.StringVar(&c.expiration, "expiration", "", "the card's expiration date")
 
+	flags.BoolVarP(&c.yes, "yes", "y", c.yes, "do not prompt the user with a question")
 	flags.BoolVar(&c.logonly, "log-only", false, "")
 	flags.MarkHidden("log-only")
 	return c
