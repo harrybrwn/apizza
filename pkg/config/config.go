@@ -12,6 +12,7 @@ import (
 
 	"github.com/harrybrwn/apizza/pkg/errs"
 	homedir "github.com/mitchellh/go-homedir"
+	"gopkg.in/yaml.v2"
 )
 
 var (
@@ -24,19 +25,27 @@ var (
 	DefaultOutput io.Writer = os.Stdout
 )
 
+// Type describes the type of config file being used.
+type Type int
+
+const (
+	// YamlType is the config filetype for yaml
+	YamlType Type = iota
+	// JSONType is the config filetype for json
+	JSONType
+)
+
 // SetConfig sets the config file and also runs through the configuration
 // setup process.
 func SetConfig(foldername string, c Config) error {
-	// if cfg.file != "" {
-	// 	return errors.New("cannot set multiple config files")
-	// }
 	dir := getdir(foldername)
 
 	cfg = configfile{
 		conf: c,
 		dir:  dir,
-		file: filepath.Join(dir, "config.json"),
+		file: findConfigFile(dir),
 	}
+	cfg.typ = getFileType(cfg.file)
 
 	if !cfg.exists() {
 		os.MkdirAll(cfg.dir, 0700)
@@ -52,6 +61,7 @@ func SetNonFileConfig(c Config) error {
 		conf: c,
 		dir:  "",
 		file: "",
+		typ:  -1,
 	}
 	t := reflect.ValueOf(c).Elem()
 	autogen := emptyJSONConfig(t.Type(), 0)
@@ -63,6 +73,7 @@ type configfile struct {
 	file    string
 	dir     string
 	changed bool
+	typ     Type
 }
 
 func (c *configfile) save() error {
@@ -72,7 +83,15 @@ func (c *configfile) save() error {
 		return nil
 	}
 
-	raw, err := json.MarshalIndent(c.conf, "", "    ")
+	var (
+		raw []byte
+		err error
+	)
+	if c.typ == JSONType {
+		raw, err = json.MarshalIndent(c.conf, "", "    ")
+	} else {
+		raw, err = yaml.Marshal(c.conf)
+	}
 	return errs.Pair(err, ioutil.WriteFile(c.file, raw, 0644))
 }
 
@@ -90,7 +109,11 @@ func (c *configfile) init() error {
 	if err != nil {
 		return err
 	}
-	return json.Unmarshal(b, c.conf)
+	err = json.Unmarshal(b, c.conf)
+	if err != nil {
+		return yaml.Unmarshal(b, c.conf)
+	}
+	return err
 }
 
 func (c *configfile) exists() bool {
@@ -228,6 +251,35 @@ func getdir(fname string) string {
 		return fname
 	}
 	return filepath.Join(home, fname)
+}
+
+var configFileNames = []string{
+	"config.yml",
+	"config.yaml",
+	"config.json",
+}
+
+func findConfigFile(root string) string {
+	var p string
+	for _, f := range configFileNames {
+		p = filepath.Join(root, f)
+		if _, err := os.Stat(p); !os.IsNotExist(err) {
+			return p
+		}
+	}
+	return p
+}
+
+func getFileType(file string) Type {
+	switch filepath.Ext(file) {
+	case ".json":
+		return JSONType
+	case ".yml", ".yaml":
+		return YamlType
+	default:
+		fmt.Fprintln(os.Stderr, "config filetype not supported")
+		return -1
+	}
 }
 
 func rightLabel(key string, field reflect.StructField) bool {
