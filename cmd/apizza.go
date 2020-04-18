@@ -49,10 +49,10 @@ var (
 // AllCommands returns a list of all the Commands.
 func AllCommands(builder cli.Builder) []*cobra.Command {
 	return []*cobra.Command{
-		NewCartCmd(builder).Cmd(),
+		commands.NewCartCmd(builder).Cmd(),
 		commands.NewConfigCmd(builder).Cmd(),
 		NewMenuCmd(builder).Cmd(),
-		NewOrderCmd(builder).Cmd(),
+		commands.NewOrderCmd(builder).Cmd(),
 		commands.NewAddAddressCmd(builder, os.Stdin).Cmd(),
 		commands.NewCompletionCmd(builder),
 	}
