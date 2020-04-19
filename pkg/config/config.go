@@ -25,6 +25,8 @@ var (
 	DefaultOutput io.Writer = os.Stdout
 )
 
+//go:generate stringer -type Type
+
 // Type describes the type of config file being used.
 type Type int
 
