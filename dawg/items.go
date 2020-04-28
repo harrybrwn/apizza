@@ -40,7 +40,7 @@ type ItemCommon struct {
 	// Local will tell you if the item was made locally
 	Local bool
 
-	menu *Menu // not really sure how i feel about this... smells like OOP
+	menu *Menu // not really sure how i feel about this... smells like OOP :(
 }
 
 // ItemCode is a getter method for the Code field.

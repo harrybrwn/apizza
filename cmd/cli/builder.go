@@ -12,10 +12,9 @@ import (
 type Builder interface {
 	CommandBuilder
 	DBBuilder
-	ConfigBuilder
+	StateBuilder
 	AddressBuilder
 	Output() io.Writer
-	GlobalOptions() *opts.CliFlags
 }
 
 // CommandBuilder defines an interface for building commands.
@@ -37,6 +36,14 @@ type ConfigBuilder interface {
 // address.
 type AddressBuilder interface {
 	Address() dawg.Address
+}
+
+// StateBuilder defines a cli builder that has control over the
+// program state, whether that is from the config file or the global
+// command line options.
+type StateBuilder interface {
+	ConfigBuilder
+	GlobalOptions() *opts.CliFlags
 }
 
 // AddrDBBuilder is an anddress-builder and a db-builder.

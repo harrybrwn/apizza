@@ -3,13 +3,13 @@ COVER=go tool cover
 VERSION=$(shell git describe --tags --abbrev=12)
 GOFLAGS=-ldflags "-X $(shell go list)/cmd.version=$(VERSION)"
 
-build:
+build: gen
 	go build $(GOFLAGS)
 
-install:
+install: gen
 	go install $(GOFLAGS)
 
-uninstall:
+uninstall: clean
 	go clean -i
 
 test: test-build
@@ -17,10 +17,10 @@ test: test-build
 	bash scripts/integration.sh ./bin/apizza
 	@[ -d ./bin ] && [ -x ./bin/apizza ] && rm -rf ./bin
 
-release:
+release: gen
 	scripts/release build
 
-test-build:
+test-build: gen
 	scripts/build.sh test
 
 coverage.txt:
@@ -30,6 +30,9 @@ coverage.txt:
 html: coverage.txt
 	$(COVER) -html=$<
 
+gen:
+	go generate ./...
+
 clean:
 	$(RM) -r coverage.txt release/apizza-* bin
 	go clean -testcache
@@ -37,4 +40,4 @@ clean:
 
 all: test build release
 
-.PHONY: install test clean html release
+.PHONY: install test clean html release gen

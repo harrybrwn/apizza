@@ -116,6 +116,15 @@ func TestValidate_Err(t *testing.T) {
 	if cart.CurrentOrder == nil {
 		t.Error("current order should not be nil")
 	}
+	orders, err := cart.ListOrders()
+	tests.Check(err)
+	if orders[0] != cmdtest.OrderName {
+		t.Error("did not list correct order name")
+	}
+	orders, _ = cart.OrdersCompletion(nil, []string{}, "")
+	if orders[0] != cmdtest.OrderName {
+		t.Error("did not list correct order name")
+	}
 	tests.Exp(cart.SaveAndReset())
 	if cart.CurrentOrder != nil {
 		t.Error("current order should be nil")

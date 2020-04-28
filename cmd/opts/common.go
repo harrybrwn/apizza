@@ -7,12 +7,7 @@ import (
 )
 
 // MenuUpdateTime is the time a menu is persistant in cache
-var (
-	MenuUpdateTime = 12 * time.Hour
-
-	// Globals is a copy of the global cli flags
-	Globals *CliFlags
-)
+const MenuUpdateTime = 12 * time.Hour
 
 // CliFlags for the root apizza command.
 type CliFlags struct {
@@ -27,13 +22,11 @@ type CliFlags struct {
 // Install the RootFlags
 func (rf *CliFlags) Install(persistflags *pflag.FlagSet) {
 	rf.ClearCache = false
-	// persistflags.BoolVar(&rf.ClearCache, "clear-cache", false, "delete the database")
 	persistflags.BoolVar(&rf.ResetMenu, "delete-menu", false, "delete the menu stored in cache")
 	persistflags.StringVar(&rf.LogFile, "log", "", "set a log file (found in ~/.config/apizza/logs)")
 
 	persistflags.StringVarP(&rf.Address, "address", "A", rf.Address, "an address name stored with 'apizza address --new'")
 	persistflags.StringVar(&rf.Service, "service", rf.Service, "select a Dominos service, either 'Delivery' or 'Carryout'")
-	Globals = rf
 }
 
 // ApizzaFlags that are not persistant.

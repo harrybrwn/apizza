@@ -14,12 +14,17 @@ import (
 	"github.com/harrybrwn/apizza/pkg/errs"
 )
 
-// OrderPrefix is the prefix added to user orders when stored in a database.
-const OrderPrefix = "user_order_"
+const (
+	// OrderPrefix is the prefix added to user orders when stored in a database.
+	OrderPrefix = "user_order_"
+
+	// DataBaseName is the filename for the program's local storage.
+	DataBaseName = "apizza.db"
+)
 
 // OpenDatabase make the default database.
 func OpenDatabase() (*cache.DataBase, error) {
-	dbPath := filepath.Join(config.Folder(), "cache", "apizza.db")
+	dbPath := filepath.Join(config.Folder(), "cache", DataBaseName)
 	return cache.GetDB(dbPath)
 }
 

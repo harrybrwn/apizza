@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"os"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -18,7 +19,7 @@ import (
 )
 
 // New will create a new cart
-func New(b cli.Builder) *Cart {
+func New(b cartBuilder) *Cart {
 	storefinder := client.NewStoreGetterFunc(func() string {
 		opts := b.GlobalOptions()
 		if opts.Service != "" {
@@ -30,12 +31,18 @@ func New(b cli.Builder) *Cart {
 	return &Cart{
 		db:     b.DB(),
 		finder: storefinder,
+		out:    DefaultOutput,
 		MenuCacher: data.NewMenuCacher(
 			opts.MenuUpdateTime,
 			b.DB(),
 			storefinder.Store,
 		),
 	}
+}
+
+type cartBuilder interface {
+	cli.AddrDBBuilder
+	cli.StateBuilder
 }
 
 var (
@@ -46,17 +53,22 @@ var (
 	// ErrOrderNotFound is raised when the cart cannot find the order
 	// the it was asked to get.
 	ErrOrderNotFound = errors.New("could not find that order")
+
+	// DefaultOutput is the cart package's default output writer.
+	DefaultOutput io.Writer = os.Stdout
 )
 
 // Cart is an abstraction on the cache.DataBase struct
 // representing the user's cart for persistant orders
 type Cart struct {
 	data.MenuCacher
+	// CurrentOrder is only set when SetCurrentOrder is called.
+	// Most functions that the cart has will fail if this is nil.
+	CurrentOrder *dawg.Order
+
 	db     *cache.DataBase
 	finder client.StoreFinder
-
-	CurrentOrder *dawg.Order
-	out          io.Writer
+	out    io.Writer
 }
 
 // SetCurrentOrder sets the order that the cart is currently working with.

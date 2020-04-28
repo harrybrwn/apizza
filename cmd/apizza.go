@@ -20,7 +20,6 @@ import (
 	"log"
 	"os"
 	fp "path/filepath"
-	"strings"
 
 	"github.com/harrybrwn/apizza/cmd/cli"
 	"github.com/harrybrwn/apizza/cmd/commands"
@@ -58,21 +57,6 @@ func AllCommands(builder cli.Builder) []*cobra.Command {
 	}
 }
 
-// ErrMsg is not actually an error but it is my way of
-// containing an error with a message and an exit code.
-type ErrMsg struct {
-	Msg  string
-	Code int
-	Err  error
-}
-
-func senderr(e error, msg string, code int) *ErrMsg {
-	if e == nil {
-		return nil
-	}
-	return &ErrMsg{Msg: msg, Code: code, Err: e}
-}
-
 // Execute runs the root command
 func Execute(args []string, dir string) (msg *ErrMsg) {
 	app := NewApp(os.Stdout)
@@ -102,22 +86,22 @@ func Execute(args []string, dir string) (msg *ErrMsg) {
 	return senderr(cmd.Execute(), "Error", 1)
 }
 
-var test = false
-
-func yesOrNo(in *os.File, msg string) bool {
-	var res string
-	fmt.Printf("%s ", msg)
-	_, err := fmt.Fscan(in, &res)
-	if err != nil {
-		return false
-	}
-
-	switch strings.ToLower(res) {
-	case "y", "yes", "si":
-		return true
-	}
-	return false
+// ErrMsg is not actually an error but it is my way of
+// containing an error with a message and an exit code.
+type ErrMsg struct {
+	Msg  string
+	Code int
+	Err  error
 }
+
+func senderr(e error, msg string, code int) *ErrMsg {
+	if e == nil {
+		return nil
+	}
+	return &ErrMsg{Msg: msg, Code: code, Err: e}
+}
+
+var test = false
 
 func newTestCmd(b cli.Builder, valid bool) *cobra.Command {
 	return &cobra.Command{

@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	"github.com/harrybrwn/apizza/cmd/cli"
+	"github.com/harrybrwn/apizza/cmd/internal"
 	"github.com/harrybrwn/apizza/cmd/internal/cmdtest"
 	"github.com/harrybrwn/apizza/pkg/config"
 	"github.com/harrybrwn/apizza/pkg/errs"
@@ -224,7 +225,7 @@ func TestYesOrNo(t *testing.T) {
 	tests.Fatal(err)
 	_, err = f.Seek(0, os.SEEK_SET)
 	tests.Fatal(err)
-	if yesOrNo(f, "this is a message") {
+	if internal.YesOrNo(f, "this is a message") {
 		res = true
 	}
 	if !res {
@@ -239,7 +240,7 @@ func TestYesOrNo(t *testing.T) {
 	_, err = f.Seek(0, os.SEEK_SET)
 	tests.Check(err)
 	res = false
-	if yesOrNo(f, "msg") {
+	if internal.YesOrNo(f, "msg") {
 		res = true
 	}
 	if res {
