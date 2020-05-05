@@ -34,7 +34,7 @@ gen:
 	go generate ./...
 
 clean:
-	$(RM) -r coverage.txt release/apizza-* bin
+	$(RM) -r coverage.txt release/apizza-* bin dist
 	go clean -testcache
 	go clean
 

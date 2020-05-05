@@ -1,9 +1,11 @@
 # Build
 /bin/
 /release/
+/dist/
 /vendor/
 __pycache__/
 /apizza
+release-notes*
 
 # Notes
 demo
