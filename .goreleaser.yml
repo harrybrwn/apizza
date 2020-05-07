@@ -1,37 +1,47 @@
 project_name: apizza
+
 before:
   hooks:
     - go mod tidy
     - go generate ./...
 
+release:
+  github:
+    owner: harrybrwn
+    name: apizza
+  prerelease: auto
+
 builds:
-  - <<: &base_build
-      binary: apizza
-      env:
-        - CGO_ENABLED=0
-      ldflags:
-        - -s -w
-        - -X github.com/harrybrwn/apizza/cmd.version={{.Version}}
-    id: linux
-    goos: [linux]
+  - binary: apizza
+    id: apizza
+    env:
+      - CGO_ENABLED=0
+      - GO111MODULE=on
+    ldflags:
+      - -s -w
+      - -X github.com/harrybrwn/apizza/cmd.version={{.Version}}
+    goos: [linux, darwin, windows]
     goarch: [386, amd64, arm64]
-  - <<: *base_build
-    id: macos
-    goos: [darwin]
-    goarch: [amd64]
-  - <<: *base_build
-    id: win
-    goos: [windows]
-    goarch: [386, amd64]
+    ignore:
+      - { goos: darwin,  goarch: 386   }
+      - { goos: darwin,  goarch: arm64 }
+      - { goos: windows, goarch: arm64 }
 
 archives:
   - replacements: &replacements
       darwin: MacOS
       linux: Linux
       windows: Windows
-      386: i386
-      amd64: x86_64
+      386: 32-bit
+      amd64: 64-bit
       arm64: arm64
+    format_overrides:
+      - goos: windows
+        format: zip
+    files:
+      - LICENSE
+      - README.md
+      - docs/*
 
 nfpms:
   - <<: &description
@@ -73,8 +83,10 @@ snapcrafts:
 
 checksum:
   name_template: 'checksums.txt'
+
 snapshot:
   name_template: "{{ .Version }}-{{ .ShortCommit }}"
+
 changelog:
   skip: true
   sort: asc

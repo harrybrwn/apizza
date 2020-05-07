@@ -21,18 +21,22 @@ Dominos pizza from the command line.
 
 ### Installation
 Download the precompiled binaries for Mac, Windows, and Linux (only for amd64)
-```
-wget https://github.com/harrybrwn/apizza/releases/download/v0.0.2/apizza-linux
-wget https://github.com/harrybrwn/apizza/releases/download/v0.0.2/apizza-darwin
-wget https://github.com/harrybrwn/apizza/releases/download/v0.0.2/apizza-windows
-```
 
-Or compile from source
+#### Download
+- Linux
+    - <a href="https://github.com/harrybrwn/apizza/releases/download/v0.0.2/apizza-linux" download>deb</a>
+    - <a href="https://github.com/harrybrwn/apizza/releases/download/v0.0.2/apizza-linux" download>rpm</a>
+- <a href="https://github.com/harrybrwn/apizza/releases/download/v0.0.2/apizza-darwin" download>MacOS</a><br>
+- <a href="https://github.com/harrybrwn/apizza/releases/download/v0.0.2/apizza-windows" download>Windows</a>
+
+#### Compile
 ```bash
 go get -u github.com/harrybrwn/apizza
 ```
 or
 ```bash
+git clone https://github.com/harrybrwn/apizza
+cd apizza
 make install
 ```
 

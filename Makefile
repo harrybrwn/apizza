@@ -1,6 +1,7 @@
 COVER=go tool cover
 
 VERSION=$(shell git describe --tags --abbrev=12)
+#VERSION=$(shell git describe --tags --abbrev=0)-$(shell git rev-parse --short HEAD)
 GOFLAGS=-ldflags "-X $(shell go list)/cmd.version=$(VERSION)"
 
 build: gen
