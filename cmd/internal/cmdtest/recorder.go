@@ -168,6 +168,7 @@ type TestRecorder struct {
 
 // NewTestRecorder creates a new TestRecorder
 func NewTestRecorder(t *testing.T) *TestRecorder {
+	tests.InitHelpers(t)
 	tr := &TestRecorder{
 		Recorder: NewRecorder(),
 		t:        t,

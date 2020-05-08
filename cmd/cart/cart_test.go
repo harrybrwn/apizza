@@ -47,6 +47,8 @@ func TestToppings(t *testing.T) {
 		"Pm:LefT:2.0",
 	}))
 
+	// TODO: add test cases that make sure errors are raised when bad inputs are given
+
 	checktoppings := func(opts map[string]interface{}) {
 		for _, tc := range []struct {
 			top, side, amount string

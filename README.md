@@ -103,6 +103,11 @@ $ apizza cart myorder --product=16SCREEN --remove=P
 ```
 will remove pepperoni from the 16SCREEN item in the order named 'myorder'.
 
+To customize toppings use the syntax `<name>:<left|right|full>:<0.5|1.0|1.5|2.0>` when adding a topping.
+```sh
+$ apizza cart myorder --product=12SCREEN --add=P:full:2 # double pepperoni
+```
+
 
 ### Order
 To actually send an order from the cart. Use the `order` command.

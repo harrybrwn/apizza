@@ -205,6 +205,7 @@ func makeTopping(cover, amount string, optionQtys []string) map[string]string {
 	}
 	if optionQtys != nil {
 		if !validateQtys(amount, optionQtys) {
+			// TODO: make this return a helpful error message
 			return nil
 		}
 	}
@@ -213,6 +214,7 @@ func makeTopping(cover, amount string, optionQtys []string) map[string]string {
 	case ToppingFull, ToppingLeft, ToppingRight:
 		key = cover
 	default:
+		// TODO: have this return an error message saying that the topping coverage was invalid
 		return nil
 	}
 

@@ -8,8 +8,51 @@ import (
 
 	"github.com/harrybrwn/apizza/cmd/cli"
 	"github.com/harrybrwn/apizza/cmd/internal/cmdtest"
+	"github.com/harrybrwn/apizza/pkg/errs"
 	"github.com/harrybrwn/apizza/pkg/tests"
 )
+
+func testCart(b cli.Builder) *cartCmd {
+	cart := NewCartCmd(b)
+	new := cart.Cmd().Commands()[0]
+	if err := errs.Pair(
+		new.ParseFlags([]string{"--name=testorder", "--product=14SCREEN"}),
+		new.RunE(new, []string{}),
+	); err != nil {
+		panic("could not create a testing cart command: " + err.Error())
+	}
+	return cart.(*cartCmd)
+}
+
+func TestCartCommand(t *testing.T) {
+	b := cmdtest.NewTestRecorder(t)
+	defer b.CleanUp()
+	cart := testCart(b)
+
+	tests.Check(cart.Run(cart.Cmd(), []string{"testorder"}))
+	if !strings.Contains(b.Out.String(), "testorder") {
+		t.Error("cart output did not have the right name")
+	}
+	if !strings.Contains(b.Out.String(), "14SCREEN") {
+		t.Error("does not have the correct product")
+	}
+}
+
+func TestCartToppings(t *testing.T) {
+	b := cmdtest.NewTestRecorder(t)
+	defer b.CleanUp()
+	cart := testCart(b)
+	tests.Check(cart.Cmd().ParseFlags([]string{"-a=P:left:1.5", "-p=14SCREEN"}))
+	tests.Check(cart.Run(cart.Cmd(), []string{"testorder"}))
+}
+
+func TestCartToppings_Err(t *testing.T) {
+	b := cmdtest.NewTestRecorder(t)
+	defer b.CleanUp()
+	cart := testCart(b)
+	tests.Check(cart.Cmd().ParseFlags([]string{"-a=P:badinput:1.5", "-p=14SCREEN"}))
+	tests.Exp(cart.Run(cart.Cmd(), []string{"testorder"}))
+}
 
 func testOrderNew(t *testing.T, buf *bytes.Buffer, cmds ...cli.CliCommand) {
 	cart, add := cmds[0], cmds[1]
@@ -43,16 +86,23 @@ func testOrderNew(t *testing.T, buf *bytes.Buffer, cmds ...cli.CliCommand) {
 	tests.Compare(t, buf.String(), strings.Replace(expected, "\t", "  ", -1))
 }
 
-func testAddOrder(t *testing.T, buf *bytes.Buffer, cmds ...cli.CliCommand) {
-	cart, add := cmds[0], cmds[1]
-	tests.Check(add.Run(add.Cmd(), []string{"testing"}))
-	if buf.String() != "" {
-		t.Errorf("wrong output: should have no output: '%s'", buf.String())
-	}
-	buf.Reset()
-	cart.Cmd().ParseFlags([]string{"-d"})
-	tests.Check(cart.Run(cart.Cmd(), []string{"testing"}))
-	buf.Reset()
+// func testAddOrder(t *testing.T, buf *bytes.Buffer, cmds ...cli.CliCommand) {
+func TestAddOrder(t *testing.T) {
+	// cart, add := cmds[0], cmds[1]
+
+	// b := cmdtest.NewTestRecorder(t)
+	// defer b.CleanUp()
+	// cart := NewCartCmd(b)
+	// add := newAddOrderCmd(b)
+
+	// tests.Check(add.Run(add.Cmd(), []string{"testing"}))
+	// if b.Out.String() != "" {
+	// 	t.Errorf("wrong output: should have no output: '%s'", b.Out.String())
+	// }
+	// b.Out.Reset()
+	// cart.Cmd().ParseFlags([]string{"-d"})
+	// tests.Check(cart.Run(cart.Cmd(), []string{"testing"}))
+	// b.Out.Reset()
 }
 
 func testOrderNewErr(t *testing.T, buf *bytes.Buffer, cmds ...cli.CliCommand) {
@@ -61,17 +111,22 @@ func testOrderNewErr(t *testing.T, buf *bytes.Buffer, cmds ...cli.CliCommand) {
 	}
 }
 
-func testOrderRunAdd(t *testing.T, buf *bytes.Buffer, cmds ...cli.CliCommand) {
-	cart := cmds[0]
+func TestOrderRunAdd(t *testing.T) {
+	b := cmdtest.NewTestRecorder(t)
+	defer b.CleanUp()
+	cart := testCart(b)
 	tests.Check(cart.Run(cart.Cmd(), []string{}))
-	tests.Compare(t, buf.String(), "Your Orders:\n  testorder\n")
-	buf.Reset()
-	cart.Cmd().ParseFlags([]string{"--add", "10SCPFEAST,PSANSAMV"})
+	tests.Compare(t, b.Out.String(), "Your Orders:\n  testorder\n")
+	b.Out.Reset()
+	tests.Check(cart.Cmd().ParseFlags([]string{"--add", "10SCPFEAST,PSANSAMV"}))
 	tests.Check(cart.Run(cart.Cmd(), []string{"testorder"}))
-	tests.Compare(t, buf.String(), "order successfully updated.\n")
+	tests.Compare(t, b.Out.String(), "order successfully updated.\n")
 }
 
-func testOrderPriceOutput(cart *cartCmd, buf *bytes.Buffer, t *testing.T) {
+func TestOrderPriceOutput(t *testing.T) {
+	b := cmdtest.NewTestRecorder(t)
+	defer b.CleanUp()
+	cart := testCart(b)
 	cart.price = true
 
 	tests.Check(cart.Run(cart.Cmd(), []string{"testorder"}))
@@ -83,23 +138,33 @@ func testOrderPriceOutput(cart *cartCmd, buf *bytes.Buffer, t *testing.T) {
 	}
 }
 
-func testOrderRunDelete(cart *cartCmd, buf *bytes.Buffer, t *testing.T) {
+// func testOrderRunDelete(cart *cartCmd, buf *bytes.Buffer, t *testing.T) {
+func TestOrderRunDelete(t *testing.T) {
+	b := cmdtest.NewTestRecorder(t)
+	defer b.CleanUp()
+	cart := testCart(b)
+
 	cart.delete = true
 	tests.Check(cart.Run(cart.Cmd(), []string{"testorder"}))
-	tests.Compare(t, buf.String(), "testorder successfully deleted.\n")
+	tests.Compare(t, b.Out.String(), "testorder successfully deleted.\n")
 	cart.delete = false
-	buf.Reset()
+	b.Out.Reset()
 	cart.Cmd().ParseFlags([]string{})
 	tests.Check(cart.Run(cart.Cmd(), []string{}))
-	tests.Compare(t, buf.String(), "No orders saved.\n")
-	buf.Reset()
+	tests.Compare(t, b.Out.String(), "No orders saved.\n")
+	b.Out.Reset()
 	tests.Exp(cart.Run(cart.Cmd(), []string{"not_a_real_order"}))
 	cart.topping = false
 	cart.validate = true
 	tests.Check(cart.Run(cart.Cmd(), []string{}))
 }
 
-func testAddToppings(cart *cartCmd, buf *bytes.Buffer, t *testing.T) {
+// func testAddToppings(cart *cartCmd, buf *bytes.Buffer, t *testing.T) {
+func TestAddToppings(t *testing.T) {
+	b := cmdtest.NewTestRecorder(t)
+	defer b.CleanUp()
+	cart := testCart(b)
+
 	cart.add = []string{"10SCREEN"}
 	tests.Check(cart.Run(cart.Cmd(), []string{"testorder"}))
 	cart.add = nil
@@ -112,7 +177,7 @@ func testAddToppings(cart *cartCmd, buf *bytes.Buffer, t *testing.T) {
 	cart.product = ""
 	cart.add = []string{}
 	cart.topping = false
-	buf.Reset()
+	b.Out.Reset()
 	tests.Check(cart.Run(cart.Cmd(), []string{"testorder"}))
 
 	expected := `Small (10") Hand Tossed Pizza
@@ -124,16 +189,16 @@ func testAddToppings(cart *cartCmd, buf *bytes.Buffer, t *testing.T) {
          X: 1/1 1
       quantity: 1`
 
-	if !strings.Contains(buf.String(), expected) {
+	if !strings.Contains(b.Out.String(), expected) {
 		t.Error("bad output")
 	}
-	buf.Reset()
+	b.Out.Reset()
 
 	cart.topping = false
 	cart.product = "10SCREEN"
 	cart.remove = "C"
 	tests.Check(cart.Run(cart.Cmd(), []string{"testorder"}))
-	buf.Reset()
+	b.Out.Reset()
 	cart.topping = false
 	cart.product = ""
 	cart.remove = ""
@@ -146,26 +211,25 @@ func testAddToppings(cart *cartCmd, buf *bytes.Buffer, t *testing.T) {
          P: 1/1 1.0
          X: 1/1 1
       quantity: 1`
-	if !strings.Contains(buf.String(), expected) {
+	if !strings.Contains(b.Out.String(), expected) {
 		fmt.Println("got:")
-		fmt.Println(buf.String())
+		fmt.Println(b.Out.String())
 		fmt.Println("expected:")
 		fmt.Print(expected)
 		t.Error("bad output")
 	}
-	buf.Reset()
+	b.Out.Reset()
 
 	cart.topping = false
 	cart.remove = "10SCREEN"
 	tests.Check(cart.Run(cart.Cmd(), []string{"testorder"}))
-	if strings.Contains(buf.String(), expected) {
+	if strings.Contains(b.Out.String(), expected) {
 		t.Error("bad output")
 	}
 }
 
 func TestOrder(t *testing.T) {
-	tests.InitHelpers(t)
-	r := cmdtest.NewRecorder()
+	r := cmdtest.NewTestRecorder(t)
 	defer r.CleanUp()
 
 	ordercmd := NewOrderCmd(r)

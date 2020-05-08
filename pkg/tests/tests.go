@@ -113,6 +113,12 @@ func InitHelpers(t *testing.T) {
 	initHelpers(t)
 }
 
+// ResetHelpers will set the current test to nil and make sure that
+// no callers after it can use the testing.T object.
+func ResetHelpers() {
+	currentTest = nil
+}
+
 // Check will check to see that an error is nil, and cause an error if not
 func Check(err error) {
 	nilcheck()
