@@ -102,6 +102,14 @@ func StreetAddrFromAddress(addr Address) *StreetAddr {
 	}
 }
 
+// Equal will test if an s is the same as the Address given.
+func (s *StreetAddr) Equal(a Address) bool {
+	return s.City() == a.City() &&
+		s.LineOne() == a.LineOne() &&
+		s.StateCode() == a.StateCode() &&
+		s.Zip() == a.Zip()
+}
+
 // LineOne gives the street in the following format
 //
 // <number> <name> <type>

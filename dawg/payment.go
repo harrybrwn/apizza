@@ -1,6 +1,7 @@
 package dawg
 
 import (
+	"errors"
 	"fmt"
 	"regexp"
 	"strconv"
@@ -60,17 +61,18 @@ func (p *Payment) Num() string {
 	return p.Number
 }
 
-var badExpiration = time.Date(0, 0, 0, 0, 0, 0, 0, time.UTC)
+// BadExpiration is a zero datetime object the is returned on error.
+var BadExpiration = time.Date(0, 0, 0, 0, 0, 0, 0, time.UTC)
 
 // ExpiresOn returns the expiration date as a time.Time.
 func (p *Payment) ExpiresOn() time.Time {
 	if len(p.Expiration) == 0 {
-		return badExpiration
+		return BadExpiration
 	}
 
 	m, y := parseDate(p.Expiration)
 	if m < 0 || y < 0 {
-		return badExpiration
+		return BadExpiration
 	}
 	return time.Date(int(y), time.Month(m), 1, 0, 0, 0, 0, time.Local)
 }
@@ -78,6 +80,17 @@ func (p *Payment) ExpiresOn() time.Time {
 // Code returns the CVV.
 func (p *Payment) Code() string {
 	return p.CVV
+}
+
+// ValidateCard will return an error if the card given has any bad data.
+func ValidateCard(c Card) error {
+	if BadExpiration.Equal(c.ExpiresOn()) {
+		return errors.New("card has a bad expiration date format")
+	}
+	if findCardType(c.Num()) == "" {
+		return errors.New("could not find card ")
+	}
+	return nil
 }
 
 var _ Card = (*Payment)(nil)
@@ -102,6 +115,11 @@ func formatDate(t time.Time) string {
 
 func parseDate(d string) (month int, year int) {
 	parts := strings.Split(d, "/")
+
+	if len(parts) == 1 && len(d) == 4 {
+		// we have been given mmYY instead of mm/YY
+		parts = []string{d[:2], d[2:]}
+	}
 	if len(parts) != 2 {
 		return -1, -1
 	}

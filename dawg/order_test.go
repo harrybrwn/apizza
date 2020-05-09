@@ -289,7 +289,7 @@ func TestCard(t *testing.T) {
 	if ok {
 		p.Expiration = "08"
 		tm = p.ExpiresOn()
-		if tm != badExpiration {
+		if tm != BadExpiration {
 			t.Error("a bad expiration date should have given the badExpiration variable")
 		}
 	} else {

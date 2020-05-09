@@ -124,7 +124,8 @@ func (o *Order) AddPayment(payment Payment) {
 
 // AddCard will add a card as a method of payment.
 func (o *Order) AddCard(c Card) {
-	o.Payments = append(o.Payments, makeOrderPaymentFromCard(c))
+	card := makeOrderPaymentFromCard(c)
+	o.Payments = append(o.Payments, card)
 }
 
 // Name returns the name that was set by the user.
@@ -174,9 +175,8 @@ func ValidateOrder(order *Order) error {
 		order.cli = orderClient
 	}
 	err := sendOrder("/power/validate-order", *order)
-	if IsWarning(err) {
+	if e, ok := err.(*DominosError); ok {
 		// TODO: make it possible to recognize the warning as an 'AutoAddedOrderId' warning.
-		e := err.(*DominosError)
 		order.OrderID = e.Order.OrderID
 	}
 	return err

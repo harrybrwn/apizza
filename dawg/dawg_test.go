@@ -206,6 +206,34 @@ func TestDominosErrorFailure(t *testing.T) {
 	}
 }
 
+func TestValidateCard(t *testing.T) {
+	tests.InitHelpers(t)
+	tsts := []struct {
+		c     Card
+		valid bool
+	}{
+		{NewCard("", "0125", 123), false},
+		{NewCard("", "01/25", 123), false},
+		{NewCard("370218180742397", "0123", 123), true},
+		{NewCard("370218180742397", "01/23", 123), true},
+		{NewCard("370218180742397", "1/23", 123), true},
+		{NewCard("370218180742397", "01/2", 123), false},
+		{NewCard("370218180742397", "01/2023", 123), true}, // nil card
+	}
+
+	for _, tc := range tsts {
+		if tc.valid {
+			if tc.c == nil {
+				t.Error("got nil card when it should be valid")
+				continue
+			}
+			tests.Check(ValidateCard(tc.c))
+		} else {
+			tests.Exp(ValidateCard(tc.c), "expedted an error:", tc.c, tc.c.ExpiresOn())
+		}
+	}
+}
+
 func TestErrPair(t *testing.T) {
 	tt := []struct {
 		err error
