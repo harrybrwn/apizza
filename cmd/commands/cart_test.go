@@ -8,26 +8,31 @@ import (
 
 	"github.com/harrybrwn/apizza/cmd/cli"
 	"github.com/harrybrwn/apizza/cmd/internal/cmdtest"
+	"github.com/harrybrwn/apizza/cmd/internal/obj"
 	"github.com/harrybrwn/apizza/pkg/errs"
 	"github.com/harrybrwn/apizza/pkg/tests"
 )
 
-func testCart(b cli.Builder) *cartCmd {
-	cart := NewCartCmd(b)
-	new := cart.Cmd().Commands()[0]
+func addTestOrder(b cli.Builder) {
+	new := newAddOrderCmd(b).Cmd()
 	if err := errs.Pair(
-		new.ParseFlags([]string{"--name=testorder", "--product=14SCREEN"}),
+		new.ParseFlags([]string{"--name=testorder", "--product=14SCREEN", "--toppings=P,K"}),
 		new.RunE(new, []string{}),
 	); err != nil {
-		panic("could not create a testing cart command: " + err.Error())
+		panic("could not add a test order: " + err.Error())
 	}
+}
+
+func newTestCart(b cli.Builder) *cartCmd {
+	cart := NewCartCmd(b)
+	addTestOrder(b)
 	return cart.(*cartCmd)
 }
 
 func TestCartCommand(t *testing.T) {
 	b := cmdtest.NewTestRecorder(t)
 	defer b.CleanUp()
-	cart := testCart(b)
+	cart := newTestCart(b)
 
 	tests.Check(cart.Run(cart.Cmd(), []string{"testorder"}))
 	if !strings.Contains(b.Out.String(), "testorder") {
@@ -36,12 +41,30 @@ func TestCartCommand(t *testing.T) {
 	if !strings.Contains(b.Out.String(), "14SCREEN") {
 		t.Error("does not have the correct product")
 	}
+	// tests.Exp(cart.Run(cart.Cmd(), []string{"testorder", "another_order"}))
+	b.Conf.Address = obj.Address{
+		Street:   "600 Mountain Ave bldg 5",
+		CityName: "New Providence",
+		State:    "NJ",
+		Zipcode:  "07974",
+	}
+	tests.Check(cart.Run(cart.Cmd(), []string{"testorder"}))
+	cart.Cmd().ParseFlags([]string{"--validate"})
+	tests.Check(cart.Run(cart.Cmd(), []string{"testorder"}))
+	tests.Exp(cart.Cmd().PreRunE(cart.Cmd(), []string{"testorder", "another"}))
+	tests.Check(cart.Cmd().PreRunE(cart.Cmd(), []string{"testorder"}))
+
+	b.Out.Reset()
+	cart.validate = false
+	cart.Cmd().ParseFlags([]string{"--add=K"})
+	tests.Exp(cart.Run(cart.Cmd(), []string{"testorder"}))
+	fmt.Println(b.Out.String())
 }
 
 func TestCartToppings(t *testing.T) {
 	b := cmdtest.NewTestRecorder(t)
 	defer b.CleanUp()
-	cart := testCart(b)
+	cart := newTestCart(b)
 	tests.Check(cart.Cmd().ParseFlags([]string{"-a=P:left:1.5", "-p=14SCREEN"}))
 	tests.Check(cart.Run(cart.Cmd(), []string{"testorder"}))
 }
@@ -49,7 +72,7 @@ func TestCartToppings(t *testing.T) {
 func TestCartToppings_Err(t *testing.T) {
 	b := cmdtest.NewTestRecorder(t)
 	defer b.CleanUp()
-	cart := testCart(b)
+	cart := newTestCart(b)
 	tests.Check(cart.Cmd().ParseFlags([]string{"-a=P:badinput:1.5", "-p=14SCREEN"}))
 	tests.Exp(cart.Run(cart.Cmd(), []string{"testorder"}))
 }
@@ -90,19 +113,19 @@ func testOrderNew(t *testing.T, buf *bytes.Buffer, cmds ...cli.CliCommand) {
 func TestAddOrder(t *testing.T) {
 	// cart, add := cmds[0], cmds[1]
 
-	// b := cmdtest.NewTestRecorder(t)
-	// defer b.CleanUp()
-	// cart := NewCartCmd(b)
-	// add := newAddOrderCmd(b)
+	b := cmdtest.NewTestRecorder(t)
+	defer b.CleanUp()
+	cart := NewCartCmd(b)
+	add := newAddOrderCmd(b)
 
-	// tests.Check(add.Run(add.Cmd(), []string{"testing"}))
-	// if b.Out.String() != "" {
-	// 	t.Errorf("wrong output: should have no output: '%s'", b.Out.String())
-	// }
-	// b.Out.Reset()
-	// cart.Cmd().ParseFlags([]string{"-d"})
-	// tests.Check(cart.Run(cart.Cmd(), []string{"testing"}))
-	// b.Out.Reset()
+	tests.Check(add.Run(add.Cmd(), []string{"testing"}))
+	if b.Out.String() != "" {
+		t.Errorf("wrong output: should have no output: '%s'", b.Out.String())
+	}
+	b.Out.Reset()
+	cart.Cmd().ParseFlags([]string{"-d"})
+	tests.Check(cart.Run(cart.Cmd(), []string{"testing"}))
+	b.Out.Reset()
 }
 
 func testOrderNewErr(t *testing.T, buf *bytes.Buffer, cmds ...cli.CliCommand) {
@@ -114,7 +137,7 @@ func testOrderNewErr(t *testing.T, buf *bytes.Buffer, cmds ...cli.CliCommand) {
 func TestOrderRunAdd(t *testing.T) {
 	b := cmdtest.NewTestRecorder(t)
 	defer b.CleanUp()
-	cart := testCart(b)
+	cart := newTestCart(b)
 	tests.Check(cart.Run(cart.Cmd(), []string{}))
 	tests.Compare(t, b.Out.String(), "Your Orders:\n  testorder\n")
 	b.Out.Reset()
@@ -126,7 +149,7 @@ func TestOrderRunAdd(t *testing.T) {
 func TestOrderPriceOutput(t *testing.T) {
 	b := cmdtest.NewTestRecorder(t)
 	defer b.CleanUp()
-	cart := testCart(b)
+	cart := newTestCart(b)
 	cart.price = true
 
 	tests.Check(cart.Run(cart.Cmd(), []string{"testorder"}))
@@ -142,7 +165,7 @@ func TestOrderPriceOutput(t *testing.T) {
 func TestOrderRunDelete(t *testing.T) {
 	b := cmdtest.NewTestRecorder(t)
 	defer b.CleanUp()
-	cart := testCart(b)
+	cart := newTestCart(b)
 
 	cart.delete = true
 	tests.Check(cart.Run(cart.Cmd(), []string{"testorder"}))
@@ -163,7 +186,7 @@ func TestOrderRunDelete(t *testing.T) {
 func TestAddToppings(t *testing.T) {
 	b := cmdtest.NewTestRecorder(t)
 	defer b.CleanUp()
-	cart := testCart(b)
+	cart := newTestCart(b)
 
 	cart.add = []string{"10SCREEN"}
 	tests.Check(cart.Run(cart.Cmd(), []string{"testorder"}))
@@ -231,6 +254,30 @@ func TestAddToppings(t *testing.T) {
 func TestOrder(t *testing.T) {
 	r := cmdtest.NewTestRecorder(t)
 	defer r.CleanUp()
+	cmd := NewOrderCmd(r).(*orderCmd)
+	addTestOrder(r)
+
+	r.Conf.Card.Number = "38790546741937"
+	r.Conf.Card.Expiration = "01/01"
+	tests.Check(cmd.Cmd().ParseFlags([]string{"--log-only", "--cvv=123"}))
+	tests.Check(cmd.Run(cmd.Cmd(), []string{"testorder"}))
+	r.Conf.Address = obj.Address{
+		Street:   "600 Mountain Ave bldg 5",
+		CityName: "New Providence",
+		State:    "NJ",
+		Zipcode:  "07974",
+	}
+	tests.Check(cmd.Cmd().ParseFlags([]string{"--log-only", "--cvv=123"}))
+	tests.Check(cmd.Run(cmd.Cmd(), []string{"testorder"}))
+	tests.Check(cmd.Cmd().ParseFlags([]string{}))
+	tests.Check(cmd.Cmd().PreRunE(cmd.Cmd(), []string{}))
+	tests.Exp(cmd.Cmd().PreRunE(cmd.Cmd(), []string{"one", "two"}))
+}
+
+func TestOrder_Err(t *testing.T) {
+	r := cmdtest.NewTestRecorder(t)
+	defer r.CleanUp()
+	addTestOrder(r)
 
 	ordercmd := NewOrderCmd(r)
 	err := ordercmd.Run(ordercmd.Cmd(), []string{})
@@ -241,6 +288,19 @@ func TestOrder(t *testing.T) {
 	cmd.cvv = 100
 	tests.Exp(cmd.Run(cmd.Cmd(), []string{"nothere"}))
 	cmd.cvv = 0
+	fmt.Println(r.Conf.Card.Number)
+
+	cmd.Cmd().ParseFlags([]string{"--log-only"})
+	tests.Exp(cmd.Run(cmd.Cmd(), []string{"testorder"}))
+	cmd.Cmd().ParseFlags([]string{"--log-only", "--cvv=123"})
+	tests.Exp(cmd.Run(cmd.Cmd(), []string{"testorder"}))
+	cmd.Cmd().ParseFlags([]string{"--log-only", "--cvv=123", "--number=38790546741937"})
+	tests.Exp(cmd.Run(cmd.Cmd(), []string{"testorder"}))
+
+	// cmd.Cmd().ParseFlags([]string{"--log-only", "--cvv=123", "--number=38790546741937", "--expiration=01/01"})
+	// tests.Exp(cmd.Run(cmd.Cmd(), []string{"testorder"}))
+	// cmd.Cmd().ParseFlags([]string{"--log-only", "--cvv=123", "--number=38790546741937", "--expiration=01/01"})
+	// tests.Exp(cmd.Run(cmd.Cmd(), []string{"testorder"}))
 }
 
 func TestEitherOr(t *testing.T) {

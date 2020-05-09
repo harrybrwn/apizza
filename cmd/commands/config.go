@@ -23,7 +23,6 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/harrybrwn/apizza/cmd/cli"
-	"github.com/harrybrwn/apizza/cmd/internal/obj"
 	"github.com/harrybrwn/apizza/pkg/cache"
 	"github.com/harrybrwn/apizza/pkg/config"
 )
@@ -38,8 +37,6 @@ type configCmd struct {
 	dir    bool
 	getall bool
 	edit   bool
-
-	setDefaultAddress string
 
 	card string
 	exp  string
@@ -59,23 +56,6 @@ func (c *configCmd) Run(cmd *cobra.Command, args []string) error {
 	}
 	if c.getall {
 		return config.FprintAll(cmd.OutOrStdout(), config.Object())
-	}
-
-	if c.setDefaultAddress != "" {
-		raw, err := c.db.WithBucket("addresses").Get(c.setDefaultAddress)
-		if err != nil {
-			return err
-		}
-		if len(raw) == 0 {
-			return fmt.Errorf("could not find '%s'", c.setDefaultAddress)
-		}
-
-		addr, err := obj.FromGob(raw)
-		if err != nil {
-			return err
-		}
-		c.conf.Address = *addr
-		return err
 	}
 	return cmd.Usage()
 }
@@ -102,7 +82,6 @@ ex. 'apizza config get name' or 'apizza config set name=<your name>'`
 	c.Flags().BoolVarP(&c.dir, "dir", "d", c.dir, "show the apizza config directory path")
 	c.Flags().BoolVar(&c.getall, "get-all", c.getall, "show all the contents of the config file")
 	c.Flags().BoolVarP(&c.edit, "edit", "e", false, "open the config file with the text editor set by $EDITOR")
-	c.Flags().StringVar(&c.setDefaultAddress, "set-address", "", "name of a pre-stored address (see 'apizza address --new')")
 
 	cmd := c.Cmd()
 	cmd.AddCommand(configSetCmd, configGetCmd)

@@ -14,7 +14,6 @@ import (
 	"github.com/harrybrwn/apizza/cmd/internal"
 	"github.com/harrybrwn/apizza/cmd/internal/data"
 	"github.com/harrybrwn/apizza/cmd/internal/obj"
-	"github.com/harrybrwn/apizza/cmd/internal/out"
 	"github.com/harrybrwn/apizza/dawg"
 	"github.com/harrybrwn/apizza/pkg/cache"
 	"github.com/harrybrwn/apizza/pkg/config"
@@ -24,11 +23,12 @@ import (
 // NewCartCmd creates a new cart command.
 func NewCartCmd(b cli.Builder) cli.CliCommand {
 	c := &cartCmd{
-		cart:    cart.New(b),
-		price:   false,
-		delete:  false,
-		verbose: false,
-		topping: false,
+		cart:       cart.New(b),
+		price:      false,
+		delete:     false,
+		verbose:    false,
+		topping:    false,
+		getaddress: b.Address,
 	}
 
 	c.CliCommand = b.Build("cart <order name>", "Manage user created orders", c)
@@ -73,11 +73,11 @@ type cartCmd struct {
 	remove  string // yes, you can only remove one thing at a time
 	product string
 
-	topping bool // not actually a flag anymore
+	topping    bool // not actually a flag anymore
+	getaddress func() dawg.Address
 }
 
 func (c *cartCmd) Run(cmd *cobra.Command, args []string) (err error) {
-	out.SetOutput(cmd.OutOrStdout())
 	c.cart.SetOutput(c.Output())
 	if len(args) < 1 {
 		return c.cart.PrintOrders(c.verbose)
@@ -99,8 +99,16 @@ func (c *cartCmd) Run(cmd *cobra.Command, args []string) (err error) {
 		return nil
 	}
 	// Set the order that will be used will the cart functions
-	if err = c.cart.SetCurrentOrder(args[0]); err != nil {
+	if err = c.cart.SetCurrentOrder(name); err != nil {
 		return err
+	}
+
+	var order *dawg.Order = c.cart.CurrentOrder
+
+	if !order.Address.Equal(c.getaddress()) {
+		if err = c.cart.UpdateAddressAndOrderID(c.getaddress()); err != nil {
+			return err
+		}
 	}
 
 	if c.validate {
@@ -110,14 +118,14 @@ func (c *cartCmd) Run(cmd *cobra.Command, args []string) (err error) {
 
 	if len(c.remove) > 0 {
 		if c.topping {
-			for _, p := range c.cart.CurrentOrder.Products {
+			for _, p := range order.Products {
 				if _, ok := p.Options()[c.remove]; ok || p.Code == c.product {
 					delete(p.Opts, c.remove)
 					break
 				}
 			}
 		} else {
-			if err = c.cart.CurrentOrder.RemoveProduct(c.remove); err != nil {
+			if err = order.RemoveProduct(c.remove); err != nil {
 				return err
 			}
 		}
@@ -133,10 +141,10 @@ func (c *cartCmd) Run(cmd *cobra.Command, args []string) (err error) {
 		if err != nil {
 			return err
 		}
-		// stave order and return early before order is printed out
+		// save order and return early before order is printed out
 		return c.cart.SaveAndReset()
 	}
-	return out.PrintOrder(c.cart.CurrentOrder, true, c.price)
+	return c.cart.PrintCurrentOrder(true, c.price)
 }
 
 func newAddOrderCmd(b cli.Builder) cli.CliCommand {
@@ -181,8 +189,7 @@ func (c *addOrderCmd) Run(cmd *cobra.Command, args []string) (err error) {
 			return err
 		}
 		for _, t := range c.toppings {
-			err = prod.AddTopping(t, dawg.ToppingFull, "1.0")
-			if err != nil {
+			if err = prod.AddTopping(t, dawg.ToppingFull, "1.0"); err != nil {
 				return err
 			}
 		}
@@ -272,13 +279,17 @@ func (c *orderCmd) Run(cmd *cobra.Command, args []string) (err error) {
 	num := eitherOr(c.number, config.GetString("card.number"))
 	exp := eitherOr(c.expiration, config.GetString("card.expiration"))
 	if num == "" {
-		fmt.Println(num)
 		return errors.New("no card number given")
 	}
 	if exp == "" {
 		return errors.New("no card expiration date given")
 	}
-	order.AddCard(dawg.NewCard(num, exp, c.cvv))
+
+	card := dawg.NewCard(num, exp, c.cvv)
+	if err = dawg.ValidateCard(card); err != nil {
+		return err
+	}
+	order.AddCard(card)
 
 	names := strings.Split(config.GetString("name"), " ")
 	if len(names) >= 1 {
@@ -289,7 +300,15 @@ func (c *orderCmd) Run(cmd *cobra.Command, args []string) (err error) {
 	}
 	order.Email = eitherOr(c.email, config.GetString("email"))
 	order.Phone = eitherOr(c.phone, config.GetString("phone"))
-	order.Address = dawg.StreetAddrFromAddress(c.getaddress())
+
+	if !order.Address.Equal(c.getaddress()) {
+		order.Address = dawg.StreetAddrFromAddress(c.getaddress())
+		s, err := dawg.NearestStore(c.getaddress(), order.ServiceMethod)
+		if err != nil {
+			return err
+		}
+		order.StoreID = s.ID
+	}
 
 	c.Printf("Ordering dominos for %s to %s\n\n", order.ServiceMethod, strings.Replace(obj.AddressFmt(order.Address), "\n", " ", -1))
 
@@ -309,7 +328,7 @@ func (c *orderCmd) Run(cmd *cobra.Command, args []string) (err error) {
 	// logging happens after so any data from placeorder is included
 	log.Println("sending order:", dawg.OrderToJSON(order))
 	if err != nil {
-		return err
+		fmt.Fprintf(os.Stderr, "Error: %s\n", err.Error())
 	}
 	c.Printf("sent to %s %s\n", order.Address.LineOne(), order.Address.City())
 

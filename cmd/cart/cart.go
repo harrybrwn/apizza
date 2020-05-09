@@ -13,6 +13,7 @@ import (
 	"github.com/harrybrwn/apizza/cmd/cli"
 	"github.com/harrybrwn/apizza/cmd/client"
 	"github.com/harrybrwn/apizza/cmd/internal/data"
+	"github.com/harrybrwn/apizza/cmd/internal/out"
 	"github.com/harrybrwn/apizza/cmd/opts"
 	"github.com/harrybrwn/apizza/dawg"
 	"github.com/harrybrwn/apizza/pkg/cache"
@@ -152,10 +153,33 @@ func (c *Cart) Validate() error {
 	fmt.Fprintf(c.out, "validating order '%s'...\n", c.CurrentOrder.Name())
 	err := c.CurrentOrder.Validate()
 	if dawg.IsWarning(err) {
-		return nil
+		goto ValidOrder
 	}
+	if err != nil {
+		return err
+	}
+
+ValidOrder:
 	fmt.Fprintln(c.out, "Order is ok.")
-	return err
+	return nil
+}
+
+// PrintCurrentOrder will print out the current order.
+func (c *Cart) PrintCurrentOrder(full, price bool) error {
+	out.SetOutput(c.out)
+	return out.PrintOrder(c.CurrentOrder, full, price)
+}
+
+// UpdateAddressAndOrderID will update the current order's address and then update
+// the current order's StoreID by finding the nearest store for that address.
+func (c *Cart) UpdateAddressAndOrderID(currentAddr dawg.Address) error {
+	c.CurrentOrder.Address = dawg.StreetAddrFromAddress(currentAddr)
+	s, err := dawg.NearestStore(currentAddr, c.CurrentOrder.ServiceMethod)
+	if err != nil {
+		return err
+	}
+	c.CurrentOrder.StoreID = s.ID
+	return nil
 }
 
 // ValidateOrder will retrieve an order from the database and validate it.

@@ -101,7 +101,7 @@ func (a *addAddressCmd) newAddress() error {
 		return err
 	}
 
-	fmt.Print(name, ":\n", addr, "\n")
+	fmt.Fprint(a.Output(), name, ":\n", addr, "\n")
 	raw, err := obj.AsGob(&addr)
 	if err != nil {
 		return err

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/harrybrwn/apizza/cmd/cli"
@@ -201,5 +202,62 @@ func TestConfigSet(t *testing.T) {
 		t.Error(err)
 	} else if err.Error() != "use '<key>=<value>' format (no spaces), use <key>='-' to set as empty" {
 		t.Error("wrong error message, got:", err.Error())
+	}
+}
+
+func TestCompletion(t *testing.T) {
+	r := cmdtest.NewTestRecorder(t)
+	defer r.CleanUp()
+	c := NewCompletionCmd(r)
+	c.SetOutput(r.Out)
+	for _, a := range []string{"zsh", "ps", "powershell", "bash", "fish"} {
+		if err := c.RunE(c, []string{a}); err != nil {
+			if r.Out.Len() == 0 {
+				t.Error("got zero length completion script")
+			}
+		}
+	}
+}
+
+func TestAddressCmd(t *testing.T) {
+	r := cmdtest.NewTestRecorder(t)
+	defer r.CleanUp()
+	buf := &bytes.Buffer{}
+	cmd := NewAddAddressCmd(r, buf).(*addAddressCmd)
+	tests.Check(cmd.Cmd().ParseFlags([]string{"--new"}))
+
+	inputs := []string{
+		"testaddress",
+		"600 Mountain Ave bldg 5",
+		"New Providence",
+		"NJ",
+		"07974",
+	}
+	for _, in := range inputs {
+		_, err := buf.Write([]byte(in + "\n"))
+		tests.Check(err)
+	}
+	tests.Check(cmd.Run(cmd.Cmd(), []string{}))
+	raw, err := r.DataBase.WithBucket("addresses").Get("testaddress")
+	tests.Check(err)
+	addr, err := obj.FromGob(raw)
+	tests.Check(err)
+	tests.StrEq(addr.Street, "600 Mountain Ave bldg 5", "got wrong street")
+	tests.StrEq(addr.CityName, "New Providence", "got wrong city")
+	tests.StrEq(addr.State, "NJ", "go wrong state")
+	tests.StrEq(addr.Zipcode, "07974", "got wrong zip")
+
+	r.Out.Reset()
+	cmd.new = false
+	tests.Check(cmd.Run(cmd.Cmd(), []string{}))
+	if !strings.Contains(r.Out.String(), obj.AddressFmtIndent(addr, 2)) {
+		t.Error("address was no found in output")
+	}
+	r.Out.Reset()
+
+	tests.Check(cmd.Cmd().ParseFlags([]string{"--delete=testaddress"}))
+	tests.Check(cmd.Run(cmd.Cmd(), []string{}))
+	if r.Out.Len() != 0 {
+		t.Error("should be zero length")
 	}
 }

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"io"
 	"io/ioutil"
+	"log"
 	"os"
 	"strings"
 	"testing"
@@ -43,11 +44,14 @@ func NewRecorder() *Recorder {
 	conf.Service = dawg.Carryout
 	conf.Address = *addr
 
+	out := new(bytes.Buffer)
+	log.SetOutput(ioutil.Discard)
+
 	return &Recorder{
 		DataBase:   TempDB(),
-		Out:        new(bytes.Buffer),
+		Out:        out,
 		Conf:       conf,
-		addr:       addr,
+		addr:       nil,
 		cfgHasFile: true,
 	}
 }
@@ -76,7 +80,10 @@ func (r *Recorder) Build(use, short string, run cli.Runner) *cli.Command {
 
 // Address returns the address.
 func (r *Recorder) Address() dawg.Address {
-	return r.addr
+	if r.addr != nil {
+		return r.addr
+	}
+	return &r.Conf.Address
 }
 
 // GlobalOptions has the global flags
