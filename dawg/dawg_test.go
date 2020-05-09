@@ -217,8 +217,9 @@ func TestValidateCard(t *testing.T) {
 		{NewCard("370218180742397", "0123", 123), true},
 		{NewCard("370218180742397", "01/23", 123), true},
 		{NewCard("370218180742397", "1/23", 123), true},
-		{NewCard("370218180742397", "01/2", 123), false},
-		{NewCard("370218180742397", "01/2023", 123), true}, // nil card
+		{NewCard("370218180742397", "01/02", 123), true},
+		{NewCard("370218180742397", "13/21", 123), false},
+		{NewCard("370218180742397", "0/21", 123), false},
 	}
 
 	for _, tc := range tsts {
@@ -229,7 +230,35 @@ func TestValidateCard(t *testing.T) {
 			}
 			tests.Check(ValidateCard(tc.c))
 		} else {
-			tests.Exp(ValidateCard(tc.c), "expedted an error:", tc.c, tc.c.ExpiresOn())
+			tests.Exp(ValidateCard(tc.c), "expected an error:", tc.c, tc.c.ExpiresOn())
+		}
+	}
+}
+
+func TestParseDate(t *testing.T) {
+	tst := []struct {
+		s    string
+		m, y int
+	}{
+		{"01/25", 1, 2025},
+		{"0125", 1, 2025},
+		{"01/2025", 1, 2025},
+		{"1/25", 1, 2025},
+		{"1/2025", 1, 2025},
+		{"012025", -1, -1}, // failure case
+		{"11/02", 11, 2002},
+		{"11/2002", 11, 2002},
+		{"11/2", 11, 202}, // failure case
+	}
+	var m, y int
+	for _, tc := range tst {
+
+		m, y = parseDate(tc.s)
+		if m != tc.m {
+			t.Errorf("got the wrong month; want %d, got %d", tc.m, m)
+		}
+		if y != tc.y {
+			t.Errorf("got the wrong year; wand %d, got %d", tc.y, y)
 		}
 	}
 }

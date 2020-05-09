@@ -26,10 +26,17 @@ const (
 )
 
 var (
+	// As of May 9, 2020, it was discovered that the authentication endpoint was changed from,
+	// "api.dominos.com/as/token.oauth2"
+	// to,
+	// "authproxy.dominos.com/auth-proxy-service/login".
+	// I am documenting this change just in case it every changed back in the future.
+	//
+	// TODO: See comment above. Possible solutions are try both oauth endpoints or let users specify which to use.
 	oauthURL = &url.URL{
 		Scheme: "https",
-		Host:   "api.dominos.com",
-		Path:   "/as/token.oauth2",
+		Host:   "authproxy.dominos.com",
+		Path:   "/auth-proxy-service/login",
 	}
 
 	loginURL = &url.URL{
@@ -107,23 +114,25 @@ var scopes = []string{
 
 func gettoken(username, password string) (*token, error) {
 	data := url.Values{
-		"grant_type": {"password"},
-		"client_id":  {"nolo-rm"}, // nolo-rm if you want a refresh token, or just nolo for temporary token
-		"scope":      {strings.Join(scopes, " ")},
-		"username":   {username},
-		"password":   {password},
+		"grant_type":   {"password"},
+		"client_id":    {"nolo-rm"}, // nolo-rm if you want a refresh token, or just nolo for temporary token
+		"validator_id": {"VoldemortCredValidator"},
+		"scope":        {strings.Join(scopes, " ")},
+		"username":     {username},
+		"password":     {password},
 	}
 	req := newAuthRequest(oauthURL, data)
 	resp, err := orderClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
+	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf(
 			"dawg.gettoken: bad status code %d", resp.StatusCode)
 	}
 	tok := &token{transport: http.DefaultTransport}
-	return tok, errpair(unmarshalToken(resp.Body, tok), resp.Body.Close())
+	return tok, unmarshalToken(resp.Body, tok)
 }
 
 func (a *auth) login() (*UserProfile, error) {

@@ -71,7 +71,7 @@ func (p *Payment) ExpiresOn() time.Time {
 	}
 
 	m, y := parseDate(p.Expiration)
-	if m < 0 || y < 0 {
+	if m <= 0 || m > 12 || y < 0 {
 		return BadExpiration
 	}
 	return time.Date(int(y), time.Month(m), 1, 0, 0, 0, 0, time.Local)
@@ -113,6 +113,8 @@ func formatDate(t time.Time) string {
 	return fmt.Sprintf("%02d%s", t.Month(), year)
 }
 
+// in the future, i may use `time.Parse("2/06", dateString)`
+// and then try that with a few different date formats like "2/2006" or "02-06"
 func parseDate(d string) (month int, year int) {
 	parts := strings.Split(d, "/")
 

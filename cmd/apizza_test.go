@@ -117,19 +117,6 @@ func withAppCmd(f func(*testing.T, *bytes.Buffer, *App), c cli.CliCommand) func(
 	}
 }
 
-// func withCartCmd(
-// 	b cli.Builder,
-// 	f func(*cartCmd, *bytes.Buffer, *testing.T),
-// ) func(*testing.T) {
-// 	return func(t *testing.T) {
-// 		cart := NewCartCmd(b).(*cartCmd)
-// 		buf := &bytes.Buffer{}
-// 		cart.SetOutput(buf)
-
-// 		f(cart, buf, t)
-// 	}
-// }
-
 func check(e error, msg string) {
 	if e != nil {
 		fmt.Printf("test setup failed: %s - %s\n", e, msg)
