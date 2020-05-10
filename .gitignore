@@ -17,6 +17,7 @@ TODO
 coverage.html
 *.json
 *.test
+!Dockerfile.test
 *.py
 *.prof
 !dawg/testdata/cardnums.json

@@ -18,6 +18,13 @@ test: test-build
 	bash scripts/integration.sh ./bin/apizza
 	@[ -d ./bin ] && [ -x ./bin/apizza ] && rm -rf ./bin
 
+docker:
+	docker build --rm -t apizza .
+
+docker-test:
+	docker build -f Dockerfile.test --rm -t apizza:$(VERSION) .
+	docker run --rm -it apizza:$(VERSION)
+
 release: gen
 	scripts/release build
 
@@ -41,4 +48,4 @@ clean:
 
 all: test build release
 
-.PHONY: install test clean html release gen
+.PHONY: install test clean html release gen docker
