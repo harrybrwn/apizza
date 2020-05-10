@@ -136,9 +136,12 @@ func TestAuth(t *testing.T) {
 	}
 	defer swapclient(5)()
 	tests.InitHelpers(t)
-
-	auth, err := getTestAuth(username, password)
+	user, err := SignIn(username, password)
 	tests.Check(err)
+	if user == nil {
+		t.Fatal("got nil user-profile")
+	}
+	auth := user.auth
 	if auth == nil {
 		t.Fatal("got nil auth")
 	}
@@ -157,14 +160,7 @@ func TestAuth(t *testing.T) {
 	if len(auth.token.AccessToken) == 0 {
 		t.Error("no access token")
 	}
-
-	var user *UserProfile
-	user, err = SignIn(username, password)
 	user.SetServiceMethod(Delivery)
-	tests.Check(err)
-	if user == nil {
-		t.Fatal("got nil user-profile")
-	}
 	user.AddAddress(testAddress())
 	user.Addresses[0].StreetNumber = ""
 	user.Addresses[0].StreetName = ""
@@ -190,12 +186,18 @@ func TestAuth(t *testing.T) {
 	if store == nil {
 		t.Fatal("store is nil")
 	}
+	store1, err := user.NearestStore(Delivery)
+	tests.Check(err)
+	if store != store1 {
+		t.Error("should be the same store")
+	}
 	if store.cli == nil {
 		t.Fatal("store did not get a client")
 	}
 	if store.cli.host != "order.dominos.com" {
 		t.Error("store client has the wrong host")
 	}
+
 	req := &http.Request{
 		Method: "GET", Host: store.cli.host, Proto: "HTTP/1.1",
 		URL: &url.URL{
@@ -215,6 +217,7 @@ func TestAuth(t *testing.T) {
 	if len(b) == 0 {
 		t.Error("zero length response")
 	}
+
 	menu, err := store.Menu()
 	tests.Check(err)
 	if menu == nil {

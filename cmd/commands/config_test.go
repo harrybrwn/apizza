@@ -75,17 +75,9 @@ func TestConfigCmd(t *testing.T) {
 
 	tests.Check(json.Unmarshal([]byte(testconfigjson), r.Config()))
 	c.dir = false
-	c.getall = true
 	tests.Check(c.Run(c.Cmd(), []string{}))
 	r.Compare(t, testConfigOutput)
 	r.ClearBuf()
-	c.getall = false
-	cmdUseage := c.Cmd().UsageString()
-	tests.Check(c.Run(c.Cmd(), []string{}))
-	r.Compare(t, cmdUseage)
-	r.ClearBuf()
-	tests.Check(c.Run(c.Cmd(), []string{}))
-	r.Compare(t, c.Cmd().UsageString())
 }
 
 func TestConfigEdit(t *testing.T) {
@@ -182,7 +174,6 @@ func TestConfigGet(t *testing.T) {
 }
 
 func TestConfigSet(t *testing.T) {
-	// c := newConfigSet() //.(*configSetCmd)
 	tests.InitHelpers(t)
 	conf := &cli.Config{}
 	config.SetNonFileConfig(conf) // don't want it to over ride the file on disk

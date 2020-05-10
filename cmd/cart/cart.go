@@ -12,6 +12,7 @@ import (
 
 	"github.com/harrybrwn/apizza/cmd/cli"
 	"github.com/harrybrwn/apizza/cmd/client"
+	"github.com/harrybrwn/apizza/cmd/internal"
 	"github.com/harrybrwn/apizza/cmd/internal/data"
 	"github.com/harrybrwn/apizza/cmd/internal/out"
 	"github.com/harrybrwn/apizza/cmd/opts"
@@ -229,7 +230,7 @@ func addToppingsToOrder(o *dawg.Order, product string, toppings []string) (err e
 			return fmt.Errorf("cannot find '%s' in the '%s' order", product, o.Name())
 		}
 
-		err = addTopping(top, p)
+		err = internal.AddTopping(top, p)
 		if err != nil {
 			return err
 		}
@@ -259,41 +260,4 @@ func getOrderItem(order *dawg.Order, code string) dawg.Item {
 		}
 	}
 	return nil
-}
-
-// adds a topping.
-//
-// formated as <name>:<side>:<amount>
-// name is the only one that is required.
-func addTopping(topStr string, p dawg.Item) error {
-	var side, amount string
-
-	topping := strings.Split(topStr, ":")
-
-	// assuming strings.Split cannot return zero length array
-	if topping[0] == "" || len(topping) > 3 {
-		return errors.New("incorrect topping format")
-	}
-
-	// TODO: need to check for bed values and use appropriate error handling
-	if len(topping) == 1 {
-		side = dawg.ToppingFull
-	} else if len(topping) >= 2 {
-		side = topping[1]
-		switch strings.ToLower(side) {
-		case "left":
-			side = dawg.ToppingLeft
-		case "right":
-			side = dawg.ToppingRight
-		case "full":
-			side = dawg.ToppingFull
-		}
-	}
-
-	if len(topping) == 3 {
-		amount = topping[2]
-	} else {
-		amount = "1.0"
-	}
-	return p.AddTopping(topping[0], side, amount)
 }

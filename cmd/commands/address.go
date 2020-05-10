@@ -21,6 +21,9 @@ func NewAddAddressCmd(b cli.Builder, in io.Reader) cli.CliCommand {
 	}
 	c.CliCommand = b.Build("address", "Add a new named address to the internal storage.", c)
 	cmd := c.Cmd()
+	cmd.Long = `The address command is where user addresses are managed. Addresses added with
+the '--new' flag are put into the program's internal storage. To set one of theses
+addresses as the program default set the appropriate config file option (default-address-name).`
 	cmd.Aliases = []string{"addr"}
 	cmd.Flags().BoolVarP(&c.new, "new", "n", c.new, "add a new address")
 	cmd.Flags().StringVarP(&c.delete, "delete", "d", "", "delete an address")

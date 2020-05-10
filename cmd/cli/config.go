@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	"github.com/harrybrwn/apizza/cmd/internal/obj"
+	"github.com/harrybrwn/apizza/dawg"
 	"github.com/harrybrwn/apizza/pkg/config"
 )
 
@@ -29,7 +30,7 @@ func (c *Config) Get(key string) interface{} {
 // Set a config variable
 func (c *Config) Set(key string, val interface{}) error {
 	if config.FieldName(c, key) == "Service" {
-		if val != "Delivery" && val != "Carryout" {
+		if val != dawg.Delivery && val != dawg.Carryout {
 			return errors.New("service must be either 'Delivery' or 'Carryout'")
 		}
 	}

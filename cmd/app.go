@@ -48,6 +48,9 @@ func NewApp(out io.Writer) *App {
 	}
 	app.CliCommand = cli.NewCommand("apizza", "Dominos pizza from the command line.", app.Run)
 	app.StoreFinder = client.NewStoreGetterFunc(app.getService, app.Address)
+	cmd := app.Cmd()
+	cmd.PersistentPreRunE = app.prerun
+	cmd.PostRunE = app.postrun
 	app.SetOutput(out)
 	return app
 }
@@ -179,9 +182,6 @@ func (a *App) initflags() {
 	cmd := a.Cmd()
 	flags := cmd.Flags()
 	persistflags := cmd.PersistentFlags()
-
-	cmd.PersistentPreRunE = a.prerun
-	cmd.PostRunE = a.postrun
 
 	a.gOpts.Install(persistflags)
 	a.opts.Install(flags)

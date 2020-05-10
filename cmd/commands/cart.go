@@ -45,15 +45,15 @@ created orders.`
 	}
 	cmd.ValidArgsFunction = c.cart.OrdersCompletion
 
-	c.Flags().BoolVar(&c.validate, "validate", c.validate, "send an order to the dominos order-validation endpoint.")
-	c.Flags().BoolVar(&c.price, "price", c.price, "show to price of an order")
-	c.Flags().BoolVarP(&c.delete, "delete", "d", c.delete, "delete the order from the database")
+	c.Flags().BoolVar(&c.validate, "validate", c.validate, "Send an order to the dominos order-validation endpoint")
+	c.Flags().BoolVar(&c.price, "price", c.price, "Show to price of an order")
+	c.Flags().BoolVarP(&c.delete, "delete", "d", c.delete, "Delete the order from the database")
 
-	c.Flags().StringSliceVarP(&c.add, "add", "a", c.add, "add any number of products to a specific order")
-	c.Flags().StringVarP(&c.remove, "remove", "r", c.remove, "remove a product from the order")
-	c.Flags().StringVarP(&c.product, "product", "p", "", "give the product that will be effected by --add or --remove")
+	c.Flags().StringSliceVarP(&c.add, "add", "a", c.add, "Add any number of products to a specific order")
+	c.Flags().StringVarP(&c.remove, "remove", "r", c.remove, "Remove a product from the order")
+	c.Flags().StringVarP(&c.product, "product", "p", "", "Give the product that will be effected by --add or --remove")
 
-	c.Flags().BoolVarP(&c.verbose, "verbose", "v", c.verbose, "print cart verbosely")
+	c.Flags().BoolVarP(&c.verbose, "verbose", "v", c.verbose, "Print cart verbosely")
 
 	c.Addcmd(newAddOrderCmd(b))
 	return c
@@ -183,13 +183,17 @@ func (c *addOrderCmd) Run(cmd *cobra.Command, args []string) (err error) {
 		order.SetName(c.name)
 	}
 
+	// User interface options:
+	// - only add one product but a list of toppings
+	// - add a list of products in parallel with a list of toppings (vectorized approach)
+	// - add some weird extra syntax to do both (bad idea)
 	if c.product != "" {
 		prod, err := c.Store().GetVariant(c.product)
 		if err != nil {
 			return err
 		}
 		for _, t := range c.toppings {
-			if err = prod.AddTopping(t, dawg.ToppingFull, "1.0"); err != nil {
+			if err = internal.AddTopping(t, prod); err != nil {
 				return err
 			}
 		}

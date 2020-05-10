@@ -33,13 +33,9 @@ type configCmd struct {
 	db   *cache.DataBase
 	conf *cli.Config
 
-	file   bool
-	dir    bool
-	getall bool
-	edit   bool
-
-	card string
-	exp  string
+	file bool
+	dir  bool
+	edit bool
 }
 
 func (c *configCmd) Run(cmd *cobra.Command, args []string) error {
@@ -54,10 +50,7 @@ func (c *configCmd) Run(cmd *cobra.Command, args []string) error {
 		c.Println(config.Folder())
 		return nil
 	}
-	if c.getall {
-		return config.FprintAll(cmd.OutOrStdout(), config.Object())
-	}
-	return cmd.Usage()
+	return config.FprintAll(cmd.OutOrStdout(), config.Object())
 }
 
 // NewConfigCmd creates a new config command.
@@ -71,19 +64,16 @@ func NewConfigCmd(b cli.Builder) cli.CliCommand {
 	}
 	c.CliCommand = b.Build("config", "Configure apizza", c)
 	c.SetOutput(b.Output())
-	c.Cmd().Aliases = []string{"conf"}
-	c.Cmd().Long = `The 'config' command is used for accessing the apizza config file
+	cmd := c.Cmd()
+	cmd.Aliases = []string{"conf"}
+	cmd.Long = `The 'config' command is used for accessing the apizza config file
 in your home directory. Feel free to edit the apizza config.json file
-by hand or use the 'config' command.
-
-ex. 'apizza config get name' or 'apizza config set name=<your name>'`
+by hand or use the 'config' command.`
 
 	c.Flags().BoolVarP(&c.file, "file", "f", c.file, "show the path to the config.json file")
 	c.Flags().BoolVarP(&c.dir, "dir", "d", c.dir, "show the apizza config directory path")
-	c.Flags().BoolVar(&c.getall, "get-all", c.getall, "show all the contents of the config file")
 	c.Flags().BoolVarP(&c.edit, "edit", "e", false, "open the config file with the text editor set by $EDITOR")
 
-	cmd := c.Cmd()
 	cmd.AddCommand(configSetCmd, configGetCmd)
 	return c
 }

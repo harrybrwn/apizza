@@ -30,7 +30,7 @@ type Config interface {
 // 	func (c *MyConfig) Get(key string) interface{} { return config.GetField(c, key) }
 //
 // note: this will only work if the struct implements the Config interface.
-func GetField(config Config, key string) interface{} {
+func GetField(config interface{}, key string) interface{} {
 	value := reflect.ValueOf(config).Elem()
 	_, _, val := find(value, strings.Split(key, "."))
 	switch val.Kind() {
@@ -38,9 +38,7 @@ func GetField(config Config, key string) interface{} {
 		return val.String()
 	case reflect.Int:
 		return val.Int()
-	case reflect.Float64:
-		return val.Float()
-	case reflect.Float32:
+	case reflect.Float64, reflect.Float32:
 		return val.Float()
 	case reflect.Struct:
 		return val.Interface()
@@ -59,7 +57,7 @@ func GetField(config Config, key string) interface{} {
 // 	func (c *MyConfig) Get(key string, val interface{}) error { return config.SetField(c, key, val) }
 //
 // note: this will only work if the struct implements the Config interface.
-func SetField(config Config, key string, val interface{}) error {
+func SetField(config interface{}, key string, val interface{}) error {
 	v := reflect.ValueOf(config).Elem()
 	_, _, field := find(v, strings.Split(key, "."))
 	if !field.IsValid() {
@@ -165,6 +163,8 @@ func visitAll(val reflect.Value, depth int, fmtr Formatter) string {
 		name, ok = typ.Field(i).Tag.Lookup("config")
 		if !ok {
 			name = typ.Field(i).Name
+		} else {
+			name = strings.Split(name, ",")[0]
 		}
 
 		fieldVal := val.Field(i)
@@ -197,4 +197,34 @@ var DefaultFormatter = Formatter{
 		return val
 	},
 	TabSize: 2,
+}
+
+func omitProtected(obj interface{}) (map[string]interface{}, error) {
+	m := make(map[string]interface{})
+	val := reflect.ValueOf(obj)
+	typ := val.Type()
+	gatherNotProtected(m, val, typ)
+	return m, nil
+}
+
+func gatherNotProtected(m map[string]interface{}, val reflect.Value, typ reflect.Type) {
+	for i := 0; i < typ.NumField(); i++ {
+		f := typ.Field(i)
+		tag, ok := f.Tag.Lookup("config")
+		if ok {
+			if strings.Contains(tag, "protected") {
+				continue
+			}
+		}
+
+		v := val.Field(i)
+		switch f.Type.Kind() {
+		case reflect.Struct:
+			inner := map[string]interface{}{}
+			gatherNotProtected(inner, val.Field(i), f.Type)
+			m[f.Name] = inner
+		case reflect.Bool:
+			m[f.Name] = v.Bool()
+		}
+	}
 }

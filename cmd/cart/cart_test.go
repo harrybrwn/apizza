@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"testing"
 
+	"github.com/harrybrwn/apizza/cmd/internal"
 	"github.com/harrybrwn/apizza/cmd/internal/cmdtest"
 	"github.com/harrybrwn/apizza/cmd/internal/data"
 	"github.com/harrybrwn/apizza/dawg"
@@ -23,7 +24,7 @@ func TestToppings(t *testing.T) {
 	r, cart, order := setup(t)
 	defer r.CleanUp()
 
-	tests.Exp(addTopping("", testProduct))
+	tests.Exp(internal.AddTopping("", testProduct))
 	order.Products = []*dawg.OrderProduct{testProduct}
 	tests.Fatal(data.SaveOrder(order, cart.out, r.DataBase))
 	tests.Fatal(cart.SetCurrentOrder(cmdtest.OrderName))

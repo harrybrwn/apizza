@@ -12,7 +12,7 @@ import (
 
 	"github.com/harrybrwn/apizza/pkg/errs"
 	homedir "github.com/mitchellh/go-homedir"
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 )
 
 var (
@@ -39,7 +39,7 @@ const (
 
 // SetConfig sets the config file and also runs through the configuration
 // setup process.
-func SetConfig(foldername string, c Config) error {
+func SetConfig(foldername string, c interface{}) error {
 	dir := getdir(foldername)
 
 	cfg = configfile{
@@ -71,7 +71,7 @@ func SetNonFileConfig(c Config) error {
 }
 
 type configfile struct {
-	conf    Config
+	conf    interface{}
 	file    string
 	dir     string
 	changed bool
@@ -125,7 +125,7 @@ func (c *configfile) exists() bool {
 }
 
 // Object returns the configuration struct passes to SetConfig.
-func Object() Config {
+func Object() interface{} {
 	return cfg.conf
 }
 
