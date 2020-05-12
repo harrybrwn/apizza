@@ -10,14 +10,12 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
-	"time"
+
+	"github.com/harrybrwn/apizza/dawg/internal/auth"
 )
 
-type auth struct {
-	username string
-	password string
-	token    *token
-	cli      *client
+type doer interface {
+	Do(*http.Request) (*http.Response, error)
 }
 
 const (
@@ -46,53 +44,43 @@ var (
 	}
 )
 
-func newauth(username, password string) (*auth, error) {
+func authorize(c *http.Client, username, password string) error {
 	tok, err := gettoken(username, password)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	a := &auth{
-		token:    tok,
-		username: username,
-		password: password,
-		cli: &client{
-			host: orderHost,
-			Client: &http.Client{
-				Transport:     tok,
-				Timeout:       60 * time.Second,
-				CheckRedirect: noRedirects,
-			},
-		},
-	}
-	return a, nil
+	c.Transport = tok
+	return nil
 }
 
 var noRedirects = func(r *http.Request, via []*http.Request) error {
 	return http.ErrUseLastResponse
 }
 
-const tokenHost = "api.dominos.com"
+// // Token is a JWT that can be used as a transport for an http.Client
+// type token struct {
+// 	// AccessToken is the actual web token
+// 	AccessToken string `json:"access_token"`
+// 	// RefreshToken is the secret used to refresh this token
+// 	RefreshToken string `json:"refresh_token,omitempty"`
+// 	// Type is the type of token
+// 	Type string `json:"token_type"`
+// 	// ExpiresIn is the time in seconds that it takes for the token to
+// 	// expire.
+// 	ExpiresIn int `json:"expires_in"`
 
-type token struct {
-	AccessToken  string `json:"access_token"`
-	RefreshToken string `json:"refresh_token,omitempty"`
-	Type         string `json:"token_type"`
+// 	transport http.RoundTripper
+// }
 
-	// ExpiresIn is the time in seconds that it takes for the token to
-	// expire.
-	ExpiresIn int `json:"expires_in"`
+// func (t *token) authorization() string {
+// 	return fmt.Sprintf("%s %s", t.Type, t.AccessToken)
+// }
 
-	transport http.RoundTripper
-}
-
-func (t *token) authorization() string {
-	return fmt.Sprintf("%s %s", t.Type, t.AccessToken)
-}
-
-func (t *token) RoundTrip(req *http.Request) (*http.Response, error) {
-	req.Header.Add("Authorization", t.authorization())
-	return t.transport.RoundTrip(req)
-}
+// func (t *token) RoundTrip(req *http.Request) (*http.Response, error) {
+// 	req.Header.Set("Authorization", t.authorization())
+// 	auth.SetDawgUserAgent(req.Header)
+// 	return t.transport.RoundTrip(req)
+// }
 
 var scopes = []string{
 	"customer:card:read",
@@ -112,7 +100,7 @@ var scopes = []string{
 	"easyOrder:read",
 }
 
-func gettoken(username, password string) (*token, error) {
+func gettoken(username, password string) (*auth.Token, error) {
 	data := url.Values{
 		"grant_type":   {"password"},
 		"client_id":    {"nolo-rm"}, // nolo-rm if you want a refresh token, or just nolo for temporary token
@@ -121,35 +109,40 @@ func gettoken(username, password string) (*token, error) {
 		"username":     {username},
 		"password":     {password},
 	}
-	req := newAuthRequest(oauthURL, data)
+	req := newPostReq(oauthURL, data)
 	resp, err := orderClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
 	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf(
-			"dawg.gettoken: bad status code %d", resp.StatusCode)
+
+	result := struct {
+		*auth.Token
+		*auth.Error
+	}{Token: auth.NewToken(), Error: nil}
+
+	if err = json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, err
 	}
-	tok := &token{transport: http.DefaultTransport}
-	return tok, unmarshalToken(resp.Body, tok)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return result.Token, nil
 }
 
-func (a *auth) login() (*UserProfile, error) {
+func login(c *client) (*UserProfile, error) {
 	data := url.Values{
 		"loyaltyIsActive": {"true"},
 		"rememberMe":      {"true"},
-		"u":               {a.username},
-		"p":               {a.password},
 	}
-	req := newAuthRequest(loginURL, data)
-	res, err := a.cli.Do(req)
+	req := newPostReq(loginURL, data)
+	res, err := c.Do(req)
 	if err != nil {
 		return nil, err
 	}
 	defer res.Body.Close()
 
-	profile := &UserProfile{auth: a}
+	profile := &UserProfile{cli: c}
 	b, err := ioutil.ReadAll(res.Body)
 	if err = errpair(err, dominosErr(b)); err != nil {
 		return nil, err
@@ -157,7 +150,7 @@ func (a *auth) login() (*UserProfile, error) {
 	return profile, json.Unmarshal(b, profile)
 }
 
-func newAuthRequest(u *url.URL, vals url.Values) *http.Request {
+func newPostReq(u *url.URL, vals url.Values) *http.Request {
 	return &http.Request{
 		Method:     "POST",
 		Proto:      "HTTP/1.1",
@@ -166,10 +159,7 @@ func newAuthRequest(u *url.URL, vals url.Values) *http.Request {
 		Host:       u.Host,
 		Header: http.Header{
 			"Content-Type": {
-				"application/x-www-form-urlencoded; charset=UTF-8"},
-			"User-Agent": {
-				"Apizza Dominos API Wrapper for Go " + time.Now().UTC().String()},
-		},
+				"application/x-www-form-urlencoded; charset=UTF-8"}},
 		URL:  u,
 		Body: ioutil.NopCloser(strings.NewReader(vals.Encode())),
 	}
@@ -181,15 +171,19 @@ type client struct {
 }
 
 func (c *client) do(req *http.Request) ([]byte, error) {
+	return do(c.Client, req)
+}
+
+func do(d doer, req *http.Request) ([]byte, error) {
 	var buf bytes.Buffer
-	resp, err := c.Do(req)
+	resp, err := d.Do(req)
 	if err != nil {
 		return nil, err
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("dawg.client.do: bad status code %d", resp.StatusCode)
+		return nil, fmt.Errorf("dawg.do: bad status code %s", resp.Status)
 	}
 	_, err = buf.ReadFrom(resp.Body)
 	if bytes.HasPrefix(bytes.ToLower(buf.Bytes()[:15]), []byte("<!doctype html>")) {
@@ -199,16 +193,15 @@ func (c *client) do(req *http.Request) ([]byte, error) {
 }
 
 func (c *client) dojson(v interface{}, r *http.Request) (err error) {
-	resp, err := c.Do(r)
+	return dojson(c, v, r)
+}
+
+func dojson(d doer, v interface{}, r *http.Request) (err error) {
+	resp, err := d.Do(r)
 	if err != nil {
 		return err
 	}
-	defer func() {
-		e := resp.Body.Close()
-		if err == nil {
-			err = e
-		}
-	}()
+	defer resp.Body.Close()
 	return json.NewDecoder(resp.Body).Decode(v)
 }
 
@@ -253,7 +246,7 @@ func (c *client) post(path string, params URLParam, r io.Reader) ([]byte, error)
 	})
 }
 
-func unmarshalToken(r io.ReadCloser, t *token) error {
+func unmarshalToken(r io.ReadCloser, t *auth.Token) error {
 	buf := new(bytes.Buffer)
 	defer r.Close()
 
@@ -262,7 +255,13 @@ func unmarshalToken(r io.ReadCloser, t *token) error {
 	if err != nil {
 		return err
 	}
-	return newTokenErr(buf.Bytes())
+	e := &tokenError{}
+	// if there is no token error the the json parsing will fail
+	json.Unmarshal(buf.Bytes(), e)
+	if len(e.Err) > 0 || len(e.ErrorDesc) > 0 {
+		return e
+	}
+	return nil
 }
 
 type tokenError struct {
@@ -274,11 +273,12 @@ func (e *tokenError) Error() string {
 	return fmt.Sprintf("%s: %s", e.Err, e.ErrorDesc)
 }
 
-func newTokenErr(b []byte) error {
+func newTokErr(r io.Reader) error {
 	e := &tokenError{}
-	// if there is no error the the json parsing will fail
-	json.Unmarshal(b, e)
-	if len(e.Err) > 0 {
+	if err := json.NewDecoder(r).Decode(e); err != nil {
+		return err
+	}
+	if len(e.Err) > 0 || len(e.ErrorDesc) > 0 {
 		return e
 	}
 	return nil

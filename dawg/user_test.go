@@ -1,8 +1,13 @@
 package dawg
 
 import (
+	"fmt"
+	"io/ioutil"
+	"net/http"
+	"net/url"
 	"testing"
 
+	"github.com/harrybrwn/apizza/dawg/internal/auth"
 	"github.com/harrybrwn/apizza/pkg/tests"
 )
 
@@ -11,17 +16,82 @@ func TestSignIn(t *testing.T) {
 	if !ok {
 		t.Skip()
 	}
-	defer swapclient(5)()
+	defer swapclient(10)()
+	tests.InitHelpers(t)
 
-	// user, err := getTestUser(username, password) // calls SignIn if global user is nil
-	user, err := SignIn(username, password)
-	if err != nil {
-		t.Error(err)
+	user, err := getTestUser(username, password) // calls SignIn if global user is nil
+	tests.Check(err)
+	tests.NotNil(user)
+	user, err = SignIn("blah", "blahblah")
+	tests.Exp(err)
+	if user != nil {
+		t.Errorf("expected nil %T", user)
 	}
-	if user == nil {
-		t.Fatal("got nil user from SignIn")
+}
+
+func TestUser(t *testing.T) {
+	username, password, ok := gettestcreds()
+	if !ok {
+		t.Skip()
 	}
-	testUser = user
+	defer swapclient(10)()
+	tests.InitHelpers(t)
+	user, err := getTestUser(username, password)
+	tests.Check(err)
+	tests.NotNil(user)
+	tests.NotNil(user.cli)
+	tests.NotNil(user.cli.Client)
+	user.SetServiceMethod(Delivery)
+	user.AddAddress(testAddress())
+	user.Addresses[0].StreetNumber = ""
+	user.Addresses[0].StreetName = ""
+	user.AddAddress(user.Addresses[0])
+	a1 := user.Addresses[0]
+	a2 := user.Addresses[1]
+	if a1.StreetName != a2.StreetName {
+		t.Error("did not copy address name correctly")
+	}
+	if a1.StreetNumber != a2.StreetNumber {
+		t.Error("did not copy address number correctly")
+	}
+	a1.Street = ""
+	if user.Addresses[0].LineOne() != a2.LineOne() {
+		t.Error("line one for UserAddress is broken")
+	}
+
+	if testing.Short() {
+		return
+	}
+	store, err := user.NearestStore(Delivery)
+	tests.Check(err)
+	tests.NotNil(store)
+	tests.NotNil(store.cli)
+	tests.StrEq(store.cli.host, "order.dominos.com", "store client has the wrong host")
+
+	if _, ok = store.cli.Client.Transport.(*auth.Token); !ok {
+		t.Fatal("store's client should have gotten a token as its transport")
+	}
+
+	// Checking that the authorization header is carried accross a request
+	req := &http.Request{
+		Method: "GET", Host: orderHost, Proto: "HTTP/1.1",
+		URL: &url.URL{
+			Scheme: "https", Host: orderHost,
+			Path:     fmt.Sprintf("/power/store/%s/menu", store.ID),
+			RawQuery: (&Params{"lang": DefaultLang, "structured": "true"}).Encode()},
+	}
+	res, err := store.cli.Do(req)
+	tests.Check(err)
+	defer func() { tests.Check(res.Body.Close()) }()
+	authhead := res.Request.Header.Get("Authorization")
+	if len(authhead) <= len("Bearer ") {
+		t.Error("store client didn't get the token")
+	}
+	b, err := ioutil.ReadAll(res.Body)
+	tests.Check(err)
+	if len(b) == 0 {
+		t.Error("zero length response")
+	}
 }
 
 func TestUserProfile_NearestStore(t *testing.T) {
@@ -46,11 +116,16 @@ func TestUserProfile_NearestStore(t *testing.T) {
 	if user.DefaultAddress() == nil {
 		t.Error("ok, we just added an address, why am i not getting one")
 	}
-	_, err = user.NearestStore(Delivery)
+	store, err := user.NearestStore(Delivery)
 	tests.Check(err)
-	if user.store == nil {
-		t.Error("ok, now this variable should be stored")
+	tests.NotNil(store)
+	tests.NotNil(user.store)
+	storeAgain, err := user.NearestStore(Delivery)
+	tests.Check(err)
+	if store != storeAgain {
+		t.Error("should have returned the same store")
 	}
+
 	s, err := user.NearestStore(Delivery)
 	tests.Check(err)
 	if s != user.store {
@@ -63,7 +138,7 @@ func TestUserProfile_StoresNearMe(t *testing.T) {
 	if !ok {
 		t.Skip()
 	}
-	defer swapclient(5)()
+	defer swapclient(10)()
 	tests.InitHelpers(t)
 
 	user, err := getTestUser(uname, pass)

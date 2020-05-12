@@ -164,3 +164,16 @@ func StrEq(a, b string, fmt string, vs ...interface{}) {
 		currentTest.t.Errorf(fmt+"\n", vs...)
 	}
 }
+
+// NotNil is an assertion that the argument given is not nil.
+// If the argument v is nil it will stop the test with t.Fatal().
+func NotNil(v interface{}) {
+	nilcheck()
+	currentTest.t.Helper()
+	if _, ok := v.(error); ok {
+		currentTest.t.Log("tests warning: NotNil should not be used to check errors, it will call t.Fatal()")
+	}
+	if v == nil {
+		currentTest.t.Fatalf("%T should not be nil\n", v)
+	}
+}

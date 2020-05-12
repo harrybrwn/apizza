@@ -6,7 +6,6 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
-	"time"
 )
 
 // URLParam is an interface that represents a url parameter. It was defined
@@ -74,11 +73,4 @@ func (rt *roundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
 		return nil, err
 	}
 	return rt.inner.RoundTrip(req)
-}
-
-func setDawgUserAgent(head http.Header) {
-	head.Set(
-		"User-Agent",
-		"Dominos API Wrapper for GO - "+time.Now().String(),
-	)
 }

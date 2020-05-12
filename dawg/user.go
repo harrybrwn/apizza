@@ -12,11 +12,11 @@ import (
 
 // SignIn will create a new UserProfile and sign in the account.
 func SignIn(username, password string) (*UserProfile, error) {
-	a, err := newauth(username, password)
+	err := authorize(orderClient.Client, username, password)
 	if err != nil {
 		return nil, err
 	}
-	return a.login()
+	return login(orderClient)
 }
 
 // TODO: find out how to update a profile on domino's end
@@ -62,7 +62,7 @@ type UserProfile struct {
 	ServiceMethod string `json:"-"` // this is a package specific field (not from the api)
 	ordersMeta    *customerOrders
 
-	auth        *auth
+	cli         *client
 	store       *Store
 	loyaltyData *CustomerLoyalty
 }
@@ -70,7 +70,6 @@ type UserProfile struct {
 // AddAddress will add an address to the dominos account.
 func (u *UserProfile) AddAddress(a Address) {
 	// TODO: consider sending a request to dominos to update the user with this address.
-	// this can be done in a separate go-routine
 	u.Addresses = append(u.Addresses, UserAddressFromAddress(a))
 }
 
@@ -87,7 +86,7 @@ func (u *UserProfile) StoresNearMe() ([]*Store, error) {
 	if err := u.addressCheck(); err != nil {
 		return nil, err
 	}
-	return asyncNearbyStores(u.auth.cli, u.DefaultAddress(), u.ServiceMethod)
+	return asyncNearbyStores(u.cli, u.DefaultAddress(), u.ServiceMethod)
 }
 
 // NearestStore will find the the store that is closest to the user's default address.
@@ -100,7 +99,7 @@ func (u *UserProfile) NearestStore(service string) (*Store, error) {
 	// Pass the authorized user's client along to the
 	// store which will use the user's credentials
 	// on each request.
-	c := &client{host: orderHost, Client: u.auth.cli.Client}
+	c := &client{host: orderHost, Client: u.cli.Client}
 	if err = u.addressCheck(); err != nil {
 		return nil, err
 	}
@@ -148,16 +147,16 @@ func (u *UserProfile) SetStore(store *Store) error {
 
 // TODO: write tests for GetCards, Loyalty, PreviousOrders, GetEasyOrder, initOrdersMeta, and customerEndpoint
 
-// GetCards will get the cards that Dominos has saved in their database. (see UserCard)
-func (u *UserProfile) GetCards() ([]*UserCard, error) {
+// Cards will get the cards that Dominos has saved in their database. (see UserCard)
+func (u *UserProfile) Cards() ([]*UserCard, error) {
 	cards := make([]*UserCard, 0)
-	return cards, u.customerEndpoint("card", nil, &cards)
+	return cards, u.customerEndpoint(u.cli, "card", nil, &cards)
 }
 
 // Loyalty returns the user's loyalty meta-data (see CustomerLoyalty)
 func (u *UserProfile) Loyalty() (*CustomerLoyalty, error) {
 	u.loyaltyData = new(CustomerLoyalty)
-	return u.loyaltyData, u.customerEndpoint("loyalty", nil, u.loyaltyData)
+	return u.loyaltyData, u.customerEndpoint(u.cli, "loyalty", nil, u.loyaltyData)
 }
 
 // for internal use (caches the loyalty data)
@@ -188,7 +187,7 @@ func (u *UserProfile) GetEasyOrder() (*EasyOrder, error) {
 func (u *UserProfile) initOrdersMeta(limit int) error {
 	u.ordersMeta = &customerOrders{}
 	return u.customerEndpoint(
-		"order",
+		u.cli, "order",
 		Params{"limit": limit, "lang": DefaultLang},
 		&u.ordersMeta,
 	)
@@ -215,7 +214,7 @@ func (u *UserProfile) NewOrder() (*Order, error) {
 		Products:      []*OrderProduct{},
 		Address:       StreetAddrFromAddress(u.store.userAddress),
 		Payments:      []*orderPayment{},
-		cli:           u.auth.cli,
+		cli:           u.cli,
 	}
 	return order, nil
 }
@@ -238,6 +237,7 @@ func (u *UserProfile) serviceCheck() error {
 }
 
 func (u *UserProfile) customerEndpoint(
+	d doer,
 	path string,
 	params Params,
 	obj interface{},
@@ -250,13 +250,13 @@ func (u *UserProfile) customerEndpoint(
 	}
 	params["_"] = time.Now().Nanosecond()
 
-	return u.auth.cli.dojson(obj, &http.Request{
+	return dojson(d, obj, &http.Request{
 		Method: "GET",
 		Proto:  "HTTP/1.1",
 		Header: make(http.Header),
 		URL: &url.URL{
 			Scheme:   "https",
-			Host:     u.auth.cli.host,
+			Host:     orderHost,
 			Path:     fmt.Sprintf("/power/customer/%s/%s", u.CustomerID, path),
 			RawQuery: params.Encode(),
 		},

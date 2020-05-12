@@ -77,8 +77,8 @@ func ExampleUserProfile() {
 	fmt.Printf("%T\n", user)
 }
 
-func ExampleUserProfile_GetCards() {
-	cards, err := user.GetCards()
+func ExampleUserProfile_Cards() {
+	cards, err := user.Cards()
 	if err != nil {
 		log.Fatal(err)
 	}

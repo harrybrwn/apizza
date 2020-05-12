@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"sync"
 	"time"
+
+	"github.com/harrybrwn/apizza/dawg/internal/auth"
 )
 
 const (
@@ -18,12 +20,11 @@ const (
 	// will require users to go and pickup their pizza.
 	Carryout = "Carryout"
 
-	profileEndpoint = "/power/store/%s/profile"
-
 	// DefaultLang is the package language variable
 	DefaultLang = "en"
 
-	orderHost = "order.dominos.com"
+	profileEndpoint = "/power/store/%s/profile"
+	orderHost       = "order.dominos.com"
 )
 
 // NearestStore gets the dominos location closest to the given address.
@@ -73,7 +74,7 @@ var orderClient = &client{
 		Timeout:       60 * time.Second,
 		CheckRedirect: noRedirects,
 		Transport: newRoundTripper(func(req *http.Request) error {
-			setDawgUserAgent(req.Header)
+			auth.SetDawgUserAgent(req.Header)
 			return nil
 		}),
 	},

@@ -7,6 +7,13 @@ import (
 	"runtime"
 )
 
+// Eat will throw away the first value and return the error given.
+//
+// 	err := Eat(w.Write([]byte("hello?")))
+func Eat(v interface{}, e error) error {
+	return e
+}
+
 // EatInt will eat an int and return the error. This is good if you want
 // to chain calls to an io.Writer or io.Reader.
 func EatInt(n int, e error) error {
