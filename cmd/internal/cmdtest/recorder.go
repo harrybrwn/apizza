@@ -3,6 +3,7 @@ package cmdtest
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
@@ -102,14 +103,17 @@ func (r *Recorder) CleanUp() {
 	if r.cfgHasFile && config.File() != "" && config.Folder() != "" {
 		err = config.Save()
 		if err = config.Save(); err != nil {
-			panic(err)
+			// panic(err)
+			fmt.Println("Error:", err)
 		}
 		if err = os.Remove(config.File()); err != nil {
-			panic(err)
+			// panic(err)
+			fmt.Println("Error:", err)
 		}
 	}
 	if err = r.DataBase.Destroy(); err != nil {
-		panic(err)
+		// panic(err)
+		fmt.Println("Error:", err)
 	}
 }
 

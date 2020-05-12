@@ -288,7 +288,6 @@ func TestOrder_Err(t *testing.T) {
 	cmd.cvv = 100
 	tests.Exp(cmd.Run(cmd.Cmd(), []string{"nothere"}))
 	cmd.cvv = 0
-	fmt.Println(r.Conf.Card.Number)
 
 	cmd.Cmd().ParseFlags([]string{"--log-only"})
 	tests.Exp(cmd.Run(cmd.Cmd(), []string{"testorder"}))
@@ -296,11 +295,6 @@ func TestOrder_Err(t *testing.T) {
 	tests.Exp(cmd.Run(cmd.Cmd(), []string{"testorder"}))
 	cmd.Cmd().ParseFlags([]string{"--log-only", "--cvv=123", "--number=38790546741937"})
 	tests.Exp(cmd.Run(cmd.Cmd(), []string{"testorder"}))
-
-	// cmd.Cmd().ParseFlags([]string{"--log-only", "--cvv=123", "--number=38790546741937", "--expiration=01/01"})
-	// tests.Exp(cmd.Run(cmd.Cmd(), []string{"testorder"}))
-	// cmd.Cmd().ParseFlags([]string{"--log-only", "--cvv=123", "--number=38790546741937", "--expiration=01/01"})
-	// tests.Exp(cmd.Run(cmd.Cmd(), []string{"testorder"}))
 }
 
 func TestEitherOr(t *testing.T) {

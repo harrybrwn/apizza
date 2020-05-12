@@ -15,7 +15,7 @@ import (
 func TestBadCreds(t *testing.T) {
 	// swap the default client with one that has a
 	// 10s timeout then defer the cleanup.
-	defer swapclient(2)()
+	defer swapclient(8)()
 	tests.InitHelpers(t)
 
 	err := authorize(orderClient.Client, "5uup;hrg];ht8bijer$u9tot", "hurieahgr9[0249eingurivja")
@@ -101,7 +101,7 @@ func TestToken(t *testing.T) {
 	}
 	// swapclient is called first and the cleanup
 	// function it returns is deferred.
-	defer swapclient(5)()
+	defer swapclient(8)()
 	tests.InitHelpers(t)
 
 	tok, err := gettoken(username, password)

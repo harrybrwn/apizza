@@ -16,7 +16,7 @@ func TestSignIn(t *testing.T) {
 	if !ok {
 		t.Skip()
 	}
-	defer swapclient(10)()
+	defer swapclient(20)()
 	tests.InitHelpers(t)
 
 	user, err := getTestUser(username, password) // calls SignIn if global user is nil
@@ -34,13 +34,19 @@ func TestUser(t *testing.T) {
 	if !ok {
 		t.Skip()
 	}
-	defer swapclient(10)()
+	defer swapclient(20)()
 	tests.InitHelpers(t)
 	user, err := getTestUser(username, password)
 	tests.Check(err)
-	tests.NotNil(user)
-	tests.NotNil(user.cli)
-	tests.NotNil(user.cli.Client)
+	if user == nil {
+		t.Fatalf("got nil %T", user)
+	}
+	if user.cli == nil {
+		t.Fatalf("got nil %T", user.cli)
+	}
+	if user.cli.Client == nil {
+		t.Fatalf("got nil %T", user.cli.Client)
+	}
 	user.SetServiceMethod(Delivery)
 	user.AddAddress(testAddress())
 	user.Addresses[0].StreetNumber = ""
