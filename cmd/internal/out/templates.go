@@ -14,17 +14,19 @@ func tmpl(w io.Writer, tmplt string, a interface{}) (err error) {
 }
 
 var defaultOrderTmpl = `{{ .OrderName }}
-  products:{{ range .Products }}
-    {{.Name}}
-      code:     {{.Code}}
-      options:{{ range $k, $v := .ReadableOptions }}
-         {{$k}}: {{$v}}{{else}}None{{end}}
-      quantity: {{.Qty}}{{end}}
-  storeID: {{.StoreID}}
-  method:  {{.ServiceMethod}}
-  address: {{.Addr -}}
+{{- $keycol := .KeyColor -}}
+{{- $endcol := .EndColor }}
+  {{.KeyColor}}products{{.EndColor}}:{{ range .Products }}
+    {{$keycol}}name{{$endcol}}: {{.Name}}
+      {{$keycol}}code{{$endcol}}:     {{.Code}}
+      {{$keycol}}options{{$endcol}}:{{ range $k, $v := .ReadableOptions }}
+         {{$keycol}}{{$k}}{{$endcol}}: {{$v}}{{else}}None{{end}}
+      {{$keycol}}quantity{{$endcol}}: {{.Qty}}{{end}}
+  {{.KeyColor}}storeID{{.EndColor}}: {{.StoreID}}
+  {{.KeyColor}}method{{.EndColor}}:  {{.ServiceMethod}}
+  {{.KeyColor}}address{{.EndColor}}: {{.Addr -}}
 {{ if .Price }}
-  price:   ${{ .Price -}}
+  {{.KeyColor}}price{{.EndColor}}:   ${{ .Price -}}
 {{else}}{{end}}
 `
 

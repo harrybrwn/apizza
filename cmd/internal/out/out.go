@@ -85,7 +85,7 @@ func lineone(str string, start, length int) (string, int) {
 }
 
 // PrintOrder will print the order given.
-func PrintOrder(o *dawg.Order, full, price bool) (err error) {
+func PrintOrder(o *dawg.Order, full, color, price bool) (err error) {
 	var (
 		t      string
 		oPrice float64
@@ -99,14 +99,24 @@ func PrintOrder(o *dawg.Order, full, price bool) (err error) {
 	if price {
 		oPrice, err = o.Price()
 	}
+
+	var keycolor, endcolor string
+	if color {
+		keycolor = "\033[01;34m"
+		endcolor = "\033[0m"
+	}
 	data := struct {
 		*dawg.Order
-		Addr  string
-		Price float64
+		Addr     string
+		Price    float64
+		KeyColor string
+		EndColor string
 	}{
-		Order: o,
-		Addr:  obj.AddressFmtIndent(o.Address, 11),
-		Price: oPrice,
+		Order:    o,
+		Addr:     obj.AddressFmtIndent(o.Address, 11),
+		Price:    oPrice,
+		KeyColor: keycolor,
+		EndColor: endcolor,
 	}
 	return errs.Pair(err, tmpl(output, t, data))
 }

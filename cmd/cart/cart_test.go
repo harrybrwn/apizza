@@ -166,7 +166,7 @@ func TestProducts(t *testing.T) {
 	for i, c := range codes {
 		tests.StrEq(o.Products[i].Code, c, "stored wrong code")
 	}
-	tests.Check(cart.PrintOrders(false))
+	tests.Check(cart.PrintOrders(false, false))
 }
 
 func TestHelpers_Err(t *testing.T) {

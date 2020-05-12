@@ -41,7 +41,7 @@ func ListOrders(db cache.MapDB) []string {
 }
 
 // PrintOrders will print all the names of the saved user orders
-func PrintOrders(db cache.MapDB, w io.Writer, verbose bool) error {
+func PrintOrders(db cache.MapDB, w io.Writer, verbose, color bool) error {
 	all, err := db.Map()
 	if err != nil {
 		return err
@@ -77,7 +77,7 @@ func PrintOrders(db cache.MapDB, w io.Writer, verbose bool) error {
 	fmt.Fprintln(w, "Your Orders:")
 	for i, o := range orders {
 		if verbose {
-			err = out.PrintOrder(uOrders[i], false, false)
+			err = out.PrintOrder(uOrders[i], false, false, false)
 			if err != nil {
 				return err
 			}

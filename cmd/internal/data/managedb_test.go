@@ -32,7 +32,7 @@ func TestDBManagement(t *testing.T) {
 	o.SetName("test_order")
 	buf := &bytes.Buffer{}
 
-	tests.Check(PrintOrders(db, buf, false))
+	tests.Check(PrintOrders(db, buf, false, false))
 	tests.Compare(t, buf.String(), "No orders saved.\n")
 	buf.Reset()
 
@@ -40,7 +40,7 @@ func TestDBManagement(t *testing.T) {
 	tests.Compare(t, buf.String(), "order successfully updated.\n")
 	buf.Reset()
 
-	tests.Check(PrintOrders(db, buf, false))
+	tests.Check(PrintOrders(db, buf, false, false))
 	tests.Compare(t, buf.String(), "Your Orders:\n  test_order\n")
 	buf.Reset()
 
@@ -71,7 +71,7 @@ func TestPrintOrders(t *testing.T) {
 	buf := new(bytes.Buffer)
 	tests.Check(SaveOrder(o, buf, db))
 	buf.Reset()
-	tests.Check(PrintOrders(db, buf, true))
+	tests.Check(PrintOrders(db, buf, true, false))
 	tests.Compare(t, buf.String(), "Your Orders:\n  test_order -  10SCREEN, \n")
 }
 

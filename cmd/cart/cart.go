@@ -166,9 +166,9 @@ ValidOrder:
 }
 
 // PrintCurrentOrder will print out the current order.
-func (c *Cart) PrintCurrentOrder(full, price bool) error {
+func (c *Cart) PrintCurrentOrder(full, price, color bool) error {
 	out.SetOutput(c.out)
-	return out.PrintOrder(c.CurrentOrder, full, price)
+	return out.PrintOrder(c.CurrentOrder, full, price, color)
 }
 
 // UpdateAddressAndOrderID will update the current order's address and then update
@@ -216,8 +216,8 @@ func (c *Cart) AddProducts(products []string) error {
 }
 
 // PrintOrders will print out all the orders saved in the database
-func (c *Cart) PrintOrders(verbose bool) error {
-	return data.PrintOrders(c.db, c.out, verbose)
+func (c *Cart) PrintOrders(verbose, color bool) error {
+	return data.PrintOrders(c.db, c.out, verbose, color)
 }
 
 func addToppingsToOrder(o *dawg.Order, product string, toppings []string) (err error) {

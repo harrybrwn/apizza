@@ -80,7 +80,7 @@ type cartCmd struct {
 func (c *cartCmd) Run(cmd *cobra.Command, args []string) (err error) {
 	c.cart.SetOutput(c.Output())
 	if len(args) < 1 {
-		return c.cart.PrintOrders(c.verbose)
+		return c.cart.PrintOrders(c.verbose, true)
 	}
 
 	if c.topping && c.product == "" {
@@ -144,7 +144,7 @@ func (c *cartCmd) Run(cmd *cobra.Command, args []string) (err error) {
 		// save order and return early before order is printed out
 		return c.cart.SaveAndReset()
 	}
-	return c.cart.PrintCurrentOrder(true, c.price)
+	return c.cart.PrintCurrentOrder(true, c.price, true)
 }
 
 func newAddOrderCmd(b cli.Builder) cli.CliCommand {
@@ -267,7 +267,7 @@ type orderCmd struct {
 
 func (c *orderCmd) Run(cmd *cobra.Command, args []string) (err error) {
 	if len(args) < 1 {
-		return data.PrintOrders(c.db, c.Output(), c.verbose)
+		return data.PrintOrders(c.db, c.Output(), c.verbose, true)
 	} else if len(args) > 1 {
 		return errors.New("cannot handle multiple orders")
 	}

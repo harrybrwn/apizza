@@ -58,10 +58,10 @@ func TestPrintOrder(t *testing.T) {
 
 	buf := new(bytes.Buffer)
 	SetOutput(buf)
-	tests.Check(PrintOrder(o, false, false))
+	tests.Check(PrintOrder(o, false, false, false))
 	tests.CompareV(t, buf.String(), "  TestOrder -  14SCREEN, \n")
 	buf.Reset()
-	tests.Check(PrintOrder(o, true, false))
+	tests.Check(PrintOrder(o, true, false, false))
 	expected := `TestOrder
   products:
     Large (14") Hand Tossed Pizza
@@ -77,7 +77,7 @@ func TestPrintOrder(t *testing.T) {
 `
 	tests.CompareV(t, buf.String(), expected)
 	buf.Reset()
-	tests.Check(PrintOrder(o, true, true))
+	tests.Check(PrintOrder(o, true, false, true))
 	tests.Compare(t, buf.String(), expected+"  price:   $20.15\n")
 	ResetOutput()
 }
