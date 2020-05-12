@@ -223,6 +223,24 @@ func (c *client) get(path string, params URLParam) ([]byte, error) {
 	})
 }
 
+func get(d doer, host, path string, params URLParam) (*http.Response, error) {
+	if params == nil {
+		params = &Params{}
+	}
+	return d.Do(&http.Request{
+		Method: "GET",
+		Host:   host,
+		Proto:  "HTTP/1.1",
+		Header: make(http.Header),
+		URL: &url.URL{
+			Scheme:   "https",
+			Host:     host,
+			Path:     path,
+			RawQuery: params.Encode(),
+		},
+	})
+}
+
 func (c *client) post(path string, params URLParam, r io.Reader) ([]byte, error) {
 	if params == nil {
 		params = &Params{}

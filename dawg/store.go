@@ -214,7 +214,9 @@ func (s *Store) WaitTime() (min int, max int) {
 	return m[s.userService].Min, m[s.userService].Max
 }
 
-type storeLocs struct {
+// StoreLocs is an internal struct and should not be used.
+// This is only exported because of json Unmarshalling.
+type StoreLocs struct {
 	Granularity string      `json:"Granularity"`
 	Address     *StreetAddr `json:"Address"`
 	Stores      []*Store    `json:"Stores"`
@@ -240,14 +242,13 @@ func getNearestStore(c *client, addr Address, service string) (*Store, error) {
 	return store, initStore(c, store.ID, store)
 }
 
-func findNearbyStores(c *client, addr Address, service string) (*storeLocs, error) {
+func findNearbyStores(c *client, addr Address, service string) (*StoreLocs, error) {
 	if !(service == Delivery || service == Carryout) {
-		// panic("service must be either 'Delivery' or 'Carryout'")
 		return nil, ErrBadService
 	}
 	// TODO: on the dominos website, the c param can sometimes be just the zip code
 	// and it still works.
-	b, err := c.get("/power/store-locator", &Params{
+	resp, err := get(c, orderHost, "/power/store-locator", &Params{
 		"s":    addr.LineOne(),
 		"c":    format("%s, %s %s", addr.City(), addr.StateCode(), addr.Zip()),
 		"type": service,
@@ -255,12 +256,19 @@ func findNearbyStores(c *client, addr Address, service string) (*storeLocs, erro
 	if err != nil {
 		return nil, err
 	}
-	locs := &storeLocs{}
-	err = json.Unmarshal(b, locs)
-	if err != nil {
+	defer resp.Body.Close()
+
+	result := struct {
+		*StoreLocs
+		*DominosError
+	}{nil, nil}
+	if err = json.NewDecoder(resp.Body).Decode(&result); err != nil {
 		return nil, err
 	}
-	return locs, dominosErr(b)
+	if result.DominosError.Status != OkStatus {
+		return nil, result.DominosError
+	}
+	return result.StoreLocs, nil
 }
 
 func asyncNearbyStores(cli *client, addr Address, service string) ([]*Store, error) {
