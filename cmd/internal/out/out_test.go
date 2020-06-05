@@ -64,7 +64,7 @@ func TestPrintOrder(t *testing.T) {
 	tests.Check(PrintOrder(o, true, false, false))
 	expected := `TestOrder
   products:
-    Large (14") Hand Tossed Pizza
+    name: Large (14") Hand Tossed Pizza
       code:     14SCREEN
       options:
          C: full 1

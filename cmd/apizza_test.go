@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	"github.com/harrybrwn/apizza/cmd/cli"
+	"github.com/harrybrwn/apizza/cmd/commands"
 	"github.com/harrybrwn/apizza/cmd/internal"
 	"github.com/harrybrwn/apizza/cmd/internal/cmdtest"
 	"github.com/harrybrwn/apizza/pkg/config"
@@ -126,6 +127,7 @@ func check(e error, msg string) {
 
 func TestExecute(t *testing.T) {
 	tests.InitHelpers(t)
+	commands.Color = false
 	var (
 		exp    string
 		err    error

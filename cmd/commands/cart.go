@@ -28,6 +28,7 @@ func NewCartCmd(b cli.Builder) cli.CliCommand {
 		delete:     false,
 		verbose:    false,
 		topping:    false,
+		color:      Color,
 		getaddress: b.Address,
 	}
 
@@ -68,6 +69,7 @@ type cartCmd struct {
 	price    bool
 	delete   bool
 	verbose  bool
+	color    bool
 
 	add     []string
 	remove  string // yes, you can only remove one thing at a time
@@ -80,7 +82,11 @@ type cartCmd struct {
 func (c *cartCmd) Run(cmd *cobra.Command, args []string) (err error) {
 	c.cart.SetOutput(c.Output())
 	if len(args) < 1 {
-		return c.cart.PrintOrders(c.verbose, "\033[01;34m")
+		var colstr string
+		if c.color {
+			colstr = "\033[01;34m"
+		}
+		return c.cart.PrintOrders(c.verbose, colstr)
 	}
 
 	if c.topping && c.product == "" {
@@ -144,7 +150,7 @@ func (c *cartCmd) Run(cmd *cobra.Command, args []string) (err error) {
 		// save order and return early before order is printed out
 		return c.cart.SaveAndReset()
 	}
-	return c.cart.PrintCurrentOrder(true, true, c.price)
+	return c.cart.PrintCurrentOrder(true, c.color, c.price)
 }
 
 func newAddOrderCmd(b cli.Builder) cli.CliCommand {
@@ -210,6 +216,7 @@ func (c *addOrderCmd) Run(cmd *cobra.Command, args []string) (err error) {
 func NewOrderCmd(b cli.Builder) cli.CliCommand {
 	c := &orderCmd{
 		verbose:    false,
+		color:      Color,
 		getaddress: b.Address,
 	}
 	c.CliCommand = b.Build("order", "Send an order from the cart to dominos.", c)
@@ -260,6 +267,7 @@ type orderCmd struct {
 	number       string
 	expiration   string
 	yes          bool
+	color        bool
 
 	logonly    bool
 	getaddress func() dawg.Address
@@ -267,7 +275,11 @@ type orderCmd struct {
 
 func (c *orderCmd) Run(cmd *cobra.Command, args []string) (err error) {
 	if len(args) < 1 {
-		return data.PrintOrders(c.db, c.Output(), c.verbose, "\033[01;34m")
+		var colorstr string
+		if c.color {
+			colorstr = "\033[01;34m"
+		}
+		return data.PrintOrders(c.db, c.Output(), c.verbose, colorstr)
 	} else if len(args) > 1 {
 		return errors.New("cannot handle multiple orders")
 	}

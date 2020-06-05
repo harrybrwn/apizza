@@ -9,6 +9,11 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// Color toggles output color
+//
+// TODO: this is shitty code FIXME!!!
+var Color = true
+
 // NewCompletionCmd creates a new command for shell completion.
 func NewCompletionCmd(b cli.Builder) *cobra.Command {
 	var validArgs = []string{"zsh", "bash", "ps", "powershell", "fish"}
