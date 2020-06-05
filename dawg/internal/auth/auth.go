@@ -37,6 +37,10 @@ func (t *Token) RoundTrip(req *http.Request) (*http.Response, error) {
 	return t.transport.RoundTrip(req)
 }
 
+func (t *Token) SetTransport(rt http.RoundTripper) {
+	t.transport = rt
+}
+
 // Error is an error that is returned by the oauth endpoint.
 type Error struct {
 	Err       string `json:"error"`

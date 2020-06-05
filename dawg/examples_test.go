@@ -51,11 +51,9 @@ func ExampleNearestStore() {
 		log.Fatal(err)
 	}
 	fmt.Println(store.City)
-	fmt.Println(store.ID)
 
 	// Output:
 	// Washington
-	// 4336
 }
 
 func ExampleSignIn() {

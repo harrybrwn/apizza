@@ -3,7 +3,6 @@ package dawg
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -49,6 +48,9 @@ func authorize(c *http.Client, username, password string) error {
 	if err != nil {
 		return err
 	}
+	if c.Transport != nil {
+		tok.SetTransport(c.Transport)
+	}
 	c.Transport = tok
 	return nil
 }
@@ -56,31 +58,6 @@ func authorize(c *http.Client, username, password string) error {
 var noRedirects = func(r *http.Request, via []*http.Request) error {
 	return http.ErrUseLastResponse
 }
-
-// // Token is a JWT that can be used as a transport for an http.Client
-// type token struct {
-// 	// AccessToken is the actual web token
-// 	AccessToken string `json:"access_token"`
-// 	// RefreshToken is the secret used to refresh this token
-// 	RefreshToken string `json:"refresh_token,omitempty"`
-// 	// Type is the type of token
-// 	Type string `json:"token_type"`
-// 	// ExpiresIn is the time in seconds that it takes for the token to
-// 	// expire.
-// 	ExpiresIn int `json:"expires_in"`
-
-// 	transport http.RoundTripper
-// }
-
-// func (t *token) authorization() string {
-// 	return fmt.Sprintf("%s %s", t.Type, t.AccessToken)
-// }
-
-// func (t *token) RoundTrip(req *http.Request) (*http.Response, error) {
-// 	req.Header.Set("Authorization", t.authorization())
-// 	auth.SetDawgUserAgent(req.Header)
-// 	return t.transport.RoundTrip(req)
-// }
 
 var scopes = []string{
 	"customer:card:read",
@@ -141,6 +118,9 @@ func login(c *client) (*UserProfile, error) {
 		return nil, err
 	}
 	defer res.Body.Close()
+	if !isjson(res) {
+		return nil, fmt.Errorf("did not get a json response; got %s", res.Header.Get("Content-Type"))
+	}
 
 	profile := &UserProfile{cli: c}
 	b, err := ioutil.ReadAll(res.Body)
@@ -185,10 +165,10 @@ func do(d doer, req *http.Request) ([]byte, error) {
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("dawg.do: bad status code %s", resp.Status)
 	}
-	_, err = buf.ReadFrom(resp.Body)
-	if bytes.HasPrefix(bytes.ToLower(buf.Bytes()[:15]), []byte("<!doctype html>")) {
-		return nil, errpair(err, errors.New("got html response"))
+	if !isjson(resp) {
+		return nil, fmt.Errorf("did not get json response, got %s", resp.Header.Get("Content-Type"))
 	}
+	_, err = buf.ReadFrom(resp.Body)
 	return buf.Bytes(), err
 }
 
@@ -300,4 +280,15 @@ func newTokErr(r io.Reader) error {
 		return e
 	}
 	return nil
+}
+
+func isjson(r *http.Response) bool {
+	contentType := r.Header.Get("Content-Type")
+	types := strings.Split(contentType, ";")
+	for _, typ := range types {
+		if typ == "application/json" {
+			return true
+		}
+	}
+	return false
 }

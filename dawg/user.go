@@ -30,7 +30,7 @@ type UserProfile struct {
 	// Type of dominos account
 	Type string
 	// Dominos internal user id
-	CustomerID string
+	ID string `json:"CustomerID"`
 	// Identifiers are the pieces of information used to identify the
 	// user (even if they are not signed in)
 	Identifiers []string `json:"CustomerIdentifiers"`
@@ -60,8 +60,8 @@ type UserProfile struct {
 
 	// ServiceMethod should be "Delivery" or "Carryout"
 	ServiceMethod string `json:"-"` // this is a package specific field (not from the api)
-	ordersMeta    *customerOrders
 
+	ordersMeta  *customerOrders
 	cli         *client
 	store       *Store
 	loyaltyData *CustomerLoyalty
@@ -209,7 +209,7 @@ func (u *UserProfile) NewOrder() (*Order, error) {
 		LanguageCode:  DefaultLang,
 		ServiceMethod: u.ServiceMethod,
 		StoreID:       u.store.ID,
-		CustomerID:    u.CustomerID,
+		CustomerID:    u.ID,
 		Phone:         u.Phone,
 		Products:      []*OrderProduct{},
 		Address:       StreetAddrFromAddress(u.store.userAddress),
@@ -242,7 +242,7 @@ func (u *UserProfile) customerEndpoint(
 	params Params,
 	obj interface{},
 ) error {
-	if u.CustomerID == "" {
+	if u.ID == "" {
 		return errors.New("UserProfile not fully initialized: needs CustomerID")
 	}
 	if params == nil {
@@ -257,7 +257,7 @@ func (u *UserProfile) customerEndpoint(
 		URL: &url.URL{
 			Scheme:   "https",
 			Host:     orderHost,
-			Path:     fmt.Sprintf("/power/customer/%s/%s", u.CustomerID, path),
+			Path:     fmt.Sprintf("/power/customer/%s/%s", u.ID, path),
 			RawQuery: params.Encode(),
 		},
 	})

@@ -280,7 +280,6 @@ func asyncNearbyStores(cli *client, addr Address, service string) ([]*Store, err
 	var (
 		nStores = len(all.Stores)
 		stores  = make([]*Store, nStores) // return value
-
 		i       int
 		store   *Store
 		pair    maybeStore

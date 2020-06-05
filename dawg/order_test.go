@@ -3,7 +3,10 @@ package dawg
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
+	"net/http"
+	"os"
 	"strings"
 	"testing"
 	"time"
@@ -193,10 +196,48 @@ func TestRawOrder(t *testing.T) {
 	tests.Exp(o.Validate(), "expected validation error from empty order")
 }
 
+func TestNearestStore_WithProxy(t *testing.T) {
+	cli, mux, server := testServer()
+	defer server.Close()
+	defer swapClientWith(cli)()
+	mux.HandleFunc("/power/store-locator", storeLocatorHandlerFunc(t))
+	mux.HandleFunc("/power/store/4344/profile", storeProfileHandlerFunc(t))
+	store, err := NearestStore(testAddress(), Delivery)
+	if err != nil {
+		t.Error(err)
+	}
+	if store.ID == "" {
+		t.Error("empty id")
+	}
+}
+
 func TestRemoveProduct(t *testing.T) {
+	cli, mux, server := testServer()
+	defer server.Close()
+	defer swapClientWith(cli)()
+	mux.HandleFunc("/power/store-locator", storeLocatorHandlerFunc(t))
+	mux.HandleFunc("/power/store/4344/profile", storeProfileHandlerFunc(t))
+	mux.HandleFunc("/power/store/4328/menu", func(w http.ResponseWriter, r *http.Request) {
+		file, err := os.Open("./testdata/menu.json")
+		if err != nil {
+			t.Error(err)
+			w.WriteHeader(500)
+			return
+		}
+		defer file.Close()
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(200)
+		io.Copy(w, file)
+	})
+
 	tests.InitHelpers(t)
-	s := testingStore()
-	order := s.NewOrder()
+	order := &Order{
+		LanguageCode:  DefaultLang,
+		ServiceMethod: Carryout,
+		StoreID:       "4336",
+		Address:       testAddress(),
+		cli:           orderClient,
+	}
 	menu := testingMenu()
 
 	productCodes := []string{"2LDCOKE", "12SCREEN", "PSANSABC", "B2PCLAVA"}
