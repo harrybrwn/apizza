@@ -280,7 +280,6 @@ func asyncNearbyStores(cli *client, addr Address, service string) ([]*Store, err
 	var (
 		nStores = len(all.Stores)
 		stores  = make([]*Store, nStores) // return value
-		i       int
 		store   *Store
 		pair    maybeStore
 		builder = storebuilder{
@@ -292,7 +291,7 @@ func asyncNearbyStores(cli *client, addr Address, service string) ([]*Store, err
 
 	go func() {
 		defer close(builder.stores)
-		for i, store = range all.Stores {
+		for i, store := range all.Stores {
 			go builder.initStore(cli, store.ID, i)
 		}
 

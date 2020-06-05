@@ -375,7 +375,6 @@ func storeProfileHandlerFunc(t *testing.T) func(w http.ResponseWriter, r *http.R
 			w.WriteHeader(500)
 			return
 		}
-		f := fileHandleFunc(t, "./testdata/store.json")
-		f(w, r)
+		fileHandleFunc(t, "./testdata/store.json")(w, r)
 	}
 }

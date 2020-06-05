@@ -1,12 +1,22 @@
 package dawg
 
 import (
+	"net/http"
 	"testing"
 
 	"github.com/harrybrwn/apizza/pkg/tests"
 )
 
 func TestProduct(t *testing.T) {
+	cli, mux, server := testServer()
+	defer server.Close()
+	defer swapClientWith(cli)()
+	mux.HandleFunc("/power/store-locator", storeLocatorHandlerFunc(t))
+	mux.HandleFunc("/power/store/4344/profile", storeProfileHandlerFunc(t))
+	mux.HandleFunc("/power/store/4328/menu", func(w http.ResponseWriter, r *http.Request) {
+		fileHandleFunc(t, "./testdata/menu.json")(w, r)
+	})
+
 	menu, err := testingStore().Menu()
 	if err != nil {
 		t.Error(err)
@@ -43,6 +53,15 @@ func TestProduct(t *testing.T) {
 }
 
 func TestProductToppings(t *testing.T) {
+	cli, mux, server := testServer()
+	defer server.Close()
+	defer swapClientWith(cli)()
+	mux.HandleFunc("/power/store-locator", storeLocatorHandlerFunc(t))
+	mux.HandleFunc("/power/store/4344/profile", storeProfileHandlerFunc(t))
+	mux.HandleFunc("/power/store/4328/menu", func(w http.ResponseWriter, r *http.Request) {
+		fileHandleFunc(t, "./testdata/menu.json")(w, r)
+	})
+
 	tests.InitHelpers(t)
 	m := testingMenu()
 	p, err := m.GetProduct("S_PIZZA") // pizza
@@ -108,6 +127,14 @@ func TestProductToppings(t *testing.T) {
 }
 
 func TestViewOptions(t *testing.T) {
+	cli, mux, server := testServer()
+	defer server.Close()
+	defer swapClientWith(cli)()
+	mux.HandleFunc("/power/store-locator", storeLocatorHandlerFunc(t))
+	mux.HandleFunc("/power/store/4344/profile", storeProfileHandlerFunc(t))
+	mux.HandleFunc("/power/store/4328/menu", func(w http.ResponseWriter, r *http.Request) {
+		fileHandleFunc(t, "./testdata/menu.json")(w, r)
+	})
 	m := testingMenu()
 
 	itm, err := m.GetVariant("P10IRECK")

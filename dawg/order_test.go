@@ -3,10 +3,8 @@ package dawg
 import (
 	"encoding/json"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"net/http"
-	"os"
 	"strings"
 	"testing"
 	"time"
@@ -218,16 +216,7 @@ func TestRemoveProduct(t *testing.T) {
 	mux.HandleFunc("/power/store-locator", storeLocatorHandlerFunc(t))
 	mux.HandleFunc("/power/store/4344/profile", storeProfileHandlerFunc(t))
 	mux.HandleFunc("/power/store/4328/menu", func(w http.ResponseWriter, r *http.Request) {
-		file, err := os.Open("./testdata/menu.json")
-		if err != nil {
-			t.Error(err)
-			w.WriteHeader(500)
-			return
-		}
-		defer file.Close()
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(200)
-		io.Copy(w, file)
+		fileHandleFunc(t, "./testdata/menu.json")(w, r)
 	})
 
 	tests.InitHelpers(t)

@@ -100,8 +100,8 @@ func TestUser(t *testing.T) {
 	}
 	store, err := user.NearestStore(Delivery)
 	tests.Check(err)
-	// tests.NotNil(store)
-	// tests.NotNil(store.cli)
+	tests.NotNil(store)
+	tests.NotNil(store.cli)
 	tests.StrEq(store.cli.host, "order.dominos.com", "store client has the wrong host")
 
 	if _, ok = store.cli.Client.Transport.(*auth.Token); !ok {
@@ -131,6 +131,7 @@ func TestUser(t *testing.T) {
 }
 
 func TestUserProfile_NearestStore(t *testing.T) {
+	// t.Skip("this test is really broken")
 	uname, pass, ok := gettestcreds()
 	if !ok {
 		t.Skip()
@@ -170,29 +171,33 @@ func TestUserProfile_NearestStore(t *testing.T) {
 }
 
 func TestUserProfile_StoresNearMe(t *testing.T) {
+	// t.Skip("test fails with a panic")
 	uname, pass, ok := gettestcreds()
 	if !ok {
 		t.Skip()
 	}
-	defer swapclient(10)()
 	cli, mux, server := testServer()
 	defer server.Close()
 	defer swapClientWith(cli)()
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Printf("%+v\n", r)
+	})
 	addUserHandlers(t, mux)
-	mux.HandleFunc("/power/store-locator", storeLocatorHandlerFunc(t))
-	mux.HandleFunc("/power/store/4344/profile", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		s := Store{}
-		json.NewEncoder(w).Encode(&s)
+	mux.HandleFunc("/power/store-locator", func(w http.ResponseWriter, r *http.Request) {
+		storeLocatorHandlerFunc(t)(w, r)
+	})
+	// mux.HandleFunc("/power/store/", storeProfileHandlerFunc(t))
+	mux.HandleFunc("/power/store/", func(w http.ResponseWriter, r *http.Request) {
+		storeProfileHandlerFunc(t)(w, r)
 	})
 
 	tests.InitHelpers(t)
-
-	user, err := getTestUser(uname, pass)
+	user, err := SignIn(uname, pass)
 	tests.Check(err)
 	if user == nil {
 		t.Fatal("user should not be nil")
 	}
+	fmt.Printf("%p\n", user.cli.Client)
 	err = user.SetServiceMethod("not correct")
 	tests.Exp(err, "expected error for an invalid service method")
 	if err != ErrBadService {
@@ -231,17 +236,12 @@ func TestUserProfile_NewOrder(t *testing.T) {
 	if !ok {
 		t.Skip()
 	}
-	// cli, mux, server := testServer()
-	// defer server.Close()
-	// defer swapClientWith(cli)()
-	// addUserHandlers(t, mux)
-	// mux.HandleFunc("/power/store-locator", storeLocatorHandlerFunc(t))
-	// mux.HandleFunc("/power/store/4344/profile", func(w http.ResponseWriter, r *http.Request) {
-	// w.Header().Set("Content-Type", "application/json")
-	// fileHandleFunc(t, "./testdata/store.json")
-	// s := Store{}
-	// json.NewEncoder(w).Encode(&s)
-	// })
+	cli, mux, server := testServer()
+	defer server.Close()
+	defer swapClientWith(cli)()
+	addUserHandlers(t, mux)
+	mux.HandleFunc("/power/store-locator", storeLocatorHandlerFunc(t))
+	mux.HandleFunc("/power/store/4344/profile", storeProfileHandlerFunc(t))
 	tests.InitHelpers(t)
 
 	user, err := getTestUser(uname, pass)
@@ -249,10 +249,14 @@ func TestUserProfile_NewOrder(t *testing.T) {
 	if user == nil {
 		t.Fatal("user should not be nil")
 	}
+	user.store = &Store{userAddress: testAddress()}
 	user.AddAddress(testAddress())
 	user.SetServiceMethod(Carryout)
 	order, err := user.NewOrder()
 	tests.Check(err)
+	if order == nil {
+		t.Fatal("user.NewOrder() returend a nil order")
+	}
 
 	tests.StrEq(order.ServiceMethod, Carryout, "wrong service method")
 	tests.StrEq(order.ServiceMethod, user.ServiceMethod, "service method should carry over from the user")
@@ -283,7 +287,6 @@ func addUserHandlers(t *testing.T, mux *http.ServeMux) {
 			return
 		}
 		if creds["password"][0] != password || creds["username"][0] != username {
-			// t.Error("bad credentials")
 			w.WriteHeader(http.StatusUnauthorized)
 			return
 		}
@@ -309,8 +312,8 @@ var testdataMutex sync.Mutex
 
 func fileHandleFunc(t *testing.T, filename string) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		testdataMutex.Lock()
-		defer testdataMutex.Unlock()
+		// testdataMutex.Lock()
+		// defer testdataMutex.Unlock()
 		file, err := os.Open(filename)
 		if err != nil {
 			t.Error(err)

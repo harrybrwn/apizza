@@ -84,11 +84,17 @@ func getTestUser(uname, pass string) (*UserProfile, error) {
 // if someone is actually reading this, im sorry, i know this
 // is not very go-like, i know its hacky... sorry
 func swapclient(timeout int) func() {
+	dur := time.Duration(timeout) * time.Second
 	copyclient := orderClient
 	orderClient = &client{
 		host: orderHost,
 		Client: &http.Client{
-			Timeout:       time.Duration(timeout) * time.Second,
+			Timeout: dur,
+			Transport: &http.Transport{
+				TLSHandshakeTimeout:   dur,
+				IdleConnTimeout:       dur,
+				ResponseHeaderTimeout: dur,
+			},
 			CheckRedirect: noRedirects,
 		},
 	}

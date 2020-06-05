@@ -3,6 +3,7 @@ package dawg
 import (
 	"bytes"
 	"encoding/gob"
+	"net/http"
 	"os"
 	"path/filepath"
 	"testing"
@@ -12,6 +13,14 @@ import (
 
 // Move this to an items_test.go file
 func TestItems(t *testing.T) {
+	cli, mux, server := testServer()
+	defer server.Close()
+	defer swapClientWith(cli)()
+	mux.HandleFunc("/power/store-locator", storeLocatorHandlerFunc(t))
+	mux.HandleFunc("/power/store/4344/profile", storeProfileHandlerFunc(t))
+	mux.HandleFunc("/power/store/4328/menu", func(w http.ResponseWriter, r *http.Request) {
+		fileHandleFunc(t, "./testdata/menu.json")(w, r)
+	})
 	tests.InitHelpers(t)
 	store := testingStore()
 	menu, err := store.Menu()
@@ -86,6 +95,15 @@ func TestItems(t *testing.T) {
 }
 
 func TestOPFromItem(t *testing.T) {
+	cli, mux, server := testServer()
+	defer server.Close()
+	defer swapClientWith(cli)()
+	mux.HandleFunc("/power/store-locator", storeLocatorHandlerFunc(t))
+	mux.HandleFunc("/power/store/4344/profile", storeProfileHandlerFunc(t))
+	mux.HandleFunc("/power/store/4328/menu", func(w http.ResponseWriter, r *http.Request) {
+		fileHandleFunc(t, "./testdata/menu.json")(w, r)
+	})
+
 	tests.InitHelpers(t)
 	m := testingMenu()
 	v, err := m.GetVariant("W08PBNLW")
@@ -119,9 +137,17 @@ func TestOPFromItem(t *testing.T) {
 }
 
 func TestFindItem(t *testing.T) {
+	cli, mux, server := testServer()
+	defer server.Close()
+	defer swapClientWith(cli)()
+	mux.HandleFunc("/power/store-locator", storeLocatorHandlerFunc(t))
+	mux.HandleFunc("/power/store/4344/profile", storeProfileHandlerFunc(t))
+	mux.HandleFunc("/power/store/4328/menu", func(w http.ResponseWriter, r *http.Request) {
+		fileHandleFunc(t, "./testdata/menu.json")(w, r)
+	})
+
 	tests.InitHelpers(t)
 	m := testingMenu()
-
 	tt := []string{"W08PBNLW", "S_BONELESS", "F_PARMT", "P_14SCREEN"}
 	for _, tc := range tt {
 		itm := m.FindItem(tc)
@@ -158,6 +184,14 @@ func TestTranslateOpt(t *testing.T) {
 }
 
 func TestPrintMenu(t *testing.T) {
+	cli, mux, server := testServer()
+	defer server.Close()
+	defer swapClientWith(cli)()
+	mux.HandleFunc("/power/store-locator", storeLocatorHandlerFunc(t))
+	mux.HandleFunc("/power/store/4344/profile", storeProfileHandlerFunc(t))
+	mux.HandleFunc("/power/store/4328/menu", func(w http.ResponseWriter, r *http.Request) {
+		fileHandleFunc(t, "./testdata/menu.json")(w, r)
+	})
 	m := testingMenu()
 	buf := new(bytes.Buffer)
 
@@ -168,6 +202,14 @@ func TestPrintMenu(t *testing.T) {
 }
 
 func TestMenuStorage(t *testing.T) {
+	cli, mux, server := testServer()
+	defer server.Close()
+	defer swapClientWith(cli)()
+	mux.HandleFunc("/power/store-locator", storeLocatorHandlerFunc(t))
+	mux.HandleFunc("/power/store/4344/profile", storeProfileHandlerFunc(t))
+	mux.HandleFunc("/power/store/4328/menu", func(w http.ResponseWriter, r *http.Request) {
+		fileHandleFunc(t, "./testdata/menu.json")(w, r)
+	})
 	tests.InitHelpers(t)
 	testdir := tests.MkTempDir(t.Name())
 
