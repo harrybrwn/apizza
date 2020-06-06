@@ -30,6 +30,7 @@ dawg/ratelimit_test.go
 scripts/history.sh
 scripts/github.sh
 scripts/test-versions.sh
+scripts/release
 
 # Other
 *.out

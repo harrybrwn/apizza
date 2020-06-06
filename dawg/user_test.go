@@ -146,7 +146,7 @@ func TestUser_CustmerEndpoint(t *testing.T) {
 	if order == nil {
 		t.Error("got nil easy order")
 	}
-	if _, err = user.Loyalty(); err != nil {
+	if _, err = user.getLoyalty(); err != nil {
 		t.Error(err)
 	}
 }

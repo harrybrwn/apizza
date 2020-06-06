@@ -187,9 +187,13 @@ func setup(fname string, obj interface{}) error {
 	if err != nil {
 		return err
 	}
-	t := reflect.ValueOf(obj).Elem()
-	autogen := emptyJSONConfig(t.Type(), 0)
-	_, err = f.Write([]byte(autogen))
+	raw, err := yaml.Marshal(obj)
+	if err != nil {
+		return err
+	}
+	// t := reflect.ValueOf(obj).Elem()
+	// raw := emptyJSONConfig(t.Type(), 0) // user for json default
+	_, err = f.Write(raw)
 	return err
 }
 
@@ -256,9 +260,9 @@ func getdir(fname string) string {
 }
 
 var configFileNames = []string{
-	"config.yml",
-	"config.yaml",
 	"config.json",
+	"config.yaml",
+	"config.yml",
 }
 
 func findConfigFile(root string) string {
