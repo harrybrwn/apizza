@@ -59,6 +59,99 @@ func TestUser_WithProxy(t *testing.T) {
 }
 
 func TestUser(t *testing.T) {
+	client, mux, server := testServer()
+	defer server.Close()
+	defer swapClientWith(client)()
+	addUserHandlers(t, mux)
+	mux.HandleFunc("/power/store-locator", storeLocatorHandlerFunc(t))
+	mux.HandleFunc("/power/store/", storeProfileHandlerFunc(t))
+
+	username, password, _ := gettestcreds()
+	user, err := SignIn(username, password)
+	if err != nil {
+		t.Error(err)
+	}
+	user.AddAddress(&UserAddress{
+		Street:      "1600 Pennsylvania Ave NW",
+		CityName:    "Washington",
+		Region:      "DC",
+		PostalCode:  "20500",
+		AddressType: "House",
+	})
+	if !testAddress().Equal(user.Addresses[0]) {
+		t.Error("addresses should be equal")
+	}
+	user.SetServiceMethod(Delivery)
+
+	t.Run("User.NearestStore", func(t *testing.T) {
+		store, err := user.NearestStore(Delivery)
+		if err != nil {
+			t.Error(err)
+		}
+		if store.cli == nil {
+			t.Error("no client on store")
+		}
+		if store.ID == "" {
+			t.Error("no id")
+		}
+	})
+	t.Run("User.StoresNearMe", func(t *testing.T) {
+		store, err := user.StoresNearMe()
+		if err != nil {
+			t.Error(err)
+		}
+		if len(store) == 0 {
+			t.Error("got no stores")
+		}
+	})
+	t.Run("User.SetStore", func(t *testing.T) {
+		s := user.store
+		err := user.SetStore(nil)
+		if err == nil {
+			t.Error("expected an error")
+		}
+		err = user.SetStore(&Store{ID: ""})
+		if err == nil {
+			t.Error("expected an error")
+		}
+		err = user.SetStore(&Store{ID: "1234"})
+		if err != nil {
+			t.Error(err)
+		}
+		user.store = s
+	})
+}
+
+func TestUser_CustmerEndpoint(t *testing.T) {
+	client, mux, server := testServer()
+	defer server.Close()
+	defer swapClientWith(client)()
+	addUserHandlers(t, mux)
+	mux.HandleFunc("/power/store-locator", storeLocatorHandlerFunc(t))
+	mux.HandleFunc("/power/store/", storeProfileHandlerFunc(t))
+	mux.HandleFunc("/power/customer/", func(w http.ResponseWriter, r *http.Request) {
+		fileHandleFunc(t, "./testdata/order-meta.json")(w, r)
+	})
+
+	username, password, _ := gettestcreds()
+	user, err := SignIn(username, password)
+	if err != nil {
+		t.Error(err)
+	}
+	user.AddAddress(testAddress())
+	order, err := user.GetEasyOrder()
+	if err != nil {
+		t.Error(err)
+	}
+	if order == nil {
+		t.Error("got nil easy order")
+	}
+	if _, err = user.Loyalty(); err != nil {
+		t.Error(err)
+	}
+}
+
+func TestUser_Bad(t *testing.T) {
 	t.Skip("too wild")
 	username, password, ok := gettestcreds()
 	if !ok {
