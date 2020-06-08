@@ -54,7 +54,7 @@ type menuCmd struct {
 
 func (c *menuCmd) Run(cmd *cobra.Command, args []string) error {
 	if err := c.db.UpdateTS("menu", c); err != nil {
-		return err
+		cmd.Println(err)
 	}
 	out.SetOutput(c.Output())
 	defer out.ResetOutput()

@@ -15,8 +15,8 @@ uninstall: clean
 
 test: test-build
 	bash scripts/test.sh
-	bash scripts/integration.sh ./bin/apizza
-	@[ -d ./bin ] && [ -x ./bin/apizza ] && rm -rf ./bin
+	bash scripts/integration.sh ./bin/test-apizza
+	@[ -d ./bin ] && [ -x ./bin/test-apizza ] && rm -rf ./bin
 
 docker:
 	docker build --rm -t apizza .

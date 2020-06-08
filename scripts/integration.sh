@@ -40,10 +40,10 @@ shouldfail $?
 
 if [[ $TRAVIS_OS_NAME = "windows" ]]; then
     default_config="C:\\Users\\travis\\.config\\apizza"
-    default_configfile="$default_config\\config.json"
+    default_configfile="$default_config\\config.yml"
 else
     default_config="$HOME/.config/apizza"
-    default_configfile="$default_config/config.json"
+    default_configfile="$default_config/config.yml"
 fi
 
 $bin --help &> /dev/null
