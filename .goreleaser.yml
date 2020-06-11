@@ -61,13 +61,12 @@ brews:
     name: apizza
     github:
       owner: harrybrwn
-      name: apizza
+      name: homebrew-tap
     homepage: https://github.com/harrybrwn/apizza
     commit_author:
       name: releasebot
       email: harrybrown98@gmail.com
     folder: Formula
-    skip_upload: false
     test: |
       system "#{bin}/apizza --version"
     install: |
