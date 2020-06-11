@@ -10,6 +10,7 @@ release:
     owner: harrybrwn
     name: apizza
   prerelease: auto
+  draft: false
 
 builds:
   - binary: apizza

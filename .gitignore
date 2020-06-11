@@ -31,6 +31,7 @@ scripts/history.sh
 scripts/github.sh
 scripts/test-versions.sh
 scripts/release
+scripts/release.sh
 
 # Other
 *.out
