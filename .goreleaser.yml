@@ -80,7 +80,7 @@ snapcrafts:
     summary: Command line tool for ordering Dominos pizza.
     grade: stable
     confinement: strict
-    publish: true
+    publish: false
 
 checksum:
   name_template: 'checksums.txt'
