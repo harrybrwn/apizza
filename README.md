@@ -8,7 +8,7 @@
 
 Dominos pizza from the command line.
 
-### Table of Contents
+## Table of Contents
 - [Installation](#installation)
 - [Setup](#setup)
 - [Commands](#commands)
@@ -19,15 +19,29 @@ Dominos pizza from the command line.
 - [Tutorials](#tutorials)
 	- [None Pizza with Left Beef](#none-pizza-with-left-beef)
 
-### Installation
-Download the precompiled binaries for Mac, Windows, and Linux (only for amd64)
+## Installation
+Download the precompiled binaries for Mac, Windows, and Linux
 
-#### Download
-- Linux
-    - <a href="https://github.com/harrybrwn/apizza/releases/download/v0.0.2/apizza-linux" download>deb</a>
-    - <a href="https://github.com/harrybrwn/apizza/releases/download/v0.0.2/apizza-linux" download>rpm</a>
-- <a href="https://github.com/harrybrwn/apizza/releases/download/v0.0.2/apizza-darwin" download>MacOS</a><br>
-- <a href="https://github.com/harrybrwn/apizza/releases/download/v0.0.2/apizza-windows" download>Windows</a>
+##### Homebrew
+```
+brew install harrybrwn/tap/apizza
+```
+##### Debian/Ubuntu
+```
+curl -LO https://github.com/harrybrwn/apizza/releases/download/v0.0.3/apizza_0.0.3_Linux_64-bit.deb
+sudo dpkg -i apizza_0.0.3_Linux_64-bit.deb
+```
+##### Rpm
+```
+curl -LO https://github.com/harrybrwn/apizza/releases/download/v0.0.3/apizza_0.0.3_Linux_64-bit.rpm
+sudo rpm -i apizza_0.0.3_Linux_64-bit.rpm
+```
+##### Archives
+- <a href="https://github.com/harrybrwn/apizza/releases/download/v0.0.3/apizza_0.0.3_MacOS_64-bit.tar.gz" download>MacOS</a><br>
+- <a href="https://github.com/harrybrwn/apizza/releases/download/v0.0.3/apizza_0.0.3_Linux_64-bit.tar.gz" download>Linux</a>
+- Windows
+    - <a href="https://github.com/harrybrwn/apizza/releases/download/v0.0.3/apizza_0.0.3_Windows_64-bit.zip" download>64 bit</a>
+    - <a href="https://github.com/harrybrwn/apizza/releases/download/v0.0.3/apizza_0.0.3_Windows_32-bit.zip" download>32 bit</a>
 
 #### Compile
 ```bash
@@ -40,13 +54,13 @@ cd apizza
 make install
 ```
 
-### Setup
+## Setup
 The most you have to do as a user in terms of setting up apizza is fill in the config variables. The only config variables that are mandatory are "Address" and "Service" but the other config variables contain information that the Dominos website uses.
 
 To edit the config file, you can either use the built-in `config get` and `config set` commands (see [Config](#config)) to configure apizza or you can edit the `$HOME/.config/apizza/config.json` file. Both of these setup methods will have the same results If you add a key-value pair to the `config.json` file that is not already in the file it will be overwritten the next time the program is run.
 
 
-### Config
+## Config
 For documentation on configuration and configuration fields, see [documentation](/docs/configuration.md)
 
 The `config get` and `config set` commands can be used with one config variable at a time...
@@ -67,7 +81,7 @@ $ apizza config --edit
 ```
 
 
-### Menu
+## Menu
 Run `apizza menu` to print the dominos menu.
 
 The menu command will also give more detailed information when given arguments.
@@ -81,7 +95,7 @@ $ apizza menu 10SCEXTRAV # show details on 10SCEXTRAV
 To see the different menu categories, use the `--show-categories` flag. And to view the different toppings use the `--toppings` flag.
 
 
-### Cart
+## Cart
 To save a new order, use `apizza cart new`
 ```bash
 $ apizza cart new 'testorder' --product=16SCREEN --toppings=P,C,X # pepperoni, cheese, sauce
@@ -109,7 +123,7 @@ $ apizza cart myorder --product=12SCREEN --add=P:full:2 # double pepperoni
 ```
 
 
-### Order
+## Order
 To actually send an order from the cart. Use the `order` command.
 
 ```bash
@@ -117,7 +131,7 @@ $ apizza order myorder --cvv=000
 ```
 Once the command is executed, it will prompt you asking if you are sure you want to send the order. Enter `y` and the order will be sent.
 
-### Tutorials
+## Tutorials
 
 #### None Pizza with Left Beef
 ```bash

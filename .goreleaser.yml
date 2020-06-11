@@ -64,7 +64,7 @@ brews:
       name: homebrew-tap
     homepage: https://github.com/harrybrwn/apizza
     commit_author:
-      name: releasebot
+      name: apizza-releasebot
       email: harrybrown98@gmail.com
     folder: Formula
     test: |
@@ -75,10 +75,9 @@ brews:
 snapcrafts:
   - <<: *description
     name_template: '{{ .ProjectName }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}'
-    base: core18
     summary: Command line tool for ordering Dominos pizza.
     grade: stable
-    confinement: strict
+    confinement: classic
     publish: false
 
 checksum:
