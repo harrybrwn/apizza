@@ -43,4 +43,4 @@ jobs:
       - name: Run unit tests
         run: go test -v ./... -coverprofile=coverage.txt -covermode=atomic
       - name: Report coverage
-        run: go tool cover -func=coverage.txt
+        run: go tool cover -func coverage.txt
