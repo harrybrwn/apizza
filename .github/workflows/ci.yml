@@ -10,6 +10,8 @@ jobs:
           - 1.14.1
         os:
           - ubuntu-latest
+          - macos-latest
+          - windows-latest
     runs-on: ${{ matrix.os }}
     env:
       DOMINOS_TEST_PASS: ${{ secrets.DOMINOS_TEST_PASS }}
