@@ -4,7 +4,7 @@ name: ci
 jobs:
   test:
     strategy:
-      maxtrix:
+      matrix:
         go-version:
           - ~1.13
           - 1.14.1
