@@ -2,6 +2,7 @@ package out
 
 import (
 	"bytes"
+	"regexp"
 	"testing"
 
 	"github.com/harrybrwn/apizza/cmd/internal/cmdtest"
@@ -78,7 +79,7 @@ func TestPrintOrder(t *testing.T) {
 	tests.CompareV(t, buf.String(), expected)
 	buf.Reset()
 	tests.Check(PrintOrder(o, true, false, true))
-	tests.Compare(t, buf.String(), expected+"  price:   $20.15\n")
+	tests.Compare(t, buf.String(), expected+"  price:   $22.29\n")
 	ResetOutput()
 }
 
@@ -93,21 +94,22 @@ func TestPrintItems(t *testing.T) {
 	v, err := menu.GetVariant("14SCREEN")
 	tests.Check(err)
 	tests.Check(ItemInfo(v, menu))
-	expected := `Large (14") Hand Tossed Pizza
-  Code: 14SCREEN
-  Category: Pizza
-  Toppings:
-    Robust Inspired Tomato Sauce (X): full 1
-    Cheese (C): full 1
-  Price: 13.99
-  Parent Product: 'Pizza' [S_PIZZA]
-`
-	// we are not testing for the output of the toppings section
-	// because the order of the toppings relies on a map and we cannot guarantee
-	// that the toppings will always be in the same order.
-	tests.Compare(t, buf.String()[:76], expected[:76])
-	tests.Compare(t, buf.String()[147:], expected[147:])
+	out := buf.String()
+	assertMatch(t, `Code:\s+14SCREEN`, out)
+	assertMatch(t, `Category:\s+Pizza`, out)
+	assertMatch(t, "\\s*Toppings:\n", out)
+	assertMatch(t, `\s*Robust Inspired Tomato Sauce \(X\):\s+full 1`, out)
+	assertMatch(t, `\s*Price:\s+\d+\.\d+\n`, out)
+	assertMatch(t, `\s*Parent Product:\s+'Pizza' \[S_PIZZA\]`, out)
+
 	buf.Reset()
+}
+
+func assertMatch(t *testing.T, pattern, input string) {
+	regx := regexp.MustCompile(pattern)
+	if !regx.MatchString(input) {
+		t.Errorf("expected %q to match %q", input, pattern)
+	}
 }
 
 func TestPrintMenu(t *testing.T) {

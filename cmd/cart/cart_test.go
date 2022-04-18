@@ -149,12 +149,21 @@ func TestProducts(t *testing.T) {
 	b, err := json.Marshal(order)
 	tests.Check(err)
 	tests.Check(r.DataBase.Put(data.OrderPrefix+order.Name(), b))
-	codes := []string{"12SCREEN", "W08PBBQW", "10THIN", "10SCMEATZA"}
+	codes := []string{"12SCREEN", "W08PBBQW"}
 
 	tests.Check(cart.SetCurrentOrder(cmdtest.OrderName))
 	tests.Check(cart.AddProducts(codes))
+	if cart.CurrentOrder == nil {
+		t.Fatal("current order should not be nil")
+	}
+	if cart.CurrentOrder.Products == nil {
+		t.Fatal("current order has not produts")
+	}
+
 	for i, c := range codes {
-		tests.StrEq(cart.CurrentOrder.Products[i].Code, c, "set wrong code")
+		if cart.CurrentOrder.Products[i].Code != c {
+			t.Errorf("set wrong code: %q should equal %q", cart.CurrentOrder.Products[i].Code, c)
+		}
 	}
 	tests.Check(cart.SaveAndReset())
 	tests.Exp(cart.AddProducts(codes))
