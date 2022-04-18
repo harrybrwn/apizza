@@ -43,4 +43,5 @@ jobs:
       - name: Run unit tests
         run: go test -v ./... -coverprofile=coverage.txt -covermode=atomic
       - name: Report coverage
+        if: matrix.go-version == 'ubuntu-latest'
         run: go tool cover -func coverage.txt
