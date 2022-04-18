@@ -10,7 +10,7 @@ jobs:
           - 1.14.1
         os:
           - ubuntu-latest
-    runs-on: ${{ maxtrix.os }}
+    runs-on: ${{ matrix.os }}
     env:
       DOMINOS_TEST_PASS: ${{ secrets.DOMINOS_TEST_PASS }}
       DOMINOS_TEST_USER: ${{ secrets.DOMINOS_TEST_USER }}
@@ -21,7 +21,7 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v2
         with:
-          go-version: ${{ maxtrix.go-version }}
+          go-version: ${{ matrix.go-version }}
 
       - name: Cache Builds
         uses: actions/cache@v2
@@ -33,7 +33,7 @@ jobs:
             ~/go/bin
           key: ${{ runner.os }}_${{ runner.arch }}-${{ matrix.go-version }}-test-${{ hashFiles('**/go.sum') }}
           restore-keys: |
-            ${{ runner.os }}_${{ runner.arch }}-${{ maxtrix.go-version }}-test-
+            ${{ runner.os }}_${{ runner.arch }}-${{ matrix.go-version }}-test-
 
       - name: Download modules
         if: steps.go-cache.outputs.cache-hit != 'true'
