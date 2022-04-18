@@ -197,7 +197,7 @@ func translateOpt(opt interface{}) string {
 	return param
 }
 
-func makeTopping(cover, amount string, optionQtys []string) map[string]string {
+func makeTopping(cover, amount string, optionQtys []string) (map[string]string, error) {
 	var key string
 
 	if !(strings.HasSuffix(amount, ".0") || strings.HasSuffix(amount, ".5")) {
@@ -206,7 +206,7 @@ func makeTopping(cover, amount string, optionQtys []string) map[string]string {
 	if optionQtys != nil {
 		if !validateQtys(amount, optionQtys) {
 			// TODO: make this return a helpful error message
-			return nil
+			return nil, fmt.Errorf("invalid quantity: option %v not in {%s}", amount, strings.Join(optionQtys, ", "))
 		}
 	}
 
@@ -215,10 +215,10 @@ func makeTopping(cover, amount string, optionQtys []string) map[string]string {
 		key = cover
 	default:
 		// TODO: have this return an error message saying that the topping coverage was invalid
-		return nil
+		return nil, fmt.Errorf("invalid topping coverage %q", cover)
 	}
 
-	return map[string]string{key: amount}
+	return map[string]string{key: amount}, nil
 }
 
 func validateQtys(amount string, qtys []string) bool {

@@ -115,9 +115,9 @@ func (p *Product) AddTopping(code, side, amount string) error {
 	if p.opts == nil {
 		p.opts = make(map[string]interface{})
 	}
-	top := makeTopping(side, amount, p.optionQtys())
-	if top == nil {
-		return fmt.Errorf("could not make a %s topping", code)
+	top, err := makeTopping(side, amount, p.optionQtys())
+	if err != nil {
+		return fmt.Errorf("could not make topping %q: %w", code, err)
 	}
 	p.opts[code] = top
 	return nil
@@ -205,9 +205,9 @@ func (v *Variant) AddTopping(code, side, amount string) error {
 		qtys = nil
 	}
 
-	top := makeTopping(side, amount, qtys)
-	if top == nil {
-		return fmt.Errorf("could not make %s topping", code)
+	top, err := makeTopping(side, amount, qtys)
+	if err != nil {
+		return fmt.Errorf("could not make topping %q: %w", code, err)
 	}
 	v.opts[code] = top
 	return nil

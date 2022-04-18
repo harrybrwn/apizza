@@ -68,10 +68,7 @@ func TestProductToppings(t *testing.T) {
 	tests.Check(err)
 
 	err = p.AddTopping("notatopping", ToppingFull, "1.9")
-	tests.Exp(err)
-	if err.Error() != "could not make a notatopping topping" {
-		t.Error("got the wrong error")
-	}
+	tests.Exp(err) // expect an error
 	p.opts = nil
 	if len(p.Options()) == 0 {
 		t.Error("should not be len zero even after set to nil (see Options impl for Product)")

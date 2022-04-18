@@ -2,6 +2,7 @@ package dawg
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"os"
 	"strings"
@@ -55,6 +56,7 @@ func TestBadCreds(t *testing.T) {
 func gettestcreds() (string, string, bool) {
 	u, p := os.Getenv("DOMINOS_TEST_USER"), os.Getenv("DOMINOS_TEST_PASS")
 	if len(u) == 0 || len(p) == 0 {
+		fmt.Println("Warning: could not find test credentials")
 		return u, p, false
 	}
 	return u, p, true

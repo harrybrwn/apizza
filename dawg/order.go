@@ -311,9 +311,9 @@ func (p *OrderProduct) ReadableOptions() map[string]string {
 // pizza. The 'amount' parameter is 2.0, 1.5, 1.0, o.5, or 0 and gives the amount
 // of topping should be given.
 func (p *OrderProduct) AddTopping(code, coverage, amount string) error {
-	top := makeTopping(coverage, amount, nil)
-	if top == nil {
-		return fmt.Errorf("could not make %s topping", code)
+	top, err := makeTopping(coverage, amount, nil)
+	if err != nil {
+		return fmt.Errorf("could not make topping %q: %w", code, err)
 	}
 	p.Opts[code] = top
 	return nil
