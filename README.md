@@ -1,6 +1,6 @@
 ![apizza logo](/docs/logo.png)
 
-[![Build Status](https://travis-ci.com/harrybrwn/apizza.svg?branch=master)](https://travis-ci.com/harrybrwn/apizza)
+[![Build Status](https://github.com/harrybrwn/apizza/actions/workflows/ci.yml/badge.svg)](https://github.com/harrybrwn/apizza/actions)
 [![GoDoc](https://godoc.org/github.com/github.com/harrybrwn/apizza/dawg?status.svg)](https://pkg.go.dev/github.com/harrybrwn/apizza/dawg?tab=doc)
 [![Go Report Card](https://goreportcard.com/badge/github.com/harrybrwn/apizza)](https://goreportcard.com/report/github.com/harrybrwn/apizza)
 [![codecov](https://codecov.io/gh/harrybrwn/apizza/branch/master/graph/badge.svg)](https://codecov.io/gh/harrybrwn/apizza)
@@ -18,6 +18,8 @@ Dominos pizza from the command line.
 	- [Order](#order)
 - [Tutorials](#tutorials)
 	- [None Pizza with Left Beef](#none-pizza-with-left-beef)
+- [Development](#development)
+	- [TODO](#todo)
 
 ## Installation
 Download the precompiled binaries for Mac, Windows, and Linux
@@ -146,3 +148,14 @@ $ apizza cart leftbeef --add=B:left --product=12SCREEN # add beef to the left
 Docs and example code for my Dominos library.
 
 > **Credit**: Logo was made with [Logomakr](https://logomakr.com/).
+
+
+## Development
+
+### TODO
+
+- [ ] Stop using a real dominos account for unit tests. This should be done with
+   some sort of integration test.
+- [ ] Describe an order with a configuration file.
+- [ ] Use a linter in CI.
+- [ ] goreleaser in a github action

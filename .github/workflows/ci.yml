@@ -1,0 +1,44 @@
+on: [push]
+name: ci
+
+jobs:
+  test:
+    strategy:
+      maxtrix:
+        go-version:
+          - ~1.13
+          - 1.14.1
+        os:
+          - ubuntu-latest
+    runs-on: ${{ maxtrix.os }}
+    env:
+      DOMINOS_TEST_PASS: ${{ secrets.DOMINOS_TEST_PASS }}
+      DOMINOS_TEST_USER: ${{ secrets.DOMINOS_TEST_USER }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Setup Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: ${{ maxtrix.go-version }}
+
+      - name: Cache Builds
+        uses: actions/cache@v2
+        id: go-cache
+        with:
+          path: |
+            ~/go/pkg/mod
+            ~/.cache/go-build
+            ~/go/bin
+          key: ${{ runner.os }}_${{ runner.arch }}-${{ matrix.go-version }}-test-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}_${{ runner.arch }}-${{ maxtrix.go-version }}-test-
+
+      - name: Download modules
+        if: steps.go-cache.outputs.cache-hit != 'true'
+        run: go mod download
+      - name: Run unit tests
+        run: go test -v ./... -coverprofile=coverage.txt -covermode=atomic
+      - name: Report coverage
+        run: go tool cover -func=coverage.txt

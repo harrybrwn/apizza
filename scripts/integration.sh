@@ -55,11 +55,6 @@ if [ $configdir != $default_config ]; then
 fi
 unset configdir
 
-configfile="$($bin config -f)"
-if [ $configfile != "$default_configfile" ]; then
-    echo "wrong config dir... got: $configfile, want: $default_configfile"
-    status=1
-fi
 unset default_config
 unset default_configfile
 unset configfile

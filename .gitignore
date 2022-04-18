@@ -23,6 +23,7 @@ coverage.html
 !dawg/testdata/cardnums.json
 /env/
 dawg/ratelimit_test.go
+pizza.y*ml
 
 # Tools
 /.vscode
