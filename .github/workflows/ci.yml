@@ -19,12 +19,10 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
-
       - name: Setup Go
         uses: actions/setup-go@v2
         with:
           go-version: ${{ matrix.go-version }}
-
       - name: Cache Builds
         uses: actions/cache@v2
         id: go-cache
@@ -42,6 +40,9 @@ jobs:
         run: go mod download
       - name: Run unit tests
         run: go test -v ./... -coverprofile=coverage.txt -covermode=atomic
-      - name: Report coverage
+      - name: Test coverage
         if: matrix.go-version == 'ubuntu-latest'
-        run: go tool cover -func coverage.txt
+        uses: codecov/codecov-action@v2
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: coverage.txt
