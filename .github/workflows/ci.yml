@@ -41,7 +41,6 @@ jobs:
       - name: Run unit tests
         run: go test -v ./... -coverprofile=coverage.txt -covermode=atomic
       - name: Test coverage
-        if: matrix.go-version == 'ubuntu-latest'
         uses: codecov/codecov-action@v2
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
